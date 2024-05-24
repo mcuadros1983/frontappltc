@@ -1,0 +1,5 @@
+/* Estilo personalizado para resaltar filas de productos existentes */
+.mi-tabla-personalizada .table tbody tr.existing-product {
+    background-color: #7e0707; /* Cambia el color de fondo según tus preferencias */
+    color: #fff; /* Cambia el color del texto para asegurarte de que sea legible en el fondo oscuro */
+  } 

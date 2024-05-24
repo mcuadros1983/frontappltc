@@ -1,0 +1,13 @@
+/* Estilos para el select personalizado */
+.custom-style-select {
+    border: 1px solid transparent; /* Borde transparente */
+    background-color: rgba(255, 255, 255, 0.7); /* Fondo inicial, ajusta según sea necesario */
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1); 
+    /* Sombra similar a la de los Form.Control */
+    transition: border-color 0.2s, background-color 0.2s; /* Transición suave */
+  
+    &:focus {
+      border-color: #80bdff; /* Cambia el color del borde al seleccionar */
+      background-color: white; /* Cambia el fondo al seleccionar */
+    }
+  }

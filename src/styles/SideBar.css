@@ -1,0 +1,28 @@
+/* NavigationBar.css */
+.custom-navbar {
+  transition: margin-left 0.3s;
+}
+
+@media (max-width: 767px) {
+  .custom-navbar.collapsing,
+  .custom-navbar.collapsed {
+    margin-left: -200px; /* Ajusta el valor según tus necesidades */
+  }
+}
+
+/* Agrega esto a tu archivo de estilos */
+
+/* .nav-item:hover .nav-link,
+.nav-item.active .nav-link {
+
+  background-color: #53585e;
+
+  color: #fff; 
+
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+} */
+
+/* Nuevo: Cambia el color de fondo del Nav.Item durante el hover */
+.nav-item:hover {
+  background-color: #53585e; /* Cambia el color de fondo al pasar el ratón */
+}
