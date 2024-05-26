@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Contexts from "./Contexts";
 
 export default function DataContext({ children }) {
@@ -16,7 +16,7 @@ export default function DataContext({ children }) {
   const [empleados, setEmpleados] = useState(null);
 
   const apiUrl = process.env.REACT_APP_API_URL;
-
+  
   useEffect(() => {
     // console.log("apliUrl", apiUrl)
     const fetchData = async () => {
@@ -108,9 +108,6 @@ export default function DataContext({ children }) {
       // console.log("datacategoriastabla", dataCategoriasTabla);
 
     };
-
-    
-
     fetchData();
   }, []);
 

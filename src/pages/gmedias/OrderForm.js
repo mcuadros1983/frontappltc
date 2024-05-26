@@ -3,13 +3,12 @@ import {
   Container,
   Form,
   Button,
-  Spinner,
   Table,
   FormControl,
 } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, } from "react-router-dom";
 import "../../styles/styles.css";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
 import { GenerateReceiptOrderHTML } from "./GenerateReceiptOrderHTML"; // Importa la función de receiptGenerator
 import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable
@@ -34,16 +33,16 @@ export default function OrderForm() {
   const [selectedBranchId, setSelectedBranchId] = useState(""); // Inicializa con un valor adecuado según tus necesidades
   const [availableProducts, setAvailableProducts] = useState([]);
 
-  const [order, setOrder] = useState({
-    cantidad_total: "",
-    peso_total: "",
-    branch_id: "",
-  });
+  // const [order, setOrder] = useState({
+  //   cantidad_total: "",
+  //   peso_total: "",
+  //   branch_id: "",
+  // });
   const [branches, setBranches] = useState([]);
   const [loadingBranches, setLoadingBranches] = useState(true);
   const [editingIndex, setEditingIndex] = useState(null);
   const [modal, setModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // Define setSearchTerm
+  // const [searchTerm, setSearchTerm] = useState(""); // Define setSearchTerm
 
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);

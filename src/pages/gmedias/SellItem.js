@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { Table, Container, Button, FormControl, Form } from "react-bootstrap";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import Contexts from "../../context/Contexts";
 import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable 
 

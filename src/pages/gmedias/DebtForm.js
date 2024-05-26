@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Container, Form, Button, Spinner } from "react-bootstrap";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+import { useNavigate, useParams } from "react-router-dom";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import Contexts from "../../context/Contexts";
 
 export default function DebtForm() {
-  const location = useLocation();
+  // const location = useLocation();
 
   const [debt, setDebt] = useState({
     monto_total: "",

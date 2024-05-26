@@ -1,5 +1,4 @@
 import React from 'react'
-import { createContext } from "react";
 
 const userContext = React.createContext([]);
 const dataContext = React.createContext(null);

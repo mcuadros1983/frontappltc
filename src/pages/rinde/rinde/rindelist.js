@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useContext, useCallback } from "react";
+// import { useNavigate } from "react-router-dom";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
@@ -15,15 +15,11 @@ export default function ListaRindes() {
   const [sortDirection, setSortDirection] = useState("asc");
 
   const context = useContext(Contexts.dataContext);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    obtenerRindes();
-  }, []);
-
-  const obtenerRindes = async () => {
+  const obtenerRindes = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/obtenerrindes`);
       if (response.ok) {
@@ -36,7 +32,11 @@ export default function ListaRindes() {
     } catch (error) {
       console.error("Error al obtener los rindes:", error);
     }
-  };
+  },[apiUrl]);
+
+  useEffect(() => {
+    obtenerRindes();
+  }, [obtenerRindes]);
 
   const handleSort = (columnName) => {
     setSortDirection(
@@ -108,7 +108,7 @@ export default function ListaRindes() {
         }
       );
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         // console.log(data.message);
         setRindes(rindes.filter((rinde) => rinde.id !== rindeId));
       } else {

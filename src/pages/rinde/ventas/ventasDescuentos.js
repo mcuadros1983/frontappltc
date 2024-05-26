@@ -5,7 +5,7 @@ import Contexts from "../../../context/Contexts";
 
 export default function VentasTotales() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
-  const [searchSucursal, setSearchSucursal] = useState("");
+  // const [searchSucursal, setSearchSucursal] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,7 +21,7 @@ export default function VentasTotales() {
   useEffect(() => {
     // Aquí puedes realizar alguna acción cuando cambie la sucursal seleccionada,
     // como cargar datos relacionados con esa sucursal.
-    console.log("Sucursal seleccionada:", selectedSucursal);
+    // console.log("Sucursal seleccionada:", selectedSucursal);
   }, [selectedSucursal]);
 
   const handleFilter = async () => {
@@ -43,7 +43,7 @@ export default function VentasTotales() {
           body: JSON.stringify({
             fechaDesde: startDate,
             fechaHasta: endDate,
-            sucursalId: searchSucursal,
+            sucursalId: selectedSucursal,
           }),
         }
       );
@@ -120,7 +120,7 @@ export default function VentasTotales() {
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = ventasFiltradas.slice(indexOfFirstSell, indexOfLastSell);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(ventasFiltradas.length / sellsPerPage)) {

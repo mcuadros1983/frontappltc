@@ -167,7 +167,7 @@ export default function VentasCtaCte() {
   const indicePrimeraVenta = indiceUltimaVenta - ventasPorPagina;
   const ventasActuales = ventas.slice(indicePrimeraVenta, indiceUltimaVenta);
 
-  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
+  // const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const paginaSiguiente = () => {
     if (paginaActual < Math.ceil(ventas.length / ventasPorPagina)) {

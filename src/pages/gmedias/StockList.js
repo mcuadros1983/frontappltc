@@ -1,26 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { Table, Container, FormControl, Button } from "react-bootstrap";
+import React, { useEffect, useState, useCallback } from "react";
+import { Table, Container, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { parse } from "date-fns";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { parse } from "date-fns";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
 export default function StockList() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState("asc");
+  // const [sortColumn, setSortColumn] = useState(null);
+  // const [sortDirection, setSortDirection] = useState("asc");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [products, setProducts] = useState([]); //agregado para el doble clickf
+  // const [products, setProducts] = useState([]); //agregado para el doble clickf
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(10);
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/ordenes/`, {
         credentials: "include",
@@ -49,51 +49,15 @@ export default function StockList() {
     } catch (error) {
       console.error(error);
     }
-  };
-
-  // const handleSearch = () => {
-  //   const startDateFilter = startDate
-  //     ? parse(startDate, "yyyy-MM-dd", new Date())
-  //     : null;
-  //   const endDateFilter = endDate
-  //     ? parse(endDate, "yyyy-MM-dd", new Date())
-  //     : null;
-
-  //   if (startDateFilter) startDateFilter.setHours(0, 0, 0, 0);
-  //   if (endDateFilter) endDateFilter.setHours(0, 0, 0, 0);
-
-  //   if (!startDate && !endDate) {
-  //     // console.log("Sin criterios de búsqueda. Mostrando totales por sucursal.");
-  //     // console.log("test0", orders);
-  //     const totalsByBranch = calculateTotalsByBranch(orders);
-  //     setFilteredOrders(totalsByBranch);
-  //   } else {
-  //     const filtered = orders.filter((order) => {
-  //       const orderDate = new Date(order.fecha).setHours(0, 0, 0, 0);
-
-  //       const matchesDate =
-  //         (!startDateFilter || orderDate >= startDateFilter) &&
-  //         (!endDateFilter || orderDate <= endDateFilter);
-
-  //       return matchesDate;
-  //     });
-
-  //     // console.log("test3", filtered);
-  //     // console.log("test4",totalsByBranch)
-  //     const totalsByBranch = calculateTotalsByBranch(filtered);
-  //     setFilteredOrders(totalsByBranch);
-  //     // console.log("test1", orders);
-  //     // console.log("test2", filteredOrders);
-  //   }
-  // };
+  }, [apiUrl]);
 
   // Define la función para convertir las fechas al formato deseado
-  const parseDate = (dateString) => {
-    const [year, month, day] = dateString.split("-");
-    return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
-  };
+  // const parseDate = (dateString) => {
+  //   const [year, month, day] = dateString.split("-");
+  //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
+  // };
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const startDateFilter = startDate ? startDate : null;
     const endDateFilter = endDate ? endDate : null;
 
@@ -116,7 +80,7 @@ export default function StockList() {
       const totalsByBranch = calculateTotalsByBranch(filtered);
       setFilteredOrders(totalsByBranch);
     }
-  };
+  }, [orders, searchTerm, startDate, endDate]);
 
   const calculateTotalsByBranch = (orders) => {
     const totalsByBranch = {};
@@ -152,48 +116,48 @@ export default function StockList() {
     }));
   };
 
-  const handleSort = (columnName) => {
-    setSortDirection(
-      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
-    );
+  // const handleSort = (columnName) => {
+  //   setSortDirection(
+  //     columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
+  //   );
 
-    setSortColumn(columnName);
+  //   setSortColumn(columnName);
 
-    const sortedOrders = [...filteredOrders].sort((a, b) => {
-      const valueA =
-        columnName === "Sucursal.nombre"
-          ? a.Sucursal && a.Sucursal.nombre
-          : a[columnName];
-      const valueB =
-        columnName === "Sucursal.nombre"
-          ? b.Sucursal && b.Sucursal.nombre
-          : b[columnName];
+  //   const sortedOrders = [...filteredOrders].sort((a, b) => {
+  //     const valueA =
+  //       columnName === "Sucursal.nombre"
+  //         ? a.Sucursal && a.Sucursal.nombre
+  //         : a[columnName];
+  //     const valueB =
+  //       columnName === "Sucursal.nombre"
+  //         ? b.Sucursal && b.Sucursal.nombre
+  //         : b[columnName];
 
-      if (columnName === "fecha") {
-        return sortDirection === "asc"
-          ? new Date(a.fecha) - new Date(b.fecha)
-          : new Date(b.fecha) - new Date(a.fecha);
-      } else {
-        if (valueA < valueB) {
-          return sortDirection === "asc" ? -1 : 1;
-        } else if (valueA > valueB) {
-          return sortDirection === "asc" ? 1 : -1;
-        } else {
-          return 0;
-        }
-      }
-    });
+  //     if (columnName === "fecha") {
+  //       return sortDirection === "asc"
+  //         ? new Date(a.fecha) - new Date(b.fecha)
+  //         : new Date(b.fecha) - new Date(a.fecha);
+  //     } else {
+  //       if (valueA < valueB) {
+  //         return sortDirection === "asc" ? -1 : 1;
+  //       } else if (valueA > valueB) {
+  //         return sortDirection === "asc" ? 1 : -1;
+  //       } else {
+  //         return 0;
+  //       }
+  //     }
+  //   });
 
-    setFilteredOrders(sortedOrders);
-  };
+  //   setFilteredOrders(sortedOrders);
+  // };
 
   useEffect(() => {
     loadOrders();
-  }, []);
+  }, [loadOrders]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, orders, startDate, endDate]);
+  }, [searchTerm, orders, startDate, endDate, handleSearch]);
 
   const handleDoubleClick = async (order) => {
     try {
@@ -205,13 +169,6 @@ export default function StockList() {
       if (startDate && endDate) {
         url += `/${startDate}/${endDate}`;
       }
-      // if (startDate) {
-      //   url += `/${startDate}`;
-      // }
-
-      // if (endDate) {
-      //   url += `/${endDate}`;
-      // }
 
       const response = await fetch(url, {
         credentials: "include",
@@ -276,15 +233,6 @@ export default function StockList() {
           />
         </div>
       </div>
-      {/* <div className="mb-3">
-        <FormControl
-          type="text"
-          placeholder="Buscar por sucursal"
-          className="mr-sm-2"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div> */}
 
       <Table striped bordered hover>
         <thead>
@@ -310,7 +258,7 @@ export default function StockList() {
           </tr>
         </thead>
         <tbody>
-          {filteredOrders.map((order, index) => (
+          {currentOrders.map((order, index) => (
             <tr
               key={index}
               style={{ cursor: "pointer" }}

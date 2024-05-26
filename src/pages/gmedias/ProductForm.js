@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Form, Button, Spinner } from "react-bootstrap";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 
 export default function ProductForm() {
   const location = useLocation();
@@ -261,17 +261,6 @@ export default function ProductForm() {
           />
         </Form.Group>
 
-        {/* <Form.Group className="mb-3">
-          <Form.Label>Mensaje</Form.Label>
-          <Form.Control
-            as="textarea"
-            name="message"
-            // value={formData.message}
-            //onChange={handleChange}
-            placeholder="Escribe tu mensaje aquí"
-            className="my-textarea"
-          />
-        </Form.Group> */}
         <Button
           variant="primary"
           type="submit"

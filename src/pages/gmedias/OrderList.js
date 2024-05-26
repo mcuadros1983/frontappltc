@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { parse } from "date-fns";
-import Pagination from "../../utils/Pagination";
+// import Pagination from "../../utils/Pagination";
 
 export default function OrderList() {
   const [orders, setOrders] = useState([]);
@@ -69,7 +69,7 @@ export default function OrderList() {
     }
 
     try {
-      const res = await fetch(`${apiUrl}/ordenes/${id}`, {
+     await fetch(`${apiUrl}/ordenes/${id}`, {
         credentials: "include",
         method: "DELETE",
       });
@@ -99,10 +99,10 @@ export default function OrderList() {
     }
   };
 
-  const parseDate = (dateString) => {
-    const [day, month, year] = dateString.split("/");
-    return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
-  };
+  // const parseDate = (dateString) => {
+  //   const [day, month, year] = dateString.split("/");
+  //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
+  // };
 
   const handleSearch = () => {
     const searchTermLower = searchTerm.toLowerCase();

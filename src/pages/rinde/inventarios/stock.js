@@ -8,13 +8,13 @@ import {
   ListGroup,
 } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import Contexts from "../../../context/Contexts";
 
 export default function Stock() {
   const [articulos, setArticulos] = useState([]);
   const [searchSucursal, setSearchSucursal] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,17 +27,8 @@ export default function Stock() {
   const [selectedInventario, setSelectedInventario] = useState(null);
 
   const context = useContext(Contexts.dataContext);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
-
-  // const formatDate = (dateString) => {
-  //   const date = new Date(dateString);
-  //   const day = date.getDate();
-  //   const month = date.getMonth() + 1;
-  //   const year = date.getFullYear();
-  //   return `${day < 10 ? "0" + day : day}/${month < 10 ? "0" + month : month
-  //     }/${year}`;
-  // };
 
   // Este efecto se activa cada vez que cambia el valor de searchSucursal
   useEffect(() => {

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Container, Form, Button, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 
 export default function WayPayForm() {
   const [waypay, setWaypay] = useState({
@@ -12,6 +12,7 @@ export default function WayPayForm() {
   const [editing, setEditing] = useState(false); //estado para saber si se esta editando o no
 
   const apiUrl = process.env.REACT_APP_API_URL;
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setWaypay({
@@ -23,25 +24,23 @@ export default function WayPayForm() {
   const navigate = useNavigate();
   const params = useParams();
 
-  const loadWayPay = async (id) => {
+  const loadWayPay = useCallback(async (id) => {
     const res = await fetch(`${apiUrl}/formas-pago/${id}`, {
       credentials: "include",
     });
     const data = await res.json();
     setWaypay(data);
     setEditing(true);
-  };
+  }, [apiUrl]); // Añade solo apiUrl porque params.id se maneja a nivel de useEffect
 
   useEffect(() => {
     if (params.id) {
       loadWayPay(params.id);
     } else {
       setEditing(false);
-      setWaypay({
-        tipo: "",
-      });
+      setWaypay({ tipo: "" });
     }
-  }, [params.id]);
+  }, [params.id, loadWayPay]); // Añade loadWayPay a las dependencias
 
   const handleSubmit = async (e) => {
     e.preventDefault(); //cancela el comportamiento por defecto

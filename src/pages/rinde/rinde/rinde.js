@@ -8,7 +8,7 @@ import {
   ListGroup,
   InputGroup,
 } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import Contexts from "../../../context/Contexts";
 
 export default function CalculoRinde() {
@@ -22,7 +22,7 @@ export default function CalculoRinde() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [inventarios, setInventarios] = useState([]);
-  const [selectedInventario, setSelectedInventario] = useState(null);
+  // const [selectedInventario, setSelectedInventario] = useState(null);
   const [isFinal, setIsFinal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
@@ -32,8 +32,8 @@ export default function CalculoRinde() {
   const [kgNovillo, setKgNovillo] = useState(0);
   const [kgVaca, setKgVaca] = useState(0);
   const [kgCerdo, setKgCerdo] = useState(0);
-  const [montoVendidoParcial, setMontoVendidoParcial] = useState(0);
-  const [montoEsperadoParcial, setMontoEsperadoParcial] = useState(0);
+  // const [montoVendidoParcial, setMontoVendidoParcial] = useState(0);
+  // const [montoEsperadoParcial, setMontoEsperadoParcial] = useState(0);
   const [showModalCategories, setShowModalCategories] = useState(false);
   const [selectedCategorias, setSelectedCategorias] = useState([]);
   const [ajustes, setAjustes] = useState([]);
@@ -50,7 +50,7 @@ export default function CalculoRinde() {
   const [showVerModal, setShowVerModal] = useState(false);
 
   const context = useContext(Contexts.dataContext);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -150,16 +150,16 @@ export default function CalculoRinde() {
     setShowModalCategories(true);
   };
 
-  const handleSeleccionarCategoria = (categoriaId) => {
-    const index = selectedCategorias.indexOf(categoriaId);
-    if (index === -1) {
-      setSelectedCategorias([...selectedCategorias, categoriaId]);
-    } else {
-      setSelectedCategorias(
-        selectedCategorias.filter((id) => id !== categoriaId)
-      );
-    }
-  };
+  // const handleSeleccionarCategoria = (categoriaId) => {
+  //   const index = selectedCategorias.indexOf(categoriaId);
+  //   if (index === -1) {
+  //     setSelectedCategorias([...selectedCategorias, categoriaId]);
+  //   } else {
+  //     setSelectedCategorias(
+  //       selectedCategorias.filter((id) => id !== categoriaId)
+  //     );
+  //   }
+  // };
 
   const handleObtenerDatos = async (url, operacion, excludedCategoriesId) => {
     try {
@@ -287,7 +287,7 @@ export default function CalculoRinde() {
   };
 
   const handleSelectInventario = (inventario) => {
-    setSelectedInventario(inventario);
+    // setSelectedInventario(inventario);
     if (isFinal) {
       setMontoInventarioFinal(inventario.total);
     } else {
@@ -369,9 +369,9 @@ export default function CalculoRinde() {
   };
 
   // Función para mostrar el modal de ver ingresos esperados
-  const handleVerAjustesRinde = () => {
-    setShowAjustesModal(true);
-  };
+  // const handleVerAjustesRinde = () => {
+  //   setShowAjustesModal(true);
+  // };
 
   const handleEliminarAjuste = (index) => {
     const nuevosAjustes = [...ajustes]; // Hacemos una copia de la lista actual de ajustes

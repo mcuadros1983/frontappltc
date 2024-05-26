@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { Table, Container, Button } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
-import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { Table, Container } from "react-bootstrap";
+// import { useNavigate } from "react-router-dom";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
 export default function BranchList() {
   const [branches, setBranches] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [branchesPerPage] = useState(10); // Puedes ajustar este número según tus necesidades
+  // const [currentPage, setCurrentPage] = useState(1);
+  // const [branchesPerPage] = useState(10); // Puedes ajustar este número según tus necesidades
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const loadBranches = async () => {
@@ -22,46 +22,46 @@ export default function BranchList() {
 
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "¿Estás seguro de que deseas eliminar esta sucursal?"
-    );
-    if (!confirmDelete) {
-      return;
-    }
-    try {
-      const res = await fetch(`${apiUrl}/sucursales/${id}`, {
-        credentials: "include",
-        method: "DELETE",
-      });
+  // const handleDelete = async (id) => {
+  //   const confirmDelete = window.confirm(
+  //     "¿Estás seguro de que deseas eliminar esta sucursal?"
+  //   );
+  //   if (!confirmDelete) {
+  //     return;
+  //   }
+  //   try {
+  //     const res = await fetch(`${apiUrl}/sucursales/${id}`, {
+  //       credentials: "include",
+  //       method: "DELETE",
+  //     });
 
-      setBranches(branches.filter((branch) => branch.id !== id));
+  //     setBranches(branches.filter((branch) => branch.id !== id));
     
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   useEffect(() => {
     loadBranches();
   }, []);
 
   // Paginación lógica
-  const indexOfLastBranch = currentPage * branchesPerPage;
-  const indexOfFirstBranch = indexOfLastBranch - branchesPerPage;
-  const currentBranches = branches.slice(indexOfFirstBranch, indexOfLastBranch);
+  // const indexOfLastBranch = currentPage * branchesPerPage;
+  // const indexOfFirstBranch = indexOfLastBranch - branchesPerPage;
+  // const currentBranches = branches.slice(indexOfFirstBranch, indexOfLastBranch);
 
-  const nextPage = () => {
-    if (currentPage < Math.ceil(branches.length / branchesPerPage)) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
+  // const nextPage = () => {
+  //   if (currentPage < Math.ceil(branches.length / branchesPerPage)) {
+  //     setCurrentPage(currentPage + 1);
+  //   }
+  // };
 
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+  // const prevPage = () => {
+  //   if (currentPage > 1) {
+  //     setCurrentPage(currentPage - 1);
+  //   }
+  // };
 
 
   return (

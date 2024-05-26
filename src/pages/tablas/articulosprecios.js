@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
@@ -13,16 +13,10 @@ export default function ArticulosPrecios() {
   const [sortDirection, setSortDirection] = useState("asc");
 
   const apiUrl = process.env.REACT_APP_API_URL;
-  
-  useEffect(() => {
-    obtenerArticulosPrecios();
-  }, []);
 
-  const obtenerArticulosPrecios = async () => {
+  const obtenerArticulosPrecios = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${apiUrl}/obtenerarticulosprecios`
-      );
+      const response = await fetch(`${apiUrl}/obtenerarticulosprecios`);
       if (!response.ok) {
         throw new Error("Error al obtener los artículos con precios");
       }
@@ -32,7 +26,11 @@ export default function ArticulosPrecios() {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [apiUrl]);
+
+  useEffect(() => {
+    obtenerArticulosPrecios();
+  }, [obtenerArticulosPrecios]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);

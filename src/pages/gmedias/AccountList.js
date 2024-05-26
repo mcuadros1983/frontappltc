@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Table, Container, Button } from "react-bootstrap";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
 const AccountList = () => {
@@ -78,7 +78,7 @@ const AccountList = () => {
           </tr>
         </thead>
         <tbody>
-          {clientesConCuenta.map((cliente) => (
+          {currentClientes.map((cliente) => (
             <tr key={cliente.id}>
               <td>{cliente.nombre}</td>
               <td>

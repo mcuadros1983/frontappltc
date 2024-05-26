@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Container, Form, Button, Spinner, Table } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate,  } from "react-router-dom";
 import { processBarCode } from "../../utils/processBarCode";
 import { GenerateReceiptReceiptHTML } from "./GenerateReceiptReceiptHTML";
 import CategorySummaryTable from "../../utils/CategorySummaryTable";
@@ -31,20 +31,20 @@ const ReceiptForm = () => {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [receipt, setReceipt] = useState({
-    cantidad_total: "",
-    peso_total: "",
-    categoria_ingreso: "",
-    branch_id: "",
-    movement_id: "",
-  });
+  // const [receipt, setReceipt] = useState({
+  //   cantidad_total: "",
+  //   peso_total: "",
+  //   categoria_ingreso: "",
+  //   branch_id: "",
+  //   movement_id: "",
+  // });
 
   const [isCodeProcessing, setIsCodeProcessing] = useState(false);
   const [isCancelButtonDisabled, setIsCancelButtonDisabled] = useState(true);
   const [categoria, setCategoria] = useState(null);
   const [generatedCodes, setGeneratedCodes] = useState([]);
   const [canGenerateCode, setCanGenerateCode] = useState(true); // Estado para controlar la generación de códigos
-  const [saveGeneratedCodes, setSaveGeneratedCodes] = useState([]); // Estado para controlar la generación de códigos
+  // const [saveGeneratedCodes, setSaveGeneratedCodes] = useState([]); // Estado para controlar la generación de códigos
 
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
@@ -143,10 +143,10 @@ const ReceiptForm = () => {
       }));
     }
   };
-  const handleEdit = (product, index) => {
-    setProduct(product);
-    setEditingIndex(index);
-  };
+  // const handleEdit = (product, index) => {
+  //   setProduct(product);
+  //   setEditingIndex(index);
+  // };
 
   const handleSave = async () => {
     if (!product.codigo_de_barra) {

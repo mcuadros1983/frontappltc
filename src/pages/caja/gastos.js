@@ -12,7 +12,7 @@ export default function Gastos() {
   const [gastosPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
-  const [tipoDeGastoFilter, setTipoDeGastoFilter] = useState("");
+  // const [tipoDeGastoFilter, setTipoDeGastoFilter] = useState("");
   const [selectedTipoGasto, setSelectedTipoGasto] = useState("");
 
   const context = useContext(Contexts.dataContext);
@@ -39,11 +39,7 @@ export default function Gastos() {
     }
   };
 
-  // useEffect(() => {
-  //   handleFilter();
-  // }, []); // Load data on component mount
-
-  const handleFilter = async () => {
+ const handleFilter = async () => {
     try {
       // Validación de fechas
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
@@ -128,7 +124,7 @@ export default function Gastos() {
   const indexOfFirstGasto = indexOfLastGasto - gastosPerPage;
   const currentGastos = gastos.slice(indexOfFirstGasto, indexOfLastGasto);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(gastos.length / gastosPerPage)) {
@@ -242,15 +238,6 @@ export default function Gastos() {
         </thead>
         <tbody>
           {currentGastos.map((gasto) => {
-            // // Convertir la fecha a un objeto Date
-            // const fecha = new Date(gasto.fecha);
-            // // Obtener los componentes de la fecha
-            // const dia = fecha.getDate();
-            // const mes = fecha.getMonth() + 1; // Los meses comienzan desde 0
-            // const anio = fecha.getFullYear();
-            // // Formatear la fecha en el formato DD/MM/AAAA
-            // const fechaFormateada = `${dia}/${mes}/${anio}`;
-
             return (
               <tr key={gasto.id}>
                 <td>{gasto.fecha}</td>

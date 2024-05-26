@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Container, Table } from "react-bootstrap";
 
@@ -8,12 +8,7 @@ export default function FormulasItems() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    obtenerFormulaPorId();
-  }, [formulaId]);
-
-  const obtenerFormulaPorId = async () => {
-    // console.log("obtenerFormulaPorId");
+  const obtenerFormulaPorId = useCallback(async () => {
     try {
       const response = await fetch(
         `${apiUrl}/obtenerformulaporid/${formulaId}`
@@ -27,7 +22,11 @@ export default function FormulasItems() {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [apiUrl, formulaId]); // Añadir apiUrl y formulaId como dependencias
+
+  useEffect(() => {
+    obtenerFormulaPorId();
+  }, [obtenerFormulaPorId]); // Añadir obtenerFormulaPorId a las dependencias
 
   return (
     <Container>

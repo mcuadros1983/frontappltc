@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Table, Container, Button } from "react-bootstrap";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
 export default function ReceiptItem() {
@@ -72,21 +72,6 @@ export default function ReceiptItem() {
               <td>{product.tropa}</td>
               <td>{product.categoria_producto}</td>
               <td>{product.subcategoria}</td>
-              {/* <td className="text-center">
-                <Button
-                  variant="danger"
-                  onClick={() => handleDelete(product.id)}
-                  className="mx-2"
-                >
-                  Eliminar
-                </Button>
-                <Button
-                  color="inherit"
-                  onClick={() => navigate(`/products/${product.id}/edit`)}
-                >
-                  Editar
-                </Button>
-              </td> */}
             </tr>
           ))}
         </tbody>

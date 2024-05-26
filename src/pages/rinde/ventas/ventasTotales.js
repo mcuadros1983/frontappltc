@@ -5,7 +5,7 @@ import Contexts from "../../../context/Contexts";
 
 export default function VentasTotales() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
-  const [searchSucursal, setSearchSucursal] = useState("");
+  // const [searchSucursal, setSearchSucursal] = useState("");
   const [selectedSucursal, setSelectedSucursal] = useState(""); // Estado para la sucursal seleccionada
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -124,7 +124,7 @@ export default function VentasTotales() {
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = ventasFiltradas.slice(indexOfFirstSell, indexOfLastSell);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(ventasFiltradas.length / sellsPerPage)) {

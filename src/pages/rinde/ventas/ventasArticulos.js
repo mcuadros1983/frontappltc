@@ -7,7 +7,7 @@ export default function VentasArticulos() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
   const [articulos, setArticulos] = useState([]);
   const [selectedArticulo, setSelectedArticulo] = useState("");
-  const [searchSucursal, setSearchSucursal] = useState("");
+  // const [searchSucursal, setSearchSucursal] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -81,15 +81,15 @@ export default function VentasArticulos() {
     return date.getTime() && date.toISOString().slice(0, 10) === dateString;
   };
 
-  const handleSearchClick = () => {
-    handleFilter();
-  };
+  // const handleSearchClick = () => {
+  //   handleFilter();
+  // };
 
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = ventasFiltradas.slice(indexOfFirstSell, indexOfLastSell);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(ventasFiltradas.length / sellsPerPage)) {

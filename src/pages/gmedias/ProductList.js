@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
-import { parse } from "date-fns";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { parse } from "date-fns";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
 export default function ProductList() {
@@ -129,10 +129,10 @@ export default function ProductList() {
   };
 
   // Define la función para convertir las fechas al formato deseado
-  const parseDate = (dateString) => {
-    const [day, month, year] = dateString.split("/");
-    return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
-  };
+  // const parseDate = (dateString) => {
+  //   const [day, month, year] = dateString.split("/");
+  //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
+  // };
 
   const handleSearch = () => {
     const searchTermLower = searchBarra.toLowerCase();
@@ -280,16 +280,6 @@ export default function ProductList() {
     return summary;
   }, {});
 
-  // Si el peso total de la categoría es cero, mostramos "N/A"
-  // Object.keys(categorySummary).forEach((category) => {
-  //   if (categorySummary[category].pesoTotal === 0) {
-  //     categorySummary[category].pesoTotal = "N/A";
-  //   }
-  //   // Si el costo total de la categoría es cero, mostramos "N/A"
-  //   if (categorySummary[category].costoTotal === 0) {
-  //     categorySummary[category].costoTotal = "N/A";
-  //   }
-  // });
 
   return (
     <Container>
@@ -516,9 +506,6 @@ export default function ProductList() {
                 <td>{categorySummary[category].cantidad}</td>
                 <td>
                   {categorySummary[category].pesoTotal}
-                  {/* {categorySummary[category].pesoTotal !== 0
-                    ? categorySummary[category].pesoTotal
-                    : "N/A"} */}
                 </td>
                 <td>
                   {categorySummary[category].costoTotal !== 0

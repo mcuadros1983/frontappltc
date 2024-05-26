@@ -1,6 +1,6 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { useState } from "react";
 import Contexts from "./Contexts";
-// const UserContext = createContext();
+
 
 export default function UserContext({ children }) {
   const [user, setUser] = useState(null);
@@ -22,7 +22,7 @@ export default function UserContext({ children }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("user", data)
+        // console.log("user", data)
         setUser(data.user);
       } else {
         const errorData = await response.json();

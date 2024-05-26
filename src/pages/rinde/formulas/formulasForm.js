@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState} from "react";
 import { Container, Form, Button, Spinner, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import Contexts from "../../../context/Contexts";
+// import Contexts from "../../../context/Contexts";
 
 export default function FormulasForm() {
-  const context = useContext(Contexts.userContext);
+  // const context = useContext(Contexts.userContext);
   const navigate = useNavigate();
 
   const [formula, setFormula] = useState({
@@ -171,7 +171,7 @@ export default function FormulasForm() {
       if (!response.ok) {
         throw new Error("Error al guardar la fórmula");
       }
-      const data = await response.json();
+      await response.json();
       // console.log("Fórmula guardada:", data);
       // Si la fórmula se guarda correctamente, navegar a la página de fórmulas
       navigate("/formulas");

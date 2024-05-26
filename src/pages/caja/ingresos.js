@@ -136,7 +136,7 @@ export default function Ingresos() {
   const indicePrimerIngreso = indiceUltimoIngreso - ingresosPorPagina;
   const ingresosActuales = ingresos.slice(indicePrimerIngreso, indiceUltimoIngreso);
 
-  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
+  // const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const paginaSiguiente = () => {
     if (paginaActual < Math.ceil(ingresos.length / ingresosPorPagina)) {
@@ -250,12 +250,6 @@ export default function Ingresos() {
         </thead>
         <tbody>
           {ingresosActuales.map((ingreso) => {
-            // console.log("ingresos", ingreso)
-            // const fecha = new Date(ingreso.fecha);
-            // const dia = fecha.getDate();
-            // const mes = fecha.getMonth() + 1;
-            // const anio = fecha.getFullYear();
-            // const fechaFormateada = `${dia}/${mes}/${anio}`;
 
             return (
               <tr key={ingreso.id}>

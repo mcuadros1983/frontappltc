@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
@@ -18,16 +18,6 @@ export default function Inventario() {
   const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
-
-  // const formatDate = (dateString) => {
-  //   const date = new Date(dateString);
-  //   const day = date.getDate();
-  //   const month = date.getMonth() + 1;
-  //   const year = date.getFullYear();
-  //   return `${day < 10 ? "0" + day : day}/${
-  //     month < 10 ? "0" + month : month
-  //   }/${year}`;
-  // };
 
   const handleFilter = async () => {
     try {
@@ -116,7 +106,7 @@ export default function Inventario() {
         }
       );
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         // console.log(data.message);
         setInventarios(
           inventarios.filter((inventario) => inventario.id !== inventarioId)

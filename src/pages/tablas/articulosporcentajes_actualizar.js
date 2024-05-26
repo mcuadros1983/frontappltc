@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, Button, Form, Alert, Spinner } from "react-bootstrap";
 import * as XLSX from "xlsx";
 
@@ -9,13 +9,10 @@ const ArticulosPorcentajeActualizar = () => {
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [articulos, setArticulos] = useState([]);
-  
-  const apiUrl = process.env.REACT_APP_API_URL;
-  useEffect(() => {
-    obtenerArticulos();
-  }, []);
 
-  const obtenerArticulos = async () => {
+  const apiUrl = process.env.REACT_APP_API_URL;
+
+  const obtenerArticulos = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/obtenerarticulosporcentaje`);
       if (!response.ok) {
@@ -26,7 +23,11 @@ const ArticulosPorcentajeActualizar = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [apiUrl]);
+
+  useEffect(() => {
+    obtenerArticulos();
+  }, [obtenerArticulos]);
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -80,20 +81,26 @@ const ArticulosPorcentajeActualizar = () => {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-  
+
         const porcentajeColumn = jsonData.map((row) => row[2]); // Obtener la tercera columna (índice 2)
-  
-        const invalidPercentages = porcentajeColumn.slice(1).some((percentage) => isNaN(percentage) || isNaN(parseFloat(percentage)));
-        
+
+        const invalidPercentages = porcentajeColumn
+          .slice(1)
+          .some(
+            (percentage) => isNaN(percentage) || isNaN(parseFloat(percentage))
+          );
+
         if (invalidPercentages) {
           setUploadSuccess(false);
-          setUploadMessage("La columna de porcentajes debe contener solo números o números con decimales.");
+          setUploadMessage(
+            "La columna de porcentajes debe contener solo números o números con decimales."
+          );
           return;
         }
-  
+
         handleUpload();
       };
-  
+
       fileReader.readAsArrayBuffer(file);
     } catch (error) {
       console.error("Error al validar el archivo:", error);
@@ -107,7 +114,12 @@ const ArticulosPorcentajeActualizar = () => {
   const downloadTemplate = () => {
     const data = [
       ["codigo", "descripcion", "porcentaje", "subcategoria"],
-     ...articulos.map((articulo) => [articulo.Articulotabla.codigobarra, articulo.Articulotabla.descripcion, articulo.porcentaje, articulo.subcategoria])
+      ...articulos.map((articulo) => [
+        articulo.Articulotabla.codigobarra,
+        articulo.Articulotabla.descripcion,
+        articulo.porcentaje,
+        articulo.subcategoria,
+      ]),
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -129,7 +141,11 @@ const ArticulosPorcentajeActualizar = () => {
       <Form>
         <Form.Group controlId="formFile" className="mb-3">
           <Form.Label>Seleccione un archivo Excel:</Form.Label>
-          <Form.Control type="file" onChange={handleFileChange} disabled={loading} />
+          <Form.Control
+            type="file"
+            onChange={handleFileChange}
+            disabled={loading}
+          />
         </Form.Group>
         <Button
           variant="primary"
@@ -137,14 +153,24 @@ const ArticulosPorcentajeActualizar = () => {
           disabled={buttonDisabled || loading}
         >
           {loading ? (
-            <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+            <Spinner
+              as="span"
+              animation="border"
+              size="sm"
+              role="status"
+              aria-hidden="true"
+            />
           ) : (
             "Actualizar Porcentajes"
           )}
         </Button>
       </Form>
       <div style={{ marginTop: "10px" }}>
-        <Button variant="secondary" onClick={downloadTemplate} disabled={loading}>
+        <Button
+          variant="secondary"
+          onClick={downloadTemplate}
+          disabled={loading}
+        >
           Descargar Plantilla
         </Button>
       </div>

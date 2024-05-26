@@ -1,7 +1,6 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { Navbar, Nav, Container } from "react-bootstrap";
-// import UserContext from "../path-to-your-user-context/UserContext"; // Actualiza la ruta según tu estructura de carpetas
 import Contexts from "../context/Contexts";
 
 export default function Navigation() {

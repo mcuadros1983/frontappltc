@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 export default function ProductSearch({ products, onProductSelect }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const apiUrl = process.env.REACT_APP_API_URL;
+  // const apiUrl = process.env.REACT_APP_API_URL;
   
   const filteredProducts = products.filter((product) =>
     product.num_media.toLowerCase().includes(searchTerm.toLowerCase())

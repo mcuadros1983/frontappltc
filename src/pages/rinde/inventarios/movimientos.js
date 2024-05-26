@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import {
   Container,
   Table,
@@ -21,7 +21,7 @@ export default function MovimientosInternos() {
   const [sortDirection, setSortDirection] = useState("asc"); 
   const [loading, setLoading] = useState(false);
   const [noResults, setNoResults] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const context = useContext(Contexts.dataContext);
@@ -125,7 +125,7 @@ export default function MovimientosInternos() {
         }
       );
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         // console.log(data.message);
         setMovimientos(
           movimientos.filter((movimiento) => movimiento.id !== movimientoId)
@@ -149,16 +149,6 @@ export default function MovimientosInternos() {
       setCurrentPage(currentPage - 1);
     }
   };
-
-  // const formatDate = (dateString) => {
-  //   const date = new Date(dateString);
-  //   const day = date.getDate();
-  //   const month = date.getMonth() + 1;
-  //   const year = date.getFullYear();
-  //   return `${day < 10 ? "0" + day : day}/${
-  //     month < 10 ? "0" + month : month
-  //   }/${year}`;
-  // };
 
   const indexOfLastMovimiento = currentPage * movimientosPerPage;
   const indexOfFirstMovimiento = indexOfLastMovimiento - movimientosPerPage;

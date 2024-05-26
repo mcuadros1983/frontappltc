@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect , useCallback} from "react";
+// import { useParams } from "react-router-dom";
 import { Container, Table, Button } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 
 export default function Formulas() {
-  const { formulaId } = useParams();
+  // const { formulaId } = useParams();
   const [formulas, setFormulas] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [formulasPerPage] = useState(10);
@@ -16,11 +16,9 @@ export default function Formulas() {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    obtenerFormulas();
-  }, []);
+ 
 
-  const obtenerFormulas = async () => {
+  const obtenerFormulas = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/obtenerformulas`);
       if (response.ok) {
@@ -32,7 +30,12 @@ export default function Formulas() {
     } catch (error) {
       console.error(error);
     }
-  };
+  },[apiUrl]);
+
+  useEffect(() => {
+    obtenerFormulas();
+  }, [obtenerFormulas]);
+
 
   const handleSort = (columnName) => {
     setSortDirection(

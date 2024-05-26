@@ -18,7 +18,7 @@ const SideBar = () => {
   const [debtitem, setDebtitem] = useState(false);
   const [ctacteitem, setCtacteitem] = useState(false);
   const [stockitem, setStockitem] = useState(false);
-  const [movitem, setMovitem] = useState(false);
+  // const [movitem, setMovitem] = useState(false);
   const [orditem, setOrditem] = useState(false);
   const [receiptitem, setReceiptitem] = useState(false);
   const [sellRinde, setSellRinde] = useState(false);

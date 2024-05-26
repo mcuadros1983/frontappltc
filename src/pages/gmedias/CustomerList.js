@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table, Container, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
 export default function CustomerList() {
@@ -90,7 +90,7 @@ export default function CustomerList() {
           </tr>
         </thead>
         <tbody>
-          {customers.map((customer) => (
+          {currentCustomers.map((customer) => (
             <tr key={customer.id}>
               <td>{customer.id}</td>
               <td>{customer.nombre}</td>

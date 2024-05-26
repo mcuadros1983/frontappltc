@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback  } from "react";
 import { Container, Button, Form, Alert, Spinner } from "react-bootstrap";
 import * as XLSX from "xlsx";
 
@@ -12,11 +12,7 @@ const ArticulosPreciosActualizar = () => {
   
   const apiUrl = process.env.REACT_APP_API_URL;
   
-  useEffect(() => {
-    obtenerArticulos();
-  }, []);
-
-  const obtenerArticulos = async () => {
+  const obtenerArticulos = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/obtenerarticulosprecios`);
       if (!response.ok) {
@@ -27,7 +23,11 @@ const ArticulosPreciosActualizar = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [apiUrl]); // Dependencias de la función
+  
+  useEffect(() => {
+    obtenerArticulos();
+  }, [obtenerArticulos]);
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);

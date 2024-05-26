@@ -142,7 +142,7 @@ export default function Vales() {
   const indicePrimerVale = indiceUltimoVale - valesPorPagina;
   const valesActuales = vales.slice(indicePrimerVale, indiceUltimoVale);
 
-  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
+  // const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const paginaSiguiente = () => {
     if (paginaActual < Math.ceil(vales.length / valesPorPagina)) {
@@ -250,11 +250,6 @@ export default function Vales() {
         </thead>
         <tbody>
           {valesActuales.map((vale) => {
-            // const fecha = new Date(vale.fecha);
-            // const dia = fecha.getDate();
-            // const mes = fecha.getMonth() + 1;
-            // const anio = fecha.getFullYear();
-            // const fechaFormateada = `${dia}/${mes}/${anio}`;
 
             return (
               <tr key={vale.id}>

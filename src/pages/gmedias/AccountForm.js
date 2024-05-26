@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Table, Container, Button, FormControl, Modal, Form } from "react-bootstrap";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { useNavigate } from "react-router-dom";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
@@ -14,7 +14,7 @@ export default function AccountForm() {
   const [montoCobranza, setMontoCobranza] = useState(""); // Nuevo estado para el monto de la cobranza
   const [descripcionCobranza, setDescripcionCobranza] = useState(""); // Nuevo estado para el monto de la cobranza
   const [formaCobro, setFormaCobro] = useState(""); // Nuevo estado para el monto de la cobranza
-  const [isLoading, setIsLoading] = useState(false); // Estado para indicar si se están cargando los datos
+  // const [isLoading, setIsLoading] = useState(false); // Estado para indicar si se están cargando los datos
   const [currentMovimientos, setCurrentMovimientos] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [movimientosPerPage] = useState(10);

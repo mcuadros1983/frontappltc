@@ -3,13 +3,12 @@ import {
   Container,
   Form,
   Button,
-  Spinner,
   Table,
   FormControl,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "../../styles/styles.css";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
 import { GenerateReceiptHTML } from "./GenerateReceiptHTML"; // Importa la función de receiptGenerator
 import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable
@@ -35,15 +34,15 @@ export default function SellForm() {
   const [waypays, setWaypays] = useState([]);
   const [loadingWaypays, setLoadingWaypays] = useState(true);
   const [selectedWaypaysId, setSelectedWaypaysId] = useState("");
-  const [sell, setSell] = useState({
-    cantidad_total: 0,
-    peso_total: 0,
-    cliente_id: "",
-  });
+  // const [sell, setSell] = useState({
+  //   cantidad_total: 0,
+  //   peso_total: 0,
+  //   cliente_id: "",
+  // });
   const [editingIndex, setEditingIndex] = useState(null);
   const [availableProducts, setAvailableProducts] = useState([]);
   const [modal, setModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // Define setSearchTerm
+  // const [searchTerm, setSearchTerm] = useState(""); // Define setSearchTerm
 
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);

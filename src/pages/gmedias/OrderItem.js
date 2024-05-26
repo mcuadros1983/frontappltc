@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import Contexts from "../../context/Contexts";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 

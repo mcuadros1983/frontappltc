@@ -7,7 +7,7 @@ import {
   Dropdown,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { parse } from "date-fns";
+// import { parse } from "date-fns";
 import Contexts from "../../context/Contexts";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
@@ -101,7 +101,7 @@ export default function SellList() {
       return;
     }
     try {
-      const res = await fetch(`${apiUrl}/ventas/${id}`, {
+      await fetch(`${apiUrl}/ventas/${id}`, {
         credentials: "include",
         method: "DELETE",
       });

@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { useNavigate } from "react-router-dom";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
@@ -15,10 +15,10 @@ export default function StockCentralList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       // Realiza la solicitud de productos específicos del branch con ID
       const res = await fetch(`${apiUrl}/sucursales/18/productos`, {
@@ -31,9 +31,9 @@ export default function StockCentralList() {
     } catch (error) {
       console.log(error);
     }
-  };
+  },[apiUrl]);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const searchTermLower = searchTerm.toLowerCase();
 
     if (searchTermLower === "") {
@@ -49,7 +49,7 @@ export default function StockCentralList() {
       });
       setFilteredProducts(filtered);
     }
-  };
+  },[searchTerm, products]);
 
   const handleSort = (columnName) => {
     // Cambiar la dirección de orden si la columna es la misma que la columna actualmente ordenada
@@ -79,11 +79,11 @@ export default function StockCentralList() {
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [loadProducts]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, products]);
+  }, [searchTerm, products,handleSearch]);
 
   // Cálculo de la paginación
   const indexOfLastProduct = currentPage * productsPerPage;
@@ -188,21 +188,6 @@ export default function StockCentralList() {
               <td>{product.tropa}</td>
               <td>{product.categoria_producto}</td>
               <td>{product.subcategoria}</td>
-              {/* <td className="text-center">
-                <Button
-                  variant="danger"
-                  onClick={() => handleDelete(product.id)}
-                  className="mx-2"
-                >
-                  Eliminar
-                </Button>
-                <Button
-                  color="inherit"
-                  onClick={() => navigate(`/products/${product.id}/edit`)}
-                >
-                  Editar
-                </Button>
-              </td> */}
             </tr>
           ))}
         </tbody>

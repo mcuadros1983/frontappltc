@@ -27,7 +27,7 @@ export default function BranchList() {
       return;
     }
     try {
-      const res = await fetch(`${apiUrl}/usuarios/${id}`, {
+      await fetch(`${apiUrl}/usuarios/${id}`, {
         credentials: "include",
         method: "DELETE",
       });

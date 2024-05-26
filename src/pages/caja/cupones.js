@@ -136,7 +136,7 @@ export default function Cupones() {
   const indicePrimerCupon = indiceUltimoCupon - cuponesPorPagina;
   const cuponesActuales = cupones.slice(indicePrimerCupon, indiceUltimoCupon);
 
-  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
+  // const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const paginaSiguiente = () => {
     if (paginaActual < Math.ceil(cupones.length / cuponesPorPagina)) {

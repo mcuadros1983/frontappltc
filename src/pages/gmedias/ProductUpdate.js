@@ -1,8 +1,8 @@
 // export default ProductUpdate;
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Button, Form, Alert } from "react-bootstrap";
 import * as XLSX from "xlsx";
-import Contexts from "../../context/Contexts";
+// import Contexts from "../../context/Contexts";
 
 const ProductUpdate = () => {
   const [file, setFile] = useState(null);
@@ -66,52 +66,6 @@ const ProductUpdate = () => {
       setButtonDisabled(false);
     }
   };
-
-  // const validateFile = async (file) => {
-  //   try {
-  //     const fileReader = new FileReader();
-  //     fileReader.onload = (event) => {
-  //       const data = new Uint8Array(event.target.result);
-  //       const workbook = XLSX.read(data, { type: "array" });
-  //       const sheetName = workbook.SheetNames[0];
-  //       const sheet = workbook.Sheets[sheetName];
-  //       const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-  //       // Excluir la séptima columna (índice 6) y validar números a partir de la tercera columna
-  //       const invalidRows = jsonData.slice(1).some((row) => {
-  //         const filteredRow = row.filter((cell, index) => index !== 6);
-  //         return filteredRow.slice(2).some((cell) => isNaN(cell));
-  //       });
-
-  //       if (invalidRows) {
-  //         setUploadSuccess(false);
-  //         setUploadMessage(
-  //           "El archivo debe contener solo datos numéricos a partir de la tercera columna, comenzando desde la segunda fila, excluyendo la séptima columna."
-  //         );
-  //         return;
-  //       }
-
-  //       // Validar la primera columna para "bovino" o "porcino" y que solo haya una categoría por archivo
-  //       const categories = jsonData.slice(1).map(row => row[0]);
-  //       const validCategories = new Set(categories.filter(category => category === "bovino" || category === "porcino"));
-
-  //       if (validCategories.size > 1) {
-  //         alert("Solo se permite una categoría por archivo.");
-  //         return;
-  //       } else if (categories.some(category => category !== "bovino" && category !== "porcino")) {
-  //         alert("Ingresó una categoría inexistente (bovino o porcino");
-  //         return;
-  //       }
-
-  //       // Si la validación es exitosa, puedes continuar con el proceso de carga del archivo
-  //       handleUpload();
-  //     };
-
-  //     fileReader.readAsArrayBuffer(file);
-  //   } catch (error) {
-  //     console.error("Error al validar el archivo:", error);
-  //   }
-  // };
 
   const validateFile = async (file) => {
     try {

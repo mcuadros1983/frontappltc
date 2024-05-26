@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { parse } from "date-fns";
+// import { parse } from "date-fns";
 import Contexts from "../../context/Contexts";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
@@ -66,10 +66,10 @@ export default function ReceiptList() {
   };
 
   // Define la función para convertir las fechas al formato deseado
-  const parseDate = (dateString) => {
-    const [year, month, day] = dateString.split("-");
-    return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
-  };
+  // const parseDate = (dateString) => {
+  //   const [year, month, day] = dateString.split("-");
+  //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
+  // };
 
   const handleFilter = () => {
     const startDateFilter = startDate ? startDate : null;
@@ -114,18 +114,7 @@ export default function ReceiptList() {
     indexOfLastReceipt
   );
 
-  // const pageNumbers = [];
-  // for (
-  //   let i = 1;
-  //   i <= Math.ceil(filteredReceipts.length / receiptsPerPage);
-  //   i++
-  // ) {
-  //   pageNumbers.push(i);
-  // }
-
-  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const nextPage = () => {
+   const nextPage = () => {
     if (currentPage < Math.ceil(filteredReceipts.length / receiptsPerPage)) {
       setCurrentPage(currentPage + 1);
     }

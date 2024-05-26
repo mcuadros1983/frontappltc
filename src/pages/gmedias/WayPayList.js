@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Table, Container, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 
 export default function WayPayList() {
   const [waypays, setWaypays] = useState([]);
@@ -9,14 +9,19 @@ export default function WayPayList() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadWayPays = async () => {
+  const loadWayPays = useCallback(async () => {
     const res = await fetch(`${apiUrl}/formas-pago/`, {
       credentials: "include",
     });
     const data = await res.json();
     const sortedWayPays = data.sort((a, b) => a.id - b.id);
     setWaypays(sortedWayPays);
-  };
+  },[apiUrl]);
+
+  useEffect(() => {
+    loadWayPays();
+  }, [loadWayPays]);
+
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -26,7 +31,7 @@ export default function WayPayList() {
       return;
     }
     try {
-      const res = await fetch(`${apiUrl}/formas-pago/${id}`, {
+      await fetch(`${apiUrl}/formas-pago/${id}`, {
         credentials:"include",
         method: "DELETE",
       });
@@ -37,9 +42,6 @@ export default function WayPayList() {
     }
   };
 
-  useEffect(() => {
-    loadWayPays();
-  }, []);
 
   return (
     <Container>

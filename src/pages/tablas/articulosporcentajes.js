@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
@@ -13,20 +13,29 @@ export default function ArticulosPorcentaje() {
   const [sortDirection, setSortDirection] = useState("asc");
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    obtenerArticulosPorcentaje();
-  }, []);
+  const filterArticulos = useCallback(
+    (codigoBarras, descripcion) => {
+      const filtered = articulosPorcentaje.filter((articulo) => {
+        const codigoBarrasMatch = articulo.Articulotabla.codigobarra
+          .toLowerCase()
+          .includes(codigoBarras.toLowerCase());
+        const descripcionMatch = articulo.Articulotabla.descripcion
+          .toLowerCase()
+          .includes(descripcion.toLowerCase());
+        return codigoBarrasMatch && descripcionMatch;
+      });
+      setFilteredArticulos(filtered);
+    },
+    [articulosPorcentaje]
+  ); // Dependencias de useCallback
 
   useEffect(() => {
     filterArticulos(codigoBarrasFilter, descripcionFilter);
-  }, [codigoBarrasFilter, descripcionFilter]);
+  }, [codigoBarrasFilter, descripcionFilter, filterArticulos]);
 
-  const obtenerArticulosPorcentaje = async () => {
+  const obtenerArticulosPorcentaje = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${apiUrl}/obtenerarticulosporcentaje`
-
-      );
+      const response = await fetch(`${apiUrl}/obtenerarticulosporcentaje`);
 
       // console.log("response",response)
       if (!response.ok) {
@@ -38,7 +47,11 @@ export default function ArticulosPorcentaje() {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [apiUrl]);
+
+  useEffect(() => {
+    obtenerArticulosPorcentaje();
+  }, [obtenerArticulosPorcentaje]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -50,19 +63,6 @@ export default function ArticulosPorcentaje() {
 
   const handleDescripcionFilterChange = (e) => {
     setDescripcionFilter(e.target.value);
-  };
-
-  const filterArticulos = (codigoBarras, descripcion) => {
-    const filtered = articulosPorcentaje.filter((articulo) => {
-      const codigoBarrasMatch = articulo.Articulotabla.codigobarra
-        .toLowerCase()
-        .includes(codigoBarras.toLowerCase());
-      const descripcionMatch = articulo.Articulotabla.descripcion
-        .toLowerCase()
-        .includes(descripcion.toLowerCase());
-      return codigoBarrasMatch && descripcionMatch;
-    });
-    setFilteredArticulos(filtered);
   };
 
   const handleSort = (columnName) => {

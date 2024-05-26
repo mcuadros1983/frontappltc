@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useContext } from "react";
 import {
   Container,
   Table,
@@ -76,17 +76,7 @@ export default function DetalleDeCaja() {
       setVentas(dataVentas);
       setCurrentPage(1); // Reiniciar a la primera página después de cada búsqueda
 
-      // if (responseDetalles.ok && responseVentas.ok) {
-      //   const dataDetalles = await responseDetalles.json();
-      //   const dataVentas = await responseVentas.json();
-      //   // console.log("data detalles", dataDetalles[1]);
-      //   // console.log("data ventas", dataVentas);
-      //   setDetalles(dataDetalles);
-      //   setVentas(dataVentas);
-      //   setCurrentPage(1); // Reiniciar a la primera página después de cada búsqueda
-      // } else {
-      //   throw new Error("Error al obtener los detalles de caja");
-      // }
+
     } catch (error) {
       console.error(error);
       setError(
@@ -97,36 +87,6 @@ export default function DetalleDeCaja() {
     }
   };
 
-  // const handleSort = (columnName) => {
-  //   const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
-  //   setSortDirection(newSortDirection);
-  //   setSortColumn(columnName);
-
-  //   const sortedDetalles = [...detalles].sort((a, b) => {
-  //     let valueA = a[columnName];
-  //     let valueB = b[columnName];
-
-  //     // Conversión de fecha para comparación
-  //     if (columnName === "fechainicio") {
-  //       valueA = Date.parse(valueA);
-  //       valueB = Date.parse(valueB);
-  //     } else if (columnName === "importe") {
-  //       valueA = parseFloat(valueA);
-  //       valueB = parseFloat(valueB);
-  //     }
-
-  //     // Determinar el orden basado en la dirección actualizada
-  //     if (valueA < valueB) {
-  //       return newSortDirection === "asc" ? -1 : 1;
-  //     } else if (valueA > valueB) {
-  //       return newSortDirection === "asc" ? 1 : -1;
-  //     } else {
-  //       return 0;
-  //     }
-  //   });
-
-  //   setDetalles(sortedDetalles);
-  // };
   const handleSort = (columnName, nested = false) => {
     // Calcula la nueva dirección del ordenamiento antes de cambiar el estado
     const newSortDirection =
@@ -183,7 +143,7 @@ export default function DetalleDeCaja() {
     indexOfLastDetalle
   );
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(detalles.length / detallesPerPage)) {
@@ -196,14 +156,6 @@ export default function DetalleDeCaja() {
       setCurrentPage(currentPage - 1);
     }
   };
-
-  // const formatDate = (dateString) => {
-  //   const date = new Date(dateString);
-  //   const day = String(date.getDate()).padStart(2, "0");
-  //   const month = String(date.getMonth() + 1).padStart(2, "0");
-  //   const year = date.getFullYear();
-  //   return `${day}/${month}/${year}`;
-  // };
 
   const calcularDiferenciaCaja = (detalle, ventas) => {
     let totalRetiros = parseFloat(detalle.totalRetiros) || 0;
@@ -219,10 +171,14 @@ export default function DetalleDeCaja() {
       (parseFloat(detalle.caja.cajainicial) || 0) +
       (parseFloat(detalle.totalCobranzas) || 0);
 
-    const totalVentas =
-      ventas.find(
-        (venta) => venta.fecha === detalle.caja.fechainicio.split("T")[0]
-      )?.monto || 0;
+    // const totalVentas =
+    //   ventas.find(
+    //     (venta) => venta.fecha === detalle.caja.fechainicio.split("T")[0]
+    //   )?.monto || 0;
+
+    ventas.find(
+      (venta) => venta.fecha === detalle.caja.fechainicio.split("T")[0]
+    )?.monto || 0;
 
     let egresos =
       totalRetiros +

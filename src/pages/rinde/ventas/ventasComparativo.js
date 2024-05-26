@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useContext } from "react";
-import { Container, Table, Button, FormControl, Spinner } from "react-bootstrap";
-import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import React, { useState, useContext } from "react";
+import { Container, Table, Button,  } from "react-bootstrap";
+// import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
 import '../../../components/css/styles.css'
 

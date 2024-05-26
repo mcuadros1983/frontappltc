@@ -193,14 +193,6 @@ export default function Retiros() {
         </thead>
         <tbody>
           {currentRetiros.map((retiro) => {
-            // Convertir la fecha a un objeto Date
-            // const fecha = new Date(retiro.fecha);
-            // // Obtener los componentes de la fecha
-            // const dia = fecha.getDate();
-            // const mes = fecha.getMonth() + 1; // Los meses comienzan desde 0
-            // const anio = fecha.getFullYear();
-            // // Formatear la fecha en el formato DD/MM/AAAA
-            // const fechaFormateada = `${dia}/${mes}/${anio}`;
 
             return (
               <tr key={retiro.id}>

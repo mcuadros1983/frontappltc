@@ -137,7 +137,7 @@ export default function Sueldos() {
   const indicePrimerSueldo = indiceUltimoSueldo - sueldosPorPagina;
   const sueldosActuales = sueldos.slice(indicePrimerSueldo, indiceUltimoSueldo);
 
-  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
+  // const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const paginaSiguiente = () => {
     if (paginaActual < Math.ceil(sueldos.length / sueldosPorPagina)) {

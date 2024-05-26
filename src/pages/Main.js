@@ -1,8 +1,8 @@
-import React, { useContext, useState } from "react";
+// import React, { useContext, useState } from "react";
 import Contexts from "../context/Contexts";
 
 export default function Main() {
-  const context = useContext(Contexts.dataContext);
+  // const context = useContext(Contexts.dataContext);
   // console.log("clientes",context.clientesTabla)
   return (
     <div className="d-flex align-items-center justify-content-center">

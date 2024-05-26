@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -15,17 +15,9 @@ export default function Cierres() {
   const [sortDirection, setSortDirection] = useState("asc");
 
   const context = useContext(Contexts.dataContext);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
-
-  // const formatDate = (dateString) => {
-  //   const date = new Date(dateString);
-  //   const day = date.getDate();
-  //   const month = date.getMonth() + 1;
-  //   const year = date.getFullYear();
-  //   return `${day < 10 ? "0" + day : day}/${month < 10 ? "0" + month : month}/${year}`;
-  // };
 
   const handleFilter = async () => {
     try {

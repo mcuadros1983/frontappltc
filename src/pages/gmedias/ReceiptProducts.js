@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
@@ -69,7 +69,7 @@ export default function ReceiptProducts() {
       const peso_producto = data.kg;
       const peso_total_actualizado = peso_total - peso_producto;
 
-      const receiptUpdate = await fetch(
+      await fetch(
         `${apiUrl}/ingresos/${ingreso_id}`,
         {
           method: "PUT",
@@ -83,7 +83,7 @@ export default function ReceiptProducts() {
       );
 
       // Eliminar el producto
-      const res = await fetch(`${apiUrl}/productos/${id}`, {
+      await fetch(`${apiUrl}/productos/${id}`, {
         credentials: "include",
         method: "DELETE",
       });

@@ -7,9 +7,9 @@ import {
   Modal,
   FormControl,
 } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
-import { parse } from "date-fns";
+// import { useNavigate } from "react-router-dom";
+// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+// import { parse } from "date-fns";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
 const DebtList = () => {
@@ -30,7 +30,7 @@ const DebtList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [debtsPerPage] = useState(10);
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -53,7 +53,7 @@ const DebtList = () => {
       );
 
       // Obtener las cobranzas de los clientes filtrados y mapearlas
-      const cobranzas = clientsWithDebts.flatMap((client) =>
+      clientsWithDebts.flatMap((client) =>
         client.cuentaCorriente.cobranzas.map((cobranza) => ({
           ...cobranza,
           cliente: client, // Agregar la referencia al cliente en cada cobranza
@@ -158,7 +158,7 @@ const DebtList = () => {
   };
 
   const handleSearch = () => {
-    const searchTermLower = searchCliente.toLowerCase();
+    searchCliente.toLowerCase();
     const startDateFilter = startDate ? startDate : null;
     const endDateFilter = endDate ? endDate : null;
 
@@ -327,18 +327,6 @@ const DebtList = () => {
           <BsChevronRight />
         </Button>
       </div>
-      {/* <div>
-        {pageNumbers.map((number) => (
-          <Button
-            key={number}
-            onClick={() => paginate(number)}
-            className="mx-1" // Agrega una pequeña separación horizontal entre los botones
-          >
-            {number}
-          </Button>
-        ))}
-      </div> */}
-
       {/* Modal para editar cobranza */}
       <Modal
         show={showModal}
