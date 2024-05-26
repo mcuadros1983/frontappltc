@@ -38,7 +38,7 @@ const SideBar = () => {
     setShowReturnButton(false);
   };
 
-  console.log("usuarioid", typeof(context.user.rol_id))
+  // console.log("usuarioid", typeof(context.user.rol_id))
 
   return (
     <Nav defaultActiveKey="/" className="flex-column">
