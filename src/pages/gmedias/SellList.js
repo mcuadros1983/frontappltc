@@ -93,6 +93,44 @@ export default function SellList() {
     }
   };
 
+  const handleSearch = () => {
+    const searchTermLower = searchTerm.toLowerCase();
+    const startDateFilter = startDate ? startDate : null;
+    const endDateFilter = endDate ? endDate : null;
+
+    // if (startDateFilter) startDateFilter.setHours(0, 0, 0, 0);
+    // if (endDateFilter) endDateFilter.setHours(0, 0, 0, 0);
+
+    if (searchTermLower === "" && !startDate && !endDate) {
+      setFilteredSells(sells);
+    } else {
+      const filtered = sells.filter((sell) => {
+        const matchesCustomer =
+          sell.Cliente &&
+          sell.Cliente.nombre.toLowerCase().includes(searchTermLower);
+        const sellDate = sell.fecha;
+
+        const matchesDate =
+          (!startDateFilter || sellDate >= startDateFilter) &&
+          (!endDateFilter || sellDate <= endDateFilter);
+
+        return matchesCustomer && matchesDate;
+      });
+
+      setFilteredSells(filtered);
+    }
+  };
+
+  useEffect(() => {
+    loadSells();
+    loadClients();
+    loadPaymentMethods();
+  }, [loadSells, loadClients, loadPaymentMethods]);
+  
+  useEffect(() => {
+    handleSearch();
+  }, [handleSearch, startDate, endDate]);
+
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "¿Estás seguro de que deseas eliminar esta venta?"
@@ -162,43 +200,7 @@ export default function SellList() {
     }
   };
 
-  const handleSearch = () => {
-    const searchTermLower = searchTerm.toLowerCase();
-    const startDateFilter = startDate ? startDate : null;
-    const endDateFilter = endDate ? endDate : null;
-
-    // if (startDateFilter) startDateFilter.setHours(0, 0, 0, 0);
-    // if (endDateFilter) endDateFilter.setHours(0, 0, 0, 0);
-
-    if (searchTermLower === "" && !startDate && !endDate) {
-      setFilteredSells(sells);
-    } else {
-      const filtered = sells.filter((sell) => {
-        const matchesCustomer =
-          sell.Cliente &&
-          sell.Cliente.nombre.toLowerCase().includes(searchTermLower);
-        const sellDate = sell.fecha;
-
-        const matchesDate =
-          (!startDateFilter || sellDate >= startDateFilter) &&
-          (!endDateFilter || sellDate <= endDateFilter);
-
-        return matchesCustomer && matchesDate;
-      });
-
-      setFilteredSells(filtered);
-    }
-  };
-
-  useEffect(() => {
-    loadSells();
-    loadClients();
-    loadPaymentMethods();
-  }, []);
-
-  useEffect(() => {
-    handleSearch();
-  }, [searchTerm, sells, startDate, endDate]);
+  
 
   // Pagination logic
   const indexOfLastSell = currentPage * sellsPerPage;

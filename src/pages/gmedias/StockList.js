@@ -8,7 +8,7 @@ import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 export default function StockList() {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [ setSearchTerm] = useState("");
   // const [sortColumn, setSortColumn] = useState(null);
   // const [sortDirection, setSortDirection] = useState("asc");
   const [startDate, setStartDate] = useState("");
@@ -80,7 +80,7 @@ export default function StockList() {
       const totalsByBranch = calculateTotalsByBranch(filtered);
       setFilteredOrders(totalsByBranch);
     }
-  }, [orders, searchTerm, startDate, endDate]);
+  }, [orders,  startDate, endDate]);
 
   const calculateTotalsByBranch = (orders) => {
     const totalsByBranch = {};
@@ -157,7 +157,7 @@ export default function StockList() {
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, orders, startDate, endDate, handleSearch]);
+  }, [ orders, startDate, endDate, handleSearch]);
 
   const handleDoubleClick = async (order) => {
     try {

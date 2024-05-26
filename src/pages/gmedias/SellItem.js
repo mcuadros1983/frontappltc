@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Table, Container, Button, FormControl, Form } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -25,13 +25,36 @@ export default function SellItem() {
   const apiUrl = process.env.REACT_APP_API_URL;
   const params = useParams();
 
-  const loadProductsSell = async (id) => {
+  const loadProductsSell = useCallback(async (id) => {
     const res = await fetch(`${apiUrl}/ventas/${id}/productos/`, {
       credentials: "include",
     });
     const data = await res.json();
     setProductsSell(data);
-  };
+  }, [apiUrl]);
+  
+  const handleSearch = useCallback(() => {
+    const searchTermLower = searchTerm.toLowerCase();
+    if (searchTermLower === "") {
+      setFilteredProducts(productsSell);
+    } else {
+      const filtered = productsSell.filter((product) => 
+        product.codigo_de_barra.toLowerCase().includes(searchTermLower) ||
+        product.num_media.toString().includes(searchTermLower) ||
+        product.tropa.toString().includes(searchTermLower) ||
+        (product.sucursal && product.sucursal.nombre.toLowerCase().includes(searchTermLower))
+      );
+      setFilteredProducts(filtered);
+    }
+  }, [searchTerm, productsSell]);
+
+  useEffect(() => {
+    loadProductsSell(params.id);
+  }, [params.id, loadProductsSell]);  // include loadProductsSell as a dependency
+  
+  useEffect(() => {
+    handleSearch();
+  }, [searchTerm, productsSell, handleSearch]);  // include handleSearch as a dependency
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -64,25 +87,6 @@ export default function SellItem() {
       }
     } catch (error) {
       console.log(error);
-    }
-  };
-
-  const handleSearch = () => {
-    const searchTermLower = searchTerm.toLowerCase();
-
-    if (searchTermLower === "") {
-      setFilteredProducts(productsSell);
-    } else {
-      const filtered = productsSell.filter((product) => {
-        return (
-          product.codigo_de_barra.toLowerCase().includes(searchTermLower) ||
-          product.num_media.toString().includes(searchTermLower) ||
-          product.tropa.toString().includes(searchTermLower) ||
-          (product.sucursal &&
-            product.sucursal.nombre.toLowerCase().includes(searchTermLower))
-        );
-      });
-      setFilteredProducts(filtered);
     }
   };
 
