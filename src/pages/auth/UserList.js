@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Table, Container, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +9,7 @@ export default function BranchList() {
 
   const navigate = useNavigate();
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     const res = await fetch(`${apiUrl}/usuarios/`, {
       credentials: "include",
     });
@@ -17,7 +17,7 @@ export default function BranchList() {
     const sortedUsers = data.sort((a, b) => a.id - b.id);
     setUsers(sortedUsers);
     // console.log("storagebranchlist", localStorage.token);
-  };
+  },[apiUrl]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -41,7 +41,7 @@ export default function BranchList() {
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [loadUsers]);
 
   return (
     <Container>

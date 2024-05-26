@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -20,26 +20,24 @@ export default function Vales() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  
+  // Utiliza useCallback para memorizar la función
+  const manejadorFiltroClienteSeleccionado = useCallback(() => {
+    let valesFiltrados = [...valesOriginales];
+    if (clienteSeleccionado) {
+      valesFiltrados = valesFiltrados.filter(
+        (vale) => parseInt(vale.cliente_id) === parseInt(clienteSeleccionado)
+      );
+    }
+    setVales(valesFiltrados);
+    setPaginaActual(1);
+  }, [clienteSeleccionado, valesOriginales]); // Dependencias para useCallback
+
   useEffect(() => {
     manejadorFiltroClienteSeleccionado();
-  }, [clienteSeleccionado]);
+  }, [manejadorFiltroClienteSeleccionado]); // useEffect ahora depende de la versión memorizada de la función
 
-  const manejadorFiltroClienteSeleccionado = () => {
-    // Filter gastos based on selectedTipoGasto
-    if (vales.length > 0) {
-      let valesFiltrados = [...valesOriginales];
-      // console.log("valesOriginales", valesFiltrados)
 
-      if (clienteSeleccionado) {
-        valesFiltrados = valesFiltrados.filter(
-          (vale) => parseInt(vale.cliente_id) === parseInt(clienteSeleccionado)
-        );
-      }
-
-      setVales(valesFiltrados);
-      setPaginaActual(1);
-    }
-  };
 
 
   const manejarFiltro = async () => {

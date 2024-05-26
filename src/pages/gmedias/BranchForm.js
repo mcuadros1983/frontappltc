@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Container, Form, Button, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -25,14 +25,14 @@ export default function BranchForm() {
   const navigate = useNavigate();
   const params = useParams();
 
-  const loadBranch = async (id) => {
+  const loadBranch = useCallback(async (id) => {
     const res = await fetch(`${apiUrl}/sucursales/${id}`, {
       credentials: "include",
     });
     const data = await res.json();
     setBranch(data);
     setEditing(true);
-  };
+  },[apiUrl]);
 
   useEffect(() => {
     if (params.id) {
@@ -44,7 +44,7 @@ export default function BranchForm() {
         codigo:"",
       });
     }
-  }, [params.id]);
+  }, [params.id,loadBranch]);
 
   const handleSubmit = async (e) => {
     e.preventDefault(); //cancela el comportamiento por defecto

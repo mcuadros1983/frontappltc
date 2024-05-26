@@ -9,7 +9,7 @@ const LoginForm = () => {
   // const { login } = useUser();
   const navigate = useNavigate();
 
-  const apiUrl = process.env.REACT_APP_API_URL;
+  // const apiUrl = process.env.REACT_APP_API_URL;
 
   const context = useContext(Contexts.userContext);
 

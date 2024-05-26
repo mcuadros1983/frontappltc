@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Table, Container, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -12,7 +12,7 @@ export default function CustomerList() {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
     const res = await fetch(`${apiUrl}/clientes/`, {
       credentials: "include",
     });
@@ -24,7 +24,7 @@ export default function CustomerList() {
       return a.nombre.localeCompare(b.nombre);
     });
     setCustomers(sortedCustomers);
-  };
+  },[apiUrl]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -58,7 +58,7 @@ export default function CustomerList() {
 
   useEffect(() => {
     loadCustomers();
-  }, []);
+  }, [loadCustomers]);
 
   // Pagination logic
   const indexOfLastCustomer = currentPage * customersPerPage;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -20,26 +20,21 @@ export default function Sueldos() {
 
   const contexto = useContext(Contexts.dataContext);
 
-  useEffect(() => {
-    // console.log("empleados", contexto.empleados)
-    manejadorFiltroEmpleadoSeleccionado();
-  }, [empleadoSeleccionado]);
-
-  const manejadorFiltroEmpleadoSeleccionado = () => {
-    if (sueldosOriginales.length > 0) {
+    // Envolver la lógica del filtro en useCallback
+    const manejadorFiltroEmpleadoSeleccionado = useCallback(() => {
       let sueldosFiltrados = [...sueldosOriginales];
-
       if (empleadoSeleccionado) {
         sueldosFiltrados = sueldosFiltrados.filter(
-          (sueldo) =>
-            parseInt(sueldo.empleado_id) === parseInt(empleadoSeleccionado)
+          (sueldo) => parseInt(sueldo.empleado_id) === parseInt(empleadoSeleccionado)
         );
       }
-
       setSueldos(sueldosFiltrados);
       setPaginaActual(1);
-    }
-  };
+    }, [empleadoSeleccionado, sueldosOriginales]);
+  
+    useEffect(() => {
+      manejadorFiltroEmpleadoSeleccionado();
+    }, [manejadorFiltroEmpleadoSeleccionado]);
 
   const manejarFiltro = async () => {
     try {

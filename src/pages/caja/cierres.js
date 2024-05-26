@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback } from "react";
 // import { useNavigate } from "react-router-dom";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
@@ -19,7 +19,7 @@ export default function Cierres() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const handleFilter = async () => {
+  const handleFilter = useCallback(async () => {
     try {
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         alert("Ingrese una fecha válida.");
@@ -50,7 +50,13 @@ export default function Cierres() {
     } catch (error) {
       console.error(error);
     }
-  };
+  },[apiUrl, startDate, endDate, searchSucursal]);
+
+  
+  useEffect(() => {
+    // Simula la carga inicial de datos
+    handleFilter();
+  }, [handleFilter]);
 
   const handleSort = (columnName) => {
     const direction = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
@@ -110,10 +116,6 @@ export default function Cierres() {
     }
   };
 
-  useEffect(() => {
-    // Simula la carga inicial de datos
-    handleFilter();
-  }, []);
 
   const indexOfLastCierre = currentPage * cierresPerPage;
   const indexOfFirstCierre = indexOfLastCierre - cierresPerPage;

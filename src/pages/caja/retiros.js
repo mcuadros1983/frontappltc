@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -102,7 +102,7 @@ export default function Retiros() {
   const indexOfFirstRetiro = indexOfLastRetiro - retirosPerPage;
   const currentRetiros = retiros.slice(indexOfFirstRetiro, indexOfLastRetiro);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(retiros.length / retirosPerPage)) {

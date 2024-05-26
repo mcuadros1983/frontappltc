@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback } from "react";
 import {
   Container,
   Table,
@@ -36,29 +36,35 @@ export default function VentasCtaCte() {
   const contexto = useContext(Contexts.dataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    manejadorFiltroClienteSeleccionado();
-  }, [clienteSeleccionado]);
 
-  useEffect(() => {
-    calcularTotalImporte();
-  }, [ventas]);
-
-  const manejadorFiltroClienteSeleccionado = () => {
+  const manejadorFiltroClienteSeleccionado = useCallback(() => {
     if (ventasOriginales.length > 0) {
       let ventasFiltradas = [...ventasOriginales];
-
       if (clienteSeleccionado) {
         ventasFiltradas = ventasFiltradas.filter(
-          (venta) =>
-            parseInt(venta.cliente_id) === parseInt(clienteSeleccionado)
+          (venta) => parseInt(venta.cliente_id) === parseInt(clienteSeleccionado)
         );
       }
-
       setVentas(ventasFiltradas);
       setPaginaActual(1);
     }
-  };
+  }, [ventasOriginales, clienteSeleccionado]);
+
+  const calcularTotalImporte = useCallback(() => {
+    const total = ventas.reduce(
+      (acc, venta) => acc + parseFloat(venta.importe),
+      0
+    );
+    setTotalImporte(total);
+  }, [ventas]);
+
+  useEffect(() => {
+    manejadorFiltroClienteSeleccionado();
+  }, [manejadorFiltroClienteSeleccionado]);
+
+  useEffect(() => {
+    calcularTotalImporte();
+  }, [calcularTotalImporte]);
 
   const manejarFiltro = async () => {
     try {
@@ -155,13 +161,7 @@ export default function VentasCtaCte() {
     manejarFiltro();
   };
 
-  const calcularTotalImporte = () => {
-    const total = ventas.reduce(
-      (acc, venta) => acc + parseFloat(venta.importe),
-      0
-    );
-    setTotalImporte(total);
-  };
+ 
 
   const indiceUltimaVenta = paginaActual * ventasPorPagina;
   const indicePrimeraVenta = indiceUltimaVenta - ventasPorPagina;

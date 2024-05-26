@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -19,12 +19,7 @@ export default function Gastos() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    handleTipoGastoFilter();
-  }, [selectedTipoGasto]);
-
-  const handleTipoGastoFilter = () => {
-    // Filter gastos based on selectedTipoGasto
+  const handleTipoGastoFilter = useCallback(() => {
     if (gastos.length > 0) {
       let filteredGastos = gastos;
 
@@ -37,7 +32,12 @@ export default function Gastos() {
       setGastos(filteredGastos);
       setCurrentPage(1);
     }
-  };
+  }, [gastos, selectedTipoGasto]); // Include all relevant dependencies
+
+  useEffect(() => {
+    handleTipoGastoFilter();
+  }, [selectedTipoGasto, handleTipoGastoFilter]); // Include handleTipoGastoFilter in the dependency array
+
 
  const handleFilter = async () => {
     try {

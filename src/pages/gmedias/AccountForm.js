@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Table, Container, Button, FormControl, Modal, Form } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { useNavigate } from "react-router-dom";
@@ -9,13 +9,13 @@ export default function AccountForm() {
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
   const [saldoActual, setSaldoActual] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  // const [loaded, setLoaded] = useState(false);
   const [showModal, setShowModal] = useState(false); // Nuevo estado para controlar la visibilidad del modal
   const [montoCobranza, setMontoCobranza] = useState(""); // Nuevo estado para el monto de la cobranza
   const [descripcionCobranza, setDescripcionCobranza] = useState(""); // Nuevo estado para el monto de la cobranza
   const [formaCobro, setFormaCobro] = useState(""); // Nuevo estado para el monto de la cobranza
   // const [isLoading, setIsLoading] = useState(false); // Estado para indicar si se están cargando los datos
-  const [currentMovimientos, setCurrentMovimientos] = useState([]);
+  // const [currentMovimientos, setCurrentMovimientos] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [movimientosPerPage] = useState(10);
 
@@ -24,13 +24,7 @@ export default function AccountForm() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
   
-  useEffect(() => {
-    // Obtener lista de clientes al cargar el componente
-    obtenerClientes();
-
-  }, []);
-
-  const obtenerClientes = async () => {
+  const obtenerClientes = useCallback(async () => {
 
     try {
       const response = await fetch(`${apiUrl}/clientes/`, {
@@ -39,11 +33,17 @@ export default function AccountForm() {
       const data = await response.json();
       setClientes(data);
 
-      setLoaded(true);
+      // setLoaded(true);
     } catch (error) {
       console.error("Error al obtener clientes", error);
     }
-  };
+  },[apiUrl]);
+
+  useEffect(() => {
+    // Obtener lista de clientes al cargar el componente
+    obtenerClientes();
+
+  }, [obtenerClientes]);
 
   const obtenerCliente = async (clienteId) => {
     try {
@@ -174,8 +174,8 @@ export default function AccountForm() {
 
   
   // Paginación de los movimientos
-  const indexOfLastMovimiento = currentPage * movimientosPerPage;
-  const indexOfFirstMovimiento = indexOfLastMovimiento - movimientosPerPage;
+  // const indexOfLastMovimiento = currentPage * movimientosPerPage;
+  // const indexOfFirstMovimiento = indexOfLastMovimiento - movimientosPerPage;
   const handleNextPage = () => {
     setCurrentPage(currentPage + 1);
   };
@@ -183,9 +183,9 @@ export default function AccountForm() {
     setCurrentPage(currentPage - 1);
   };
 
-  useEffect(() => {
-    setCurrentMovimientos(movimientos.slice(indexOfFirstMovimiento, indexOfLastMovimiento));
-  }, [currentPage, movimientos]);
+  // useEffect(() => {
+  //   setCurrentMovimientos(movimientos.slice(indexOfFirstMovimiento, indexOfLastMovimiento));
+  // }, [currentPage, movimientos]);
 
   return (
     <Container>

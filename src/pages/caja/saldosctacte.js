@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -15,17 +15,12 @@ const SaldosCtaCte = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    obtenerSaldosCtaCte();
-  }, []);
-
-  const obtenerSaldosCtaCte = async () => {
+  const obtenerSaldosCtaCte = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/caja/saldosctacte`);
       const data = await response.json();
       if (data.length === 0) {
         alert("No existe informacion para la fecha indicada.");
-        ;
         return;
       }
 
@@ -43,7 +38,6 @@ const SaldosCtaCte = () => {
       setSaldos(saldosConNombreApellido);
       setSaldosFiltrados(saldosConNombreApellido);
 
-      // Crear lista de clientes únicos con saldo
       const clientesUnicos = saldosConNombreApellido.reduce((clientes, saldo) => {
         if (!clientes.some((cliente) => cliente.id === saldo.cliente_id)) {
           clientes.push({ id: saldo.cliente_id, nombre: saldo.nombre, apellido: saldo.apellido });
@@ -51,7 +45,6 @@ const SaldosCtaCte = () => {
         return clientes;
       }, []);
 
-      // Ordenar los clientes alfabéticamente
       clientesUnicos.sort((a, b) => {
         const nombreCompletoA = `${a.nombre} ${a.apellido}`.toLowerCase();
         const nombreCompletoB = `${b.nombre} ${b.apellido}`.toLowerCase();
@@ -64,24 +57,25 @@ const SaldosCtaCte = () => {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [apiUrl, contexto.clientesTabla]);
+
+  useEffect(() => {
+    obtenerSaldosCtaCte();
+  }, [obtenerSaldosCtaCte]);
+
+  // Envolver esta función en useCallback
+  const manejadorFiltroClienteSeleccionado = useCallback(() => {
+    const filtrados = clienteSeleccionado ? saldos.filter(
+      (saldo) => parseInt(saldo.cliente_id) === parseInt(clienteSeleccionado)
+    ) : saldos;
+    
+    setSaldosFiltrados(filtrados);
+    setPaginaActual(1);
+  }, [clienteSeleccionado, saldos]);
 
   useEffect(() => {
     manejadorFiltroClienteSeleccionado();
-  }, [clienteSeleccionado]);
-
-  const manejadorFiltroClienteSeleccionado = () => {
-    if (clienteSeleccionado) {
-      const filtrados = saldos.filter(
-        (saldo) => parseInt(saldo.cliente_id) === parseInt(clienteSeleccionado)
-      );
-      setSaldosFiltrados(filtrados);
-    } else {
-      setSaldosFiltrados(saldos);
-    }
-    setPaginaActual(1);
-  };
-
+  }, [clienteSeleccionado, manejadorFiltroClienteSeleccionado]);
   const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const manejarOrden = (columna) => {

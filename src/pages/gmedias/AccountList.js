@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback} from "react";
 import { Table, Container, Button } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
@@ -11,12 +11,7 @@ const AccountList = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    // Lógica para obtener la lista de clientes con cuenta corriente
-    obtenerClientesConCuenta();
-  }, []);
-
-  const obtenerClientesConCuenta = async () => {
+  const obtenerClientesConCuenta = useCallback(async () => {
     try {
       // Lógica para obtener clientes con cuenta corriente desde el servidor
       // Puedes ajustar la ruta y la lógica según tu API
@@ -45,7 +40,12 @@ const AccountList = () => {
     } catch (error) {
       console.error("Error al obtener clientes con cuenta corriente", error);
     }
-  };
+  },[apiUrl]);
+
+  useEffect(() => {
+    // Lógica para obtener la lista de clientes con cuenta corriente
+    obtenerClientesConCuenta();
+  }, [obtenerClientesConCuenta]);
 
   // Paginación
   const indexOfLastCliente = currentPage * clientesPerPage;

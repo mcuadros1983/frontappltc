@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Container, Form, Button, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -65,17 +65,16 @@ const UserForm = () => {
     }
   };
 
-  const loadUser = async (id) => {
+  const loadUser = useCallback(async (id) => {
     const res = await fetch(`${apiUrl}/usuarios/${id}`, {
       credentials: "include",
     });
     const data = await res.json();
     setUser(data);
     setEditing(true);
-  };
+  }, [apiUrl]); // Agregar `apiUrl` como dependencia aquí
 
   useEffect(() => {
-    // Cargar la lista de roles al montar el componente
     const fetchRoles = async () => {
       const res = await fetch(`${apiUrl}/roles`, {
         credentials: "include",
@@ -96,7 +95,8 @@ const UserForm = () => {
         nombreRol: "",
       });
     }
-  }, [params.id]);
+  }, [params.id, loadUser, apiUrl]); // Añadir `loadUser` y `apiUrl` a las dependencias
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();

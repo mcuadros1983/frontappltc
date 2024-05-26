@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback  } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -20,25 +20,25 @@ export default function Ingresos() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    manejadorFiltroTipoSeleccionado();
-  }, [tipoSeleccionado]);
-
-  const manejadorFiltroTipoSeleccionado = () => {
+  const manejadorFiltroTipoSeleccionado = useCallback(() => {
     if (ingresosOriginales.length > 0) {
       let ingresosFiltrados = [...ingresosOriginales];
 
       if (tipoSeleccionado) {
         ingresosFiltrados = ingresosFiltrados.filter(
-          (ingreso) =>
-            parseInt(ingreso.tipodeingreso_id) === parseInt(tipoSeleccionado)
+          (ingreso) => parseInt(ingreso.tipodeingreso_id) === parseInt(tipoSeleccionado)
         );
       }
 
       setIngresos(ingresosFiltrados);
       setPaginaActual(1);
     }
-  };
+  }, [ingresosOriginales, tipoSeleccionado]);  // Incluir todas las dependencias relevantes
+
+  useEffect(() => {
+    manejadorFiltroTipoSeleccionado();
+  }, [tipoSeleccionado, manejadorFiltroTipoSeleccionado]);  // Ahora incluye manejadorFiltroTipoSeleccionado en las dependencias
+
 
   const manejarFiltro = async () => {
     // console.log("tipodeingreso", contexto.tipoDeIngresoTabla)

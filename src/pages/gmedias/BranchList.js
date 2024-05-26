@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Table, Container } from "react-bootstrap";
 // import { useNavigate } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -12,7 +12,7 @@ export default function BranchList() {
   // const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadBranches = async () => {
+  const loadBranches = useCallback(async () => {
     const res = await fetch(`${apiUrl}/sucursales/`, {
       credentials: "include",
     });
@@ -20,7 +20,7 @@ export default function BranchList() {
     const sortedBranches = data.sort((a, b) => a.id - b.id);
     setBranches(sortedBranches);
 
-  };
+  },[apiUrl]);
 
   // const handleDelete = async (id) => {
   //   const confirmDelete = window.confirm(
@@ -44,7 +44,7 @@ export default function BranchList() {
 
   useEffect(() => {
     loadBranches();
-  }, []);
+  }, [loadBranches]);
 
   // Paginación lógica
   // const indexOfLastBranch = currentPage * branchesPerPage;

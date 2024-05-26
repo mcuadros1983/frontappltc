@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -19,11 +19,7 @@ export default function CobranzasCtaCte() {
   const contexto = useContext(Contexts.dataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    manejadorFiltroClienteSeleccionado();
-  }, [clienteSeleccionado]);
-
-  const manejadorFiltroClienteSeleccionado = () => {
+  const manejadorFiltroClienteSeleccionado = useCallback(() => {
     if (cobranzasOriginales.length > 0) {
       let cobranzasFiltradas = [...cobranzasOriginales];
 
@@ -37,8 +33,12 @@ export default function CobranzasCtaCte() {
       setCobranzas(cobranzasFiltradas);
       setPaginaActual(1);
     }
-  };
+  }, [cobranzasOriginales, clienteSeleccionado]);
 
+  useEffect(() => {
+    manejadorFiltroClienteSeleccionado();
+  }, [clienteSeleccionado, manejadorFiltroClienteSeleccionado]);
+  
   const manejarFiltro = async () => {
     try {
       if (!esFechaValida(fechaDesde) || !esFechaValida(fechaHasta)) {
@@ -65,7 +65,6 @@ export default function CobranzasCtaCte() {
         const datos = await respuesta.json();
         if (datos.length === 0) {
           alert("No existe informacion para la fecha indicada.");
-          ;
           return;
         }
         setCobranzas(datos);
@@ -137,7 +136,7 @@ export default function CobranzasCtaCte() {
     indiceUltimaCobranza
   );
 
-  const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
+  // const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const paginaSiguiente = () => {
     if (paginaActual < Math.ceil(cobranzas.length / cobranzasPorPagina)) {

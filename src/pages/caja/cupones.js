@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useCallback } from "react";
 import { Container, Table, Button, FormControl, Spinner } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -21,11 +21,7 @@ export default function Cupones() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    manejadorFiltroClienteSeleccionado();
-  }, [clienteSeleccionado]);
-
-  const manejadorFiltroClienteSeleccionado = () => {
+  const manejadorFiltroClienteSeleccionado = useCallback(() => {
     if (cuponesOriginales.length > 0) {
       let cuponesFiltrados = [...cuponesOriginales];
 
@@ -39,7 +35,12 @@ export default function Cupones() {
       setCupones(cuponesFiltrados);
       setPaginaActual(1);
     }
-  };
+  }, [cuponesOriginales, clienteSeleccionado]); // Asegúrate de incluir las dependencias necesarias
+
+  useEffect(() => {
+    manejadorFiltroClienteSeleccionado();
+  }, [clienteSeleccionado, manejadorFiltroClienteSeleccionado]); // Incluye manejadorFiltroClienteSeleccionado como dependencia
+
 
   const manejarFiltro = async () => {
     try {

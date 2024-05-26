@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Container, Form, Button, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -25,25 +25,25 @@ export default function CustomerForm() {
   const navigate = useNavigate();
   const params = useParams();
 
-  const loadCustomer = async (id) => {
+  const loadCustomer = useCallback(async (id) => {
     const res = await fetch(`${apiUrl}/clientes/${id}`, {
       credentials: "include",
     });
     const data = await res.json();
     setCustomer(data);
     setEditing(true);
-  };
+  },[apiUrl]);
 
   useEffect(() => {
     if (params.id) {
       loadCustomer(params.id);
     } else {
       setEditing(false);
-      setCustomer({
+      setCustomer({ 
         nombre: "",
       });
     }
-  }, [params.id]);
+  }, [params.id,loadCustomer]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
