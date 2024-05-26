@@ -176,9 +176,9 @@ export default function DetalleDeCaja() {
     //     (venta) => venta.fecha === detalle.caja.fechainicio.split("T")[0]
     //   )?.monto || 0;
 
-    ventas.find(
-      (venta) => venta.fecha === detalle.caja.fechainicio.split("T")[0]
-    )?.monto || 0;
+    // ventas.find(
+    //   (venta) => venta.fecha === detalle.caja.fechainicio.split("T")[0]
+    // )?.monto || 0;
 
     let egresos =
       totalRetiros +
