@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Table, Container, Button } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -12,17 +12,17 @@ export default function ReceiptItem() {
   const apiUrl = process.env.REACT_APP_API_URL;
   const params = useParams();
 
-  const loadReceiptsProducts = async (id) => {
+  const loadReceiptsProducts = useCallback(async (id) => {
     const res = await fetch(`${apiUrl}/ingresos/${id}/productos`, {
       credentials: "include",
     });
     const data = await res.json();
     setProductsReceipt(data);
-  };
+  },[apiUrl]);
 
   useEffect(() => {
     loadReceiptsProducts(params.id);
-  }, [params.id]);
+  }, [params.id,loadReceiptsProducts]);
 
   // Paginación lógica
   const indexOfLastProduct = currentPage * productsPerPage;
