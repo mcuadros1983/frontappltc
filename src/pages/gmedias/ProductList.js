@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useCallback} from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -30,24 +30,24 @@ export default function ProductList() {
   const apiUrl = process.env.REACT_APP_API_URL;
 
   // Función para cargar sucursales
-  const loadBranches = async () => {
+  const loadBranches = useCallback(async () => {
     const res = await fetch(`${apiUrl}/sucursales/`, {
       credentials: "include",
     });
     const data = await res.json();
     setBranches(data);
-  };
+  },[apiUrl]);
 
   // Función para cargar clientes
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
     const res = await fetch(`${apiUrl}/clientes/`, {
       credentials: "include",
     });
     const data = await res.json();
     setCustomers(data);
-  };
+  },[apiUrl]);
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/productos/`, {
         credentials: "include",
@@ -100,7 +100,7 @@ export default function ProductList() {
     } catch (error) {
       console.error("Error al cargar productos:", error);
     }
-  };
+  },[apiUrl]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -134,11 +134,11 @@ export default function ProductList() {
   //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
   // };
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const searchTermLower = searchBarra.toLowerCase();
-    const startDateFilter = startDate ? startDate : null;
-    const endDateFilter = endDate ? endDate : null;
-
+    const startDateFilter = startDate ? new Date(startDate) : null;
+    const endDateFilter = endDate ? new Date(endDate) : null;
+  
     if (
       searchTermLower === "" &&
       searchMedia === "" &&
@@ -153,28 +153,23 @@ export default function ProductList() {
       setFilteredProducts(products);
     } else {
       const filtered = products.filter((product) => {
-        const codigoMatch = product.codigo_de_barra
-          .toLowerCase()
-          .includes(searchTermLower);
+        const codigoMatch = product.codigo_de_barra.toLowerCase().includes(searchTermLower);
         const mediaMatch = product.num_media.toString().includes(searchMedia);
         const pesoMatch = product.kg.toString().includes(searchPeso);
         const tropaMatch = product.tropa.toString().includes(searchTropa);
-        const categoriaMatch = product.categoria_producto
-          .toString()
-          .includes(searchCategoria);
+        const categoriaMatch = product.categoria_producto.toString().includes(searchCategoria);
         const sucursalMatch = branches
           .find((branch) => branch.id === product.sucursal_id)
           ?.nombre.toLowerCase()
           .includes(searchSucursal.toLowerCase());
-
-        // Convertir la fecha de creación al formato de objeto Date
-        const productDate = product.fecha;
-
+  
+        // Convertir la fecha de creación al formato de objeto Date si es necesario
+        const productDate = new Date(product.fecha);
+  
         // Verificar si la fecha de creación está dentro del rango especificado
-        const startDateMatch =
-          !startDateFilter || productDate >= startDateFilter;
+        const startDateMatch = !startDateFilter || productDate >= startDateFilter;
         const endDateMatch = !endDateFilter || productDate <= endDateFilter;
-
+  
         return (
           codigoMatch &&
           mediaMatch &&
@@ -186,10 +181,22 @@ export default function ProductList() {
           endDateMatch
         );
       });
-
+  
       setFilteredProducts(filtered);
     }
-  };
+  }, [
+    searchBarra,
+    searchMedia,
+    searchPeso,
+    searchTropa,
+    searchCategoria,
+    searchSucursal,
+    startDate,
+    endDate,
+    products,
+    branches
+  ]); // Asegúrate de incluir todas las dependencias relevantes aquí.
+  
 
   const handleSort = (columnName) => {
     // Cambiar la dirección de orden si la columna es la misma que la columna actualmente ordenada
@@ -239,7 +246,7 @@ export default function ProductList() {
     loadProducts();
     loadBranches();
     loadCustomers();
-  }, []);
+  }, [loadProducts,loadBranches,loadCustomers]);
 
   useEffect(() => {
     handleSearch();
@@ -252,6 +259,7 @@ export default function ProductList() {
     searchSucursal,
     startDate,
     endDate,
+    handleSearch
   ]);
 
   const categorySummary = filteredProducts.reduce((summary, product) => {

@@ -16,7 +16,7 @@ export default function VentasArticulos() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [selectedSucursal, setSelectedSucursal] = useState(""); // Estado para la sucursal seleccionada
 
-  const context = useContext(Contexts.dataContext);
+  const context = useContext(Contexts.DataContext);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 

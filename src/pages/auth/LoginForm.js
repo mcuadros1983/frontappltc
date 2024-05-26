@@ -11,7 +11,7 @@ const LoginForm = () => {
 
   // const apiUrl = process.env.REACT_APP_API_URL;
 
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

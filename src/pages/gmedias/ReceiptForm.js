@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Container, Form, Button, Spinner, Table } from "react-bootstrap";
-import { useNavigate,  } from "react-router-dom";
+import { Container, Form, Button, Table } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import { processBarCode } from "../../utils/processBarCode";
 import { GenerateReceiptReceiptHTML } from "./GenerateReceiptReceiptHTML";
 import CategorySummaryTable from "../../utils/CategorySummaryTable";
@@ -28,8 +28,8 @@ const ReceiptForm = () => {
 
   const [product, setProduct] = useState(initialProductState);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [editing, setEditing] = useState(false);
+  // const [loading, setLoading] = useState(false);
+  // const [editing, setEditing] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   // const [receipt, setReceipt] = useState({
   //   cantidad_total: "",
@@ -131,15 +131,15 @@ const ReceiptForm = () => {
     if (name === "kg") {
       // Permite solo números y punto decimal
       if (/^\d*\.?\d*$/.test(value) || value === "") {
-        setProduct(prev => ({
+        setProduct((prev) => ({
           ...prev,
-          [name]: value
+          [name]: value,
         }));
       }
     } else {
-      setProduct(prev => ({
+      setProduct((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
@@ -374,9 +374,7 @@ const ReceiptForm = () => {
 
   return (
     <Container className="d-flex flex-column align-items-center">
-      <h1 className="my-form-title text-center">
-        {editing ? "Editar Ingreso" : "Agregar Ingreso"}
-      </h1>
+      <h1 className="my-form-title text-center">Agregar Ingreso</h1>
 
       <div className="my-buttons-container">
         <Button
@@ -530,21 +528,10 @@ const ReceiptForm = () => {
           variant="primary"
           type="button"
           onClick={handleSave}
-          disabled={loading || !product.num_media}
+          disabled={!product.num_media}
           style={{ position: "relative" }}
         >
-          {editing ? (
-            "Editar"
-          ) : loading ? (
-            <Spinner
-              animation="border"
-              size="sm"
-              role="status"
-              aria-hidden="true"
-            />
-          ) : (
-            "Guardar"
-          )}
+        Guardar
         </Button>
       </Form>
       <h1 className="my-list-title dark-text">Productos a agregar</h1>

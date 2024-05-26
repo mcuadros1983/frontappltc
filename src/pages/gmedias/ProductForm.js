@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Container, Form, Button, Spinner } from "react-bootstrap";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -33,7 +33,7 @@ export default function ProductForm() {
   const navigate = useNavigate();
   const params = useParams();
 
-  const loadProduct = async (id) => {
+  const loadProduct = useCallback(async (id) => {
     try {
       const res = await fetch(`${apiUrl}/productos/${id}`, {
         credentials: "include",
@@ -53,7 +53,7 @@ export default function ProductForm() {
       console.error("Error al cargar el producto:", error);
       // Manejar el error según sea necesario
     }
-  };
+  },[apiUrl]);
 
   useEffect(() => {
     if (params.id) {
@@ -71,7 +71,7 @@ export default function ProductForm() {
         subcategoria:""
       });
     }
-  }, [params.id]);
+  }, [params.id,loadProduct]);
 
   const handleSubmit = async (e) => {
     e.preventDefault(); //cancela el comportamiento por defecto

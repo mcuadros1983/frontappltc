@@ -4,7 +4,7 @@ import { Navbar, Nav, Container } from "react-bootstrap";
 import Contexts from "../context/Contexts";
 
 export default function Navigation() {
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
 
   return (
     <Navbar bg="dark" variant="dark">

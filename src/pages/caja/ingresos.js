@@ -16,7 +16,7 @@ export default function Ingresos() {
   const [tiposFiltrados, setTiposFiltrados] = useState([]);
   const [ingresosOriginales, setIngresosOriginales] = useState([]);
 
-  const contexto = useContext(Contexts.dataContext);
+  const contexto = useContext(Contexts.DataContext);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 

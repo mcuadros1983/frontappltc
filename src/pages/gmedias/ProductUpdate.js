@@ -225,7 +225,7 @@ const ProductUpdate = () => {
     };
 
     fetchData();
-  }, []);
+  }, [apiUrl]);
 
   useEffect(() => {
     // Cada vez que 'operacion' cambie, restablecer los otros estados

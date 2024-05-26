@@ -22,7 +22,7 @@ export default function DetalleDeCaja() {
   const [error, setError] = useState("");
   const [ventas, setVentas] = useState([]);
 
-  const context = useContext(Contexts.dataContext);
+  const context = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const handleFilter = async () => {

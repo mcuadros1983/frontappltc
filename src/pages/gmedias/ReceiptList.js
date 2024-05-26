@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 // import { parse } from "date-fns";
@@ -17,12 +17,12 @@ export default function ReceiptList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [receiptsPerPage] = useState(4);
 
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadReceipts = async () => {
+  const loadReceipts = useCallback(async () => {
     const res = await fetch(`${apiUrl}/ingresos/`, {
       credentials: "include",
     });
@@ -30,7 +30,7 @@ export default function ReceiptList() {
     const sortedReceipts = data.sort((a, b) => a.id - b.id);
     setReceipts(sortedReceipts);
     setFilteredReceipts(sortedReceipts); // Inicialmente mostramos todos los recibos
-  };
+  },[apiUrl]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -71,7 +71,7 @@ export default function ReceiptList() {
   //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
   // };
 
-  const handleFilter = () => {
+  const handleFilter = useCallback(() => {
     const startDateFilter = startDate ? startDate : null;
     const endDateFilter = endDate ? endDate : null;
 
@@ -96,15 +96,15 @@ export default function ReceiptList() {
 
       setFilteredReceipts(filtered);
     }
-  };
+  },[startDate,endDate,receipts,searchCategoria]);
 
   useEffect(() => {
     loadReceipts();
-  }, []);
+  }, [loadReceipts]);
 
   useEffect(() => {
     handleFilter();
-  }, [startDate, endDate, searchCategoria]);
+  }, [startDate, endDate, searchCategoria,handleFilter]);
 
   // Cálculo de la paginación para los productos filtrados
   const indexOfLastReceipt = currentPage * receiptsPerPage;

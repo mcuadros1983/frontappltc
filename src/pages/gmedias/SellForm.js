@@ -27,12 +27,12 @@ export default function SellForm() {
 
   const [product, setProduct] = useState(initialProductState);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
-  const [loadingCustomers, setLoadingCustomers] = useState(true);
+  // const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [waypays, setWaypays] = useState([]);
-  const [loadingWaypays, setLoadingWaypays] = useState(true);
+  // const [loadingWaypays, setLoadingWaypays] = useState(true);
   const [selectedWaypaysId, setSelectedWaypaysId] = useState("");
   // const [sell, setSell] = useState({
   //   cantidad_total: 0,
@@ -61,7 +61,7 @@ export default function SellForm() {
   const [searchGarron, setSearchGarron] = useState("");
 
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
+  // const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
 
   const navigate = useNavigate();
 
@@ -101,8 +101,6 @@ export default function SellForm() {
         setCustomers(sortedCustomers);
       } catch (error) {
         console.error("Error fetching customers:", error);
-      } finally {
-        setLoadingCustomers(false);
       }
     };
 
@@ -115,14 +113,12 @@ export default function SellForm() {
         setWaypays(data);
       } catch (error) {
         console.error("Error fetching Way Pays:", error);
-      } finally {
-        setLoadingWaypays(false);
-      }
+      } 
     };
 
     fetchCustomers();
     fetchWaypays();
-  }, []);
+  }, [apiUrl]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -144,7 +140,7 @@ export default function SellForm() {
     if (modal) {
       fetchProducts();
     }
-  }, [modal]);
+  }, [modal,apiUrl]);
 
   // Actualizar los productos filtrados cada vez que se aplique un filtro
   useEffect(() => {
@@ -169,17 +165,17 @@ export default function SellForm() {
     setFilteredProducts(filtered);
   }, [searchMedia, searchPeso, searchTropa, searchGarron, availableProducts]);
 
-  useEffect(() => {
-    if (filteredProducts) {
-      const indexOfLastProduct = currentPage * productsPerPage;
-      const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-      const paginatedProducts = filteredProducts.slice(
-        indexOfFirstProduct,
-        indexOfLastProduct
-      );
-      setCurrentFilteredProducts(paginatedProducts);
-    }
-  }, [filteredProducts, currentPage, productsPerPage]);
+  // useEffect(() => {
+  //   if (filteredProducts) {
+  //     const indexOfLastProduct = currentPage * productsPerPage;
+  //     const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  //     const paginatedProducts = filteredProducts.slice(
+  //       indexOfFirstProduct,
+  //       indexOfLastProduct
+  //     );
+  //     setCurrentFilteredProducts(paginatedProducts);
+  //   }
+  // }, [filteredProducts, currentPage, productsPerPage]);
 
   // Función para manejar la venta exitosa y realizar la impresión del recibo
   const handleVentaExitosa = async (venta, productos) => {
@@ -239,7 +235,7 @@ export default function SellForm() {
       return;
     }
 
-    if (selectedCustomerId == 1) {
+    if (selectedCustomerId === 1) {
       alert("No se pueden hacer ventas a la central, cambie de cliente.");
       return;
     }
@@ -370,7 +366,7 @@ export default function SellForm() {
       !productData.precio &&
       cliente.margen &&
       productData.costo &&
-      productData.categoria_producto == "bovino"
+      productData.categoria_producto === "bovino"
     ) {
       productData.precio = (1 + cliente.margen / 100) * productData.costo;
     }
@@ -706,7 +702,7 @@ export default function SellForm() {
           variant="primary"
           type="button"
           onClick={handleSave}
-          disabled={loading}
+          // disabled={loading}
           style={{ position: "relative" }}
         >
           Guardar

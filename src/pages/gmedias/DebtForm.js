@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { Container, Form, Button, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -26,18 +26,18 @@ export default function DebtForm() {
     });
   };
 
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
   const params = useParams();
 
-  const loadDebt = async (id) => {
+  const loadDebt = useCallback(async (id) => {
     const res = await fetch(`${apiUrl}/cobranzas/${id}`, {
       credentials: "include",
     });
     const data = await res.json();
     setDebt(data);
     setEditing(true);
-  };
+  },[apiUrl]);
 
   useEffect(() => {
     if (params.id) {
@@ -50,7 +50,7 @@ export default function DebtForm() {
         descripcion_cobro: "",
       });
     }
-  }, [params.id]);
+  }, [params.id,loadDebt]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

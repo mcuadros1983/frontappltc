@@ -49,7 +49,7 @@ export default function CalculoRinde() {
   const [showIngresosModal, setShowIngresosModal] = useState(false);
   const [showVerModal, setShowVerModal] = useState(false);
 
-  const context = useContext(Contexts.dataContext);
+  const context = useContext(Contexts.DataContext);
   // const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;

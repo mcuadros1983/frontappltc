@@ -72,7 +72,7 @@ import Cierres from "./pages/caja/cierres";
 import VentasComparativo from "./pages/rinde/ventas/ventasComparativo";
 
 export default function App() {
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
 
   return (
     <>

@@ -25,7 +25,7 @@ const SideBar = () => {
   const [infoCaja, setInfoCaja] = useState(false);
   const [infoRinde, setInfoRinde] = useState(false);
 
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
 
   const toggleMainItems = () => {
@@ -37,6 +37,8 @@ const SideBar = () => {
     setShowMainItems(true);
     setShowReturnButton(false);
   };
+
+  console.log("usuarioid", typeof(context.user.rol_id))
 
   return (
     <Nav defaultActiveKey="/" className="flex-column">
@@ -53,7 +55,7 @@ const SideBar = () => {
       {showMainItems && (
         <>
 {
-  context.user && (context.user.rol_id == 1 || context.user.rol_id == 2) && (
+  context.user && (context.user.rol_id === '1' || context.user.rol_id === '2') && (
     <>
       <Nav.Item onClick={toggleMainItems}>
         <Link
@@ -64,7 +66,7 @@ const SideBar = () => {
           Rinde
         </Link>
       </Nav.Item>
-      {context.user.rol_id == 1 && (
+      {context.user.rol_id === '1' && (
         <>
           <Nav.Item onClick={() => setUseritem(!useritem)} className="nav-item">
             <Link
@@ -234,7 +236,7 @@ const SideBar = () => {
               </Link>
             </div>
           </Collapse>
-          {context.user && context.user.usuario == 1 && (
+          {context.user && context.user.usuario === '1' && (
             <>
               <Nav.Item onClick={() => setDebtitem(!debtitem)}>
                 <Link
@@ -364,7 +366,7 @@ const SideBar = () => {
               >
                 Listar Ingresos
               </Link>
-              {context.user && context.user.usuario == 1 && (
+              {context.user && context.user.usuario === '1' && (
                 <Link
                   to="/receipts/products"
                   className="nav-link"

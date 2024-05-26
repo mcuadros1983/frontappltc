@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -8,7 +8,7 @@ import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 export default function ReceiptProducts() {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
@@ -27,7 +27,7 @@ export default function ReceiptProducts() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     const res = await fetch(`${apiUrl}/productos/`, {
       credentials: "include",
     });
@@ -35,7 +35,7 @@ export default function ReceiptProducts() {
     const sortedProducts = data.sort((a, b) => a.id - b.id);
     setProducts(sortedProducts);
     setFilteredProducts(sortedProducts);
-  };
+  },[apiUrl]);
 
   const handleDelete = async (id) => {
 
@@ -95,7 +95,7 @@ export default function ReceiptProducts() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const filtered = products.filter((product) => {
       const codigoMatch = product.codigo_de_barra
         .toLowerCase()
@@ -113,7 +113,7 @@ export default function ReceiptProducts() {
     });
 
     setFilteredProducts(filtered);
-  };
+  },[products,searchBarra,searchCategoria,searchMedia,searchPeso,searchTropa]);
 
   const handleSort = (columnName) => {
     // Cambiar la dirección de orden si la columna es la misma que la columna actualmente ordenada
@@ -163,15 +163,15 @@ export default function ReceiptProducts() {
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [loadProducts]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, products]);
+  }, [products,handleSearch]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchBarra, searchMedia, searchPeso, searchTropa, searchCategoria]);
+  }, [searchBarra, searchMedia, searchPeso, searchTropa, searchCategoria,handleSearch]);
 
   return (
     <Container>

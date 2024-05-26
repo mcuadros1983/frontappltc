@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -14,7 +14,7 @@ export default function OrderItem() {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10); // Puedes ajustar este número según tus necesidades
 
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
   const params = useParams();
 
@@ -22,34 +22,37 @@ export default function OrderItem() {
 
   // loadOrdersProducts
 
-  const loadProductsOrder = async (id) => {
-    const res = await fetch(`${apiUrl}/ordenes/${id}/productos`, {
-      credentials: "include",
-    });
-    const data = await res.json();
+  const loadProductsOrder = useCallback(
+    async (id) => {
+      const res = await fetch(`${apiUrl}/ordenes/${id}/productos`, {
+        credentials: "include",
+      });
+      const data = await res.json();
 
-    // Mapear cada producto para incluir la información de la sucursal
-    const productsWithBranch = await Promise.all(
-      data.map(async (product) => {
-        const productWithBranch = { ...product };
+      // Mapear cada producto para incluir la información de la sucursal
+      const productsWithBranch = await Promise.all(
+        data.map(async (product) => {
+          const productWithBranch = { ...product };
 
-        if (product.sucursal_id) {
-          const branch = await fetch(
-            `${apiUrl}/sucursales/${product.sucursal_id}`,
-            {
-              credentials: "include",
-            }
-          );
-          const branchData = await branch.json();
-          productWithBranch.sucursal = branchData;
-        }
+          if (product.sucursal_id) {
+            const branch = await fetch(
+              `${apiUrl}/sucursales/${product.sucursal_id}`,
+              {
+                credentials: "include",
+              }
+            );
+            const branchData = await branch.json();
+            productWithBranch.sucursal = branchData;
+          }
 
-        return productWithBranch;
-      })
-    );
+          return productWithBranch;
+        })
+      );
 
-    setProductsOrder(productsWithBranch);
-  };
+      setProductsOrder(productsWithBranch);
+    },
+    [apiUrl]
+  );
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -85,7 +88,7 @@ export default function OrderItem() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const searchTermLower = searchTerm.toLowerCase();
 
     if (searchTermLower === "") {
@@ -102,7 +105,7 @@ export default function OrderItem() {
       });
       setFilteredProducts(filtered);
     }
-  };
+  }, [searchTerm, productsOrder]);
 
   const handleSort = (columnName) => {
     setSortDirection(
@@ -129,11 +132,11 @@ export default function OrderItem() {
 
   useEffect(() => {
     loadProductsOrder(params.id);
-  }, [params.id]);
+  }, [params.id, loadProductsOrder]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, productsOrder]);
+  }, [searchTerm, productsOrder, handleSearch]);
 
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;

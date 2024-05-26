@@ -16,7 +16,7 @@ export default function SellItem() {
   const [editedPrice, setEditedPrice] = useState(""); // Estado para el precio editado
   const [editedWeight, setEditedWeight] = useState(""); // Estado para el peso editado
   const [editedTropa, setEditedTropa] = useState(""); // Estado para la tropa editada
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
 
   // paginacion
   const [currentPage, setCurrentPage] = useState(1);
@@ -115,11 +115,11 @@ export default function SellItem() {
 
   useEffect(() => {
     loadProductsSell(params.id);
-  }, [params.id]);
+  }, [params.id,loadProductsSell]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, productsSell]);
+  }, [searchTerm, productsSell,handleSearch]);
 
   // Función para manejar la edición de una fila
   const handleEdit = (index) => {

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Contexts from "./Contexts";
 
 
-export default function UserContext({ children }) {
+export default function UserContextProvider({ children }) {
   const [user, setUser] = useState(null);
 
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -54,8 +54,8 @@ export default function UserContext({ children }) {
   };
 
   return (
-    <Contexts.userContext.Provider value={{ user, login, logout }}>
+    <Contexts.UserContext.Provider value={{ user, login, logout }}>
       {children}
-    </Contexts.userContext.Provider>
+    </Contexts.UserContext.Provider>
   );
 }

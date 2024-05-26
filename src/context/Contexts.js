@@ -1,11 +1,11 @@
-import React from 'react'
+    import React from 'react'
 
-const userContext = React.createContext([]);
-const dataContext = React.createContext(null);
+    const UserContext  = React.createContext([]);
+    const DataContext  = React.createContext(null);
 
-const Contexts = {
-  userContext: userContext,
-  dataContext: dataContext
-}
+    const Contexts = {
+      UserContext: UserContext,
+      DataContext: DataContext
+    }
 
-export default Contexts;
+    export default Contexts;

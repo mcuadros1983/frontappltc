@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Container,
   Table,
@@ -23,7 +23,7 @@ const DebtList = () => {
   const [searchMonto, setSearchMonto] = useState("");
   const [searchCliente, setSearchCliente] = useState("");
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -34,12 +34,7 @@ const DebtList = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    // Obtener la lista de cobranzas al cargar el componente
-    fetchDebts();
-  }, []);
-
-  const fetchDebts = async () => {
+  const fetchDebts = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/clientes`, {
         credentials: "include",
@@ -68,7 +63,12 @@ const DebtList = () => {
     } catch (error) {
       console.error("Error al obtener cobranzas", error);
     }
-  };
+  }, [apiUrl]);
+
+  useEffect(() => {
+    // Obtener la lista de cobranzas al cargar el componente
+    fetchDebts();
+  }, [fetchDebts]);
 
   const handleDelete = async (cobranzaId) => {
     const confirmDelete = window.confirm(
@@ -157,10 +157,10 @@ const DebtList = () => {
     }
   };
 
-  const handleSearch = () => {
-    searchCliente.toLowerCase();
-    const startDateFilter = startDate ? startDate : null;
-    const endDateFilter = endDate ? endDate : null;
+  const handleSearch = useCallback(() => {
+    const searchTerm = searchCliente.toLowerCase();
+    const startDateFilter = startDate ? new Date(startDate) : null;
+    const endDateFilter = endDate ? new Date(endDate) : null;
 
     const filtered = debts.map((client) => {
       const filteredCobranzas = client.cuentaCorriente.cobranzas.filter(
@@ -172,9 +172,9 @@ const DebtList = () => {
           const clienteMatch = client.nombre
             .toString()
             .toLowerCase()
-            .includes(searchCliente.toLowerCase());
+            .includes(searchTerm);
 
-          const cobranzaDate = cobranza.fecha;
+          const cobranzaDate = new Date(cobranza.fecha);
 
           const matchesDate =
             (!startDateFilter || cobranzaDate >= startDateFilter) &&
@@ -194,7 +194,7 @@ const DebtList = () => {
     });
 
     setFilteredDebts(filtered);
-  };
+  }, [startDate, endDate, debts, searchMonto, searchCliente]);
 
   // Pagination logic
   const indexOfLastDebt = currentPage * debtsPerPage;
@@ -219,7 +219,7 @@ const DebtList = () => {
 
   useEffect(() => {
     handleSearch();
-  }, [searchMonto, searchCliente, searchTerm, startDate, endDate]);
+  }, [searchMonto, searchCliente, startDate, endDate,handleSearch]);
 
   return (
     <Container>

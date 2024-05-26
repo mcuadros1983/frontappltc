@@ -16,7 +16,7 @@ export default function Vales() {
   const [clientesFiltrados, setClientesFiltrados] = useState([]);
   const [valesOriginales, setValesOriginales] = useState([]);
 
-  const contexto = useContext(Contexts.dataContext);
+  const contexto = useContext(Contexts.DataContext);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 

@@ -18,7 +18,7 @@ export default function Sueldos() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const contexto = useContext(Contexts.dataContext);
+  const contexto = useContext(Contexts.DataContext);
 
     // Envolver la lógica del filtro en useCallback
     const manejadorFiltroEmpleadoSeleccionado = useCallback(() => {

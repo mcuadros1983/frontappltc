@@ -24,7 +24,7 @@ export default function MovimientosInternos() {
   // const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const context = useContext(Contexts.dataContext);
+  const context = useContext(Contexts.DataContext);
 
   const handleFilter = async () => {
     try {

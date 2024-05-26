@@ -17,7 +17,7 @@ export default function Cupones() {
   const [cuponesOriginales, setCuponesOriginales] = useState([]);
   const [cargando, setCargando] = useState(false);
 
-  const contexto = useContext(Contexts.dataContext);
+  const contexto = useContext(Contexts.DataContext);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 

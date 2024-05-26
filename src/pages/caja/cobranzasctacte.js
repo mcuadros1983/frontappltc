@@ -16,7 +16,7 @@ export default function CobranzasCtaCte() {
   const [clientesFiltrados, setClientesFiltrados] = useState([]);
   const [cobranzasOriginales, setCobranzasOriginales] = useState([]);
 
-  const contexto = useContext(Contexts.dataContext);
+  const contexto = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const manejadorFiltroClienteSeleccionado = useCallback(() => {

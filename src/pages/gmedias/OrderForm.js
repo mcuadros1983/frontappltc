@@ -1,12 +1,6 @@
 import React, { useContext, useEffect, useState, useRef } from "react";
-import {
-  Container,
-  Form,
-  Button,
-  Table,
-  FormControl,
-} from "react-bootstrap";
-import { useNavigate, } from "react-router-dom";
+import { Container, Form, Button, Table, FormControl } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import "../../styles/styles.css";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
@@ -15,7 +9,7 @@ import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa 
 import Contexts from "../../context/Contexts";
 
 export default function OrderForm() {
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
   const toggleModal = () => setModal(!modal);
   const codigoDeBarraRef = useRef(null);
 
@@ -29,7 +23,7 @@ export default function OrderForm() {
 
   const [product, setProduct] = useState(initialProductState);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState(""); // Inicializa con un valor adecuado según tus necesidades
   const [availableProducts, setAvailableProducts] = useState([]);
 
@@ -39,7 +33,7 @@ export default function OrderForm() {
   //   branch_id: "",
   // });
   const [branches, setBranches] = useState([]);
-  const [loadingBranches, setLoadingBranches] = useState(true);
+  // const [loadingBranches, setLoadingBranches] = useState(true);
   const [editingIndex, setEditingIndex] = useState(null);
   const [modal, setModal] = useState(false);
   // const [searchTerm, setSearchTerm] = useState(""); // Define setSearchTerm
@@ -61,7 +55,7 @@ export default function OrderForm() {
 
   // Dentro de la función OrderForm
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
+  // const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -77,13 +71,11 @@ export default function OrderForm() {
         setBranches(data);
       } catch (error) {
         console.error("Error fetching branches:", error);
-      } finally {
-        setLoadingBranches(false);
       }
     };
 
     fetchBranches();
-  }, []);
+  }, [apiUrl]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -105,7 +97,7 @@ export default function OrderForm() {
     if (modal) {
       fetchProducts();
     }
-  }, [modal]);
+  }, [modal, apiUrl]);
 
   // Actualizar los productos filtrados cada vez que se aplique un filtro
   useEffect(() => {
@@ -130,17 +122,17 @@ export default function OrderForm() {
     setFilteredProducts(filtered);
   }, [searchMedia, searchPeso, searchTropa, searchGarron, availableProducts]);
 
-  useEffect(() => {
-    if (filteredProducts) {
-      const indexOfLastProduct = currentPage * productsPerPage;
-      const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-      const paginatedProducts = filteredProducts.slice(
-        indexOfFirstProduct,
-        indexOfLastProduct
-      );
-      setCurrentFilteredProducts(paginatedProducts);
-    }
-  }, [filteredProducts, currentPage, productsPerPage]);
+  // useEffect(() => {
+  //   if (filteredProducts) {
+  //     const indexOfLastProduct = currentPage * productsPerPage;
+  //     const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  //     const paginatedProducts = filteredProducts.slice(
+  //       indexOfFirstProduct,
+  //       indexOfLastProduct
+  //     );
+  //     // setCurrentFilteredProducts(paginatedProducts);
+  //   }
+  // }, [filteredProducts, currentPage, productsPerPage]);
 
   const handleOrderExitosa = async (orden, productos) => {
     try {
@@ -185,7 +177,7 @@ export default function OrderForm() {
       return;
     }
 
-    if (selectedBranchId == 1) {
+    if (selectedBranchId === 1) {
       alert("No se pueden hacer envios a la central, cambie la sucursal .");
       return;
     }
@@ -239,15 +231,21 @@ export default function OrderForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProduct({
-      ...product,
-      [name]: name === "kg" ? Number(value) : value,
-    });
-
-    // Enfocar el campo de entrada del código de barras al seleccionar una sucursal
-    if (name === "sucursal_destino" && codigoDeBarraRef.current) {
-      setSelectedBranchId(value);
-      codigoDeBarraRef.current.focus();
+  
+    // Aquí aseguramos que el valor es numérico antes de establecerlo
+    if (name === "sucursal_destino") {
+      const numericValue = Number(value);
+      setSelectedBranchId(numericValue);
+  
+      // Suponiendo que quieres enfocar el campo de entrada del código de barras después de seleccionar una sucursal
+      if (codigoDeBarraRef.current) {
+        codigoDeBarraRef.current.focus();
+      }
+    } else {
+      setProduct({
+        ...product,
+        [name]: value,
+      });
     }
   };
 
@@ -356,18 +354,18 @@ export default function OrderForm() {
     setEditingIndex(null);
   };
 
-  const handleSearch = () => {
-    const filtered = availableProducts.filter((product) => {
-      const mediaMatch = product.num_media.toString().includes(searchMedia);
-      const pesoMatch = product.kg.toString().includes(searchPeso);
-      const tropaMatch = product.tropa.toString().includes(searchTropa);
-      const garronMatch = product.garron.toString().includes(searchGarron);
+  // const handleSearch = () => {
+  //   const filtered = availableProducts.filter((product) => {
+  //     const mediaMatch = product.num_media.toString().includes(searchMedia);
+  //     const pesoMatch = product.kg.toString().includes(searchPeso);
+  //     const tropaMatch = product.tropa.toString().includes(searchTropa);
+  //     const garronMatch = product.garron.toString().includes(searchGarron);
 
-      return mediaMatch && pesoMatch && tropaMatch && garronMatch;
-    });
+  //     return mediaMatch && pesoMatch && tropaMatch && garronMatch;
+  //   });
 
-    setAvailableProducts(filtered);
-  };
+  //   setAvailableProducts(filtered);
+  // };
 
   const handleProductDoubleClick = async (product) => {
     const productResponse = await fetch(
@@ -636,7 +634,7 @@ export default function OrderForm() {
         <Button
           variant="primary"
           onClick={handleSave} // Ejecuta handleSave cuando se hace clic en el botón
-          disabled={loading}
+          // disabled={loading}
           style={{ position: "relative" }}
         >
           Guardar
@@ -731,7 +729,11 @@ export default function OrderForm() {
         </tbody>
       </Table>
       <div className="py-2">
-        <Button color="inherit" onClick={handleSubmit} disabled={products.length === 0} >
+        <Button
+          color="inherit"
+          onClick={handleSubmit}
+          disabled={products.length === 0}
+        >
           Grabar
         </Button>
       </div>

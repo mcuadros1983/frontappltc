@@ -15,7 +15,7 @@ export default function VentasTotales() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const context = useContext(Contexts.dataContext);
+  const context = useContext(Contexts.DataContext);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 

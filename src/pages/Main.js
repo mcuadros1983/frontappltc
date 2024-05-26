@@ -1,5 +1,5 @@
 // import React, { useContext, useState } from "react";
-import Contexts from "../context/Contexts";
+// import Contexts from "../context/Contexts";
 
 export default function Main() {
   // const context = useContext(Contexts.dataContext);

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import {
   Table,
   Container,
@@ -25,12 +25,12 @@ export default function SellList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sellsPerPage] = useState(14);
 
-  const context = useContext(Contexts.userContext);
+  const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadSells = async () => {
+  const loadSells = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/ventas/`, {
         credentials: "include",
@@ -67,9 +67,9 @@ export default function SellList() {
     } catch (error) {
       console.error(error);
     }
-  };
+  },[apiUrl]);
 
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/clientes`, {
         credentials: "include",
@@ -79,9 +79,9 @@ export default function SellList() {
     } catch (error) {
       console.error(error);
     }
-  };
+  },[apiUrl]);
 
-  const loadPaymentMethods = async () => {
+  const loadPaymentMethods = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/formas-pago`, {
         credentials: "include",
@@ -91,9 +91,9 @@ export default function SellList() {
     } catch (error) {
       console.error(error);
     }
-  };
+  },[apiUrl]);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const searchTermLower = searchTerm.toLowerCase();
     const startDateFilter = startDate ? startDate : null;
     const endDateFilter = endDate ? endDate : null;
@@ -119,7 +119,7 @@ export default function SellList() {
 
       setFilteredSells(filtered);
     }
-  };
+  },[searchTerm,startDate,endDate,sells]);
 
   useEffect(() => {
     loadSells();

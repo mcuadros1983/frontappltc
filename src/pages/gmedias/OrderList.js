@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { parse } from "date-fns";
+// import { parse } from "  date-fns";
 // import Pagination from "../../utils/Pagination";
 
 export default function OrderList() {
@@ -24,7 +24,7 @@ export default function OrderList() {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/ordenes/`, {
         credentials: "include",
@@ -41,9 +41,9 @@ export default function OrderList() {
     } catch (error) {
       console.error(error);
     }
-  };
+  },[apiUrl]);
 
-  const loadBranches = async () => {
+  const loadBranches = useCallback(async () => {
     try {
       const response = await fetch(`${apiUrl}/sucursales`, {
         credentials: "include",
@@ -53,12 +53,12 @@ export default function OrderList() {
     } catch (error) {
       console.error("Error fetching branches:", error);
     }
-  };
+  },[apiUrl]);
 
   useEffect(() => {
     loadOrders();
     loadBranches();
-  }, []);
+  }, [loadOrders,loadBranches]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -104,7 +104,7 @@ export default function OrderList() {
   //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
   // };
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const searchTermLower = searchTerm.toLowerCase();
     const startDateFilter = startDate ? startDate : null;
     const endDateFilter = endDate ? endDate : null;
@@ -126,16 +126,16 @@ export default function OrderList() {
       });
       setFilteredOrders(filtered);
     }
-  };
+  },[searchTerm,startDate,endDate,orders]);
 
   useEffect(() => {
     loadOrders();
     loadBranches();
-  }, []);
+  }, [loadOrders,loadBranches]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, orders, startDate, endDate]);
+  }, [searchTerm, orders, startDate, endDate,handleSearch]);
 
   const handleEdit = (id, currentBranchId, currentDate) => {
     setIsEditing(true);

@@ -15,7 +15,7 @@
     const [sortDirection, setSortDirection] = useState("asc");
     const [selectedSucursal, setSelectedSucursal] = useState("");
 
-    const context = useContext(Contexts.dataContext);
+    const context = useContext(Contexts.DataContext);
 
     const apiUrl = process.env.REACT_APP_API_URL;
 

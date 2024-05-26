@@ -26,7 +26,7 @@ export default function Stock() {
   const [inventarios, setInventarios] = useState([]);
   const [selectedInventario, setSelectedInventario] = useState(null);
 
-  const context = useContext(Contexts.dataContext);
+  const context = useContext(Contexts.DataContext);
   // const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 

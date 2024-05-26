@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Container } from "react-bootstrap";
+import { Table, Container, FormControl } from "react-bootstrap";
 import { useParams } from "react-router-dom";
 
 const ArticulosInventario = () => {
   const [articulos, setArticulos] = useState([]);
   const [filteredArticulos, setFilteredArticulos] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  // const [searchTerm, setSearchTerm] = useState("");
   // const [sortColumn, setSortColumn] = useState(null);
   // const [sortDirection, setSortDirection] = useState("asc");
 
@@ -20,12 +20,13 @@ const ArticulosInventario = () => {
       });
       const data = await res.json();
       setArticulos(data);
+      setFilteredArticulos(data); // Set initial filtered <state> </state>
     } catch (error) {
       console.error(error);
     }
   }, [apiUrl]); // Asumiendo que apiUrl podría cambiar, lo cual es poco común
   
-  const handleSearch = useCallback(() => {
+  const handleSearch = (searchTerm) => {
     const searchTermLower = searchTerm.toLowerCase();
     if (searchTermLower === "") {
       setFilteredArticulos(articulos);
@@ -36,16 +37,12 @@ const ArticulosInventario = () => {
       );
       setFilteredArticulos(filtered);
     }
-  }, [searchTerm, articulos]); 
+  }; 
 
   useEffect(() => {
     loadArticulos(params.inventarioId);
   }, [params.inventarioId, loadArticulos]);
   
-  useEffect(() => {
-    handleSearch();
-  }, [searchTerm, articulos, handleSearch]);
-
   // const handleDelete = async (id) => {
   //   const confirmDelete = window.confirm(
   //     "¿Estás seguro de que deseas eliminar este artículo?"
@@ -101,6 +98,14 @@ const ArticulosInventario = () => {
   return (
     <Container>
       <h1 className="my-list-title dark-text">Artículos de Inventario</h1>
+      <div className="mb-3">
+        <FormControl
+          type="text"
+          placeholder="Buscar por código o descripción"
+          onChange={(e) => handleSearch(e.target.value)}
+          className="mb-3"
+        />
+      </div>
       <Table striped bordered hover>
         <thead>
           <tr>

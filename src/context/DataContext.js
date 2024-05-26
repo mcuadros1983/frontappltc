@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Contexts from "./Contexts";
 
-export default function DataContext({ children }) {
+export default function DataContextProvider({ children }) {
   const [data, setData] = useState(null);
   const [sucursales, setSucursales] = useState(null);
   const [clientes, setClientes] = useState(null);
@@ -109,10 +109,10 @@ export default function DataContext({ children }) {
 
     };
     fetchData();
-  }, []);
+  }, [apiUrl]);
 
   return (
-    <Contexts.dataContext.Provider
+    <Contexts.DataContext.Provider
       value={{
         data,
         setData,
@@ -133,6 +133,6 @@ export default function DataContext({ children }) {
       }}
     >
       {children}
-    </Contexts.dataContext.Provider>
+    </Contexts.DataContext.Provider>
   );
 }

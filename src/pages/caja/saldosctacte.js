@@ -11,7 +11,7 @@ const SaldosCtaCte = () => {
   const [paginaActual, setPaginaActual] = useState(1);
   const [saldosPorPagina] = useState(10);
   const [orden, setOrden] = useState({ columna: "", direccion: "asc" });
-  const contexto = useContext(Contexts.dataContext);
+  const contexto = useContext(Contexts.DataContext);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
