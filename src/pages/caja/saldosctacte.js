@@ -20,7 +20,7 @@ const SaldosCtaCte = () => {
       const response = await fetch(`${apiUrl}/caja/saldosctacte`);
       const data = await response.json();
       if (data.length === 0) {
-        alert("No existe informacion para la fecha indicada.");
+        alert("No existen cuentas corrientes activas.");
         return;
       }
 

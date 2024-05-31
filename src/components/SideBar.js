@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import { Nav } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Collapse from "react-bootstrap/Collapse";
@@ -40,9 +40,9 @@ const SideBar = () => {
 
   // console.log("usuarioid", typeof(context.user.rol_id))
 
-  useEffect(() => {
-    console.log("datos", context.user);
-  }, [context.user]);
+  // useEffect(() => {
+  //   console.log("datos", context.user);
+  // }, [context.user]);
 
   return (
     <Nav defaultActiveKey="/" className="flex-column">
