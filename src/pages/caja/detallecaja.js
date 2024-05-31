@@ -71,8 +71,8 @@ export default function DetalleDeCaja() {
       const dataDetalles = await responseDetalles.json();
       const dataVentas = await responseVentas.json();
 
-      if (dataDetalles.length === 0 && dataVentas.length === 0) {
-        alert("No existe informacion para la fecha seleccionada.");
+      if (dataDetalles.length === 0) {
+        alert("No existe informacion de caja para la fecha seleccionada.");
       }
 
       // console.log("data detalles", dataDetalles[1]);
