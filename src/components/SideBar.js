@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { Nav } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Collapse from "react-bootstrap/Collapse";
@@ -40,6 +40,10 @@ const SideBar = () => {
 
   // console.log("usuarioid", typeof(context.user.rol_id))
 
+  useEffect(() => {
+    console.log("datos", context.user);
+  }, [context.user]);
+
   return (
     <Nav defaultActiveKey="/" className="flex-column">
       <Nav.Item>
@@ -54,161 +58,163 @@ const SideBar = () => {
 
       {showMainItems && (
         <>
-{
-  context.user && (context.user.rol_id === 1 || context.user.rol_id === 2) && (
-    <>
-      <Nav.Item onClick={toggleMainItems}>
-        <Link
-          to="#"
-          className="nav-link"
-          style={{ color: "white", whiteSpace: "nowrap" }}
-        >
-          Rinde
-        </Link>
-      </Nav.Item>
-      {context.user.rol_id === 1 && (
-        <>
-          <Nav.Item onClick={() => setUseritem(!useritem)} className="nav-item">
-            <Link
-              to="#"
-              className="nav-link"
-              style={{ color: "white", whiteSpace: "nowrap" }}
-            >
-              Usuarios
-            </Link>
-          </Nav.Item>
-          <Collapse in={useritem}>
-            <div className="ml-3">
-              <Link
-                to="/users/new"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Crear Usuario
-              </Link>
-              <Link
-                to="/users"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Listar Usuarios
-              </Link>
-            </div>
-          </Collapse>
-          <Nav.Item onClick={() => setProditem(!proditem)}>
-            <Link
-              to="#"
-              className="nav-link"
-              style={{ color: "white", whiteSpace: "nowrap" }}
-            >
-              Productos
-            </Link>
-          </Nav.Item>
-          <Collapse in={proditem}>
-            <div className="ml-3">
-              <Link
-                to="/products/new"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Crear Productos
-              </Link>
-              <Link
-                to="/products"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Listar Productos
-              </Link>
-              <Link
-                to="/products_update"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Actualizar
-              </Link>
-            </div>
-          </Collapse>
-          <Nav.Item onClick={() => setSucitem(!sucitem)}>
-            <Link
-              to="#"
-              className="nav-link"
-              style={{ color: "white", whiteSpace: "nowrap" }}
-            >
-              Sucursales
-            </Link>
-          </Nav.Item>
-          <Collapse in={sucitem}>
-            <div className="ml-3">
-              <Link
-                to="/branches"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Listar Sucursales
-              </Link>
-            </div>
-          </Collapse>
-          <Nav.Item onClick={() => setCustitem(!custitem)}>
-            <Link
-              to="#"
-              className="nav-link"
-              style={{ color: "white", whiteSpace: "nowrap" }}
-            >
-              Clientes
-            </Link>
-          </Nav.Item>
-          <Collapse in={custitem}>
-            <div className="ml-3">
-              <Link
-                to="/customers/new"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Crear Cliente
-              </Link>
-              <Link
-                to="/customers"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Listar Clientes
-              </Link>
-            </div>
-          </Collapse>
-          <Nav.Item onClick={() => setWaypayitem(!waypitem)}>
-            <Link
-              to="#"
-              className="nav-link"
-              style={{ color: "white", whiteSpace: "nowrap" }}
-            >
-              Formas de Pago
-            </Link>
-          </Nav.Item>
-          <Collapse in={waypitem}>
-            <div className="ml-3">
-              <Link
-                to="/waypays/new"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Crear Forma Pago
-              </Link>
-              <Link
-                to="/waypays"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Listar Formas Pago
-              </Link>
-            </div>
-          </Collapse>
-        </>
-      )}
-    </>
-  )
-}
-          
+          {context.user &&
+            (context.user.rol_id === 1 || context.user.rol_id === 2) && (
+              <>
+                <Nav.Item onClick={toggleMainItems}>
+                  <Link
+                    to="#"
+                    className="nav-link"
+                    style={{ color: "white", whiteSpace: "nowrap" }}
+                  >
+                    Rinde
+                  </Link>
+                </Nav.Item>
+                {context.user.rol_id === 1 && (
+                  <>
+                    <Nav.Item
+                      onClick={() => setUseritem(!useritem)}
+                      className="nav-item"
+                    >
+                      <Link
+                        to="#"
+                        className="nav-link"
+                        style={{ color: "white", whiteSpace: "nowrap" }}
+                      >
+                        Usuarios
+                      </Link>
+                    </Nav.Item>
+                    <Collapse in={useritem}>
+                      <div className="ml-3">
+                        <Link
+                          to="/users/new"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Crear Usuario
+                        </Link>
+                        <Link
+                          to="/users"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Listar Usuarios
+                        </Link>
+                      </div>
+                    </Collapse>
+                    <Nav.Item onClick={() => setProditem(!proditem)}>
+                      <Link
+                        to="#"
+                        className="nav-link"
+                        style={{ color: "white", whiteSpace: "nowrap" }}
+                      >
+                        Productos
+                      </Link>
+                    </Nav.Item>
+                    <Collapse in={proditem}>
+                      <div className="ml-3">
+                        <Link
+                          to="/products/new"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Crear Productos
+                        </Link>
+                        <Link
+                          to="/products"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Listar Productos
+                        </Link>
+                        <Link
+                          to="/products_update"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Actualizar
+                        </Link>
+                      </div>
+                    </Collapse>
+                    <Nav.Item onClick={() => setSucitem(!sucitem)}>
+                      <Link
+                        to="#"
+                        className="nav-link"
+                        style={{ color: "white", whiteSpace: "nowrap" }}
+                      >
+                        Sucursales
+                      </Link>
+                    </Nav.Item>
+                    <Collapse in={sucitem}>
+                      <div className="ml-3">
+                        <Link
+                          to="/branches"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Listar Sucursales
+                        </Link>
+                      </div>
+                    </Collapse>
+                    <Nav.Item onClick={() => setCustitem(!custitem)}>
+                      <Link
+                        to="#"
+                        className="nav-link"
+                        style={{ color: "white", whiteSpace: "nowrap" }}
+                      >
+                        Clientes
+                      </Link>
+                    </Nav.Item>
+                    <Collapse in={custitem}>
+                      <div className="ml-3">
+                        <Link
+                          to="/customers/new"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Crear Cliente
+                        </Link>
+                        <Link
+                          to="/customers"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Listar Clientes
+                        </Link>
+                      </div>
+                    </Collapse>
+                    <Nav.Item onClick={() => setWaypayitem(!waypitem)}>
+                      <Link
+                        to="#"
+                        className="nav-link"
+                        style={{ color: "white", whiteSpace: "nowrap" }}
+                      >
+                        Formas de Pago
+                      </Link>
+                    </Nav.Item>
+                    <Collapse in={waypitem}>
+                      <div className="ml-3">
+                        <Link
+                          to="/waypays/new"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Crear Forma Pago
+                        </Link>
+                        <Link
+                          to="/waypays"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Listar Formas Pago
+                        </Link>
+                      </div>
+                    </Collapse>
+                  </>
+                )}
+              </>
+            )}
+
           <Nav.Item onClick={() => setSellitem(!sellitem)}>
             <Link
               to="#"
@@ -236,7 +242,7 @@ const SideBar = () => {
               </Link>
             </div>
           </Collapse>
-          {context.user && context.user.usuario === '1' && (
+          {context.user && context.user.usuario === "1" && (
             <>
               <Nav.Item onClick={() => setDebtitem(!debtitem)}>
                 <Link
@@ -366,7 +372,7 @@ const SideBar = () => {
               >
                 Listar Ingresos
               </Link>
-              {context.user && context.user.usuario === '1' && (
+              {context.user && context.user.usuario === "1" && (
                 <Link
                   to="/receipts/products"
                   className="nav-link"
@@ -403,9 +409,7 @@ const SideBar = () => {
           </Nav.Item>
           <Collapse in={sellRinde}>
             <div className="ml-3">
-
-              
-            <Link
+              <Link
                 to="/sells/totalcomparativo"
                 className="nav-link"
                 style={{ color: "white", whiteSpace: "nowrap" }}

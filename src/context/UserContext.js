@@ -22,7 +22,7 @@ export default function UserContextProvider({ children }) {
 
       if (response.ok) {
         const data = await response.json();
-        // console.log("user", data)
+        console.log("user", data)
         setUser(data.user);
       } else {
         const errorData = await response.json();
