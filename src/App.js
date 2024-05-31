@@ -70,6 +70,8 @@ import FormulasForm from "./pages/rinde/formulas/formulasForm";
 import Stock from "./pages/rinde/inventarios/stock";
 import Cierres from "./pages/caja/cierres";
 import VentasComparativo from "./pages/rinde/ventas/ventasComparativo";
+import SaldosCtaCteSucursal from "./pages/caja/saldosctactesucursal";
+import DetalleCtaCte from "./pages/caja/detallectacte";
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -164,6 +166,8 @@ export default function App() {
                   <Route path="/info/collectionsaccount" element={<CobranzasCtaCte />} />
                   <Route path="/info/cashclosure" element={<Cierres />} />
                   <Route path="/info/balanceaccount" element={<SaldosCtaCte />} />
+                  <Route path="/info/balanceaccountbranch" element={<SaldosCtaCteSucursal />} />
+                  <Route path="/info/balanceaccountdetail" element={<DetalleCtaCte />} />
                   <Route path="/info/detail" element={<DetalleDeCaja />} />
                   <Route path="/inventory/inventories" element={<Inventario />} />
                   <Route path="/inventory/:inventarioId/articles" element={<InventariosArticulos />} />

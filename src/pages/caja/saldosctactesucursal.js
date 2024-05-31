@@ -3,24 +3,33 @@ import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
 
-const SaldosCtaCte = () => {
-  const [saldos, setSaldos] = useState([]);
+const SaldosCtaCteSucursal = () => {
+  // const [saldos, setSaldos] = useState([]);
   const [saldosFiltrados, setSaldosFiltrados] = useState([]);
-  const [clienteSeleccionado, setClienteSeleccionado] = useState("");
-  const [clientesFiltrados, setClientesFiltrados] = useState([]);
+  const [sucursalSeleccionada, setSucursalSeleccionada] = useState("");
   const [paginaActual, setPaginaActual] = useState(1);
   const [saldosPorPagina] = useState(10);
   const [orden, setOrden] = useState({ columna: "", direccion: "asc" });
   const contexto = useContext(Contexts.DataContext);
-
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const obtenerSaldosCtaCte = useCallback(async () => {
+    if (!sucursalSeleccionada) return;
+
     try {
-      const response = await fetch(`${apiUrl}/caja/saldosctacte`);
+      const response = await fetch(`${apiUrl}/caja/saldosctacte_filtrados`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sucursalId: sucursalSeleccionada }),
+      });
+
       const data = await response.json();
       if (data.length === 0) {
-        alert("No existe informacion para la fecha indicada.");
+        alert("No existen cuentas corrientes para esta sucursal.");
+        // setSaldos([]);
+        setSaldosFiltrados([]);
         return;
       }
 
@@ -35,46 +44,17 @@ const SaldosCtaCte = () => {
         };
       });
 
-      setSaldos(saldosConNombreApellido);
+      // setSaldos(saldosConNombreApellido);
       setSaldosFiltrados(saldosConNombreApellido);
-
-      const clientesUnicos = saldosConNombreApellido.reduce((clientes, saldo) => {
-        if (!clientes.some((cliente) => cliente.id === saldo.cliente_id)) {
-          clientes.push({ id: saldo.cliente_id, nombre: saldo.nombre, apellido: saldo.apellido });
-        }
-        return clientes;
-      }, []);
-
-      clientesUnicos.sort((a, b) => {
-        const nombreCompletoA = `${a.nombre} ${a.apellido}`.toLowerCase();
-        const nombreCompletoB = `${b.nombre} ${b.apellido}`.toLowerCase();
-        if (nombreCompletoA < nombreCompletoB) return -1;
-        if (nombreCompletoA > nombreCompletoB) return 1;
-        return 0;
-      });
-
-      setClientesFiltrados(clientesUnicos);
     } catch (error) {
       console.error(error);
     }
-  }, [apiUrl, contexto.clientesTabla]);
+  }, [apiUrl, contexto.clientesTabla, sucursalSeleccionada]);
 
   useEffect(() => {
     obtenerSaldosCtaCte();
   }, [obtenerSaldosCtaCte]);
 
-  const manejadorFiltroClienteSeleccionado = useCallback(() => {
-    const filtrados = clienteSeleccionado ? saldos.filter(
-      (saldo) => parseInt(saldo.cliente_id) === parseInt(clienteSeleccionado)
-    ) : saldos;
-    
-    setSaldosFiltrados(filtrados);
-    setPaginaActual(1);
-  }, [clienteSeleccionado, saldos]);
-
-  useEffect(() => {
-    manejadorFiltroClienteSeleccionado();
-  }, [clienteSeleccionado, manejadorFiltroClienteSeleccionado]);
   const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
 
   const manejarOrden = (columna) => {
@@ -107,15 +87,15 @@ const SaldosCtaCte = () => {
       <div className="d-flex justify-content-between mb-3">
         <FormControl
           as="select"
-          value={clienteSeleccionado}
-          onChange={(e) => setClienteSeleccionado(e.target.value)}
+          value={sucursalSeleccionada}
+          onChange={(e) => setSucursalSeleccionada(e.target.value)}
           className="mr-2"
           style={{ width: "25%" }}
         >
-          <option value="">Seleccione un cliente</option>
-          {clientesFiltrados.map((cliente) => (
-            <option key={cliente.id} value={cliente.id}>
-              {cliente.nombre} {cliente.apellido}
+          <option value="">Seleccione una sucursal</option>
+          {contexto.sucursales.map((sucursal) => (
+            <option key={sucursal.id} value={sucursal.id}>
+              {sucursal.nombre}
             </option>
           ))}
         </FormControl>
@@ -168,4 +148,4 @@ const SaldosCtaCte = () => {
   );
 };
 
-export default SaldosCtaCte;
+export default SaldosCtaCteSucursal;

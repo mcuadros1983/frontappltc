@@ -55,7 +55,7 @@ const SideBar = () => {
       {showMainItems && (
         <>
 {
-  context.user && (context.user.rol_id === '1' || context.user.rol_id === '2') && (
+  context.user && (context.user.rol_id === 1 || context.user.rol_id === 2) && (
     <>
       <Nav.Item onClick={toggleMainItems}>
         <Link
@@ -66,7 +66,7 @@ const SideBar = () => {
           Rinde
         </Link>
       </Nav.Item>
-      {context.user.rol_id === '1' && (
+      {context.user.rol_id === 1 && (
         <>
           <Nav.Item onClick={() => setUseritem(!useritem)} className="nav-item">
             <Link
@@ -516,7 +516,7 @@ const SideBar = () => {
               >
                 Ingresos
               </Link>
-              <Link
+              {/* <Link
                 to="/info/salesaccount"
                 className="nav-link"
                 style={{ color: "white", whiteSpace: "nowrap" }}
@@ -530,7 +530,7 @@ const SideBar = () => {
                 style={{ color: "white", whiteSpace: "nowrap" }}
               >
                 Cob Cta. Cte.
-              </Link>
+              </Link> */}
 
               <Link
                 to="/info/cashclosure"
@@ -545,8 +545,25 @@ const SideBar = () => {
                 className="nav-link"
                 style={{ color: "white", whiteSpace: "nowrap" }}
               >
-                Saldo Cta. Cte.
+                Cta. Cte. Cliente
               </Link>
+
+              <Link
+                to="/info/balanceaccountbranch"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+              >
+                Ctas. Ctes. Suc.
+              </Link>
+
+              <Link
+                to="/info/balanceaccountdetail"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+              >
+                Detalle Cta. Cte.
+              </Link>
+
               <Link
                 to="/info/detail"
                 className="nav-link"

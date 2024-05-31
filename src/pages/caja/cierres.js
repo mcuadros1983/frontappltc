@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext,useCallback } from "react";
+import React, { useState, useContext, useCallback } from "react";
 // import { useNavigate } from "react-router-dom";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
@@ -42,6 +42,10 @@ export default function Cierres() {
       );
       if (response.ok) {
         const data = await response.json();
+        if (data.length === 0) {
+          alert("No hay cierres en la fecha seleccionada");
+          return;
+        }
         setCierres(data);
         setCurrentPage(1);
       } else {
@@ -50,13 +54,7 @@ export default function Cierres() {
     } catch (error) {
       console.error(error);
     }
-  },[apiUrl, startDate, endDate, searchSucursal]);
-
-  
-  useEffect(() => {
-    // Simula la carga inicial de datos
-    handleFilter();
-  }, [handleFilter]);
+  }, [apiUrl, startDate, endDate, searchSucursal]);
 
   const handleSort = (columnName) => {
     const direction = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
@@ -102,11 +100,9 @@ export default function Cierres() {
       if (response.ok) {
         const data = await response.json();
         if (data.length === 0) {
-          alert("No existe informacion para la fecha indicada.");
-          ;
+          alert("No hay cierres en la fecha y sucursal seleccionada");
           return;
         }
-        // console.log(data.message);
         setCierres(cierres.filter((cierre) => cierre.id !== cierreId));
       } else {
         throw new Error("Error al eliminar el cierre");
@@ -115,7 +111,6 @@ export default function Cierres() {
       console.error("Error al eliminar el cierre:", error);
     }
   };
-
 
   const indexOfLastCierre = currentPage * cierresPerPage;
   const indexOfFirstCierre = indexOfLastCierre - cierresPerPage;
@@ -137,8 +132,8 @@ export default function Cierres() {
     <Container>
       <h1 className="my-list-title">Cierres de Ventas</h1>
 
-      <div className="d-flex justify-content-between my-3">
-        <div>
+      <div className="mb-3">
+        <div className="d-inline-block w-auto">
           <label>DESDE: </label>
           <input
             type="date"
@@ -146,28 +141,38 @@ export default function Cierres() {
             onChange={(e) => setStartDate(e.target.value)}
             className="form-control"
           />
-          <label>HASTA: </label>
+        </div>
+
+        <div className="d-inline-block w-auto ml-2">
+          <label className="ml-2 mr-2">HASTA: </label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="form-control"
           />
-          <FormControl
-            as="select"
-            value={searchSucursal}
-            onChange={(e) => setSearchSucursal(e.target.value)}
-            className="my-2"
-          >
-            <option value="">Seleccione una sucursal</option>
-            {context.sucursales.map((sucursal) => (
-              <option key={sucursal.id} value={sucursal.id}>
-                {sucursal.nombre}
-              </option>
-            ))}
-          </FormControl>
-          <Button onClick={handleFilter}>Filtrar</Button>
         </div>
+      </div>
+
+      <div className="mb-3">
+        <FormControl
+          as="select"
+          value={searchSucursal}
+          onChange={(e) => setSearchSucursal(e.target.value)}
+          className="mr-2 mb-3"
+          style={{ width: "25%" }}
+        >
+          <option value="">Seleccione una sucursal</option>
+          {context.sucursales.map((sucursal) => (
+            <option key={sucursal.id} value={sucursal.id}>
+              {sucursal.nombre}
+            </option>
+          ))}
+        </FormControl>
+      </div>
+
+      <div className="mb-3 d-flex">
+        <Button onClick={handleFilter}>Filtrar</Button>
       </div>
 
       <Table striped bordered hover>
@@ -195,17 +200,30 @@ export default function Cierres() {
         </tbody>
       </Table>
 
-      <div className="pagination">
+      <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
           <BsChevronLeft />
         </Button>
-        <span>
+        <span className="mx-2">
           Página {currentPage} de {Math.ceil(cierres.length / cierresPerPage)}
         </span>
         <Button onClick={nextPage} disabled={currentPage === Math.ceil(cierres.length / cierresPerPage)}>
           <BsChevronRight />
         </Button>
       </div>
+
+      {/* <div className="d-flex justify-content-center align-items-center">
+                <Button onClick={paginaAnterior} disabled={paginaActual === 1}>
+                    <BsChevronLeft />
+                </Button>
+                <span className="mx-2">
+                    Página {paginaActual} de {Math.ceil([...ventas, ...cobranzas].length / operacionesPorPagina)}
+                </span>
+                <Button onClick={paginaSiguiente} disabled={paginaActual === Math.ceil([...ventas, ...cobranzas].length / operacionesPorPagina)}>
+                    <BsChevronRight />
+                </Button>
+            </div> */}
+
     </Container>
   );
 }
