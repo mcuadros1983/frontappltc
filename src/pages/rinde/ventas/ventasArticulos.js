@@ -187,7 +187,7 @@ export default function VentasArticulos() {
             <option
               key={index}
               value={articulo.codigo}
-            >{`${articulo.codigo} - ${articulo.descripcion}`}</option>
+            >{`${articulo.descripcion}`}</option>
           ))}
         </FormControl>
       </div>
