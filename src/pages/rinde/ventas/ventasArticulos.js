@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useCallback } from "react";
+import React, { useState, useContext, useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
@@ -79,11 +79,11 @@ export default function VentasArticulos() {
     }
   }, [apiUrl, startDate, endDate, selectedSucursal]);
 
-  useEffect(() => {
-    if (isValidDate(startDate) && isValidDate(endDate)) {
-      handleFilter();
-    }
-  }, [handleFilter, startDate, endDate]);  // Asegúrate de incluir las dependencias
+  // useEffect(() => {
+  //   if (isValidDate(startDate) && isValidDate(endDate)) {
+  //     handleFilter();
+  //   }
+  // }, [handleFilter, startDate, endDate]);  // Asegúrate de incluir las dependencias
 
   const handleSort = (columnName) => {
     const isAsc = columnName === sortColumn && sortDirection === "asc";
