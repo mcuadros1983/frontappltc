@@ -7,7 +7,6 @@ export default function VentasArticulos() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
   const [articulos, setArticulos] = useState([]);
   const [selectedArticulo, setSelectedArticulo] = useState("");
-  // const [searchSucursal, setSearchSucursal] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,9 +20,7 @@ export default function VentasArticulos() {
   const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    // Aquí puedes realizar alguna acción cuando cambie la sucursal seleccionada,
-    // como cargar datos relacionados con esa sucursal.
-    // console.log("Sucursal seleccionada:", selectedSucursal);
+    handleFilter();
   }, [selectedSucursal]);
 
   const handleFilter = async () => {
@@ -32,24 +29,34 @@ export default function VentasArticulos() {
         alert("Ingrese una fecha válida.");
         return;
       }
-      const response = await fetch(`${apiUrl}/ventas/con_articulo_filtradas`, {
+
+      const body = selectedSucursal
+        ? { fechaDesde: startDate, fechaHasta: endDate, sucursalId: selectedSucursal }
+        : { fechaDesde: startDate, fechaHasta: endDate };
+
+      const response = await fetch(`${apiUrl}/ventas/con_articulo_filtradas`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ fechaDesde: startDate, fechaHasta: endDate, sucursalId: selectedSucursal }),
+        body: JSON.stringify(body),
       });
       if (response.ok) {
         const data = await response.json();
 
         if (data.length === 0) {
           alert("No existen ventas para la fecha indicada.");
-          // setVentasFiltradas([]);
           return;
         }
 
+        const uniqueArticulosSet = new Set(data.map(venta => JSON.stringify({ codigo: venta.articuloCodigo, descripcion: venta.articuloDescripcion })));
+        const uniqueArticulos = Array.from(uniqueArticulosSet).map(str => JSON.parse(str));
+        
+        // Filtrar artículos que tienen descripción válida
+        const validArticulos = uniqueArticulos.filter(articulo => articulo.descripcion);
+        validArticulos.sort((a, b) => a.descripcion.localeCompare(b.descripcion));
 
         setVentasFiltradas(data);
-        setArticulos([...new Set(data.map(venta => ({ codigo: venta.articuloCodigo, descripcion: venta.articuloDescripcion })))]);
+        setArticulos(validArticulos);
         setSelectedArticulo(""); // Reset selected article
       } else {
         throw new Error("Error al obtener las ventas con artículos filtradas");
@@ -81,15 +88,9 @@ export default function VentasArticulos() {
     return date.getTime() && date.toISOString().slice(0, 10) === dateString;
   };
 
-  // const handleSearchClick = () => {
-  //   handleFilter();
-  // };
-
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = ventasFiltradas.slice(indexOfFirstSell, indexOfLastSell);
-
-  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(ventasFiltradas.length / sellsPerPage)) {
@@ -127,26 +128,26 @@ export default function VentasArticulos() {
         >
           <option value="">Seleccionar sucursal</option>
           {context.sucursalesTabla.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>{sucursal.nombre}</option>
+            <option key={sucursal.id} value={sucursal.id}>{sucursal.id}{sucursal.nombre}</option>
           ))}
         </FormControl>
-
       </div>
-      <div className="mb-3">        <FormControl
-        as="select"
-        className="mr-2"
-        value={selectedArticulo}
-        onChange={(e) => setSelectedArticulo(e.target.value)}
-        style={{ width: "25%" }}
-        disabled={articulos.length === 0}
-      >
-        <option value="">Seleccionar Artículo</option>
-        {articulos.map((articulo, index) => (
-          <option key={index} value={articulo.codigo}>{`${articulo.codigo} - ${articulo.descripcion}`}</option>
-        ))}
-      </FormControl></div>
       <div className="mb-3">
-
+        <FormControl
+          as="select"
+          className="mr-2"
+          value={selectedArticulo}
+          onChange={(e) => setSelectedArticulo(e.target.value)}
+          style={{ width: "25%" }}
+          disabled={articulos.length === 0}
+        >
+          <option value="">Seleccionar Artículo</option>
+          {articulos.map((articulo, index) => (
+            <option key={index} value={articulo.codigo}>{`${articulo.codigo} - ${articulo.descripcion}`}</option>
+          ))}
+        </FormControl>
+      </div>
+      <div className="mb-3">
         <Button onClick={handleFilter}>Filtrar</Button>
       </div>
 
@@ -161,15 +162,18 @@ export default function VentasArticulos() {
           </tr>
         </thead>
         <tbody>
-          {currentSells.filter(venta => selectedArticulo === "" || venta.articuloCodigo === selectedArticulo).map((venta) => (
-            <tr key={venta.id}>
-              <td>{venta.fecha}</td>
-              <td>{venta.articuloCodigo}</td>
-              <td>{venta.articuloDescripcion}</td>
-              <td>{venta.cantidad}</td>
-              <td>{context.sucursalesTabla.find(sucursal => sucursal.id === parseInt(venta.sucursal_id))?.nombre || "Desconocido"}</td>
-            </tr>
-          ))}
+          {ventasFiltradas
+            .filter(venta => selectedArticulo === "" || venta.articuloCodigo === selectedArticulo)
+            .slice(indexOfFirstSell, indexOfLastSell)
+            .map((venta) => (
+              <tr key={venta.id}>
+                <td>{venta.fecha}</td>
+                <td>{venta.articuloCodigo}</td>
+                <td>{venta.articuloDescripcion}</td>
+                <td>{venta.cantidad}</td>
+                <td>{context.sucursalesTabla.find(sucursal => sucursal.id === parseInt(venta.sucursal_id))?.nombre || "Desconocido"}</td>
+              </tr>
+            ))}
         </tbody>
       </Table>
       <div className="d-flex justify-content-center align-items-center">
