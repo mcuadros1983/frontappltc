@@ -80,8 +80,10 @@ export default function VentasArticulos() {
   }, [apiUrl, startDate, endDate, selectedSucursal]);
 
   useEffect(() => {
-    handleFilter();
-  }, [handleFilter]);
+    if (isValidDate(startDate) && isValidDate(endDate)) {
+      handleFilter();
+    }
+  }, [handleFilter, startDate, endDate]);  // Asegúrate de incluir las dependencias
 
   const handleSort = (columnName) => {
     const isAsc = columnName === sortColumn && sortDirection === "asc";
