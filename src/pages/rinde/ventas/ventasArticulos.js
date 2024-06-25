@@ -1,4 +1,4 @@
-import React, { useState, useContext, useCallback } from "react";
+import React, { useState, useContext } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
@@ -19,7 +19,7 @@ export default function VentasArticulos() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  const handleFilter = useCallback(async () => {
+  const handleFilter = async () => {
     try {
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         alert("Ingrese una fecha válida.");
@@ -77,7 +77,7 @@ export default function VentasArticulos() {
     } catch (error) {
       console.error(error);
     }
-  }, [apiUrl, startDate, endDate, selectedSucursal]);
+  };
 
   // useEffect(() => {
   //   if (isValidDate(startDate) && isValidDate(endDate)) {

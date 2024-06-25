@@ -1,0 +1,2 @@
+# Ignorar todos los archivos JS en un directorio específico
+src/pages/rinde/ventas/*.js
