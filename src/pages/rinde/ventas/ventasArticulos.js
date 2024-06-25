@@ -166,7 +166,6 @@ export default function VentasArticulos() {
           <option value="">Seleccionar sucursal</option>
           {context.sucursalesTabla.map((sucursal) => (
             <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.id}
               {sucursal.nombre}
             </option>
           ))}
