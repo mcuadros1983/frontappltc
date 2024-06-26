@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
-import { Container, Table, Button,  } from "react-bootstrap";
+import { Container, Table, Button } from "react-bootstrap";
 // import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
-import '../../../components/css/styles.css'
+import "../../../components/css/styles.css";
 
 export default function VentasTotalesPorFecha() {
   const [ventasTotales, setVentasTotales] = useState([]);
@@ -32,7 +32,6 @@ export default function VentasTotalesPorFecha() {
         const data = await response.json();
         if (data.length === 0) {
           alert("No existen ventas para la fecha indicada.");
-          ;
           return;
         }
         processVentasTotales(data);
@@ -48,21 +47,26 @@ export default function VentasTotalesPorFecha() {
   };
 
   const processVentasTotales = (ventas) => {
-    let fechas = new Set(ventas.map(v => v.fecha));
-    let sucursales = context.sucursalesTabla.map(s => s.id);
+    let fechas = new Set(ventas.map((v) => v.fecha));
+    let sucursales = context.sucursalesTabla.map((s) => s.id);
     let sucursalesActivas = new Set();
-    let tabla = Array.from(fechas).sort().map(fecha => {
-      let fila = { fecha };
-      sucursales.forEach(sucursalId => {
-        const total = ventas.filter(v => v.fecha === fecha && parseInt(v.sucursal_id) === sucursalId)
-          .reduce((sum, curr) => sum + parseFloat(curr.monto), 0);
-        fila[sucursalId] = total.toFixed(2) || 0;
-        if (total > 0) {
-          sucursalesActivas.add(sucursalId);
-        }
+    let tabla = Array.from(fechas)
+      .sort()
+      .map((fecha) => {
+        let fila = { fecha };
+        sucursales.forEach((sucursalId) => {
+          const total = ventas
+            .filter(
+              (v) => v.fecha === fecha && parseInt(v.sucursal_id) === sucursalId
+            )
+            .reduce((sum, curr) => sum + parseFloat(curr.monto), 0);
+          fila[sucursalId] = total || 0;
+          if (total > 0) {
+            sucursalesActivas.add(sucursalId);
+          }
+        });
+        return fila;
       });
-      return fila;
-    });
     setVentasTotales(tabla);
     setActiveSucursales(sucursalesActivas);
   };
@@ -92,11 +96,14 @@ export default function VentasTotalesPorFecha() {
       </div>
 
       <div className="mb-3">
-        <Button variant="primary" onClick={handleFetchVentasTotales} disabled={loading}>
-          {loading ? 'Cargando...' : 'Buscar'}
+        <Button
+          variant="primary"
+          onClick={handleFetchVentasTotales}
+          disabled={loading}
+        >
+          {loading ? "Cargando..." : "Buscar"}
         </Button>
       </div>
-
 
       {error && <div className="alert alert-danger">{error}</div>}
       <div className="fixed-table-container">
@@ -104,18 +111,35 @@ export default function VentasTotalesPorFecha() {
           <thead>
             <tr>
               <th className="fixed-first-column">Fecha</th>
-              {context.sucursalesTabla.filter(sucursal => activeSucursales.has(sucursal.id)).map(sucursal => (
-                <th key={sucursal.id}>{sucursal.nombre}</th>
-              ))}
+              {context.sucursalesTabla
+                .filter((sucursal) => activeSucursales.has(sucursal.id))
+                .map((sucursal) => (
+                  <th key={sucursal.id}>{sucursal.nombre}</th>
+                ))}
             </tr>
           </thead>
           <tbody>
-            {ventasTotales.map((fila, index) => (
+            {/* {ventasTotales.map((fila, index) => (
               <tr key={index}>
                 <td className="fixed-first-column">{fila.fecha}</td>
                 {context.sucursalesTabla.filter(sucursal => activeSucursales.has(sucursal.id)).map(sucursal => (
                   <td key={sucursal.id}>{fila[sucursal.id].toFixed(2)}</td>
                 ))}
+              </tr>
+            ))} */}
+            {ventasTotales.map((fila, index) => (
+              <tr key={index}>
+                <td className="fixed-first-column">{fila.fecha}</td>
+                {context.sucursalesTabla
+                  .filter((sucursal) => activeSucursales.has(sucursal.id))
+                  .map((sucursal) => (
+                    <td key={sucursal.id}>
+                      {fila[sucursal.id].toLocaleString("es-ES", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </td>
+                  ))}
               </tr>
             ))}
           </tbody>

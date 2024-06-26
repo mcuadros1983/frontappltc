@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Container, Table, Button, FormControl, Spinner } from "react-bootstrap";
+import {
+  Container,
+  Table,
+  Button,
+  FormControl,
+  Spinner,
+} from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
 
@@ -59,7 +65,6 @@ export default function VentasTotales() {
           return;
         }
 
-        
         const ventasMapped = data.map((venta) => ({
           ...venta,
           sucursalNombre:
@@ -138,7 +143,10 @@ export default function VentasTotales() {
     }
   };
 
-  const totalMonto = ventasFiltradas.reduce((acc, curr) => acc + parseFloat(curr.monto), 0);
+  const totalMonto = ventasFiltradas.reduce(
+    (acc, curr) => acc + parseFloat(curr.monto),
+    0
+  );
 
   return (
     <Container>
@@ -189,18 +197,29 @@ export default function VentasTotales() {
 
       {loading && <Spinner animation="border" />}
       {error && <div>{error}</div>}
-      {ventasFiltradas.length === 0 && !loading && <div>No se encontraron ventas para la fecha indicada.</div>}
+      {ventasFiltradas.length === 0 && !loading && (
+        <div>No se encontraron ventas para la fecha indicada.</div>
+      )}
 
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>
+            <th
+              onClick={() => handleSort("fecha")}
+              style={{ cursor: "pointer" }}
+            >
               Fecha
             </th>
-            <th onClick={() => handleSort("monto")} style={{ cursor: "pointer" }}>
+            <th
+              onClick={() => handleSort("monto")}
+              style={{ cursor: "pointer" }}
+            >
               Monto
             </th>
-            <th onClick={() => handleSort("sucursal_id")} style={{ cursor: "pointer" }}>
+            <th
+              onClick={() => handleSort("sucursal_id")}
+              style={{ cursor: "pointer" }}
+            >
               Sucursal
             </th>
           </tr>
@@ -209,8 +228,16 @@ export default function VentasTotales() {
           {currentSells.map((venta) => (
             <tr key={venta.id}>
               <td>{venta.fecha}</td>
-              <td>{venta.monto.toFixed(2)}</td>
-              <td>{context.sucursalesTabla.find(sucursal => sucursal.id === parseInt(venta.sucursal_id))?.nombre || "Desconocido"}</td>
+              {/* <td>{venta.monto}</td> */}
+              {parseFloat(venta.monto).toLocaleString("es-ES", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+              <td>
+                {context.sucursalesTabla.find(
+                  (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
+                )?.nombre || "Desconocido"}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -220,7 +247,6 @@ export default function VentasTotales() {
       <div className="total-sales-display">
         <strong>Total:</strong> ${totalMonto.toFixed(2)}
       </div>
-
 
       <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
