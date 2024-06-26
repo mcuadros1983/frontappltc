@@ -56,7 +56,7 @@ export default function VentasTotalesPorFecha() {
       sucursales.forEach(sucursalId => {
         const total = ventas.filter(v => v.fecha === fecha && parseInt(v.sucursal_id) === sucursalId)
           .reduce((sum, curr) => sum + parseFloat(curr.monto), 0);
-        fila[sucursalId] = total || 0;
+        fila[sucursalId] = total.toFixed(2) || 0;
         if (total > 0) {
           sucursalesActivas.add(sucursalId);
         }

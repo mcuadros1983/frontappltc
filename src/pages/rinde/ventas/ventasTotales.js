@@ -209,7 +209,7 @@ export default function VentasTotales() {
           {currentSells.map((venta) => (
             <tr key={venta.id}>
               <td>{venta.fecha}</td>
-              <td>{venta.monto}</td>
+              <td>{venta.monto.toFixed(2)}</td>
               <td>{context.sucursalesTabla.find(sucursal => sucursal.id === parseInt(venta.sucursal_id))?.nombre || "Desconocido"}</td>
             </tr>
           ))}
