@@ -1,4 +1,4 @@
-import React, { useState, useContext,useEffect } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
@@ -9,7 +9,7 @@ export default function VentasTotales() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [sellsPerPage] = useState(10); 
+  const [sellsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
   const [selectedSucursal, setSelectedSucursal] = useState(""); // Estado para la sucursal seleccionada
@@ -32,21 +32,18 @@ export default function VentasTotales() {
         return;
       }
 
-      const response = await fetch(
-        `${apiUrl}/ventas/con_descuento_filtradas`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            fechaDesde: startDate,
-            fechaHasta: endDate,
-            sucursalId: selectedSucursal,
-          }),
-        }
-      );
+      const response = await fetch(`${apiUrl}/ventas/con_descuento_filtradas`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: selectedSucursal,
+        }),
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.length === 0) {
@@ -159,7 +156,7 @@ export default function VentasTotales() {
           />
         </div>
       </div>
-      
+
       <div className="mb-3">
         <FormControl
           as="select"
@@ -184,16 +181,28 @@ export default function VentasTotales() {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>
+            <th
+              onClick={() => handleSort("fecha")}
+              style={{ cursor: "pointer" }}
+            >
               Fecha
             </th>
-            <th onClick={() => handleSort("monto")} style={{ cursor: "pointer" }}>
+            <th
+              onClick={() => handleSort("monto")}
+              style={{ cursor: "pointer" }}
+            >
               Monto
             </th>
-            <th onClick={() => handleSort("descuento")} style={{ cursor: "pointer" }}>
+            <th
+              onClick={() => handleSort("descuento")}
+              style={{ cursor: "pointer" }}
+            >
               Descuento
             </th>
-            <th onClick={() => handleSort("numeroticket")} style={{ cursor: "pointer" }}>
+            <th
+              onClick={() => handleSort("numeroticket")}
+              style={{ cursor: "pointer" }}
+            >
               Número de Ticket
             </th>
             <th>Sucursal</th>
@@ -203,10 +212,20 @@ export default function VentasTotales() {
           {currentSells.map((venta) => (
             <tr key={venta.id}>
               <td>{venta.fecha}</td>
-              <td>{venta.monto}</td>
+              <td>
+                {" "}
+                {parseFloat(venta.monto).toLocaleString("es-ES", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </td>
               <td>{venta.descuento}</td>
               <td>{venta.numeroticket}</td>
-              <td>{context.sucursalesTabla.find(sucursal => sucursal.id === parseInt(venta.sucursal_id))?.nombre || "Desconocido"}</td>
+              <td>
+                {context.sucursalesTabla.find(
+                  (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
+                )?.nombre || "Desconocido"}
+              </td>
             </tr>
           ))}
         </tbody>

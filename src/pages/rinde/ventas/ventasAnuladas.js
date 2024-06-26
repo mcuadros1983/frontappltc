@@ -32,21 +32,18 @@ export default function VentasTotales() {
         return;
       }
 
-      const response = await fetch(
-        `${apiUrl}/ventas/anuladasfiltradas`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            fechaDesde: startDate,
-            fechaHasta: endDate,
-            sucursalId: selectedSucursal,
-          }),
-        }
-      );
+      const response = await fetch(`${apiUrl}/ventas/anuladasfiltradas`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: selectedSucursal,
+        }),
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.length === 0) {
@@ -54,7 +51,7 @@ export default function VentasTotales() {
           setVentasFiltradas([]);
           return;
         }
-        
+
         const ventasMapped = data.map((venta) => ({
           ...venta,
           sucursalNombre:
@@ -135,7 +132,7 @@ export default function VentasTotales() {
       <h1 className="my-list-title dark-text">Ventas Anuladas</h1>
 
       <div className="mb-3">
-        <div className="d-inline-block w-auto"> 
+        <div className="d-inline-block w-auto">
           <label className="mr-2">DESDE: </label>
           <input
             type="date"
@@ -210,7 +207,13 @@ export default function VentasTotales() {
           {currentSells.map((venta) => (
             <tr key={venta.id}>
               <td>{venta.fecha}</td>
-              <td>{venta.monto}</td>
+              <td>
+                {" "}
+                {parseFloat(venta.monto).toLocaleString("es-ES", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </td>
               <td>{venta.numeroticket}</td>
               <td>{venta.sucursalNombre}</td>
             </tr>
