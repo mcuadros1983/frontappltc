@@ -12,19 +12,45 @@ export default function CustomerList() {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // const loadCustomers = useCallback(async () => {
+  //   const res = await fetch(`${apiUrl}/clientes/`, {
+  //     credentials: "include",
+  //   });
+  //   const data = await res.json();
+  //   console.log("data", data)
+  //   // const sortedCustomers = data.sort((a, b) => a.id - b.id);
+  //   const sortedCustomers = data.sort((a, b) => {
+  //     if (a.nombre === "CENTRAL") return -1;
+  //     if (b.nombre === "CENTRAL") return 1;
+  //     return a.nombre.localeCompare(b.nombre);
+  //   });
+  //   setCustomers(sortedCustomers);
+  // },[apiUrl]);
+
   const loadCustomers = useCallback(async () => {
-    const res = await fetch(`${apiUrl}/clientes/`, {
-      credentials: "include",
-    });
-    const data = await res.json();
-    // const sortedCustomers = data.sort((a, b) => a.id - b.id);
-    const sortedCustomers = data.sort((a, b) => {
-      if (a.nombre === "CENTRAL") return -1;
-      if (b.nombre === "CENTRAL") return 1;
-      return a.nombre.localeCompare(b.nombre);
-    });
-    setCustomers(sortedCustomers);
-  },[apiUrl]);
+    try {
+      const res = await fetch(`${apiUrl}/clientes/`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const sortedCustomers = data.sort((a, b) => {
+          if (a.nombre === "CENTRAL") return -1;
+          if (b.nombre === "CENTRAL") return 1;
+          return a.nombre.localeCompare(b.nombre);
+        });
+        setCustomers(sortedCustomers);
+      } else {
+        setCustomers([]); // Set to empty array if data is empty or not an array
+      }
+    } catch (error) {
+      console.error('Failed to load customers:', error);
+      setCustomers([]); // Handle error by setting customers to empty array
+    }
+  }, [apiUrl]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(

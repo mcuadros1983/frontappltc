@@ -77,6 +77,7 @@ export default function CustomerForm() {
         const response = await fetch(`${apiUrl}/clientes`, {
           credentials: "include",
         });
+        console.log("lista", response)
         if (!response.ok) {
           throw new Error("Error al obtener la lista de clientes");
         }
