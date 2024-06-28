@@ -364,7 +364,7 @@ export default function SellForm() {
 
     if (
       !productData.precio &&
-      cliente.margen &&
+      cliente.margen >0 &&
       productData.costo &&
       productData.categoria_producto === "bovino"
     ) {
