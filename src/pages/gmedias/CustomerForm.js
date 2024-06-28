@@ -97,7 +97,7 @@ export default function CustomerForm() {
           }
         }
         console.log("datos", customer, apiUrl)
-        await fetch(`${apiUrl}/clientes`, {
+        await fetch(`${apiUrl}/clientes-new`, {
           credentials: "include",
           method: "POST",
           body: JSON.stringify(customer),
