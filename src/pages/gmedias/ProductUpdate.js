@@ -206,7 +206,7 @@ const ProductUpdate = () => {
         setSucursales(dataSucursales);
 
         // Llamada para obtener clientes
-        const resClientes = await fetch(`${apiUrl}/clientes/`, {
+        const resClientes = await fetch(`${apiUrl}/clientes`, {
           credentials: "include",
         });
         const dataClientes = await resClientes.json();

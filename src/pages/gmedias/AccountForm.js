@@ -27,7 +27,7 @@ export default function AccountForm() {
   const obtenerClientes = useCallback(async () => {
 
     try {
-      const response = await fetch(`${apiUrl}/clientes/`, {
+      const response = await fetch(`${apiUrl}/clientes`, {
         credentials: "include",
       }); // Ajusta la ruta de la API
       const data = await response.json();
