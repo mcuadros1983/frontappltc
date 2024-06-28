@@ -27,15 +27,23 @@ export default function CustomerList() {
   //   setCustomers(sortedCustomers);
   // },[apiUrl]);
 
+  // const apiUrl = process.env.REACT_APP_API_URL;
+
+  // const loadBranches = useCallback(async () => {
+  //   const res = await fetch(`${apiUrl}/sucursales/`, {
+  //     credentials: "include",
+  //   });
+  //   const data = await res.json();
+  //   const sortedBranches = data.sort((a, b) => a.id - b.id);
+  //   setBranches(sortedBranches);
+
+  // },[apiUrl]);
+
   const loadCustomers = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/clientes/`, {
         credentials: "include",
       });
-      console.log("res", res)
-      if (!res.ok) {
-        throw new Error('Network response was not ok');
-      }
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         const sortedCustomers = data.sort((a, b) => {
