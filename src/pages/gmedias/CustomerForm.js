@@ -45,10 +45,79 @@ export default function CustomerForm() {
     }
   }, [params.id,loadCustomer]);
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+
+  //   // Validar el formato del margen
+  //   const regex = /^\d+(\.\d{1,2})?$/;
+  //   // Validar el formato del margen solo si el campo no está vacío
+  //   if (customer.margen && !regex.test(customer.margen)) {
+  //     // Si el formato no es correcto y el campo no está vacío, muestra un mensaje de error y detén el envío del formulario
+  //     alert(
+  //       "El formato del margen no es válido. Debe ser un número con hasta dos decimales."
+  //     );
+  //     setLoading(false);
+  //     return;
+  //   }
+
+  //   try {
+  //     if (editing) {
+  //       await fetch(`${apiUrl}/clientes/${params.id}`, {
+  //         credentials: "include",
+  //         method: "PUT",
+  //         body: JSON.stringify(customer),
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       });
+  //       setEditing(false);
+  //     } else {
+  //       // Obtener todos los clientes
+  //       const response = await fetch(`${apiUrl}/clientes`, {
+  //         credentials: "include",
+  //       });
+  //       console.log("lista", response)
+  //       if (!response.ok) {
+  //         throw new Error("Error al obtener la lista de clientes");
+  //       }
+  //       const existingCustomers = await response.json();
+
+  //       // Verificar si el nombre del cliente ya existe
+  //       const customerNames = existingCustomers.map(
+  //         (customer) => customer.nombre
+  //       );
+  //       if (customerNames.includes(customer.nombre)) {
+  //         alert(
+  //           "El nombre del cliente ya existe. Por favor, ingresa un nombre diferente."
+  //         );
+  //         setLoading(false);
+  //         return;
+  //       }
+
+  //       await fetch(`${apiUrl}/clientes/`, {
+  //         credentials: "include",
+  //         method: "POST",
+  //         body: JSON.stringify(customer),
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       });
+  //     }
+  //     setLoading(false);
+  //     navigate("/customers");
+  //   } catch (error) {
+  //     // Manejar errores de la solicitud fetch
+  //     console.error("Error al enviar los datos al backend:", error);
+  //     setLoading(false);
+  //     // Aquí podrías mostrar un mensaje de error al usuario si lo deseas
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+  
     // Validar el formato del margen
     const regex = /^\d+(\.\d{1,2})?$/;
     // Validar el formato del margen solo si el campo no está vacío
@@ -60,7 +129,7 @@ export default function CustomerForm() {
       setLoading(false);
       return;
     }
-
+  
     try {
       if (editing) {
         await fetch(`${apiUrl}/clientes/${params.id}`, {
@@ -77,24 +146,23 @@ export default function CustomerForm() {
         const response = await fetch(`${apiUrl}/clientes`, {
           credentials: "include",
         });
-        console.log("lista", response)
-        if (!response.ok) {
-          throw new Error("Error al obtener la lista de clientes");
-        }
+        // console.log("lista", response);
+  
         const existingCustomers = await response.json();
-
-        // Verificar si el nombre del cliente ya existe
-        const customerNames = existingCustomers.map(
-          (customer) => customer.nombre
-        );
-        if (customerNames.includes(customer.nombre)) {
-          alert(
-            "El nombre del cliente ya existe. Por favor, ingresa un nombre diferente."
+        if (Array.isArray(existingCustomers)) {
+          // Verificar si el nombre del cliente ya existe
+          const customerNames = existingCustomers.map(
+            (customer) => customer.nombre
           );
-          setLoading(false);
-          return;
+          if (customerNames.includes(customer.nombre)) {
+            alert(
+              "El nombre del cliente ya existe. Por favor, ingresa un nombre diferente."
+            );
+            setLoading(false);
+            return;
+          }
         }
-
+  
         await fetch(`${apiUrl}/clientes/`, {
           credentials: "include",
           method: "POST",
@@ -113,6 +181,7 @@ export default function CustomerForm() {
       // Aquí podrías mostrar un mensaje de error al usuario si lo deseas
     }
   };
+  
 
   return (
     <Container className="d-flex flex-column align-items-center">
