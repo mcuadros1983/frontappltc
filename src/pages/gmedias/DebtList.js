@@ -36,7 +36,7 @@ const DebtList = () => {
 
   const fetchDebts = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/clientes`, {
+      const response = await fetch(`${apiUrl}/clientes/`, {
         credentials: "include",
       });
       const data = await response.json();

@@ -40,7 +40,7 @@ export default function ProductList() {
 
   // Función para cargar clientes
   const loadCustomers = useCallback(async () => {
-    const res = await fetch(`${apiUrl}/clientes`, {
+    const res = await fetch(`${apiUrl}/clientes/`, {
       credentials: "include",
     });
     const data = await res.json();

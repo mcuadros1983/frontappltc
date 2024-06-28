@@ -15,7 +15,7 @@ const AccountList = () => {
     try {
       // Lógica para obtener clientes con cuenta corriente desde el servidor
       // Puedes ajustar la ruta y la lógica según tu API
-      const response = await fetch(`${apiUrl}/clientes`, {
+      const response = await fetch(`${apiUrl}/clientes/`, {
         credentials: "include",
       });
       const data = await response.json();

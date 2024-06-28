@@ -71,7 +71,7 @@ export default function SellList() {
 
   const loadClients = useCallback(async () => {
     try {
-      const res = await fetch(`${apiUrl}/clientes`, {
+      const res = await fetch(`${apiUrl}/clientes/`, {
         credentials: "include",
       });
       const data = await res.json();

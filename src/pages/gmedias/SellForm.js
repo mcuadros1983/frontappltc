@@ -89,7 +89,7 @@ export default function SellForm() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const response = await fetch(`${apiUrl}/clientes`, {
+        const response = await fetch(`${apiUrl}/clientes/`, {
           credentials: "include",
         });
         const data = await response.json();
@@ -355,7 +355,7 @@ export default function SellForm() {
 
     //Obtener cliente
     const res = await fetch(
-      `${apiUrl}/clientes/${selectedCustomerId}`,
+      `${apiUrl}/clientes/${selectedCustomerId}/`,
       {
         credentials: "include",
       }

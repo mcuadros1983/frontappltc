@@ -26,7 +26,7 @@ export default function CustomerForm() {
   const params = useParams();
 
   const loadCustomer = useCallback(async (id) => {
-    const res = await fetch(`${apiUrl}/clientes/${id}`, {
+    const res = await fetch(`${apiUrl}/clientes/${id}/`, {
       credentials: "include",
     });
     const data = await res.json();
@@ -63,7 +63,7 @@ export default function CustomerForm() {
 
     try {
       if (editing) {
-        await fetch(`${apiUrl}/clientes/${params.id}`, {
+        await fetch(`${apiUrl}/clientes/${params.id}/`, {
           credentials: "include",
           method: "PUT",
           body: JSON.stringify(customer),
@@ -74,7 +74,7 @@ export default function CustomerForm() {
         setEditing(false);
       } else {
         // Obtener todos los clientes
-        const response = await fetch(`${apiUrl}/clientes`, {
+        const response = await fetch(`${apiUrl}/clientes/`, {
           credentials: "include",
         });
         console.log("lista", response)
@@ -97,7 +97,7 @@ export default function CustomerForm() {
           }
         }
         console.log("datos", customer, apiUrl)
-        await fetch(`${apiUrl}/clientes-new`, {
+        await fetch(`${apiUrl}/clientes-new/`, {
           credentials: "include",
           method: "POST",
           body: JSON.stringify(customer),
