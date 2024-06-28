@@ -13,7 +13,7 @@ export default function CustomerForm() {
   const [editing, setEditing] = useState(false); //estado para saber si se esta editando o no
 
   const apiUrl = process.env.REACT_APP_API_URL;
-  
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCustomer({
@@ -32,18 +32,18 @@ export default function CustomerForm() {
     const data = await res.json();
     setCustomer(data);
     setEditing(true);
-  },[apiUrl]);
+  }, [apiUrl]);
 
   useEffect(() => {
     if (params.id) {
       loadCustomer(params.id);
     } else {
       setEditing(false);
-      setCustomer({ 
+      setCustomer({
         nombre: "",
       });
     }
-  }, [params.id,loadCustomer]);
+  }, [params.id, loadCustomer]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,18 +83,19 @@ export default function CustomerForm() {
         // }
         const existingCustomers = await response.json();
 
-        // Verificar si el nombre del cliente ya existe
-        const customerNames = existingCustomers.map(
-          (customer) => customer.nombre
-        );
-        if (customerNames.includes(customer.nombre)) {
-          alert(
-            "El nombre del cliente ya existe. Por favor, ingresa un nombre diferente."
+        if (Array.isArray(existingCustomers)) {
+          // Verificar si el nombre del cliente ya existe
+          const customerNames = existingCustomers.map(
+            (customer) => customer.nombre
           );
-          setLoading(false);
-          return;
+          if (customerNames.includes(customer.nombre)) {
+            alert(
+              "El nombre del cliente ya existe. Por favor, ingresa un nombre diferente."
+            );
+            setLoading(false);
+            return;
+          }
         }
-
         await fetch(`${apiUrl}/clientes/`, {
           credentials: "include",
           method: "POST",
