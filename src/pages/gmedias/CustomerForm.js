@@ -97,7 +97,7 @@ export default function CustomerForm() {
           }
         }
         console.log("datos", customer, apiUrl)
-        await fetch(`${apiUrl}/clientes-new/`, {
+        const nuevoCliente = await fetch(`${apiUrl}/clientes-new/`, {
           credentials: "include",
           method: "POST",
           body: JSON.stringify(customer),
@@ -105,6 +105,7 @@ export default function CustomerForm() {
             "Content-Type": "application/json",
           },
         });
+        console.log("nuevoCliente", nuevoCliente)
       }
       setLoading(false);
       navigate("/customers");

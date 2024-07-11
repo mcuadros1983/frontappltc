@@ -30,6 +30,7 @@ export default function VentasTotalesPorFecha() {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log("data", data)
         if (data.length === 0) {
           alert("No existen ventas para la fecha indicada.");
           return;
@@ -70,7 +71,7 @@ export default function VentasTotalesPorFecha() {
     setVentasTotales(tabla);
     setActiveSucursales(sucursalesActivas);
   };
-
+ 
   return (
     <Container>
       <h1>Comparativo de ventas</h1>
@@ -148,3 +149,4 @@ export default function VentasTotalesPorFecha() {
     </Container>
   );
 }
+
