@@ -221,7 +221,7 @@ const SideBar = () => {
               className="nav-link"
               style={{ color: "white", whiteSpace: "nowrap" }}
             >
-              Ventas
+              Ventas Medias
             </Link>
           </Nav.Item>
           <Collapse in={sellitem}>
