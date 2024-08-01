@@ -75,6 +75,7 @@ import KgPorUsuario from "./pages/rinde/ventas/kgPorUsuario";
 import KgPorSucursal from "./pages/rinde/ventas/kgPorSucursal";
 import SaldosCtaCteSucursal from "./pages/caja/saldosctactesucursal";
 import DetalleCtaCte from "./pages/caja/detallectacte";
+import CantidadTicketPorUsuario from "./pages/rinde/ventas/cantidadTicketPorUsuario";
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -160,6 +161,7 @@ export default function App() {
                   <Route path="/sells/user" element={<VentasPorUsuario />} />
                   <Route path="/sells/kg_user" element={<KgPorUsuario />} />
                   <Route path="/sells/kg_branch" element={<KgPorSucursal />} />
+                  <Route path="/sells/quantity" element={<CantidadTicketPorUsuario />} />
                   {/* Rutas info de caja */}
                   <Route path="/info/register" element={<Cajas />} />
                   <Route path="/info/expenses" element={<Gastos />} />

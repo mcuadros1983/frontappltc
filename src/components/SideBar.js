@@ -476,6 +476,13 @@ const SideBar = () => {
               >
                 Kg por Sucursal
               </Link>
+              <Link
+                to="/sells/quantity"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+              >
+                Cantidad Tickets
+              </Link>
               {/* )} */}
             </div>
           </Collapse>

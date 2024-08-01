@@ -9,7 +9,7 @@ export default function KgPorUsuario() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [sellsPerPage] = useState(20);
+  const [sellsPerPage] = useState(1);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
   const [selectedSucursal, setSelectedSucursal] = useState(""); // Estado para la sucursal seleccionada
@@ -52,7 +52,9 @@ export default function KgPorUsuario() {
         }
 
         setVentasFiltradas(data.ventasFiltradas);
-        setVentasAgrupadas(data.ventasAgrupadas); // Guardar ventas agrupadas
+        const ventasAgrupadas = agruparVentasPorUsuario(data.ventasFiltradas);
+        console.log("ventas", ventasAgrupadas)
+        setVentasAgrupadas(ventasAgrupadas); // Guardar ventas agrupadas
       } else {
         throw new Error(
           "Error al obtener las ventas en kg por usuario filtradas"
@@ -63,12 +65,24 @@ export default function KgPorUsuario() {
     }
   };
 
+  const agruparVentasPorUsuario = (ventas) => {
+    const ventasAgrupadas = ventas.reduce((acc, venta) => {
+      const { usuario_id, total_cantidadpeso } = venta;
+      if (!acc[usuario_id]) {
+        acc[usuario_id] = { usuario_id, total_kg: 0 };
+      }
+      acc[usuario_id].total_kg += parseInt(total_cantidadpeso);
+      return acc;
+    }, {});
+
+    return Object.values(ventasAgrupadas);
+  };
+
   const handleSort = (columnName) => {
     const isAsc = columnName === sortColumn && sortDirection === "asc";
     setSortDirection(isAsc ? "desc" : "asc");
     setSortColumn(columnName);
-    // setVentasFiltradas(
-    //   [...ventasFiltradas].sort((a, b) => {
+
     setVentasAgrupadas(
       [...ventasAgrupadas].sort((a, b) => {
         let valueA = a[columnName];
@@ -95,14 +109,11 @@ export default function KgPorUsuario() {
 
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
-  // const currentSells = ventasFiltradas.slice(indexOfFirstSell, indexOfLastSell);
-  const currentSells = ventasAgrupadas.slice(indexOfFirstSell, indexOfLastSell);
+  console.log("ventasAgrupadas2", ventasAgrupadas)
+  const currentSells = ventasAgrupadas.slice(indexOfFirstSell, indexOfLastSell );
 
-  // const nextPage = () => {
-  //   if (currentPage < Math.ceil(ventasFiltradas.length / sellsPerPage)) {
-  //     setCurrentPage(currentPage + 1);
-  //   }
-  // };
+  console.log("currentsells", currentSells)
+
   const nextPage = () => {
     if (currentPage < Math.ceil(ventasAgrupadas.length / sellsPerPage)) {
       setCurrentPage(currentPage + 1);
@@ -138,7 +149,7 @@ export default function KgPorUsuario() {
           />
         </div>
       </div>
-
+{/* 
       <div className="mb-3">
         <FormControl
           as="select"
@@ -154,93 +165,31 @@ export default function KgPorUsuario() {
             </option>
           ))}
         </FormControl>
-      </div>
+      </div> */}
       <div className="mb-3">
         <Button onClick={handleFilter}>Filtrar</Button>
       </div>
-
-      {/* <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th onClick={() => handleSort("fecha")}>Fecha</th>
-            <th onClick={() => handleSort("usuario_id")}>Usuario</th>
-            <th onClick={() => handleSort("sucursal_id")}>Sucursal</th>
-            <th onClick={() => handleSort("articulocodigo")}>Artículo</th>
-            <th onClick={() => handleSort("total_cantidadpeso")}>Total Kg</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentSells.map((venta, index) => (
-            <tr key={`${venta.fecha}-${venta.sucursal_id}-${venta.articulocodigo}-${index}`}>
-              <td>{venta.fecha}</td>
-              <td>
-                {context.usuariosTabla.find(
-                  (usuario) => usuario.id === parseInt(venta.usuario_id)
-                )?.nombre_completo || "Desconocido"}
-              </td>
-              <td>
-                {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
-                )?.nombre || "Desconocido"}
-              </td>
-              <td>
-                {context.articulosTabla.find(
-                  (articulo) => articulo.codigobarra === venta.articulocodigo
-                )?.descripcion || "Desconocido"}
-              </td>
-              <td>{venta.total_cantidadpeso}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table> */}
-
       <h2 className="my-list-title dark-text">Total Kg por Usuario</h2>
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th onClick={() => handleSort("fecha")}>Fecha</th>
             <th onClick={() => handleSort("usuario_id")}>Usuario</th>
-            <th onClick={() => handleSort("sucursal_id")}>Sucursal</th>
-            <th onClick={() => handleSort("total_cantidadpeso")}>Total Kg</th>
+            <th onClick={() => handleSort("total_kg")}>Total Kg</th>
           </tr>
         </thead>
         <tbody>
           {currentSells.map((venta, index) => (
-            <tr key={`${venta.fecha}-${venta.sucursal_id}-${venta.usuario_id}-${index}`}>
-              <td>{venta.fecha}</td>
+            <tr key={`${venta.usuario_id}-${index}`}>
               <td>
                 {context.usuariosTabla.find(
                   (usuario) => usuario.id === parseInt(venta.usuario_id)
                 )?.nombre_completo || "Desconocido"}
-              </td>
-              <td>
-                {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
-                )?.nombre || "Desconocido"}
               </td>
               <td>{venta.total_kg}</td>
             </tr>
           ))}
         </tbody>
       </Table>
-
-      {/* <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={prevPage} disabled={currentPage === 1}>
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(ventasFiltradas.length / sellsPerPage)}
-        </span>
-        <Button
-          onClick={nextPage}
-          disabled={
-            currentPage === Math.ceil(ventasFiltradas.length / sellsPerPage)
-          }
-        >
-          <BsChevronRight />
-        </Button>
-      </div> */}
       <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
           <BsChevronLeft />
