@@ -17,3 +17,17 @@
     background-color: white; /* asegura que la columna fija tenga fondo para no ver datos "tras" ella */
     z-index: 1; /* asegura que la columna fija se muestre sobre el scroll de otras columnas */
 }
+
+.fixed-header thead th {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 2;
+  }
+  
+  .fixed-first-column {
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 3;
+  }

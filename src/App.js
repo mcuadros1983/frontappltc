@@ -70,6 +70,9 @@ import FormulasForm from "./pages/rinde/formulas/formulasForm";
 import Stock from "./pages/rinde/inventarios/stock";
 import Cierres from "./pages/caja/cierres";
 import VentasComparativo from "./pages/rinde/ventas/ventasComparativo";
+import VentasPorUsuario from "./pages/rinde/ventas/ventasPorUsuario";
+import KgPorUsuario from "./pages/rinde/ventas/kgPorUsuario";
+import KgPorSucursal from "./pages/rinde/ventas/kgPorSucursal";
 import SaldosCtaCteSucursal from "./pages/caja/saldosctactesucursal";
 import DetalleCtaCte from "./pages/caja/detallectacte";
 
@@ -154,6 +157,9 @@ export default function App() {
                   <Route path="/sells/totalcomparativo" element={<VentasComparativo />} />
                   <Route path="/sells/customers" element={<VentasClientes />} />
                   <Route path="/sells/articles" element={<VentasArticulos />} />
+                  <Route path="/sells/user" element={<VentasPorUsuario />} />
+                  <Route path="/sells/kg_user" element={<KgPorUsuario />} />
+                  <Route path="/sells/kg_branch" element={<KgPorSucursal />} />
                   {/* Rutas info de caja */}
                   <Route path="/info/register" element={<Cajas />} />
                   <Route path="/info/expenses" element={<Gastos />} />

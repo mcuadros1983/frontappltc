@@ -455,6 +455,27 @@ const SideBar = () => {
               >
                 Ventas por Art
               </Link>
+              <Link
+                to="/sells/user"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+              >
+                Ventas por Usuario
+              </Link>
+              <Link
+                to="/sells/kg_user"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+              >
+                Kg por Usuario
+              </Link>
+              <Link
+                to="/sells/kg_branch"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+              >
+                Kg por Sucursal
+              </Link>
               {/* )} */}
             </div>
           </Collapse>

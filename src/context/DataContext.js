@@ -14,6 +14,7 @@ export default function DataContextProvider({ children }) {
   const [planTarjetaTabla, setPlanTarjetaTabla] = useState(null);
   const [clientesTabla, setClientesTabla] = useState(null);
   const [empleados, setEmpleados] = useState(null);
+  const [usuariosTabla, setUsuariosTabla] = useState(null);
 
   const apiUrl = process.env.REACT_APP_API_URL;
   
@@ -99,6 +100,12 @@ export default function DataContextProvider({ children }) {
       const dataEmpleadosTabla = await resEmpleadosTabla.json();
       setEmpleados(dataEmpleadosTabla);
 
+      const resUsuariosTabla = await fetch(
+        `${apiUrl}/obtenerusuario`
+      );
+      const dataUsuariosTabla = await resUsuariosTabla.json();
+      setUsuariosTabla(dataUsuariosTabla);
+
       const resSubcategoriasTabla = await fetch(
         `${apiUrl}/obtenersubcategorias`
       );
@@ -125,6 +132,7 @@ export default function DataContextProvider({ children }) {
         formasPago,
         setFormasPago,
         empleados,
+        usuariosTabla,
         sucursalesTabla,
         articulosTabla,
         tipoDeIngresoTabla,

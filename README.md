@@ -68,3 +68,16 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+###
+
+- Las ventas por usuario y las ventas con articulos y kg por usuario, toman la ultima fecha de la sucursal lo cual podria generar errores en caso de que se haga un cierre de ventas y se vuelva a abrir el mismo dia, ya que estas ventas posteriores no se estarian tomando en cuenta
+- Existe codigo hardcodeado lo cual se deberia corregir a futuro por ejepmlo en el controlador de ventas rinde existe este codigo:
+
+    const articuloFilters = {
+      ...filters,
+      articuloCodigo: {
+        [Op.in]: ["1005", "1012", "1011"],
+      },
+    };
+
