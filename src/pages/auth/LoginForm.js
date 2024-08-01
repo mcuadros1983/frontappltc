@@ -46,6 +46,7 @@ const LoginForm = () => {
       style={{ minHeight: "100vh" }}
     >
       <div className="w-100" style={{ maxWidth: "400px" }}>
+        <h1 className="text-center mb-4">Sistema de Gestión</h1>
         <h2 className="text-center mb-4">Iniciar Sesión</h2>
         <Form onSubmit={handleSubmit}>
           <Form.Group controlId="formUsername">
