@@ -123,7 +123,7 @@ export default function CantidadTicketPorUsuario() {
 
   return (
     <Container>
-      <h1 className="my-list-title dark-text">Cantidad de Tickets por Usuario</h1>
+      <h1 className="my-list-title dark-text">Cantidad de Tickets </h1>
       <div className="mb-3">
         <div className="d-inline-block w-auto">
           <label className="mr-2">DESDE: </label>
@@ -157,45 +157,6 @@ export default function CantidadTicketPorUsuario() {
           <option value="usuario">Filtrar por Usuario</option>
         </FormControl>
       </div>
-
-      {/* {filterBy === "sucursal" && (
-        <div className="mb-3">
-          <FormControl
-            as="select"
-            className="mr-2"
-            value={selectedSucursal}
-            onChange={(e) => setSelectedSucursal(e.target.value)}
-            style={{ width: "25%" }}
-          >
-            <option value="">Seleccionar sucursal</option>
-            {context.sucursalesTabla.map((sucursal) => (
-              <option key={sucursal.id} value={sucursal.id}>
-                {sucursal.nombre}
-              </option>
-            ))}
-          </FormControl>
-        </div>
-      )} */}
-{/* 
-      {filterBy === "usuario" && (
-        <div className="mb-3">
-          <FormControl
-            as="select"
-            className="mr-2"
-            value={selectedUsuario}
-            onChange={(e) => setSelectedUsuario(e.target.value)}
-            style={{ width: "25%" }}
-          >
-            <option value="">Seleccionar usuario</option>
-            {context.usuariosTabla.map((usuario) => (
-              <option key={usuario.id} value={usuario.id}>
-                {usuario.nombre_completo}
-              </option>
-            ))}
-          </FormControl>
-        </div>
-      )} */}
-
       <div className="mb-3">
         <Button onClick={handleFilter}>Filtrar</Button>
       </div>
@@ -226,7 +187,7 @@ export default function CantidadTicketPorUsuario() {
                 </td>
               )}
               <td>{venta.cantidad}</td>
-              <td>{venta.total_monto}</td>
+              <td>{venta.total_monto.toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
