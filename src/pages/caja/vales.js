@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useContext,useCallback } from "react";
-import { Container, Table, Button, FormControl } from "react-bootstrap";
+import React, { useState, useEffect, useContext, useCallback } from "react";
+import { Container, Table, Button, FormControl, Form } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
+import * as XLSX from 'xlsx';
 
 export default function Vales() {
   const [vales, setVales] = useState([]);
@@ -9,7 +10,7 @@ export default function Vales() {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [paginaActual, setPaginaActual] = useState(1);
-  const [valesPorPagina] = useState(10);
+  const [valesPorPagina, setValesPorPagina] = useState(10);
   const [columnaOrden, setColumnaOrden] = useState(null);
   const [direccionOrden, setDireccionOrden] = useState("asc");
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
@@ -20,8 +21,6 @@ export default function Vales() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  
-  // Utiliza useCallback para memorizar la función
   const manejadorFiltroClienteSeleccionado = useCallback(() => {
     let valesFiltrados = [...valesOriginales];
     if (clienteSeleccionado) {
@@ -31,18 +30,14 @@ export default function Vales() {
     }
     setVales(valesFiltrados);
     setPaginaActual(1);
-  }, [clienteSeleccionado, valesOriginales]); // Dependencias para useCallback
+  }, [clienteSeleccionado, valesOriginales]);
 
   useEffect(() => {
     manejadorFiltroClienteSeleccionado();
-  }, [manejadorFiltroClienteSeleccionado]); // useEffect ahora depende de la versión memorizada de la función
-
-
-
+  }, [manejadorFiltroClienteSeleccionado]);
 
   const manejarFiltro = async () => {
     try {
-      // Validación de fechas
       if (!esFechaValida(fechaDesde) || !esFechaValida(fechaHasta)) {
         alert("Ingrese una fecha válida.");
         return;
@@ -65,27 +60,21 @@ export default function Vales() {
       if (respuesta.ok) {
         const datos = await respuesta.json();
         if (datos.length === 0) {
-          alert("No existe informacion para la fecha indicada.");
-          ;
+          alert("No existe información para la fecha indicada.");
           return;
         }
         setVales(datos);
-        setValesOriginales(datos); // Actualizar valesOriginales
-        setPaginaActual(1); // Reiniciar a la primera página después de cada búsqueda
-        setClienteSeleccionado("")
-        // console.log("datos", datos)
+        setValesOriginales(datos);
+        setPaginaActual(1);
+        setClienteSeleccionado("");
 
-        // Filtrar los clientes relacionados con los vales obtenidos
         const clientes = datos.map((vale) => parseInt(vale.cliente_id));
         const clientesUnicos = [...new Set(clientes)];
 
-        // console.log("datos2", clientesUnicos)
-        // console.log("datos3", contexto.clientesTabla)
         const clientesFiltrados = contexto.clientesTabla.filter((cliente) =>
           clientesUnicos.includes(cliente.id)
         );
 
-        // console.log("datos4", clientesFiltrados)
         setClientesFiltrados(clientesFiltrados);
       } else {
         throw new Error("Error al obtener los vales");
@@ -126,9 +115,9 @@ export default function Vales() {
 
   const esFechaValida = (cadenaFecha) => {
     const regEx = /^\d{4}-\d{2}-\d{2}$/;
-    if (!cadenaFecha.match(regEx)) return false; // Formato incorrecto
+    if (!cadenaFecha.match(regEx)) return false;
     const fecha = new Date(cadenaFecha);
-    if (!fecha.getTime()) return false; // Fecha inválida (por ejemplo, 31/04/2024)
+    if (!fecha.getTime()) return false;
     return fecha.toISOString().slice(0, 10) === cadenaFecha;
   };
 
@@ -140,8 +129,6 @@ export default function Vales() {
   const indicePrimerVale = indiceUltimoVale - valesPorPagina;
   const valesActuales = vales.slice(indicePrimerVale, indiceUltimoVale);
 
-  // const cambiarPagina = (numeroPagina) => setPaginaActual(numeroPagina);
-
   const paginaSiguiente = () => {
     if (paginaActual < Math.ceil(vales.length / valesPorPagina)) {
       setPaginaActual(paginaActual + 1);
@@ -152,6 +139,33 @@ export default function Vales() {
     if (paginaActual > 1) {
       setPaginaActual(paginaActual - 1);
     }
+  };
+
+  const exportarExcel = () => {
+    const valesParaExportar = vales.map((vale) => {
+      const sucursalNombre = contexto.sucursalesTabla.find(
+        (sucursal) => sucursal.id === parseInt(vale.sucursal_id)
+      )?.nombre || "Desconocido";
+
+      const clienteNombre = contexto.clientesTabla.find(
+        (cliente) => cliente.id === parseInt(vale.cliente_id)
+      );
+      const clienteCompleto = clienteNombre
+        ? `${clienteNombre.nombre} ${clienteNombre.apellido}`
+        : "Desconocido";
+
+      return {
+        Fecha: vale.fecha,
+        Importe: vale.importecupon,
+        Sucursal: sucursalNombre,
+        Cliente: clienteCompleto,
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(valesParaExportar);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Vales");
+    XLSX.writeFile(wb, "vales.xlsx");
   };
 
   return (
@@ -214,7 +228,22 @@ export default function Vales() {
       </div>
 
       <div className="mb-3">
-        <Button onClick={manejarBusqueda}>Filtrar</Button>
+        <Button onClick={manejarBusqueda} className="mr-2">Filtrar</Button>
+        <Button onClick={exportarExcel} disabled={vales.length === 0}>Exportar a Excel</Button>
+      </div>
+
+      <div className="mb-3">
+        <FormControl
+          as="select"
+          value={valesPorPagina}
+          onChange={(e) => setValesPorPagina(parseInt(e.target.value))}
+          className="mr-2"
+          style={{ width: "10%" }}
+        >
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </FormControl>
       </div>
 
       <Table striped bordered hover>
@@ -248,25 +277,23 @@ export default function Vales() {
         </thead>
         <tbody>
           {valesActuales.map((vale) => {
+            const sucursalNombre = contexto.sucursalesTabla.find(
+              (sucursal) => sucursal.id === parseInt(vale.sucursal_id)
+            )?.nombre || "Desconocido";
+
+            const clienteNombre = contexto.clientesTabla.find(
+              (cliente) => cliente.id === parseInt(vale.cliente_id)
+            );
+            const clienteCompleto = clienteNombre
+              ? `${clienteNombre.nombre} ${clienteNombre.apellido}`
+              : "Desconocido";
 
             return (
               <tr key={vale.id}>
                 <td>{vale.fecha}</td>
                 <td>{vale.importecupon}</td>
-                <td>
-                  {contexto.sucursalesTabla.find(
-                    (sucursal) => sucursal.id === parseInt(vale.sucursal_id)
-                  )?.nombre || "Desconocido"}
-                </td>
-                <td>
-                  {contexto.clientesTabla.find(
-                    (cliente) => cliente.id === parseInt(vale.cliente_id)
-                  )?.nombre || ""}
-                  &nbsp;
-                  {contexto.clientesTabla.find(
-                    (cliente) => cliente.id === parseInt(vale.cliente_id)
-                  )?.apellido || "Desconocido"}
-                </td>
+                <td>{sucursalNombre}</td>
+                <td>{clienteCompleto}</td>
               </tr>
             );
           })}
@@ -289,3 +316,4 @@ export default function Vales() {
     </Container>
   );
 }
+
