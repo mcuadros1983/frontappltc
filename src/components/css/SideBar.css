@@ -1,0 +1,15 @@
+/* SideBar.css */
+.sidebar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sidebar {
+  width: 100%;
+  transition: transform 0.3s ease;
+}
+
+.sidebar.hidden {
+  display: none;
+}
