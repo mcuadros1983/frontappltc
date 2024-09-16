@@ -1,41 +1,28 @@
-// // components/Layout.js
-// import React from 'react';
-// import { Container, Row, Col } from 'react-bootstrap';
-// import Navigation from './Navbar';
-// import SideBar from './SideBar';
-
-// const Layout = ({ children }) => {
-//   return (
-//     <>
-//       <Navigation />
-//       <Container fluid>
-//         <Row>
-//           <Col
-//             xs={1}
-//             style={{
-//               backgroundColor: '#343a40',
-//               minHeight: '100vh',
-//               color: 'white',
-//               minWidth: '200px',
-//             }}
-//           >
-//             <SideBar />
-//           </Col>
-//           <Col style={{ minWidth: '200px' }}>{children}</Col>
-//         </Row>
-//       </Container>
-//     </>
-//   );
-// };
-import React, { useState } from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Button } from 'react-bootstrap';
 import Navigation from './Navbar';
 import SideBar from './SideBar';
 import { FaBars, FaTimes } from "react-icons/fa"; // Importar íconos
 import './css/Layout.css';
 
 const Layout = ({ children }) => {
-  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSidebarVisible, setIsSidebarVisible] = useState(!isMobile);
+
+  // Detecta cambios en el tamaño de la pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setIsMobile(true);
+        setIsSidebarVisible(false); // Sidebar oculto inicialmente en pantallas pequeñas
+      } else {
+        setIsMobile(false);
+        setIsSidebarVisible(true); // Sidebar siempre visible en pantallas grandes
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
@@ -44,24 +31,70 @@ const Layout = ({ children }) => {
   return (
     <>
       <Navigation />
+
+      {/* Botón hamburguesa visible solo en pantallas pequeñas */}
+      {isMobile && (
+        <Button
+          onClick={toggleSidebar}
+          style={{
+            position: 'absolute', // Alinea con el flow del contenido
+            top: '70px', // Debajo del navbar
+            left: '10px',
+            zIndex: 1000,
+          }}
+        >
+          ☰
+        </Button>
+      )}
+
       <Container fluid>
         <Row>
-          <Col
-            className={`sidebar-col ${isSidebarVisible ? 'visible' : 'hidden'}`}
-          >
-            <SideBar isSidebarVisible={isSidebarVisible} toggleSidebar={toggleSidebar} />
-          </Col>
-
-          {/* Columna para el botón de toggle */}
-          <div className={`toggle-sidebar-col ${isSidebarVisible ? 'visible' : 'hidden'}`}>
-            <div className="toggle-sidebar-button" onClick={toggleSidebar}>
-              {isSidebarVisible ? <FaTimes /> : <FaBars />}
+          {/* Sidebar visible solo si está habilitado */}
+          {isMobile ? (
+            <div
+              className={`sidebar-wrapper ${isSidebarVisible ? 'visible' : ''}`}
+              style={{
+                backgroundColor: '#343a40',
+                minHeight: '100vh',
+                color: 'white',
+                position: 'absolute', // Alineado con el flujo debajo del navbar
+                top: '70px', // Debajo del navbar
+                left: isSidebarVisible ? '0' : '-250px', // Aparece o desaparece en pantallas pequeñas
+                width: '250px',
+                zIndex: 999, // Se asegura de que esté por encima del contenido, pero no del navbar
+                transition: 'left 0.3s ease',
+                overflowY: 'auto',
+              }}
+            >
+              <SideBar toggleSidebar={toggleSidebar} isMobile={isMobile} />
             </div>
-          </div>
+          ) : (
+            <Col
+              xs={12}
+              lg={2} // Sidebar visible en pantallas grandes
+              style={{
+                backgroundColor: '#343a40',
+                minHeight: '100vh',
+                color: 'white',
+                minWidth: '200px',
+              }}
+            >
+              <SideBar />
+            </Col>
+          )}
 
+          {/* El contenido principal que no se ve afectado por el sidebar en pantallas pequeñas */}
           <Col
-            xs={isSidebarVisible ? 10 : 12} // Ajusta el contenido para ocupar todo el ancho cuando el sidebar está oculto
-            className="main-content-col"
+            xs={12}
+            lg={10}
+            style={{
+              paddingLeft: '0',
+              paddingRight: '0',
+              marginTop: '70px', // Asegura que el contenido comience debajo del navbar
+              position: 'relative',
+              zIndex: isMobile ? 1 : 'auto', // En pantallas pequeñas, el contenido tiene menor z-index que el sidebar
+              transition: 'margin-left 0.3s ease',
+            }}
           >
             {children}
           </Col>

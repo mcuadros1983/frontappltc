@@ -12,33 +12,6 @@ export default function CustomerList() {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  // const loadCustomers = useCallback(async () => {
-  //   const res = await fetch(`${apiUrl}/clientes/`, {
-  //     credentials: "include",
-  //   });
-  //   const data = await res.json();
-  //   console.log("data", data)
-  //   // const sortedCustomers = data.sort((a, b) => a.id - b.id);
-  //   const sortedCustomers = data.sort((a, b) => {
-  //     if (a.nombre === "CENTRAL") return -1;
-  //     if (b.nombre === "CENTRAL") return 1;
-  //     return a.nombre.localeCompare(b.nombre);
-  //   });
-  //   setCustomers(sortedCustomers);
-  // },[apiUrl]);
-
-  // const apiUrl = process.env.REACT_APP_API_URL;
-
-  // const loadBranches = useCallback(async () => {
-  //   const res = await fetch(`${apiUrl}/sucursales/`, {
-  //     credentials: "include",
-  //   });
-  //   const data = await res.json();
-  //   const sortedBranches = data.sort((a, b) => a.id - b.id);
-  //   setBranches(sortedBranches);
-
-  // },[apiUrl]);
-
   const loadCustomers = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/clientes/`, {

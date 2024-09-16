@@ -76,6 +76,16 @@ import KgPorSucursal from "./pages/rinde/ventas/kgPorSucursal";
 import SaldosCtaCteSucursal from "./pages/caja/saldosctactesucursal";
 import DetalleCtaCte from "./pages/caja/detallectacte";
 import CantidadTicketPorUsuario from "./pages/rinde/ventas/cantidadTicketPorUsuario";
+import CategoriaEquipoForm from "./pages/mantenimiento/categoriaEquipoForm";
+import CategoriaEquipoList from "./pages/mantenimiento/categoriaEquipoList";
+import EquipoForm from "./pages/mantenimiento/equipoForm";
+import EquipoList from "./pages/mantenimiento/equipoList";
+import MantenimientoForm from "./pages/mantenimiento/mantenimientoForm";
+import MantenimientoList from "./pages/mantenimiento/mantenimientoList";
+import OrdenMantenimientoForm from "./pages/mantenimiento/ordenMantenimientoForm";
+import OrdenMantenimientoList from "./pages/mantenimiento/ordenMantenimientoList";
+import MantenimientoPreventivoList from "./pages/mantenimiento/mantenimientoPreventivoList";
+import MantenimientoPreventivoForm from "./pages/mantenimiento/mantenimientoPreventivoForm";
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -155,41 +165,134 @@ export default function App() {
                     element={<VentasDescuentos />}
                   />
                   <Route path="/sells/total" element={<VentasTotales />} />
-                  <Route path="/sells/totalcomparativo" element={<VentasComparativo />} />
+                  <Route
+                    path="/sells/totalcomparativo"
+                    element={<VentasComparativo />}
+                  />
                   <Route path="/sells/customers" element={<VentasClientes />} />
                   <Route path="/sells/articles" element={<VentasArticulos />} />
                   <Route path="/sells/user" element={<VentasPorUsuario />} />
                   <Route path="/sells/kg_user" element={<KgPorUsuario />} />
                   <Route path="/sells/kg_branch" element={<KgPorSucursal />} />
-                  <Route path="/sells/quantity" element={<CantidadTicketPorUsuario />} />
+                  <Route
+                    path="/sells/quantity"
+                    element={<CantidadTicketPorUsuario />}
+                  />
                   {/* Rutas info de caja */}
                   <Route path="/info/register" element={<Cajas />} />
                   <Route path="/info/expenses" element={<Gastos />} />
                   <Route path="/info/withdrawals" element={<Retiros />} />
                   <Route path="/info/vouchers" element={<Vales />} />
-                  <Route path="/info/creditcard" element={<Cupones />} /> 
+                  <Route path="/info/creditcard" element={<Cupones />} />
                   <Route path="/info/salaries" element={<Sueldos />} />
                   <Route path="/info/incomes" element={<Ingresos />} />
                   <Route path="/info/salesaccount" element={<VentasCtaCte />} />
-                  <Route path="/info/collectionsaccount" element={<CobranzasCtaCte />} />
+                  <Route
+                    path="/info/collectionsaccount"
+                    element={<CobranzasCtaCte />}
+                  />
                   <Route path="/info/cashclosure" element={<Cierres />} />
-                  <Route path="/info/balanceaccount" element={<SaldosCtaCte />} />
-                  <Route path="/info/balanceaccountbranch" element={<SaldosCtaCteSucursal />} />
-                  <Route path="/info/balanceaccountdetail" element={<DetalleCtaCte />} />
+                  <Route
+                    path="/info/balanceaccount"
+                    element={<SaldosCtaCte />}
+                  />
+                  <Route
+                    path="/info/balanceaccountbranch"
+                    element={<SaldosCtaCteSucursal />}
+                  />
+                  <Route
+                    path="/info/balanceaccountdetail"
+                    element={<DetalleCtaCte />}
+                  />
                   <Route path="/info/detail" element={<DetalleDeCaja />} />
-                  <Route path="/inventory/inventories" element={<Inventario />} />
-                  <Route path="/inventory/:inventarioId/articles" element={<InventariosArticulos />} />
-                  <Route path="/inventory/movements/" element={<MovimientosInternos />} />
-                  <Route path="/inventory/performance/" element={<CalculoRinde />} />
-                  <Route path="/inventory/performancelist/" element={<ListaRindes />} />
+                  <Route
+                    path="/inventory/inventories"
+                    element={<Inventario />}
+                  />
+                  <Route
+                    path="/inventory/:inventarioId/articles"
+                    element={<InventariosArticulos />}
+                  />
+                  <Route
+                    path="/inventory/movements/"
+                    element={<MovimientosInternos />}
+                  />
+                  <Route
+                    path="/inventory/performance/"
+                    element={<CalculoRinde />}
+                  />
+                  <Route
+                    path="/inventory/performancelist/"
+                    element={<ListaRindes />}
+                  />
                   <Route path="/inventory/stock/" element={<Stock />} />
                   <Route path="/prices" element={<ArticulosPrecios />} />
-                  <Route path="/prices_update" element={<ArticulosPreciosActualizar/>} />
-                  <Route path="/percent" element={<ArticulosPorcentaje/>} />
-                  <Route path="/percent_update" element={<ArticulosPorcentajeActualizar/>} />
-                  <Route path="/formulas" element={<Formulas/>} />
-                  <Route path="/formulas/create" element={<FormulasForm/>} />
-                  <Route path="/formulas/:formulaId" element={<FormulasItems/>} />
+                  <Route
+                    path="/prices_update"
+                    element={<ArticulosPreciosActualizar />}
+                  />
+                  <Route path="/percent" element={<ArticulosPorcentaje />} />
+                  <Route
+                    path="/percent_update"
+                    element={<ArticulosPorcentajeActualizar />}
+                  />
+                  <Route path="/formulas" element={<Formulas />} />
+                  <Route path="/formulas/create" element={<FormulasForm />} />
+                  <Route
+                    path="/formulas/:formulaId"
+                    element={<FormulasItems />}
+                  />
+                  <Route
+                    path="/categorias-equipos"
+                    element={<CategoriaEquipoList />}
+                  />
+                  <Route
+                    path="/categorias-equipos/new"
+                    element={<CategoriaEquipoForm />}
+                  />
+                  <Route
+                    path="/categorias-equipos/:id/edit"
+                    element={<CategoriaEquipoForm />}
+                  />
+                  <Route path="/equipos" element={<EquipoList />} />
+                  <Route path="/equipos/new" element={<EquipoForm />} />
+                  <Route path="/equipos/:id/edit" element={<EquipoForm />} />
+                  <Route
+                    path="/mantenimientos"
+                    element={<MantenimientoList />}
+                  />
+                  <Route
+                    path="/mantenimientos/new"
+                    element={<MantenimientoForm />}
+                  />
+                  <Route
+                    path="/mantenimientos/:id/edit"
+                    element={<MantenimientoForm />}
+                  />
+                  <Route
+                    path="/ordenes-mantenimiento"
+                    element={<OrdenMantenimientoList />}
+                  />
+                  <Route
+                    path="/ordenes-mantenimiento/new"
+                    element={<OrdenMantenimientoForm />}
+                  />
+                  <Route
+                    path="/ordenes-mantenimiento/:id/edit"
+                    element={<OrdenMantenimientoForm />}
+                  />
+                  <Route
+                    path="/mantenimiento-preventivo"
+                    element={<MantenimientoPreventivoList />}
+                  />
+                  <Route
+                    path="/mantenimiento-preventivo/:id/edit"
+                    element={<MantenimientoPreventivoForm />}
+                  />
+                  <Route
+                    path="/mantenimiento-preventivo/new"
+                    element={<MantenimientoPreventivoForm />}
+                  />
                 </Routes>
               </Layout>
             }

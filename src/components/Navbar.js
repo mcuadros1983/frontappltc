@@ -11,13 +11,15 @@ export default function Navigation() {
       <Container>
         <Navbar.Brand>
           <Link to="/" className="navbar-brand">
-            LA TRADICION CARNICERIAS
+            <span className="brand-text">LA TRADICION CARNICERIAS</span>
           </Link>
         </Navbar.Brand>
         <Nav className="ml-auto">
           {context.user && (
             <Nav.Item className="text-light">
-              <strong>Bienvenido {context.user.usuario.toUpperCase()}</strong>
+              <strong className="welcome-text">
+                Bienvenido {context.user.usuario.toUpperCase()}
+              </strong>
             </Nav.Item>
           )}
         </Nav>

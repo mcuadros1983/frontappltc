@@ -11,3 +11,34 @@
       background-color: white; /* Cambia el fondo al seleccionar */
     }
   }
+
+  /* Asegúrate de agregar este CSS al archivo de estilos */
+
+.brand-text {
+  font-size: 1.5rem; /* Tamaño por defecto */
+}
+
+.welcome-text {
+  font-size: 1.2rem; /* Tamaño por defecto */
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 768px) {
+  .brand-text {
+    font-size: 1.2rem; /* Reduce el tamaño del logo en pantallas pequeñas */
+  }
+
+  .welcome-text {
+    font-size: 1rem; /* Reduce el tamaño del texto de bienvenida */
+  }
+}
+
+@media (max-width: 576px) {
+  .brand-text {
+    font-size: 1rem; /* Más pequeño para pantallas extra pequeñas */
+  }
+
+  .welcome-text {
+    font-size: 0.9rem; /* Ajuste aún menor para texto de bienvenida */
+  }
+}

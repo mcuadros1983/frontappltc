@@ -1,0 +1,32 @@
+/* Estilos por defecto para pantallas pequeñas */
+/* .table-sm th, .table-sm td {
+    font-size: 12px;
+  }
+  
+  .form-control {
+    font-size: 14px;
+    width: 100%;
+  }
+  
+  .btn-primary {
+    font-size: 14px;
+    width: 100%;
+  }
+   */
+  /* Estilos específicos para pantallas grandes */
+  @media (min-width: 768px) {
+    .form-control {
+      max-width: 300px; /* Ajusta el ancho del desplegable */
+      width: 100%;
+    }
+  
+    .btn-primary {
+      max-width: 200px; /* Ajusta el ancho del botón */
+      width: 100%; /* Evita que el botón ocupe todo el ancho */
+    }
+  
+    /* Asegurar que el botón no se alinee a la derecha */
+    .text-md-right {
+      text-align: left; /* Cambiar la alineación a izquierda en pantallas grandes */
+    }
+  }
