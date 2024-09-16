@@ -14,7 +14,7 @@
   }
    */
   /* Estilos específicos para pantallas grandes */
-  @media (min-width: 768px) {
+  @media (min-width: 993px) {
     .form-control {
       max-width: 300px; /* Ajusta el ancho del desplegable */
       width: 100%;

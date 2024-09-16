@@ -6,13 +6,13 @@ import { FaBars, FaTimes } from "react-icons/fa"; // Importar íconos
 import './css/Layout.css';
 
 const Layout = ({ children }) => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 993);
   const [isSidebarVisible, setIsSidebarVisible] = useState(!isMobile);
 
   // Detecta cambios en el tamaño de la pantalla
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 768) {
+      if (window.innerWidth <= 993) {
         setIsMobile(true);
         setIsSidebarVisible(false); // Sidebar oculto inicialmente en pantallas pequeñas
       } else {

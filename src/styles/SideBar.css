@@ -6,7 +6,7 @@
 }
 
 /* Estilos para pantallas pequeñas (max-width: 768px) */
-@media (max-width: 768px) {
+@media (max-width: 993px) {
   .sidebar-wrapper {
     position: fixed;
     top: 0;

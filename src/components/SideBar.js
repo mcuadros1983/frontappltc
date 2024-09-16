@@ -41,7 +41,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
   const handleLinkClick = () => {
     // Verifica si la pantalla es de tamaño móvil
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 993) {
       toggleSidebar(); // Oculta el sidebar
     }
   };

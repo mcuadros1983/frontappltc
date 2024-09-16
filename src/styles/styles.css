@@ -23,7 +23,7 @@
 }
 
 /* Ajustes para pantallas pequeñas */
-@media (max-width: 768px) {
+@media (max-width: 993px) {
   .brand-text {
     font-size: 1.2rem; /* Reduce el tamaño del logo en pantallas pequeñas */
   }
