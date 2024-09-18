@@ -15,7 +15,7 @@ export const GenerateReceiptReceiptHTML = (ingreso, productos) => {
 
   return `
     <div>
-    <h2>Orden de Venta N° ${ingreso.id}</h2>
+    <h2>Comprobante de Ingreso N° ${ingreso.id}</h2>
     <p>Fecha: ${fechaIngreso}</p>
     <p>Sucursal: CENTRAL</p>
     <p>Categoría: ${ingreso.categoria_ingreso ? ingreso.categoria_ingreso : ''}</p>

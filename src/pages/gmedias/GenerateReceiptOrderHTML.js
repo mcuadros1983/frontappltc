@@ -15,7 +15,7 @@ export const GenerateReceiptOrderHTML = (ingreso, productos, nombreSucursal) => 
 
   return `
     <div>
-    <h2>Comprobante de Ingreso N° ${ingreso.id}</h2>
+    <h2>Orden de Egreso N° ${ingreso.id}</h2>
     <p>Fecha: ${fechaIngreso ? fechaIngreso : ''}</p>
     <p>Sucursal: ${nombreSucursal ? nombreSucursal : ''}</p>
     <p>Cantidad total: ${ingreso.cantidad_total ? ingreso.cantidad_total : ''}</p>
