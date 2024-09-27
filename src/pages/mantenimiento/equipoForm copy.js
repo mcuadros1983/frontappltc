@@ -1,6 +1,7 @@
+// pages/mantenimiento/EquipoForm.js
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { Form, Button, Container, Row, Col, Alert, ListGroup, InputGroup } from 'react-bootstrap';
+import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
 import Contexts from "../../context/Contexts";
 
 export default function EquipoForm() {
@@ -12,9 +13,6 @@ export default function EquipoForm() {
   const [categoriaId, setCategoriaId] = useState('');
   const [sucursalId, setSucursalId] = useState('');
   const [categorias, setCategorias] = useState([]);
-  const [items, setItems] = useState([]); // Estado para manejar los items
-  const [itemName, setItemName] = useState(''); // Estado para el nombre del nuevo item
-  const [itemEstado, setItemEstado] = useState(''); // Estado para el estado del nuevo item
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -46,12 +44,6 @@ export default function EquipoForm() {
         try {
           const response = await fetch(`${apiUrl}/equipos/${id}`);
           const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error('Error al obtener el equipo');
-          }
-
-          // Asignar los datos del equipo y los ítems correctamente
           setNombre(data.nombre);
           setMarca(data.marca);
           setNumeroSerie(data.numero_serie);
@@ -59,13 +51,8 @@ export default function EquipoForm() {
           setUltimoMantenimiento(data.ultimo_mantenimiento || '');
           setCategoriaId(data.categoria_equipo_id || '');
           setSucursalId(data.sucursal_id || '');
-
-          // Verifica que el nombre de los ítems coincida con lo que devuelve el backend
-          setItems(data.ItemEquipos || []); // Aquí usamos el nombre exacto devuelto por el backend
-
         } catch (error) {
           console.error('Error al obtener el equipo:', error);
-          setError('Error al cargar el equipo. Por favor, intente nuevamente.');
         } finally {
           setLoading(false);
         }
@@ -91,7 +78,6 @@ export default function EquipoForm() {
       ultimo_mantenimiento: ultimoMantenimiento || null,
       sucursal_id: sucursalId,
       categoria_equipo_id: categoriaId,
-      items, // Incluir los items en el envío de datos
     };
 
     setLoading(true);
@@ -119,39 +105,6 @@ export default function EquipoForm() {
       console.error('Error al guardar el equipo:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Agregar un item a la lista
-  const handleAddItem = () => {
-    if (itemName.trim()) {
-      setItems([...items, { nombre: itemName, estado: itemEstado || '' }]); // Agrega un nuevo item con el estado seleccionado o vacío
-      setItemName('');
-      setItemEstado(''); // Reiniciar el estado del item
-    }
-  };
-
-  // Verificar y eliminar un item de la lista
-  const handleRemoveItem = async (index) => {
-    const item = items[index];
-    try {
-      // Verificar si el ítem tiene revisiones antes de eliminarlo
-      const revisionesResponse = await fetch(`${apiUrl}/revisiones/item/${item.id}`);
-      const revisionesData = await revisionesResponse.json();
-
-      // Si el ítem tiene revisiones, no permitir eliminar y mostrar mensaje de error
-      if (Array.isArray(revisionesData) && revisionesData.length > 0) {
-        setError(`No se puede eliminar el item "${item.nombre}" porque tiene revisiones asociadas.`);
-        return;
-      }
-
-      // Eliminar el ítem si no tiene revisiones
-      const newItems = items.filter((_, i) => i !== index);
-      setItems(newItems);
-      setError(''); // Limpiar el error si la eliminación es exitosa
-    } catch (error) {
-      console.error('Error al verificar revisiones del item:', error);
-      setError('Error al verificar las revisiones del item. Por favor, intente nuevamente.');
     }
   };
 
@@ -268,50 +221,6 @@ export default function EquipoForm() {
             </Form.Group>
           </Col>
         </Row>
-
-        {/* Sección para agregar items */}
-        <Row className="mt-4">
-          <Col xs={12} md={4}>
-            <InputGroup>
-              <Form.Control
-                type="text"
-                placeholder="Ingrese el nombre del item"
-                value={itemName}
-                onChange={(e) => setItemName(e.target.value)}
-              />
-            </InputGroup>
-          </Col>
-          <Col xs={12} md={4}>
-            <Form.Control
-              as="select"
-              value={itemEstado}
-              onChange={(e) => setItemEstado(e.target.value)}
-            >
-              <option value="">Seleccione el estado</option>
-              <option value="Bueno">Bueno</option>
-              <option value="Regular">Regular</option>
-              <option value="Malo">Malo</option>
-            </Form.Control>
-          </Col>
-          <Col xs={12} md={4}>
-            <Button variant="secondary" onClick={handleAddItem}>
-              Agregar Item
-            </Button>
-          </Col>
-        </Row>
-
-        {/* Lista de items agregados */}
-        <ListGroup className="mt-3">
-          {items.map((item, index) => (
-            <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
-              {item.nombre} - {item.estado || 'Sin estado'}
-              <Button variant="danger" size="sm" onClick={() => handleRemoveItem(index)}>
-                Eliminar
-              </Button>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-
         {error && <Alert variant="danger">{error}</Alert>}
         <Button variant="primary" type="submit" disabled={loading} className="mt-3">
           {loading ? 'Guardando...' : 'Guardar'}

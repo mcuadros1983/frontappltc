@@ -38,10 +38,10 @@ export default function Vales() {
 
   const manejarFiltro = async () => {
     try {
-      // if (!esFechaValida(fechaDesde) || !esFechaValida(fechaHasta)) {
-      //   alert("Ingrese una fecha válida.");
-      //   return;
-      // }
+      if (!esFechaValida(fechaDesde) || !esFechaValida(fechaHasta)) {
+        alert("Ingrese una fecha válida.");
+        return;
+      }
 
       const respuesta = await fetch(
         `${apiUrl}/caja/vales_filtrados`,
@@ -113,13 +113,13 @@ export default function Vales() {
     setVales(valesOrdenados);
   };
 
-  // const esFechaValida = (cadenaFecha) => {
-  //   const regEx = /^\d{4}-\d{2}-\d{2}$/;
-  //   if (!cadenaFecha.match(regEx)) return false;
-  //   const fecha = new Date(cadenaFecha);
-  //   if (!fecha.getTime()) return false;
-  //   return fecha.toISOString().slice(0, 10) === cadenaFecha;
-  // };
+  const esFechaValida = (cadenaFecha) => {
+    const regEx = /^\d{4}-\d{2}-\d{2}$/;
+    if (!cadenaFecha.match(regEx)) return false;
+    const fecha = new Date(cadenaFecha);
+    if (!fecha.getTime()) return false;
+    return fecha.toISOString().slice(0, 10) === cadenaFecha;
+  };
 
   const manejarBusqueda = () => {
     manejarFiltro();

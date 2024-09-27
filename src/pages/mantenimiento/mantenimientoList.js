@@ -35,6 +35,7 @@ export default function MantenimientoList() {
           throw new Error("Error al obtener los mantenimientos");
         }
         const data = await response.json();
+        // console.log("data", data)
 
         if (!Array.isArray(data)) {
           throw new Error("Los datos obtenidos no son un array");

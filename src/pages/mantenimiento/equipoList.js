@@ -21,6 +21,7 @@ export default function EquipoList() {
       try {
         const response = await fetch(`${apiUrl}/equipos`);
         const data = await response.json();
+        // console.log("data", data)
         setEquipos(Array.isArray(data) ? data : []);
         setFilteredEquipos(Array.isArray(data) ? data : []); // Inicialmente, mostrar todos los equipos
       } catch (error) {
