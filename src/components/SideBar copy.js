@@ -231,16 +231,81 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </div>
                       </Collapse>
 
-                      <Nav.Item >
+                      <Nav.Item onClick={() => setMessageItem(!messageItem)}>
                         <Link
-                          to="/sync"
+                          to="#"
+                          className="nav-link"
+                          style={{ color: "white", whiteSpace: "nowrap" }}
+                        >
+                          Mensajes
+                        </Link>
+                      </Nav.Item>
+                      <Collapse in={messageItem}>
+                        <div className="ml-3">
+                          <Link
+                            to="/messages"
+                            className="nav-link"
+                            style={{ color: "white", whiteSpace: "nowrap" }}
+                            onClick={handleLinkClick}
+                          >
+                            Listar Mensajes
+                          </Link>
+                          <Link
+                            to="/messages/new"
+                            className="nav-link"
+                            style={{ color: "white", whiteSpace: "nowrap" }}
+                            onClick={handleLinkClick}
+                          >
+                            Crear Mensaje
+                          </Link>
+                          {/* <Link
+                            to="/messages/:id/edit"
+                            className="nav-link"
+                            style={{ color: "white", whiteSpace: "nowrap" }}
+                            onClick={handleLinkClick}
+                          >
+                            Editar Mensaje
+                          </Link> */}
+                        </div>
+                      </Collapse>
+
+                      <Nav.Item onClick={() => setScheduleItem(!scheduleItem)}>
+                        <Link
+                          to="#"
                           className="nav-link"
                           style={{ color: "white", whiteSpace: "nowrap" }}
                         >
                           Sincronizar
                         </Link>
                       </Nav.Item>
-                    
+                      <Collapse in={scheduleItem}>
+                        <div className="ml-3">
+                          <Link
+                            to="/schedules"
+                            className="nav-link"
+                            style={{ color: "white", whiteSpace: "nowrap" }}
+                            onClick={handleLinkClick}
+                          >
+                            Listar Horarios
+                          </Link>
+                          <Link
+                            to="/schedules/new"
+                            className="nav-link"
+                            style={{ color: "white", whiteSpace: "nowrap" }}
+                            onClick={handleLinkClick}
+                          >
+                            Crear Horario
+                          </Link>
+                          {/* <Link
+                            to="/schedules/:id/edit"
+                            className="nav-link"
+                            style={{ color: "white", whiteSpace: "nowrap" }}
+                            onClick={handleLinkClick}
+                          >
+                            Editar Horario
+                          </Link> */}
+                        </div>
+                      </Collapse>
                     </>
                   )}
                 </>

@@ -21,6 +21,8 @@ import StockProductsList from "./pages/gmedias/StockProductsList";
 import StockCentralList from "./pages/gmedias/StockCentralList";
 import CustomerList from "./pages/gmedias/CustomerList";
 import CustomerForm from "./pages/gmedias/CustomerForm";
+import CustomerOneShotList from "./pages/caja/customerOneShotList";
+import CustomerOneShotForm from "./pages/caja/customerOneShotForm";
 import SellList from "./pages/gmedias/SellList";
 import SellForm from "./pages/gmedias/SellForm";
 import SellItem from "./pages/gmedias/SellItem";
@@ -86,6 +88,11 @@ import OrdenMantenimientoForm from "./pages/mantenimiento/ordenMantenimientoForm
 import OrdenMantenimientoList from "./pages/mantenimiento/ordenMantenimientoList";
 import MantenimientoPreventivoList from "./pages/mantenimiento/mantenimientoPreventivoList";
 import MantenimientoPreventivoForm from "./pages/mantenimiento/mantenimientoPreventivoForm";
+import MessageList from "./pages/messages/MessageList";
+import MessageForm from "./pages/messages/MessageForm";
+import ScheduleList from "./pages/schedule/ScheduleList";
+import ScheduleForm from "./pages/schedule/ScheduleForm";
+import SyncForm from "./pages/sync/syncForm";
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -103,6 +110,18 @@ export default function App() {
                 <Routes>
                   <Route index element={<Main />} />
                   <Route path="/dashboard" element={<Main />} />
+                  {/* Rutas para Message */}
+                  <Route path="/messages" element={<MessageList />} />
+                  <Route path="/messages/new" element={<MessageForm />} />
+                  <Route path="/messages/:id/edit" element={<MessageForm />} />
+
+                  {/* Rutas para Schedule */}
+                  <Route path="/schedules" element={<ScheduleList />} />
+                  <Route path="/schedules/new" element={<ScheduleForm />} />
+                  <Route
+                    path="/schedules/:id/edit"
+                    element={<ScheduleForm />}
+                  />
                   <Route path="/users" element={<UserList />} />
                   <Route path="/users/new" element={<UserForm />} />
                   <Route path="/users/:id/edit" element={<UserForm />} />
@@ -115,6 +134,18 @@ export default function App() {
                   <Route
                     path="/customers/:id/edit"
                     element={<CustomerForm />}
+                  />
+                  <Route
+                    path="/clientesoneshot"
+                    element={<CustomerOneShotList />}
+                  />
+                  <Route
+                    path="/clientesoneshot/new"
+                    element={<CustomerOneShotForm />}
+                  />
+                  <Route
+                    path="/clientesoneshot/:id/edit"
+                    element={<CustomerOneShotForm />}
                   />
                   <Route path="/waypays" element={<WayPayList />} />
                   <Route path="/waypays/new" element={<WayPayForm />} />
@@ -293,6 +324,8 @@ export default function App() {
                     path="/mantenimiento-preventivo/new"
                     element={<MantenimientoPreventivoForm />}
                   />
+
+                  <Route path="/sync" element={<SyncForm />} />
                 </Routes>
               </Layout>
             }

@@ -42,3 +42,10 @@
     font-size: 0.9rem; /* Ajuste aún menor para texto de bienvenida */
   }
 }
+
+.truncated-text {
+  max-width: 200px; /* Puedes ajustar el tamaño máximo según tus necesidades */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
