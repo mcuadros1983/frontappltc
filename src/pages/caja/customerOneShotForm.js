@@ -3,17 +3,14 @@ import { Container, Form, Button, Spinner } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import Contexts from "../../context/Contexts"; // Importar el contexto
 
-  // Función para obtener la fecha local sin la parte horaria
-  const getLocalDate = () => {
-    // const today = new Date();
-    // console.log("today", today)
-    // return today.toISOString().split('T')[0]; // Solo la parte de la fecha en formato YYYY-MM-DD
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, '0'); // Sumar 1 porque los meses son 0-indexados
-    const day = today.getDate().toString().padStart(2, '0'); // Obtener el día
-    return `${year}-${month}-${day}`; // Retorna en formato YYYY-MM-DD
-  };
+// Función para obtener la fecha local sin la parte horaria
+const getLocalDate = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = (today.getMonth() + 1).toString().padStart(2, '0'); // Mes 0-indexado
+  const day = today.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`; // Retorna en formato YYYY-MM-DD
+};
 
 export default function CustomerOneShotForm() {
   const [customerOneShot, setCustomerOneShot] = useState({
@@ -22,21 +19,21 @@ export default function CustomerOneShotForm() {
     dni: "",
     domicilio: "",
     telefono: "",
-    mail: "", // Nuevo campo de correo electrónico
+    mail: "",
     monto: "",
-    fecha: getLocalDate(), // Usar la función para obtener la fecha local sin hora
+    fecha: getLocalDate(),
+    lote_cupon: "", // Nuevo campo para el lote
+    // Nuevo campo para el cupon
   });
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [editing, setEditing] = useState(false); // Estado para saber si se está editando o no
-  const userContext = useContext(Contexts.UserContext); // Context para obtener el usuario actual
+  const [editing, setEditing] = useState(false);
+  const userContext = useContext(Contexts.UserContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const navigate = useNavigate();
   const params = useParams();
-
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,9 +48,13 @@ export default function CustomerOneShotForm() {
       credentials: "include",
     });
     const data = await res.json();
-    setCustomerOneShot(data);
+    setCustomerOneShot({
+      ...data,
+      mail: data.mail || "", // Asigna "" si mail es null
+      domicilio: data.domicilio || "", // Asigna "" si domicilio es null
+      lote_cupon: data.lote_cupon || "", // Asigna "" si lote_cupon es null
+    });
     setEditing(true);
-   
   }, [apiUrl]);
 
   useEffect(() => {
@@ -67,11 +68,12 @@ export default function CustomerOneShotForm() {
         dni: "",
         domicilio: "",
         telefono: "",
-        mail: "", // Reiniciar el campo de correo
+        mail: "",
         monto: "",
-        fecha: getLocalDate(), // Fecha actual por defecto
+        fecha: getLocalDate(),
+        lote_cupon: "",
+        
       });
-      // console.log("fecha", customerOneShot.fecha )
     }
   }, [params.id, loadCustomerOneShot]);
 
@@ -91,9 +93,9 @@ export default function CustomerOneShotForm() {
       newErrors.dni = "El DNI debe ser un número de hasta 8 dígitos.";
     }
 
-    if (!customerOneShot.mail.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
-      newErrors.mail = "El formato del correo no es válido.";
-    }
+    // if (!customerOneShot.mail.match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
+    //   newErrors.mail = "El formato del correo no es válido.";
+    // }
 
     if (!customerOneShot.telefono.match(/^\d+$/)) {
       newErrors.telefono = "El teléfono solo puede contener números.";
@@ -103,29 +105,11 @@ export default function CustomerOneShotForm() {
       newErrors.monto = "El monto solo puede contener números y hasta dos decimales.";
     }
 
-    if (!customerOneShot.apellido || !customerOneShot.nombre || !customerOneShot.dni || !customerOneShot.telefono || !customerOneShot.mail || !customerOneShot.monto || !customerOneShot.domicilio) {
-      newErrors.general = "Todos los campos son obligatorios.";
+    if (!customerOneShot.apellido || !customerOneShot.nombre || !customerOneShot.dni || !customerOneShot.telefono || !customerOneShot.monto) {
+      newErrors.general = "Los campos apellido, nombre, dni, telefono y monto son obligatorios.";
     }
 
     return newErrors;
-  };
-
-  const checkCustomerExists = async (dni) => {
-    try {
-      const res = await fetch(`${apiUrl}/clientespersonatabla/${dni}`, {
-        credentials: "include",
-      });
-      if (res.status === 200) {
-        const data = await res.json();
-        if (data && data.numero) {
-          return true; // Cliente encontrado
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error("Error al verificar el cliente:", error);
-      return false;
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -139,27 +123,21 @@ export default function CustomerOneShotForm() {
       return;
     }
 
-    const customerExists = await checkCustomerExists(customerOneShot.dni);
-    if (customerExists) {
-      setErrors({ dni: "Cliente ya existe en el sistema" });
-      setLoading(false);
-      return;
-    }
-
     try {
-      customerOneShot.usuario_id = userContext.user.id; // Asignar el ID del usuario del contexto
+      customerOneShot.usuario_id = userContext.user.id;
 
       // Convertir todos los campos de texto a mayúsculas
       const customerOneShotUpperCase = {
         ...customerOneShot,
         apellido: customerOneShot.apellido.toUpperCase(),
         nombre: customerOneShot.nombre.toUpperCase(),
-        dni: customerOneShot.dni.toUpperCase(),
-        domicilio: customerOneShot.domicilio.toUpperCase(),
-        telefono: customerOneShot.telefono.toUpperCase(),
-        mail: customerOneShot.mail.toUpperCase(), // También convertir el correo
-        monto: customerOneShot.monto, // El monto no necesita conversión a mayúsculas
+        dni: customerOneShot.dni,
+        domicilio: (customerOneShot.domicilio || "").toUpperCase(), // Asigna "" si es null y convierte a mayúsculas
+        telefono: customerOneShot.telefono,
+        mail: (customerOneShot.mail || "").toUpperCase(), // Asigna "" si es null y convierte a mayúsculas
+        monto: customerOneShot.monto,
         fecha: customerOneShot.fecha,
+        lote_cupon: customerOneShot.lote_cupon || "", // Asigna "" si es null
       };
 
       if (editing) {
@@ -206,7 +184,6 @@ export default function CustomerOneShotForm() {
             value={customerOneShot.apellido}
             onChange={handleChange}
             placeholder="Ingresa el apellido del cliente"
-            className="my-input"
             isInvalid={!!errors.apellido}
           />
           <Form.Control.Feedback type="invalid">{errors.apellido}</Form.Control.Feedback>
@@ -220,7 +197,6 @@ export default function CustomerOneShotForm() {
             value={customerOneShot.nombre}
             onChange={handleChange}
             placeholder="Ingresa el nombre del cliente"
-            className="my-input"
             isInvalid={!!errors.nombre}
           />
           <Form.Control.Feedback type="invalid">{errors.nombre}</Form.Control.Feedback>
@@ -234,7 +210,6 @@ export default function CustomerOneShotForm() {
             value={customerOneShot.dni}
             onChange={handleChange}
             placeholder="Ingresa el DNI del cliente"
-            className="my-input"
             isInvalid={!!errors.dni}
           />
           <Form.Control.Feedback type="invalid">{errors.dni}</Form.Control.Feedback>
@@ -248,7 +223,6 @@ export default function CustomerOneShotForm() {
             value={customerOneShot.domicilio}
             onChange={handleChange}
             placeholder="Ingresa el domicilio del cliente"
-            className="my-input"
           />
         </Form.Group>
 
@@ -260,7 +234,6 @@ export default function CustomerOneShotForm() {
             value={customerOneShot.telefono}
             onChange={handleChange}
             placeholder="Ingresa el teléfono del cliente"
-            className="my-input"
             isInvalid={!!errors.telefono}
           />
           <Form.Control.Feedback type="invalid">{errors.telefono}</Form.Control.Feedback>
@@ -274,8 +247,7 @@ export default function CustomerOneShotForm() {
             value={customerOneShot.mail}
             onChange={handleChange}
             placeholder="Ingresa el correo electrónico del cliente"
-            className="my-input"
-            isInvalid={!!errors.mail}
+            // isInvalid={!!errors.mail}
           />
           <Form.Control.Feedback type="invalid">{errors.mail}</Form.Control.Feedback>
         </Form.Group>
@@ -288,7 +260,6 @@ export default function CustomerOneShotForm() {
             value={customerOneShot.monto}
             onChange={handleChange}
             placeholder="Ingresa el monto del cliente"
-            className="my-input"
             isInvalid={!!errors.monto}
           />
           <Form.Control.Feedback type="invalid">{errors.monto}</Form.Control.Feedback>
@@ -301,28 +272,23 @@ export default function CustomerOneShotForm() {
             name="fecha"
             value={customerOneShot.fecha}
             onChange={handleChange}
-            className="my-input"
           />
         </Form.Group>
 
-        <Button
-          variant="primary"
-          type="submit"
-          disabled={loading}
-          style={{ position: "relative" }}
-        >
-          {editing ? (
-            "Editar"
-          ) : loading ? (
-            <Spinner
-              animation="border"
-              size="sm"
-              role="status"
-              aria-hidden="true"
-            />
-          ) : (
-            "Guardar"
-          )}
+        {/* Campo Lote */}
+        <Form.Group className="mb-3">
+          <Form.Label>Lote y Cupon</Form.Label>
+          <Form.Control
+            type="text"
+            name="lote_cupon"
+            value={customerOneShot.lote_cupon}
+            onChange={handleChange}
+            placeholder="Ingresa el lote y cupon"
+          />
+        </Form.Group>
+
+        <Button variant="primary" type="submit" disabled={loading} style={{ position: "relative" }}>
+          {editing ? "Editar" : loading ? <Spinner animation="border" size="sm" /> : "Guardar"}
         </Button>
       </Form>
     </Container>
