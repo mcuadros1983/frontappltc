@@ -219,8 +219,8 @@ export default function CustomerOneShotList() {
                 <th>Teléfono</th>
                 <th>Domicilio</th>
                 <th>Monto</th>
-                <th>Lote</th>
-                <th>Cupón</th>
+                <th>Lote/Cupon</th>
+                {/* <th>Cupón</th> */}
                 {context.user.rol_id === 1 && <th>Usuario</th>}
                 <th>Fecha</th>
                 <th>Operaciones</th>
@@ -237,8 +237,8 @@ export default function CustomerOneShotList() {
                   <td>{customer.telefono}</td>
                   <td>{customer.domicilio || ""}</td> {/* Default to empty string */}
                   <td>{customer.monto}</td>
-                  <td>{customer.lote || ""}</td> {/* Default to empty string */}
-                  <td>{customer.cupon || ""}</td> {/* Default to empty string */}
+                  <td>{customer.lote_cupon || ""}</td> {/* Default to empty string */}
+                  {/* <td>{customer.cupon || ""}</td> Default to empty string */}
                   {context.user.rol_id === 1 && (
                     <td>
                       {usuarios.find((usuario) => usuario.id === customer.usuario_id)?.usuario ||
