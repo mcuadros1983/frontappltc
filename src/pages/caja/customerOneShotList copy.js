@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback, useContext } from "react";
 import { Table, Container, Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
-import * as XLSX from "xlsx"; // Importar xlsx para exportar a Excel
-import Contexts from "../../context/Contexts";
+import { BsChevronLeft, BsChevronRight } from "react-icons/bs"; // Importar íconos para la paginación
+import Contexts from "../../context/Contexts"; // Importar el contexto
 
 export default function CustomerOneShotList() {
   const [customersOneShot, setCustomersOneShot] = useState([]);
@@ -19,7 +18,6 @@ export default function CustomerOneShotList() {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  // Validar fechas
   const validateDates = () => {
     if (fechaDesde && fechaHasta && new Date(fechaDesde) > new Date(fechaHasta)) {
       alert("La fecha desde no puede ser mayor que la fecha hasta.");
@@ -154,29 +152,6 @@ export default function CustomerOneShotList() {
     }
   };
 
-  // Exportar a Excel
-  const handleExportToExcel = () => {
-    const dataToExport = customersOneShot.map((customer) => ({
-      Apellido: customer.apellido,
-      Nombre: customer.nombre,
-      "Tipo DNI": "",
-      DNI: customer.dni,
-      "Fecha Nacimiento": "",
-      "Lista de Precio": "COMUN",
-      Sexo: "MASCULINO",
-      Fidelizado: "NO",
-      Correo: customer.mail || "",
-      Teléfono: customer.telefono,
-      Domicilio: customer.domicilio || "",
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes OneShot");
-
-    XLSX.writeFile(workbook, "ClientesOneShot.xlsx");
-  };
-
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Clientes OneShot</h1>
@@ -221,11 +196,8 @@ export default function CustomerOneShotList() {
           <Button onClick={handleFilter} className="me-2 mx-md-2">
             Filtrar
           </Button>
-          <Button variant="secondary" onClick={handleResetFilters} className="me-2">
+          <Button variant="secondary" onClick={handleResetFilters}>
             Limpiar Filtros
-          </Button>
-          <Button variant="success" onClick={handleExportToExcel}>
-            Exportar a Excel
           </Button>
         </div>
       </Form>
@@ -247,7 +219,8 @@ export default function CustomerOneShotList() {
                 <th>Teléfono</th>
                 <th>Domicilio</th>
                 <th>Monto</th>
-                <th>Lote/Cupón</th>
+                <th>Lote/Cupon</th>
+                {/* <th>Cupón</th> */}
                 {context.user.rol_id === 1 && <th>Usuario</th>}
                 <th>Fecha</th>
                 <th>Operaciones</th>
@@ -260,11 +233,12 @@ export default function CustomerOneShotList() {
                   <td>{customer.apellido}</td>
                   <td>{customer.nombre}</td>
                   <td>{customer.dni}</td>
-                  <td>{customer.mail || ""}</td>
+                  <td>{customer.mail || ""}</td> {/* Default to empty string */}
                   <td>{customer.telefono}</td>
-                  <td>{customer.domicilio || ""}</td>
+                  <td>{customer.domicilio || ""}</td> {/* Default to empty string */}
                   <td>{customer.monto}</td>
-                  <td>{customer.lote_cupon || ""}</td>
+                  <td>{customer.lote_cupon || ""}</td> {/* Default to empty string */}
+                  {/* <td>{customer.cupon || ""}</td> Default to empty string */}
                   {context.user.rol_id === 1 && (
                     <td>
                       {usuarios.find((usuario) => usuario.id === customer.usuario_id)?.usuario ||
