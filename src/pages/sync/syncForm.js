@@ -136,7 +136,7 @@ export default function SyncForm() {
           {loadingSync ? (
             <Spinner animation="border" size="sm" role="status" aria-hidden="true" />
           ) : (
-            "Sincronizar Datos"
+            "Ventas y Caja"
           )}
         </Button>
 
@@ -151,7 +151,7 @@ export default function SyncForm() {
           {loadingPromociones ? (
             <Spinner animation="border" size="sm" role="status" aria-hidden="true" />
           ) : (
-            "Sincronizar Promociones"
+            "Promociones"
           )}
         </Button>
 
@@ -166,7 +166,7 @@ export default function SyncForm() {
           {loadingPrecios ? (
             <Spinner animation="border" size="sm" role="status" aria-hidden="true" />
           ) : (
-            "Sincronizar Precios"
+            "Precios"
           )}
         </Button>
 
@@ -181,7 +181,7 @@ export default function SyncForm() {
           {loadingTablas ? (
             <Spinner animation="border" size="sm" role="status" aria-hidden="true" />
           ) : (
-            "Sincronizar Tablas"
+            "Tablas"
           )}
         </Button>
       </div>

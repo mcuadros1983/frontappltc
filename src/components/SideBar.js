@@ -130,6 +130,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                             to="/products/new"
                             className="nav-link"
                             style={{ color: "white", whiteSpace: "nowrap" }}
+                            onClick={handleLinkClick}
                           >
                             Crear Productos
                           </Link>
@@ -236,6 +237,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="/sync"
                           className="nav-link"
                           style={{ color: "white", whiteSpace: "nowrap" }}
+                          onClick={handleLinkClick}
                         >
                           Sincronizar
                         </Link>
@@ -260,7 +262,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 <Link
                   to="/sells/new"
                   className="nav-link"
-                  style={{ color: "white", whiteSpace: "nowrap" }}
+                  style={{ color: "white", whiteSpace: "nowrap" }}  
+                  onClick={handleLinkClick}
                 >
                   Crear Venta
                 </Link>

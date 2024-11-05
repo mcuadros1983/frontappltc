@@ -221,10 +221,10 @@ export default function CustomerOneShotList() {
           <Button onClick={handleFilter} className="me-2 mx-md-2">
             Filtrar
           </Button>
-          <Button variant="secondary" onClick={handleResetFilters} className="me-2">
+          <Button variant="secondary" onClick={handleResetFilters} className="me-2 ml-2">
             Limpiar Filtros
           </Button>
-          <Button variant="success" onClick={handleExportToExcel}>
+          <Button variant="success" onClick={handleExportToExcel} className="ml-2">
             Exportar a Excel
           </Button>
         </div>
