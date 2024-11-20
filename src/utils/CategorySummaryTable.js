@@ -1,7 +1,7 @@
 import React from "react";
 import { Table } from "react-bootstrap";
 
-const CategorySummaryTable = ({filteredProducts}) => {
+const CategorySummaryTable = ({ filteredProducts }) => {
   const categorySummary = filteredProducts.reduce((summary, product) => {
     const category = product.categoria_producto;
     const peso = parseFloat(product.kg);
@@ -13,22 +13,18 @@ const CategorySummaryTable = ({filteredProducts}) => {
       };
     }
 
+    // Incrementar la cantidad
     summary[category].cantidad += 1;
-    summary[category].pesoTotal += peso; // Si el peso no es cero, lo sumamos
 
-    // Verificar si el peso es válido y no es cero antes de sumarlo
-    if (!isNaN(peso)) {
-      if (peso === 0) {
-        summary[category].pesoTotal = "N/A"; // Si el peso es cero, establecemos "N/A"
-      } else {
-        summary[category].pesoTotal += peso; // Si el peso no es cero, lo sumamos
-      }
+    // Sumar el peso si es válido y no es NaN
+    if (!isNaN(peso) && peso > 0) {
+      summary[category].pesoTotal += peso;
     }
 
     return summary;
   }, {});
 
-  // Si el peso total de la categoría es cero, mostramos "N/A"
+  // Ajustar las categorías que tienen peso total igual a 0 para mostrar "N/A"
   Object.keys(categorySummary).forEach((category) => {
     if (categorySummary[category].pesoTotal === 0) {
       categorySummary[category].pesoTotal = "N/A";
@@ -37,7 +33,6 @@ const CategorySummaryTable = ({filteredProducts}) => {
 
   return (
     <div style={{ maxWidth: "25%", marginTop: "20px" }}>
-      {/* Añade un estilo inline para limitar el ancho de la tabla */}
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -51,11 +46,7 @@ const CategorySummaryTable = ({filteredProducts}) => {
             <tr key={category}>
               <td>{category}</td>
               <td>{categorySummary[category].cantidad}</td>
-              <td>
-                {categorySummary[category].pesoTotal !== 0
-                  ? categorySummary[category].pesoTotal
-                  : "N/A"}
-              </td>
+              <td>{categorySummary[category].pesoTotal}</td>
             </tr>
           ))}
         </tbody>

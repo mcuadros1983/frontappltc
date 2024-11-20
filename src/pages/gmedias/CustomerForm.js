@@ -77,7 +77,7 @@ export default function CustomerForm() {
         const response = await fetch(`${apiUrl}/clientes/`, {
           credentials: "include",
         });
-        console.log("lista", response)
+        // console.log("lista", response)
         // if (!response.ok) {
         //   throw new Error("Error al obtener la lista de clientes");
         // }
@@ -96,7 +96,7 @@ export default function CustomerForm() {
             return;
           }
         }
-        console.log("datos", customer, apiUrl)
+        // console.log("datos", customer, apiUrl)
         const nuevoCliente = await fetch(`${apiUrl}/clientes-new/`, {
           credentials: "include",
           method: "POST",
@@ -105,7 +105,7 @@ export default function CustomerForm() {
             "Content-Type": "application/json",
           },
         });
-        console.log("nuevoCliente", nuevoCliente)
+        // console.log("nuevoCliente", nuevoCliente)
       }
       setLoading(false);
       navigate("/customers");
