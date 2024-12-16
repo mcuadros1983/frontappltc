@@ -271,92 +271,6 @@ const ReceiptForm = () => {
   }
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  // const handleGenerateCode = async () => {
-  //   if (!canGenerateCode) return; // Verificar si se puede generar un nuevo código
-
-  //   if (generatedCodes.length > 0) {
-  //     let newId;
-  //     if (categoria === "bovino") {
-  //       const lastGeneratedCode = generatedCodes[generatedCodes.length - 1];
-  //       newId = parseInt(lastGeneratedCode, 10) + 1;
-  //       const codigo_de_barra = newId.toString().padStart(30, "0");
-  //       const num_media = codigo_de_barra.slice(-11);
-
-  //       setProduct((prevProduct) => ({
-  //         ...prevProduct,
-  //         codigo_de_barra: codigo_de_barra,
-  //         num_media: num_media,
-  //         precio: 0,
-  //         kg: 0,
-  //         tropa: 0,
-  //       }));
-  //       setGeneratedCodes([...generatedCodes, codigo_de_barra]);
-  //       setIsCancelButtonDisabled(false);
-  //       setCanGenerateCode(false); // Deshabilitar la generación de códigos hasta que se presione "Guardar"
-  //     } else if (categoria === "porcino") {
-  //       const lastGeneratedCode = generatedCodes[generatedCodes.length - 1];
-  //       newId = parseInt(lastGeneratedCode, 10) + 1;
-  //       const codigo_de_barra = newId.toString().padStart(7, "0");
-
-  //       setProduct((prevProduct) => ({
-  //         ...prevProduct,
-  //         codigo_de_barra,
-  //         num_media: codigo_de_barra,
-  //         precio: 0,
-  //         kg: 0,
-  //         tropa: 0,
-  //       }));
-  //       setGeneratedCodes([...generatedCodes, codigo_de_barra]);
-  //       setIsCancelButtonDisabled(false);
-  //       setCanGenerateCode(false); // Deshabilitar la generación de códigos hasta que se presione "Guardar"
-  //     } else {
-  //       alert("Categoría desconocida");
-  //     }
-  //   } else {
-  //     try {
-  //       const response = await fetch(`${apiUrl}/productos/generarcodigos`, {
-  //         credentials: "include",
-  //         method: "POST",
-
-  //         body: JSON.stringify({ categoria }), // Convertir categoria a JSON
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       });
-
-  //       if (!response.ok) {
-  //         throw new Error("Error al generar el código de barras");
-  //       }
-
-  //       const data = await response.json();
-
-
-  //       if (generatedCodes.includes(data.codigo_de_barra)) {
-  //         alert("El código de barras ya ha sido generado previamente.");
-  //         return;
-  //       }
-
-  //       setGeneratedCodes([...generatedCodes, data.codigo_de_barra]);
-
-  //       processCodeBarHandler(data.codigo_de_barra);
-  //       setCanGenerateCode(false);
-
-  //       setProduct((prevProduct) => ({
-  //         ...prevProduct,
-  //         codigo_de_barra: data.codigo_de_barra,
-  //         num_media: data.num_media,
-  //         precio: 0,
-  //         kg: 0,
-  //         tropa: 0,
-  //       }));
-  //     } catch (error) {
-  //       console.error("Error al generar el código de barras:", error);
-  //       alert("Ocurrió un error al generar el código de barras.");
-  //     }
-  //   }
-  // };
-
   const handleGenerateCode = async () => {
     if (!canGenerateCode) return; // Verificar si se puede generar un nuevo código
   
@@ -408,7 +322,8 @@ const ReceiptForm = () => {
     const newId = parseInt(lastGeneratedCode, 10) + 1;
     const codigo_de_barra =
       categoria === "bovino"
-        ? newId.toString().padStart(30, "0")
+        // ? newId.toString().padStart(30, "0")
+        ? newId.toString().padStart(29, "0")
         : newId.toString().padStart(7, "0");
   
     setGeneratedCodes([...generatedCodes, codigo_de_barra]);
@@ -485,7 +400,8 @@ const ReceiptForm = () => {
                 disabled={
                   isCodeProcessing ||
                   (categoria === "bovino" &&
-                    product.codigo_de_barra.length !== 30) ||
+                    // product.codigo_de_barra.length !== 30) ||
+                    product.codigo_de_barra.length !== 29) ||
                   (categoria === "porcino" &&
                     product.codigo_de_barra.length !== 7) ||
                   generatedCodes.length > 0 // Deshabilitar si generatedCodes tiene contenido
