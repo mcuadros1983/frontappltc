@@ -40,6 +40,8 @@ const ReceiptForm = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -79,8 +81,49 @@ const ReceiptForm = () => {
     }
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const peso_total = products.reduce(
+  //     (acum, product) => acum + Number(product.kg),
+  //     0
+  //   );
+  //   const cantidad_total = products.length;
+
+  //   const confirmSubmit = window.confirm(
+  //     "¿Estás seguro de que deseas grabar este ingreso?"
+  //   );
+  //   if (!confirmSubmit) {
+  //     return;
+  //   }
+
+  //   try {
+  //     const res = await fetch(`${apiUrl}/ingresos`, {
+  //       credentials: "include",
+  //       method: "POST",
+  //       body: JSON.stringify({
+  //         products,
+  //         categoria,
+  //         cantidad_total,
+  //         peso_total,
+  //       }),
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //     });
+
+  //     const data = await res.json();
+  //     handleIngresoExitoso(data.nuevoIngreso, data.productos);
+  //     setGeneratedCodes([]);
+  //     navigate("/receipts");
+  //   } catch (error) {
+  //     console.error("Error al guardar el ingreso:", error);
+  //     alert("No se pudo guardar el ingreso");
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const peso_total = products.reduce(
       (acum, product) => acum + Number(product.kg),
       0
@@ -93,6 +136,8 @@ const ReceiptForm = () => {
     if (!confirmSubmit) {
       return;
     }
+
+    setIsSubmitting(true); // Deshabilitar el botón
 
     try {
       const res = await fetch(`${apiUrl}/ingresos`, {
@@ -116,6 +161,8 @@ const ReceiptForm = () => {
     } catch (error) {
       console.error("Error al guardar el ingreso:", error);
       alert("No se pudo guardar el ingreso");
+    } finally {
+      setIsSubmitting(false); // Habilitar el botón nuevamente
     }
   };
 
@@ -136,7 +183,6 @@ const ReceiptForm = () => {
       }));
     }
   };
-
 
   const handleSave = async () => {
     if (!product.codigo_de_barra) {
@@ -273,7 +319,7 @@ const ReceiptForm = () => {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const handleGenerateCode = async () => {
     if (!canGenerateCode) return; // Verificar si se puede generar un nuevo código
-  
+
     // Determinar el último código generado
     let lastGeneratedCode;
     if (products.length > 0) {
@@ -291,16 +337,16 @@ const ReceiptForm = () => {
             "Content-Type": "application/json",
           },
         });
-  
+
         if (!response.ok) {
           throw new Error("Error al generar el código de barras");
         }
-  
+
         const data = await response.json();
-  
+
         setGeneratedCodes([data.codigo_de_barra]);
         setCanGenerateCode(false);
-  
+
         setProduct((prevProduct) => ({
           ...prevProduct,
           codigo_de_barra: data.codigo_de_barra,
@@ -309,7 +355,7 @@ const ReceiptForm = () => {
           kg: 0,
           tropa: 0,
         }));
-  
+
         return;
       } catch (error) {
         console.error("Error al generar el código de barras:", error);
@@ -317,30 +363,30 @@ const ReceiptForm = () => {
         return;
       }
     }
-  
+
     // Generar el siguiente código basado en el último generado
     const newId = parseInt(lastGeneratedCode, 10) + 1;
     const codigo_de_barra =
       categoria === "bovino"
-        // ? newId.toString().padStart(30, "0")
-        ? newId.toString().padStart(29, "0")
+        ? // ? newId.toString().padStart(30, "0")
+          newId.toString().padStart(29, "0")
         : newId.toString().padStart(7, "0");
-  
+
     setGeneratedCodes([...generatedCodes, codigo_de_barra]);
-  
+
     setProduct((prevProduct) => ({
       ...prevProduct,
       codigo_de_barra,
-      num_media: categoria === "bovino" ? codigo_de_barra.slice(-11) : codigo_de_barra,
+      num_media:
+        categoria === "bovino" ? codigo_de_barra.slice(-11) : codigo_de_barra,
       precio: 0,
       kg: 0,
       tropa: 0,
     }));
-  
+
     setIsCancelButtonDisabled(false);
     setCanGenerateCode(false);
   };
-  
 
   return (
     <Container className="d-flex flex-column align-items-center">
@@ -501,7 +547,7 @@ const ReceiptForm = () => {
           disabled={!product.num_media}
           style={{ position: "relative" }}
         >
-        Guardar
+          Guardar
         </Button>
       </Form>
       <h1 className="my-list-title dark-text">Productos a agregar</h1>
@@ -541,9 +587,9 @@ const ReceiptForm = () => {
         <Button
           color="inherit"
           onClick={handleSubmit}
-          disabled={products.length === 0}
+          disabled={products.length === 0 || isSubmitting}
         >
-          Grabar
+          {isSubmitting ? "Grabando..." : "Grabar"}
         </Button>
       </div>
       <div>
