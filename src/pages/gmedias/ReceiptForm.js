@@ -44,23 +44,6 @@ const ReceiptForm = () => {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  // const handleIngresoExitoso = async (ingreso, productos) => {
-  //   try {
-  //     const receiptHTML = GenerateReceiptReceiptHTML(ingreso, productos);
-  //     const printWindow = window.open("", "_blank");
-  //     printWindow.document.open();
-  //     printWindow.document.write(receiptHTML);
-  //     printWindow.document.close();
-  //     printWindow.print();
-  //     printWindow.close();
-  //   } catch (error) {
-  //     console.error("Error al imprimir el comprobante de ingreso:", error);
-  //     alert(
-  //       "Ocurrió un error al imprimir el comprobante de ingreso. Intente nuevamente más tarde."
-  //     );
-  //   }
-  // };
-
   const handleIngresoExitoso = async (ingreso, productos) => {
     try {
       const receiptHTML = GenerateReceiptReceiptHTML(ingreso, productos);

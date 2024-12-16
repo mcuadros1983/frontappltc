@@ -5,10 +5,10 @@ export function processBarCode(codBar, categoria) {
   let kg;
 
   if (categoria === "bovino") {
-    longitudRequerida = 29;
-    num_media = parseFloat(codBar.slice(2, 12));
-    tropa = parseFloat(codBar.slice(13, 18));
-    kg = parseFloat(codBar.slice(25, 27));
+    longitudRequerida = 30;
+    num_media = parseFloat(codBar.slice(2, 13));
+    tropa = parseFloat(codBar.slice(14, 19));
+    kg = parseFloat(codBar.slice(26, 28));
   } else if (categoria === "porcino") {
     longitudRequerida = 7;
     num_media = codBar;
