@@ -7,7 +7,7 @@ export function processBarCode(codBar, categoria) {
   if (categoria === "bovino") {
     num_media = parseFloat(codBar.slice(2, 12)); // Número de media
     tropa = parseFloat(codBar.slice(13, 18)); // Número de tropa
-    kg = parseInt(codBar.slice(24, 29), 10); // Peso en kg (incluye ceros iniciales)
+    kg = parseInt(codBar.slice(24, 27), 10); // Peso en kg (incluye ceros iniciales)
   } else if (categoria === "porcino") {
     longitudRequerida = 7;
     num_media = codBar;
