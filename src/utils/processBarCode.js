@@ -1,14 +1,13 @@
 export function processBarCode(codBar, categoria) {
-  let longitudRequerida;
+  let longitudRequerida = 29;
   let num_media;
   let tropa;
   let kg;
 
   if (categoria === "bovino") {
-    longitudRequerida = 29;
-    num_media = parseFloat(codBar.slice(2, 12));
-    tropa = parseFloat(codBar.slice(13, 18));
-    kg = parseFloat(codBar.slice(25, 27));
+    num_media = parseFloat(codBar.slice(2, 12)); // Número de media
+    tropa = parseFloat(codBar.slice(13, 18)); // Número de tropa
+    kg = parseInt(codBar.slice(24, 29), 10); // Peso en kg (incluye ceros iniciales)
   } else if (categoria === "porcino") {
     longitudRequerida = 7;
     num_media = codBar;
@@ -21,6 +20,7 @@ export function processBarCode(codBar, categoria) {
     };
   }
 
+  // Validar longitud del código de barras
   if (codBar.length !== longitudRequerida) {
     return {
       success: false,
