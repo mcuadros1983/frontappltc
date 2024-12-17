@@ -374,7 +374,7 @@ const ReceiptForm = () => {
     const codigo_de_barra =
       categoria === "bovino"
         ? // ? newId.toString().padStart(30, "0")
-        newId.toString().padStart(29, "0")
+        newId.toString().padStart(30, "0")
         : newId.toString().padStart(7, "0");
 
     setGeneratedCodes([...generatedCodes, codigo_de_barra]);
@@ -466,7 +466,7 @@ const ReceiptForm = () => {
                   isCodeProcessing ||
                   (categoria === "bovino" &&
                     // product.codigo_de_barra.length !== 30) ||
-                    product.codigo_de_barra.length !== 29) ||
+                    product.codigo_de_barra.length !== 30) ||
                   (categoria === "porcino" &&
                     product.codigo_de_barra.length !== 7) ||
                   generatedCodes.length > 0 // Deshabilitar si generatedCodes tiene contenido
