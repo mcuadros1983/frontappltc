@@ -42,6 +42,8 @@ const ReceiptForm = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
+
   const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -124,10 +126,12 @@ const ReceiptForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const peso_total = products.reduce(
-      (acum, product) => acum + Number(product.kg),
-      0
-    );
+    const peso_total = products.reduce((acum, product) => {
+      const peso = parseFloat(product.kg); // Convertir a número decimal
+      return acum + (isNaN(peso) ? 0 : peso); // Sumar si es un número válido
+    }, 0);
+
+
     const cantidad_total = products.length;
 
     const confirmSubmit = window.confirm(
@@ -148,6 +152,7 @@ const ReceiptForm = () => {
           categoria,
           cantidad_total,
           peso_total,
+          fecha,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -369,7 +374,7 @@ const ReceiptForm = () => {
     const codigo_de_barra =
       categoria === "bovino"
         ? // ? newId.toString().padStart(30, "0")
-          newId.toString().padStart(29, "0")
+        newId.toString().padStart(29, "0")
         : newId.toString().padStart(7, "0");
 
     setGeneratedCodes([...generatedCodes, codigo_de_barra]);
@@ -391,6 +396,20 @@ const ReceiptForm = () => {
   return (
     <Container className="d-flex flex-column align-items-center">
       <h1 className="my-form-title text-center">Agregar Ingreso</h1>
+
+
+      <div className="my-buttons-container">
+        <Form.Group className="mb-3">
+          <Form.Label>Fecha del ingreso</Form.Label>
+          <Form.Control
+            type="date"
+            name="fecha"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)} // Permite al usuario cambiar la fecha si lo necesita
+            className="my-input"
+          />
+        </Form.Group>
+      </div>
 
       <div className="my-buttons-container">
         <Button

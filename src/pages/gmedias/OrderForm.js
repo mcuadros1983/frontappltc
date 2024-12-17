@@ -138,7 +138,7 @@ export default function OrderForm() {
     try {
       // Obtener el nombre de la sucursal
       const sucursal = branches.find(
-        (branch) => branch.id === orden.sucursal_id
+        (branch) => branch.id === orden.sucursal_id 
       );
       const nombreSucursal = sucursal
         ? sucursal.nombre

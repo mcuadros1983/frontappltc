@@ -1,8 +1,8 @@
 export const GenerateReceiptHTML = (sell, productos, nombreCliente, nombreFormaPago) => {
 
   // Formatear la fecha de la venta
-  const fechaVenta = new Date(sell.fecha).toLocaleDateString();
-
+  // const fechaVenta = new Date(sell.fecha).toLocaleDateString();
+  const fechaVenta = sell.fecha
   // Generar la lista de productos
   const productList = productos.map(producto => `
     <tr>
