@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState, useRef } from "react";
 import { Container, Form, Button, Table, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "../../styles/styles.css";
-// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
 import { GenerateReceiptOrderHTML } from "./GenerateReceiptOrderHTML"; // Importa la función de receiptGenerator
 import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable
@@ -23,27 +22,15 @@ export default function OrderForm() {
 
   const [product, setProduct] = useState(initialProductState);
   const [products, setProducts] = useState([]);
-  // const [loading, setLoading] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState(""); // Inicializa con un valor adecuado según tus necesidades
   const [availableProducts, setAvailableProducts] = useState([]);
-
-  // const [order, setOrder] = useState({
-  //   cantidad_total: "",
-  //   peso_total: "",
-  //   branch_id: "",
-  // });
   const [branches, setBranches] = useState([]);
-  // const [loadingBranches, setLoadingBranches] = useState(true);
   const [editingIndex, setEditingIndex] = useState(null);
   const [modal, setModal] = useState(false);
-  // const [searchTerm, setSearchTerm] = useState(""); // Define setSearchTerm
-
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
-
   const [currentPageOrder, setCurrentPageOrder] = useState(1);
   const [productsPerPageOrder] = useState(10);
-
   // ordenamiento
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
@@ -52,10 +39,10 @@ export default function OrderForm() {
   const [searchPeso, setSearchPeso] = useState("");
   const [searchTropa, setSearchTropa] = useState("");
   const [searchGarron, setSearchGarron] = useState("");
-
   // Dentro de la función OrderForm
   const [filteredProducts, setFilteredProducts] = useState([]);
   // const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
+  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // Fecha actual en formato YYYY-MM-DD
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -122,23 +109,11 @@ export default function OrderForm() {
     setFilteredProducts(filtered);
   }, [searchMedia, searchPeso, searchTropa, searchGarron, availableProducts]);
 
-  // useEffect(() => {
-  //   if (filteredProducts) {
-  //     const indexOfLastProduct = currentPage * productsPerPage;
-  //     const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  //     const paginatedProducts = filteredProducts.slice(
-  //       indexOfFirstProduct,
-  //       indexOfLastProduct
-  //     );
-  //     // setCurrentFilteredProducts(paginatedProducts);
-  //   }
-  // }, [filteredProducts, currentPage, productsPerPage]);
-
   const handleOrderExitosa = async (orden, productos) => {
     try {
       // Obtener el nombre de la sucursal
       const sucursal = branches.find(
-        (branch) => branch.id === orden.sucursal_id 
+        (branch) => branch.id === orden.sucursal_id
       );
       const nombreSucursal = sucursal
         ? sucursal.nombre
@@ -209,6 +184,7 @@ export default function OrderForm() {
           cantidad_total,
           peso_total,
           selectedBranchId,
+          fecha,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -221,8 +197,6 @@ export default function OrderForm() {
       handleOrderExitosa(data.nuevaOrden, data.productosActualizados);
 
       navigate("/orders");
-      // setLoading(true);
-      // ...
     } catch (error) {
       console.error("Error al guardar la orden:", error);
       alert("No se pudo guardar la orden");
@@ -231,12 +205,12 @@ export default function OrderForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-  
+
     // Aquí aseguramos que el valor es numérico antes de establecerlo
     if (name === "sucursal_destino") {
       const numericValue = Number(value);
       setSelectedBranchId(numericValue);
-  
+
       // Suponiendo que quieres enfocar el campo de entrada del código de barras después de seleccionar una sucursal
       if (codigoDeBarraRef.current) {
         codigoDeBarraRef.current.focus();
@@ -261,8 +235,6 @@ export default function OrderForm() {
 
     // Verificar si el producto existe en la base de datos
     if (!productData) {
-      // alert("El producto no existe en la base de datos");
-      // // setProduct(initialProductState);
       setModal(true);
       return;
     }
@@ -277,7 +249,6 @@ export default function OrderForm() {
     // Verificar si el producto existe en la base de datos
     if (productData.sucursal_id !== 18) {
       alert("El producto ya no se encuentra en stock");
-      // setProduct(initialProductState);
       return;
     }
 
@@ -299,7 +270,6 @@ export default function OrderForm() {
     }
 
     // Limpiar el formulario
-
     setProducts([...products, productData]);
     setProduct(initialProductState);
   };
@@ -353,19 +323,6 @@ export default function OrderForm() {
     // Después de que se hayan guardado los cambios, establece el índice de edición en null
     setEditingIndex(null);
   };
-
-  // const handleSearch = () => {
-  //   const filtered = availableProducts.filter((product) => {
-  //     const mediaMatch = product.num_media.toString().includes(searchMedia);
-  //     const pesoMatch = product.kg.toString().includes(searchPeso);
-  //     const tropaMatch = product.tropa.toString().includes(searchTropa);
-  //     const garronMatch = product.garron.toString().includes(searchGarron);
-
-  //     return mediaMatch && pesoMatch && tropaMatch && garronMatch;
-  //   });
-
-  //   setAvailableProducts(filtered);
-  // };
 
   const handleProductDoubleClick = async (product) => {
     const productResponse = await fetch(
@@ -596,13 +553,10 @@ export default function OrderForm() {
           }
         }}
       >
-        <Form.Group
+                <Form.Group
           controlId="formSucursalDestino"
           className="mb-3 text-center"
         >
-          {/* <Form.Label className="px-2">
-            Seleccione la sucursal de destino
-          </Form.Label> */}
           <Form.Select
             name="sucursal_destino"
             value={selectedBranchId} // Usa el estado seleccionado
@@ -618,6 +572,19 @@ export default function OrderForm() {
             ))}
           </Form.Select>
         </Form.Group>
+        
+        <Form.Group className="mb-3 justify-content-center">
+          <Form.Label>Fecha de la Orden</Form.Label>
+          <Form.Control
+            type="date"
+            name="fecha"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="my-input-date" // Clase personalizada
+          />
+        </Form.Group>
+
+
         <Form.Group className="mb-3">
           <Form.Label>Codigo de barra</Form.Label>
           <Form.Control

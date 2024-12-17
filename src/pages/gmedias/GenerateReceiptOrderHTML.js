@@ -39,7 +39,7 @@
 
 export const GenerateReceiptOrderHTML = (ingreso, productos, nombreSucursal) => {
   // Formatear la fecha del ingreso
-  const fechaIngreso = new Date(ingreso.fecha).toLocaleDateString();
+  const fechaIngreso = ingreso.fecha
 
   // Generar la lista de productos
   const productList = productos

@@ -49,3 +49,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.my-input-date {
+  width: 150px; /* Ancho ajustado para YYYY-MM-DD */
+  min-width: 150px;
+  /* text-align: center; */
+}
