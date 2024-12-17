@@ -43,6 +43,7 @@ export default function OrderForm() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   // const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // Fecha actual en formato YYYY-MM-DD
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -145,15 +146,15 @@ export default function OrderForm() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); //cancela el comportamiento por defecto
-    // Verificar si se ha seleccionado una sucursal
+    e.preventDefault();
+
     if (!selectedBranchId) {
       alert("Por favor, seleccione una sucursal antes de grabar.");
       return;
     }
 
     if (selectedBranchId === 1) {
-      alert("No se pueden hacer envios a la central, cambie la sucursal .");
+      alert("No se pueden hacer envíos a la central, cambie la sucursal.");
       return;
     }
 
@@ -175,6 +176,8 @@ export default function OrderForm() {
       0
     );
 
+    setIsSubmitting(true); // Inhabilita el botón
+
     try {
       const res = await fetch(`${apiUrl}/ordenes`, {
         credentials: "include",
@@ -193,15 +196,75 @@ export default function OrderForm() {
 
       const data = await res.json();
 
-      // Llamar a la función handleVentaExitosa después de que la venta sea exitosa
       handleOrderExitosa(data.nuevaOrden, data.productosActualizados);
 
       navigate("/orders");
     } catch (error) {
       console.error("Error al guardar la orden:", error);
       alert("No se pudo guardar la orden");
+    } finally {
+      setIsSubmitting(false); // Habilita el botón nuevamente
     }
   };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault(); //cancela el comportamiento por defecto
+  //   // Verificar si se ha seleccionado una sucursal
+  //   if (!selectedBranchId) {
+  //     alert("Por favor, seleccione una sucursal antes de grabar.");
+  //     return;
+  //   }
+
+  //   if (selectedBranchId === 1) {
+  //     alert("No se pueden hacer envios a la central, cambie la sucursal .");
+  //     return;
+  //   }
+
+  //   if (products.some((product) => product.kg <= 0)) {
+  //     alert("Debe ingresar el peso para todos los productos.");
+  //     return;
+  //   }
+
+  //   const confirmDelete = window.confirm(
+  //     "¿Estás seguro de que deseas grabar esta orden?"
+  //   );
+  //   if (!confirmDelete) {
+  //     return;
+  //   }
+
+  //   const cantidad_total = products.length;
+  //   const peso_total = products.reduce(
+  //     (acum, product) => acum + Number(product.kg),
+  //     0
+  //   );
+
+  //   try {
+  //     const res = await fetch(`${apiUrl}/ordenes`, {
+  //       credentials: "include",
+  //       method: "POST",
+  //       body: JSON.stringify({
+  //         products,
+  //         cantidad_total,
+  //         peso_total,
+  //         selectedBranchId,
+  //         fecha,
+  //       }),
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //     });
+
+  //     const data = await res.json();
+
+  //     // Llamar a la función handleVentaExitosa después de que la venta sea exitosa
+  //     handleOrderExitosa(data.nuevaOrden, data.productosActualizados);
+
+  //     navigate("/orders");
+  //   } catch (error) {
+  //     console.error("Error al guardar la orden:", error);
+  //     alert("No se pudo guardar la orden");
+  //   }
+  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -553,7 +616,7 @@ export default function OrderForm() {
           }
         }}
       >
-                <Form.Group
+        <Form.Group
           controlId="formSucursalDestino"
           className="mb-3 text-center"
         >
@@ -572,7 +635,7 @@ export default function OrderForm() {
             ))}
           </Form.Select>
         </Form.Group>
-        
+
         <Form.Group className="mb-3 justify-content-center">
           <Form.Label>Fecha de la Orden</Form.Label>
           <Form.Control
@@ -583,7 +646,6 @@ export default function OrderForm() {
             className="my-input-date" // Clase personalizada
           />
         </Form.Group>
-
 
         <Form.Group className="mb-3">
           <Form.Label>Codigo de barra</Form.Label>
@@ -696,12 +758,19 @@ export default function OrderForm() {
         </tbody>
       </Table>
       <div className="py-2">
-        <Button
+        {/* <Button
           color="inherit"
           onClick={handleSubmit}
           disabled={products.length === 0}
         >
           Grabar
+        </Button> */}
+        <Button
+          color="inherit"
+          onClick={handleSubmit}
+          disabled={products.length === 0 || isSubmitting}
+        >
+          {isSubmitting ? "Grabando..." : "Grabar"}
         </Button>
       </div>
       <div>

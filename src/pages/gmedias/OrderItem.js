@@ -4,6 +4,7 @@ import { Table, Container, Button, FormControl } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import Contexts from "../../context/Contexts";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { GenerateReceiptOrderHTML } from "./GenerateReceiptOrderHTML";
 
 export default function OrderItem() {
   const [productsOrder, setProductsOrder] = useState([]);
@@ -138,6 +139,41 @@ export default function OrderItem() {
     handleSearch();
   }, [searchTerm, productsOrder, handleSearch]);
 
+  const handleReprintOrder = async () => {
+    try {
+      // Obtener los detalles de la orden
+      const orderResponse = await fetch(`${apiUrl}/ordenes/${params.id}`, {
+        credentials: "include",
+      });
+      const orderData = await orderResponse.json();
+
+      // Obtener el nombre de la sucursal
+      const branchResponse = await fetch(
+        `${apiUrl}/sucursales/${orderData.sucursal_id}`,
+        { credentials: "include" }
+      );
+      const branchData = await branchResponse.json();
+
+      // Generar el HTML e imprimir
+      const receiptHTML = GenerateReceiptOrderHTML(
+        orderData,
+        productsOrder,
+        branchData.nombre
+      );
+      const printWindow = window.open("", "_blank");
+      printWindow.document.open();
+      printWindow.document.write(receiptHTML);
+      printWindow.document.close();
+      printWindow.print();
+      setTimeout(() => {
+        printWindow.close();
+      }, 1000);
+    } catch (error) {
+      console.error("Error al reimprimir la orden:", error);
+      alert("No se pudo reimprimir la orden. Intente nuevamente.");
+    }
+  };
+
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(
@@ -158,6 +194,13 @@ export default function OrderItem() {
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Productos Enviados</h1>
+      {/* Botón para reimprimir la orden */}
+      <div className="mb-3 ">
+        <Button variant="success" onClick={handleReprintOrder}>
+          Reimprimir Orden
+        </Button>
+      </div>
+
       <div className="mb-3">
         <FormControl
           type="text"

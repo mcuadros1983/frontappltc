@@ -1,11 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import {
-  Container,
-  Form,
-  Button,
-  Table,
-  FormControl,
-} from "react-bootstrap";
+import { Container, Form, Button, Table, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "../../styles/styles.css";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -61,7 +55,7 @@ export default function SellForm() {
   const [searchGarron, setSearchGarron] = useState("");
 
   const [filteredProducts, setFilteredProducts] = useState([]);
-  // const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
 
@@ -113,7 +107,7 @@ export default function SellForm() {
         setWaypays(data);
       } catch (error) {
         console.error("Error fetching Way Pays:", error);
-      } 
+      }
     };
 
     fetchCustomers();
@@ -140,7 +134,7 @@ export default function SellForm() {
     if (modal) {
       fetchProducts();
     }
-  }, [modal,apiUrl]);
+  }, [modal, apiUrl]);
 
   // Actualizar los productos filtrados cada vez que se aplique un filtro
   useEffect(() => {
@@ -182,7 +176,6 @@ export default function SellForm() {
     // setVentaExitosa(true); // Establecer ventaExitosa en true
 
     try {
-
       // Obtener el nombre del cliente
       const cliente = customers.find(
         (customer) => customer.id === venta.cliente_id
@@ -225,6 +218,7 @@ export default function SellForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!selectedCustomerId) {
       alert("Por favor, seleccione un cliente antes de grabar.");
       return;
@@ -240,7 +234,6 @@ export default function SellForm() {
       return;
     }
 
-    // Verificar si algún producto tiene peso menor o igual a cero
     if (products.some((product) => product.kg <= 0)) {
       alert("Debe ingresar el peso para todos los productos.");
       return;
@@ -258,6 +251,8 @@ export default function SellForm() {
       (acum, product) => acum + Number(product.kg),
       0
     );
+
+    setIsSubmitting(true); // Desactiva el botón
 
     try {
       const response = await fetch(`${apiUrl}/ventas`, {
@@ -283,7 +278,6 @@ export default function SellForm() {
 
       const data = await response.json();
 
-      // Llamar a la función handleVentaExitosa después de que la venta sea exitosa
       handleVentaExitosa(data.nuevaVenta, data.productosActualizados);
       navigate("/sells");
     } catch (error) {
@@ -291,8 +285,81 @@ export default function SellForm() {
       alert(
         "Ocurrió un error al realizar la venta. Intente nuevamente más tarde."
       );
+    } finally {
+      setIsSubmitting(false); // Reactiva el botón
     }
   };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!selectedCustomerId) {
+  //     alert("Por favor, seleccione un cliente antes de grabar.");
+  //     return;
+  //   }
+
+  //   if (!selectedWaypaysId) {
+  //     alert("Por favor, seleccione una forma de pago antes de grabar.");
+  //     return;
+  //   }
+
+  //   if (selectedCustomerId === 1) {
+  //     alert("No se pueden hacer ventas a la central, cambie de cliente.");
+  //     return;
+  //   }
+
+  //   // Verificar si algún producto tiene peso menor o igual a cero
+  //   if (products.some((product) => product.kg <= 0)) {
+  //     alert("Debe ingresar el peso para todos los productos.");
+  //     return;
+  //   }
+
+  //   const confirmDelete = window.confirm(
+  //     "¿Estás seguro de que deseas grabar esta venta?"
+  //   );
+  //   if (!confirmDelete) {
+  //     return;
+  //   }
+
+  //   const cantidad_total = products.length;
+  //   const peso_total = products.reduce(
+  //     (acum, product) => acum + Number(product.kg),
+  //     0
+  //   );
+
+  //   try {
+  //     const response = await fetch(`${apiUrl}/ventas`, {
+  //       credentials: "include",
+  //       method: "POST",
+  //       body: JSON.stringify({
+  //         cantidad_total,
+  //         peso_total,
+  //         cliente_id: selectedCustomerId,
+  //         formaPago_id: selectedWaypaysId,
+  //         productos: products,
+  //       }),
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(
+  //         "Error al realizar la venta. Intente nuevamente más tarde."
+  //       );
+  //     }
+
+  //     const data = await response.json();
+
+  //     // Llamar a la función handleVentaExitosa después de que la venta sea exitosa
+  //     handleVentaExitosa(data.nuevaVenta, data.productosActualizados);
+  //     navigate("/sells");
+  //   } catch (error) {
+  //     console.error("Error al realizar la venta:", error.message);
+  //     alert(
+  //       "Ocurrió un error al realizar la venta. Intente nuevamente más tarde."
+  //     );
+  //   }
+  // };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -312,7 +379,7 @@ export default function SellForm() {
   };
 
   const handleSave = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     const productResponse = await fetch(
       `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
       {
@@ -354,17 +421,14 @@ export default function SellForm() {
     }
 
     //Obtener cliente
-    const res = await fetch(
-      `${apiUrl}/clientes/${selectedCustomerId}/`,
-      {
-        credentials: "include",
-      }
-    );
+    const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
+      credentials: "include",
+    });
     const cliente = await res.json();
 
     if (
       !productData.precio &&
-      cliente.margen >0 &&
+      cliente.margen > 0 &&
       productData.costo &&
       productData.categoria_producto === "bovino"
     ) {
@@ -795,8 +859,12 @@ export default function SellForm() {
         </tbody>
       </Table>
       <div className="py-2">
-        <Button variant="primary" onClick={handleSubmit}>
-          Grabar
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={isSubmitting || products.length === 0}
+        >
+          {isSubmitting ? "Grabando..." : "Grabar"}
         </Button>
         <Button
           variant="secondary"

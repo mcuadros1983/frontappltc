@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Table, Container, Button } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { GenerateReceiptReceiptHTML } from "./GenerateReceiptReceiptHTML";
 
 export default function ReceiptItem() {
   const [productsReceipt, setProductsReceipt] = useState([]);
@@ -43,9 +44,40 @@ export default function ReceiptItem() {
       setCurrentPage((prev) => prev - 1);
     }
   };
+
+  const handleReprint = async () => {
+    try {
+      // 1. Obtener los detalles del ingreso
+      const ingresoResponse = await fetch(`${apiUrl}/ingresos/${params.id}`, {
+        credentials: "include",
+      });
+      const ingreso = await ingresoResponse.json();
+
+      // 2. Generar el HTML y abrir la ventana de impresión
+      const receiptHTML = GenerateReceiptReceiptHTML(ingreso, productsReceipt);
+      const printWindow = window.open("", "_blank");
+      printWindow.document.open();
+      printWindow.document.write(receiptHTML);
+      printWindow.document.close();
+      printWindow.print();
+
+      setTimeout(() => {
+        printWindow.close();
+      }, 1000); // Cierra automáticamente después de imprimir
+    } catch (error) {
+      console.error("Error al reimprimir el ingreso:", error);
+      alert("No se pudo reimprimir el ingreso. Intente nuevamente más tarde.");
+    }
+  };
+  
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Productos</h1>
+      <div className="mb-3 text-center">
+        <Button variant="success" onClick={handleReprint}>
+          Reimprimir Ingreso
+        </Button>
+      </div>
       {/* <Table striped bordered hover variant="dark"> */}
       <Table striped bordered hover>
         <thead>
