@@ -4,6 +4,8 @@ import { Table, Container, Button, FormControl, Form } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import Contexts from "../../context/Contexts";
 import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable 
+import { GenerateReceiptHTML } from "./GenerateReceiptHTML"; // Importa la función de generación de recibos
+
 
 export default function SellItem() {
   const [productsSell, setProductsSell] = useState([]);
@@ -16,6 +18,8 @@ export default function SellItem() {
   const [editedPrice, setEditedPrice] = useState(""); // Estado para el precio editado
   const [editedWeight, setEditedWeight] = useState(""); // Estado para el peso editado
   const [editedTropa, setEditedTropa] = useState(""); // Estado para la tropa editada
+  const [venta, setVenta] = useState(null); // Nuevo estado para almacenar la información de la venta
+
   const context = useContext(Contexts.UserContext);
 
   // paginacion
@@ -31,6 +35,18 @@ export default function SellItem() {
     });
     const data = await res.json();
     setProductsSell(data);
+  }, [apiUrl]);
+
+  const loadVenta = useCallback(async (id) => {
+    try {
+      const res = await fetch(`${apiUrl}/ventas/${id}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      setVenta(data);
+    } catch (error) {
+      console.error("Error al cargar la venta:", error);
+    }
   }, [apiUrl]);
   
   const handleSearch = useCallback(() => {
@@ -49,6 +65,7 @@ export default function SellItem() {
   }, [searchTerm, productsSell]);
 
   useEffect(() => {
+    loadVenta(params.id);
     loadProductsSell(params.id);
   }, [params.id, loadProductsSell]);  // include loadProductsSell as a dependency
   
@@ -190,9 +207,38 @@ export default function SellItem() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const handleReprint = () => {
+    if (!venta || !productsSell.length) {
+      alert("No se puede reimprimir la venta porque no hay datos cargados.");
+      return;
+    }
+
+    // Generar el recibo HTML
+    const receiptHTML = GenerateReceiptHTML(
+      venta,
+      productsSell,
+      venta.Cliente ? venta.Cliente.nombre : "Cliente Desconocido",
+      venta.FormaPago ? venta.FormaPago.tipo : "Forma de Pago Desconocida"
+    );
+
+    // Abrir una nueva ventana para la impresión
+    const printWindow = window.open("", "_blank");
+    printWindow.document.open();
+    printWindow.document.write(receiptHTML);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Productos Vendidos</h1>
+      <div className="d-flex justify-content-end mb-3">
+        <Button variant="primary" onClick={handleReprint}>
+          Reimprimir Venta
+        </Button>
+      </div>
+
       <div className="mb-3">
         <FormControl
           type="text"
