@@ -227,6 +227,9 @@ export default function SellItem() {
     printWindow.document.write(receiptHTML);
     printWindow.document.close();
     printWindow.print();
+    setTimeout(() => {
+      printWindow.close();
+    }, 1000);
   };
 
 
