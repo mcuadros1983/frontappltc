@@ -8,6 +8,7 @@ export const GenerateReceiptHTML = (sell, productos, nombreCliente, nombreFormaP
     <tr>
     <td>${producto.num_media ? producto.num_media : ''}</td>
     <td>${producto.garron ? producto.garron : ''}</td>
+    <td>${producto.tropa ? producto.tropa : ''}</td>
     <td>${producto.precio ? producto.precio.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) : ''}</td>
     <td>${producto.kg ? producto.kg : ''}</td>
     <td>${producto.categoria_producto ? producto.categoria_producto : ''}</td>
@@ -34,6 +35,7 @@ export const GenerateReceiptHTML = (sell, productos, nombreCliente, nombreFormaP
           <tr>
             <th>Número</th>
             <th>Garrón</th>
+            <th>Tropa</th>
             <th>Precio</th>
             <th>Peso</th>
             <th>Categoria</th>

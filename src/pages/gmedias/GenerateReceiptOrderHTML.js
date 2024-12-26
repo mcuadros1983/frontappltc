@@ -9,6 +9,7 @@ export const GenerateReceiptOrderHTML = (ingreso, productos, nombreSucursal) => 
     <tr>
       <td>${producto.num_media || ""}</td>
       <td>${producto.garron || ""}</td>
+      <td>${producto.tropa || ""}</td>
       <td>${producto.kg || ""}</td>
       <td>${producto.categoria_producto || ""}</td>
     </tr>
@@ -76,6 +77,7 @@ export const GenerateReceiptOrderHTML = (ingreso, productos, nombreSucursal) => 
             <tr>
               <th>Número</th>
               <th>Garrón</th>
+              <th>Tropa</th>
               <th>Peso</th>
               <th>Categoría</th>
             </tr>
