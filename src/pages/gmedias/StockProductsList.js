@@ -6,7 +6,7 @@ import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa 
 
 export default function StockProductsList() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(10);
+  const [productsPerPage] = useState(14);
 
   // const apiUrl = process.env.REACT_APP_API_URL;
 

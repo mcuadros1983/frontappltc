@@ -9,7 +9,15 @@ import Contexts from "../../context/Contexts";
 
 export default function OrderForm() {
   const context = useContext(Contexts.UserContext);
-  const toggleModal = () => setModal(!modal);
+  // const toggleModal = () => setModal(!modal);
+  const toggleModal = () => {
+    setModal(!modal);
+    setSearchMedia("");
+    setSearchPeso("");
+    setSearchTropa("");
+    setSearchGarron("");
+    setCurrentPage(1); // Reiniciar a la primera página
+  };
   const codigoDeBarraRef = useRef(null);
 
   const initialProductState = {
@@ -207,65 +215,6 @@ export default function OrderForm() {
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault(); //cancela el comportamiento por defecto
-  //   // Verificar si se ha seleccionado una sucursal
-  //   if (!selectedBranchId) {
-  //     alert("Por favor, seleccione una sucursal antes de grabar.");
-  //     return;
-  //   }
-
-  //   if (selectedBranchId === 1) {
-  //     alert("No se pueden hacer envios a la central, cambie la sucursal .");
-  //     return;
-  //   }
-
-  //   if (products.some((product) => product.kg <= 0)) {
-  //     alert("Debe ingresar el peso para todos los productos.");
-  //     return;
-  //   }
-
-  //   const confirmDelete = window.confirm(
-  //     "¿Estás seguro de que deseas grabar esta orden?"
-  //   );
-  //   if (!confirmDelete) {
-  //     return;
-  //   }
-
-  //   const cantidad_total = products.length;
-  //   const peso_total = products.reduce(
-  //     (acum, product) => acum + Number(product.kg),
-  //     0
-  //   );
-
-  //   try {
-  //     const res = await fetch(`${apiUrl}/ordenes`, {
-  //       credentials: "include",
-  //       method: "POST",
-  //       body: JSON.stringify({
-  //         products,
-  //         cantidad_total,
-  //         peso_total,
-  //         selectedBranchId,
-  //         fecha,
-  //       }),
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //     });
-
-  //     const data = await res.json();
-
-  //     // Llamar a la función handleVentaExitosa después de que la venta sea exitosa
-  //     handleOrderExitosa(data.nuevaOrden, data.productosActualizados);
-
-  //     navigate("/orders");
-  //   } catch (error) {
-  //     console.error("Error al guardar la orden:", error);
-  //     alert("No se pudo guardar la orden");
-  //   }
-  // };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -286,53 +235,94 @@ export default function OrderForm() {
     }
   };
 
+  // const handleSave = async () => {
+  //   // Buscar el producto en la base de datos por código de barras
+  //   const productResponse = await fetch(
+  //     `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
+  //     {
+  //       credentials: "include",
+  //     } // Cambiar por la URL correcta
+  //   );
+  //   const productData = await productResponse.json();
+
+  //   // Verificar si el producto existe en la base de datos
+  //   if (!productData) {
+  //     setModal(true);
+  //     return;
+  //   }
+
+  //   // Validar los datos del formulario antes de guardar
+  //   const formFields = ["codigo_de_barra"];
+  //   if (formFields.some((field) => !product[field])) {
+  //     alert("Todos los campos son obligatorios");
+  //     return;
+  //   }
+
+  //   // Verificar si el producto existe en la base de datos
+  //   if (productData.sucursal_id !== 18) {
+  //     alert("El producto ya no se encuentra en stock");
+  //     return;
+  //   }
+
+  //   const existingProductIndex = products.findIndex(
+  //     (prod) => prod.codigo_de_barra === productData.codigo_de_barra
+  //   );
+
+  //   // Verificar si el código de barras ya existe en la lista
+  //   if (existingProductIndex !== -1) {
+  //     alert("El código de barras ya existe en la lista");
+  //     return;
+  //   }
+
+  //   // Verificar si el código de barras solo contiene números
+  //   const barcodePattern = /^\d+$/;
+  //   if (!barcodePattern.test(product.codigo_de_barra)) {
+  //     alert("El código de barras debe contener solo números");
+  //     return;
+  //   }
+
+  //   // Limpiar el formulario
+  //   setProducts([...products, productData]);
+  //   setProduct(initialProductState);
+  // };
+
   const handleSave = async () => {
-    // Buscar el producto en la base de datos por código de barras
+    if (!product.codigo_de_barra) {
+      alert("El campo código de barra es requerido");
+      return;
+    }
+  
+    // Buscar el producto en la base de datos
     const productResponse = await fetch(
       `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
       {
         credentials: "include",
-      } // Cambiar por la URL correcta
+      }
     );
     const productData = await productResponse.json();
-
-    // Verificar si el producto existe en la base de datos
+  
     if (!productData) {
-      setModal(true);
+      setModal(true); // Abre el modal si el producto no se encuentra
       return;
     }
-
-    // Validar los datos del formulario antes de guardar
-    const formFields = ["codigo_de_barra"];
-    if (formFields.some((field) => !product[field])) {
-      alert("Todos los campos son obligatorios");
-      return;
-    }
-
-    // Verificar si el producto existe en la base de datos
+  
     if (productData.sucursal_id !== 18) {
       alert("El producto ya no se encuentra en stock");
       return;
     }
-
-    const existingProductIndex = products.findIndex(
-      (prod) => prod.codigo_de_barra === productData.codigo_de_barra
-    );
-
-    // Verificar si el código de barras ya existe en la lista
-    if (existingProductIndex !== -1) {
+  
+    if (products.some((prod) => prod.codigo_de_barra === product.codigo_de_barra)) {
       alert("El código de barras ya existe en la lista");
       return;
     }
-
-    // Verificar si el código de barras solo contiene números
+  
     const barcodePattern = /^\d+$/;
     if (!barcodePattern.test(product.codigo_de_barra)) {
       alert("El código de barras debe contener solo números");
       return;
     }
-
-    // Limpiar el formulario
+  
+    // Agregar producto y limpiar formulario
     setProducts([...products, productData]);
     setProduct(initialProductState);
   };
@@ -467,10 +457,18 @@ export default function OrderForm() {
   // Cálculo de la paginación para modal
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
+// Reiniciar la página al aplicar un filtro
+useEffect(() => {
+  if (searchMedia || searchPeso || searchTropa || searchGarron) {
+    setCurrentPage(1);
+  }
+}, [searchMedia, searchPeso, searchTropa, searchGarron]);
+
+// Cálculo de la paginación para modal después de filtrar
+const currentProducts = filteredProducts.slice(
+  (currentPage - 1) * productsPerPage,
+  currentPage * productsPerPage
+);
   const pageNumbers = [];
   for (
     let i = 1;
@@ -487,10 +485,15 @@ export default function OrderForm() {
   const indexOfLastProductOrder = currentPageOrder * productsPerPageOrder;
   const indexOfFirstProductOrder =
     indexOfLastProductOrder - productsPerPageOrder;
-  const currentProductsOrder = products.slice(
-    indexOfFirstProductOrder,
-    indexOfLastProductOrder
-  );
+  // const currentProductsOrder = products.slice(
+  //   indexOfFirstProductOrder,
+  //   indexOfLastProductOrder
+  // );
+
+  const currentProductsOrder = [...products]
+  .reverse()
+  .slice(indexOfFirstProductOrder, indexOfLastProductOrder);
+
   const pageNumbersOrder = [];
   for (let i = 1; i <= Math.ceil(products.length / productsPerPageOrder); i++) {
     pageNumbersOrder.push(i);
@@ -654,20 +657,27 @@ export default function OrderForm() {
             name="codigo_de_barra"
             value={product.codigo_de_barra}
             onChange={handleChange}
-            placeholder="Ingresa el codigo de barra"
+            placeholder="Ingresa el codigo de barra y presione ENTER"
             className="my-input"
             ref={codigoDeBarraRef}
+            // onBlur={handleSave} // Procesa el guardado al salir del campo
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault(); // Previene el comportamiento predeterminado de recargar la página
+                handleSave(); // Procesa el guardado al presionar Enter
+              }
+            }}
           />
         </Form.Group>
 
-        <Button
+        {/* <Button
           variant="primary"
           onClick={handleSave} // Ejecuta handleSave cuando se hace clic en el botón
           // disabled={loading}
           style={{ position: "relative" }}
         >
           Guardar
-        </Button>
+        </Button> */}
       </Form>
       <h1 className="my-list-title dark-text">Productos a agregar</h1>
 

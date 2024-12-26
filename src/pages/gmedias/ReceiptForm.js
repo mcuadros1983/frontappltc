@@ -16,36 +16,18 @@ const ReceiptForm = () => {
     tropa: "",
   };
 
-  const initialProductStateOnProcess = {
-    codigo_de_barra: "",
-    categoria_producto: "",
-    subcategoria: "",
-    num_media: "",
-    precio: 0,
-    kg: "",
-    tropa: "",
-  };
-
   const [product, setProduct] = useState(initialProductState);
   const [products, setProducts] = useState([]);
-
-  const [editingIndex, setEditingIndex] = useState(null);
-
-  const [isCodeProcessing, setIsCodeProcessing] = useState(false);
-  const [isCancelButtonDisabled, setIsCancelButtonDisabled] = useState(true);
   const [categoria, setCategoria] = useState(null);
-  const [generatedCodes, setGeneratedCodes] = useState([]);
-  const [canGenerateCode, setCanGenerateCode] = useState(true); // Estado para controlar la generación de códigos
-
+  const [manualEntry, setManualEntry] = useState(false);
+  const [fieldsDisabled, setFieldsDisabled] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
+  const [codeProcessed, setCodeProcessed] = useState(false);
 
   const navigate = useNavigate();
-
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const handleIngresoExitoso = async (ingreso, productos) => {
@@ -58,14 +40,176 @@ const ReceiptForm = () => {
       printWindow.print();
       setTimeout(() => {
         printWindow.close();
-      }, 1000); // Cierra la ventana automáticamente después de imprimir
+      }, 1000);
     } catch (error) {
       console.error("Error al imprimir el comprobante de ingreso:", error);
-      alert(
-        "Ocurrió un error al imprimir el comprobante de ingreso. Intente nuevamente más tarde."
-      );
+      alert("Ocurrió un error al imprimir el comprobante de ingreso.");
     }
   };
+
+  const handleCategoriaSelection = (categoriaSeleccionada) => {
+    if (products.length > 0) {
+      const confirmChange = window.confirm(
+        "Si cambia de categoría, se borrarán los productos agregados. ¿Desea continuar?"
+      );
+      if (!confirmChange) return;
+    }
+    setCategoria(categoriaSeleccionada);
+    setProducts([]);
+    setProduct(initialProductState);
+    setManualEntry(false);
+    setFieldsDisabled(true);
+    setCodeProcessed(false);
+  };
+
+  const handleManualEntry = () => {
+    setManualEntry(true);
+    setFieldsDisabled(false);
+    setProduct({
+      ...initialProductState,
+      precio: 0,
+    });
+  };
+
+  const handleCancelManualEntry = () => {
+    setManualEntry(false);
+    setFieldsDisabled(true);
+    setProduct(initialProductState);
+    setCodeProcessed(false);
+  };
+
+  // const handleSave = async () => {
+  //   if (manualEntry) {
+  //     const { num_media, tropa, kg } = product;
+
+  //     if (!num_media || !tropa || !kg) {
+  //       alert("Todos los campos (Número de media, Tropa y Peso) son obligatorios.");
+  //       return;
+  //     }
+
+  //     if (!/^\d+$/.test(num_media) || !/^\d+$/.test(tropa) || !/^\d+$/.test(kg)) {
+  //       alert("Los campos Número de media, Tropa y Peso deben ser solo números.");
+  //       return;
+  //     }
+
+  //     console.log("productos", products)
+  //     console.log("product", num_media)
+
+  //     const mediaExists = products.some(
+  //       (prod) => prod.num_media == num_media
+  //     );
+
+  //     console.log("exists", mediaExists)
+  //     if (mediaExists) {
+  //       alert("La media ya existe en la lista.");
+  //       return;
+  //     }
+
+  //     const codigo_de_barra = `00${product.num_media}00${product.tropa}00${product.kg}`;
+  //     const productExists = await checkProductExistence(codigo_de_barra);
+  //     if (productExists) {
+  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+  //       return;
+  //     }
+
+  //     setProducts([...products, { ...product, codigo_de_barra }]);
+  //     setManualEntry(false);
+  //     setProduct(initialProductState);
+  //     setFieldsDisabled(true);
+  //   } else {
+  //     if (!product.codigo_de_barra) {
+  //       alert("El campo código de barra es requerido");
+  //       return;
+  //     }
+
+  //     const productExists = await checkProductExistence(product.codigo_de_barra);
+  //     if (productExists) {
+  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+  //       return;
+  //     }
+
+  //     const barcodeExists = products.some(
+  //       (prod) => prod.codigo_de_barra === product.codigo_de_barra
+  //     );
+  //     if (barcodeExists) {
+  //       alert("El código de barras ya existe en la lista.");
+  //       return;
+  //     }
+
+  //     setProducts([...products, product]);
+  //     setFieldsDisabled(true);
+  //   }
+  //   setProduct(initialProductState);
+  //   setManualEntry(false);
+  // };
+
+  const handleSave = async () => {
+    if (manualEntry) {
+      const { num_media, tropa, kg } = product;
+  
+      if (!num_media || !tropa || !kg) {
+        alert("Todos los campos (Número de media, Tropa y Peso) son obligatorios.");
+        return;
+      }
+  
+      if (!/^\d+$/.test(num_media) || !/^\d+$/.test(tropa) || !/^\d+$/.test(kg)) {
+        alert("Los campos Número de media, Tropa y Peso deben ser solo números.");
+        return;
+      }
+  
+      const mediaExists = products.some((prod) => prod.num_media == num_media);
+  
+      if (mediaExists) {
+        alert("La media ya existe en la lista.");
+        return;
+      }
+  
+      let codigo_de_barra;
+      if (categoria === "porcino") {
+        // Si la categoría es porcino, el código de barra será igual al número de media
+        codigo_de_barra = num_media;
+      } else {
+        // Generar código de barra para otras categorías
+        codigo_de_barra = `00${product.num_media}00${product.tropa}00${product.kg}`;
+      }
+  
+      const productExists = await checkProductExistence(codigo_de_barra);
+      if (productExists) {
+        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+        return;
+      }
+  
+      setProducts([...products, { ...product, codigo_de_barra }]);
+      setManualEntry(false);
+      setProduct(initialProductState);
+      setFieldsDisabled(true);
+    } else {
+      if (!product.codigo_de_barra) {
+        alert("El campo código de barra es requerido");
+        return;
+      }
+  
+      const productExists = await checkProductExistence(product.codigo_de_barra);
+      if (productExists) {
+        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+        return;
+      }
+  
+      const barcodeExists = products.some(
+        (prod) => prod.codigo_de_barra === product.codigo_de_barra
+      );
+      if (barcodeExists) {
+        alert("El código de barras ya existe en la lista.");
+        return;
+      }
+  
+      setProducts([...products, product]);
+      setFieldsDisabled(true);
+    }
+    setProduct(initialProductState);
+    setManualEntry(false);
+  };
+  
 
   const checkProductExistence = async (codigoDeBarra) => {
     try {
@@ -83,65 +227,20 @@ const ReceiptForm = () => {
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   const peso_total = products.reduce(
-  //     (acum, product) => acum + Number(product.kg),
-  //     0
-  //   );
-  //   const cantidad_total = products.length;
-
-  //   const confirmSubmit = window.confirm(
-  //     "¿Estás seguro de que deseas grabar este ingreso?"
-  //   );
-  //   if (!confirmSubmit) {
-  //     return;
-  //   }
-
-  //   try {
-  //     const res = await fetch(`${apiUrl}/ingresos`, {
-  //       credentials: "include",
-  //       method: "POST",
-  //       body: JSON.stringify({
-  //         products,
-  //         categoria,
-  //         cantidad_total,
-  //         peso_total,
-  //       }),
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //     });
-
-  //     const data = await res.json();
-  //     handleIngresoExitoso(data.nuevoIngreso, data.productos);
-  //     setGeneratedCodes([]);
-  //     navigate("/receipts");
-  //   } catch (error) {
-  //     console.error("Error al guardar el ingreso:", error);
-  //     alert("No se pudo guardar el ingreso");
-  //   }
-  // };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const peso_total = products.reduce((acum, product) => {
-      const peso = parseFloat(product.kg); // Convertir a número decimal
-      return acum + (isNaN(peso) ? 0 : peso); // Sumar si es un número válido
-    }, 0);
-
-
+    const peso_total = products.reduce(
+      (acum, product) => acum + parseFloat(product.kg || 0),
+      0
+    );
     const cantidad_total = products.length;
 
     const confirmSubmit = window.confirm(
       "¿Estás seguro de que deseas grabar este ingreso?"
     );
-    if (!confirmSubmit) {
-      return;
-    }
+    if (!confirmSubmit) return;
 
-    setIsSubmitting(true); // Deshabilitar el botón
+    setIsSubmitting(true);
 
     try {
       const res = await fetch(`${apiUrl}/ingresos`, {
@@ -159,244 +258,158 @@ const ReceiptForm = () => {
         },
       });
 
+      if (!res.ok) throw new Error("No se pudo guardar el ingreso.");
+
       const data = await res.json();
       handleIngresoExitoso(data.nuevoIngreso, data.productos);
-      setGeneratedCodes([]);
+      setProducts([]);
       navigate("/receipts");
     } catch (error) {
-      console.error("Error al guardar el ingreso:", error);
-      alert("No se pudo guardar el ingreso");
+      console.error(error);
+      alert("Error al guardar el ingreso. Intente nuevamente.");
     } finally {
-      setIsSubmitting(false); // Habilitar el botón nuevamente
+      setIsSubmitting(false);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name === "kg") {
-      // Permite solo números y punto decimal
-      if (/^\d*\.?\d*$/.test(value) || value === "") {
-        setProduct((prev) => ({
-          ...prev,
-          [name]: value,
-        }));
-      }
-    } else {
-      setProduct((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
+  // const processCodeBarHandler = async (codigoDeBarra) => {
+  //   const processedData = processBarCode(codigoDeBarra, categoria);
+  //   if (processedData.success) {
+  //     setProduct((prevProduct) => ({
+  //       ...prevProduct,
+  //       num_media: processedData.data.num_media,
+  //       tropa: categoria === "porcino" ? "" : processedData.data.tropa,
+  //       kg: categoria === "porcino" ? "" : processedData.data.kg,
+  //       precio: 0,
+  //     }));
+  //     setFieldsDisabled(categoria !== "porcino");
+  //     setCodeProcessed(true);
+  //   } else {
+  //     alert(`Error al procesar el código de barras: ${processedData.message}`);
+  //   }
+  // };
 
-  const handleSave = async () => {
-    if (!product.codigo_de_barra) {
-      alert("El campo código de barra es requerido");
-      return;
-    }
+  // const processCodeBarHandler = async (codigoDeBarra) => {
+  //   const processedData = processBarCode(codigoDeBarra, categoria);
+  //   if (processedData.success) {
+  //     const productExists = await checkProductExistence(codigoDeBarra);
+  //     if (productExists) {
+  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+  //       return;
+  //     }
 
-    const productExists = await checkProductExistence(product.codigo_de_barra);
+  //     const barcodeExists = products.some(
+  //       (prod) => prod.codigo_de_barra === codigoDeBarra
+  //     );
+  //     if (barcodeExists) {
+  //       alert("El código de barras ya existe en la lista.");
+  //       return;
+  //     }
 
-    if (productExists) {
-      alert("¡Alerta! El producto ya existe en la base de datos.");
-      return;
-    }
+  //     setProduct((prevProduct) => ({
+  //       ...prevProduct,
+  //       num_media: processedData.data.num_media,
+  //       tropa: categoria === "porcino" ? "" : processedData.data.tropa,
+  //       kg: categoria === "porcino" ? "" : processedData.data.kg,
+  //       precio: 0,
+  //     }));
 
-    const barcodeExists = products.some(
-      (prod, index) =>
-        index !== editingIndex &&
-        prod.codigo_de_barra === product.codigo_de_barra
-    );
-    if (barcodeExists) {
-      alert("El código de barras ya existe en la lista");
-      return;
-    }
+  //     // Agregar directamente el producto a la lista
+  //     setProducts((prevProducts) => [
+  //       ...prevProducts,
+  //       {
+  //         ...product,
+  //         codigo_de_barra: codigoDeBarra,
+  //         num_media: processedData.data.num_media,
+  //         tropa: processedData.data.tropa || "",
+  //         kg: processedData.data.kg || "",
+  //         precio: 0,
+  //       },
+  //     ]);
 
-    const barcodePattern = /^\d+$/;
-    if (!barcodePattern.test(product.codigo_de_barra)) {
-      alert("El código de barras debe contener solo números");
-      return;
-    }
-
-    if (editingIndex !== null) {
-      const updatedProducts = [...products];
-      updatedProducts[editingIndex] = product;
-      setProducts(updatedProducts);
-      setEditingIndex(null);
-      setIsCancelButtonDisabled(true);
-    } else {
-      setProducts([...products, product]);
-      setIsCancelButtonDisabled(true);
-    }
-
-    setProduct(initialProductState);
-    setCanGenerateCode(true);
-  };
-
-  const handleDelete = (barcode) => {
-    const confirmDelete = window.confirm(
-      "¿Seguro que desea eliminar este elemento?"
-    );
-
-    if (confirmDelete) {
-      const updatedProducts = products.filter(
-        (prod) => prod.codigo_de_barra !== barcode
-      );
-      // Buscar el valor del input codigo_de_barra en generatedCodes
-      const index = generatedCodes.indexOf(barcode);
-
-      // Si el valor del input codigo_de_barra está en generatedCodes, eliminarlo
-      if (index !== -1) {
-        const updatedGeneratedCodes = [...generatedCodes];
-        updatedGeneratedCodes.splice(index, 1); // Eliminar el elemento en el índice encontrado
-        setGeneratedCodes(updatedGeneratedCodes); // Actualizar el estado con el nuevo array
-      }
-
-      setProducts(updatedProducts);
-    }
-  };
+  //     setFieldsDisabled(categoria !== "porcino");
+  //     setCodeProcessed(true);
+  //     setProduct(initialProductState);
+  //   } else {
+  //     alert(`Error al procesar el código de barras: ${processedData.message}`);
+  //   }
+  // };
 
   const processCodeBarHandler = async (codigoDeBarra) => {
-    setIsCodeProcessing(true);
-
     const processedData = processBarCode(codigoDeBarra, categoria);
-
     if (processedData.success) {
+      const productExists = await checkProductExistence(codigoDeBarra);
+      if (productExists) {
+        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+        return;
+      }
+  
+      const barcodeExists = products.some(
+        (prod) => prod.codigo_de_barra === codigoDeBarra
+      );
+      if (barcodeExists) {
+        alert("El código de barras ya existe en la lista.");
+        return;
+      }
+  
       setProduct((prevProduct) => ({
         ...prevProduct,
         num_media: processedData.data.num_media,
-        tropa: processedData.data.tropa,
-        kg: processedData.data.kg,
+        tropa: categoria === "porcino" ? "" : processedData.data.tropa,
+        kg: categoria === "porcino" ? "" : processedData.data.kg,
         precio: 0,
+        codigo_de_barra: codigoDeBarra,
       }));
-      setIsCancelButtonDisabled(false);
+  
+      if (categoria === "bovino") {
+        // Agregar directamente el producto a la lista si la categoría es bovino
+        setProducts((prevProducts) => [
+          ...prevProducts,
+          {
+            ...product,
+            codigo_de_barra: codigoDeBarra,
+            num_media: processedData.data.num_media,
+            tropa: processedData.data.tropa || "",
+            kg: processedData.data.kg || "",
+            precio: 0,
+          },
+        ]);
+        setProduct(initialProductState);
+      } else {
+        // Habilitar campos para editar tropa y kg en categoría porcino
+        setFieldsDisabled(false);
+      }
+  
+      setCodeProcessed(true);
     } else {
       alert(`Error al procesar el código de barras: ${processedData.message}`);
     }
-    setIsCodeProcessing(false);
   };
 
-  const handleCancel = () => {
-    // Buscar el valor del input codigo_de_barra en generatedCodes
-    const index = generatedCodes.indexOf(product.codigo_de_barra);
-
-    // Si el valor del input codigo_de_barra está en generatedCodes, eliminarlo
-    if (index !== -1) {
-      const updatedGeneratedCodes = [...generatedCodes];
-      updatedGeneratedCodes.splice(index, 1); // Eliminar el elemento en el índice encontrado
-      setGeneratedCodes(updatedGeneratedCodes); // Actualizar el estado con el nuevo array
-    }
-
-    // Restaurar el estado inicial del producto y deshabilitar el botón Cancelar
-    setProduct(initialProductStateOnProcess);
-    setIsCancelButtonDisabled(true);
-    setCanGenerateCode(true);
-  };
-
-  const handleCategoriaSelection = (categoriaSeleccionada) => {
-    if (products.length > 0) {
-      const confirmChange = window.confirm(
-        "Si cambia de categoría, se borrarán los productos agregados. ¿Desea continuar?"
-      );
-      if (!confirmChange) {
-        return;
-      }
-    }
-    setIsCancelButtonDisabled(true);
-    setCategoria(categoriaSeleccionada);
-    setProducts([]);
+  const handleCodeBarChange = (e) => {
+    const newCode = e.target.value;
     setProduct(initialProductState);
-    setGeneratedCodes([]);
-    setCanGenerateCode(true);
+    setFieldsDisabled(true);
+    setCodeProcessed(false);
+    setProduct((prevProduct) => ({
+      ...prevProduct,
+      codigo_de_barra: newCode,
+    }));
   };
 
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentFilteredProducts = products.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
-  const pageNumbers = [];
-  for (let i = 1; i <= Math.ceil(products.length / productsPerPage); i++) {
-    pageNumbers.push(i);
-  }
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const handleGenerateCode = async () => {
-    if (!canGenerateCode) return; // Verificar si se puede generar un nuevo código
-
-    // Determinar el último código generado
-    let lastGeneratedCode;
-    if (products.length > 0) {
-      lastGeneratedCode = products[products.length - 1].codigo_de_barra;
-    } else if (generatedCodes.length > 0) {
-      lastGeneratedCode = generatedCodes[generatedCodes.length - 1];
-    } else {
-      // Si no hay códigos generados previamente, genera uno desde la API
-      try {
-        const response = await fetch(`${apiUrl}/productos/generarcodigos`, {
-          credentials: "include",
-          method: "POST",
-          body: JSON.stringify({ categoria }), // Convertir categoria a JSON
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Error al generar el código de barras");
-        }
-
-        const data = await response.json();
-
-        setGeneratedCodes([data.codigo_de_barra]);
-        setCanGenerateCode(false);
-
-        setProduct((prevProduct) => ({
-          ...prevProduct,
-          codigo_de_barra: data.codigo_de_barra,
-          num_media: data.num_media,
-          precio: 0,
-          kg: 0,
-          tropa: 0,
-        }));
-
-        return;
-      } catch (error) {
-        console.error("Error al generar el código de barras:", error);
-        alert("Ocurrió un error al generar el código de barras.");
-        return;
-      }
-    }
-
-    // Generar el siguiente código basado en el último generado
-    const newId = parseInt(lastGeneratedCode, 10) + 1;
-    const codigo_de_barra =
-      categoria === "bovino"
-        ? // ? newId.toString().padStart(30, "0")
-        newId.toString().padStart(30, "0")
-        : newId.toString().padStart(7, "0");
-
-    setGeneratedCodes([...generatedCodes, codigo_de_barra]);
-
-    setProduct((prevProduct) => ({
-      ...prevProduct,
-      codigo_de_barra,
-      num_media:
-        categoria === "bovino" ? codigo_de_barra.slice(-11) : codigo_de_barra,
-      precio: 0,
-      kg: 0,
-      tropa: 0,
-    }));
-
-    setIsCancelButtonDisabled(false);
-    setCanGenerateCode(false);
-  };
+  // const currentFilteredProducts = products.slice(
+  //   indexOfFirstProduct,
+  //   indexOfLastProduct
+  // );
+  const currentFilteredProducts = [...products]
+  .reverse()
+  .slice(indexOfFirstProduct, indexOfLastProduct);
 
   return (
     <Container className="d-flex flex-column align-items-center">
       <h1 className="my-form-title text-center">Agregar Ingreso</h1>
-
 
       <div className="my-buttons-container">
         <Form.Group className="mb-3">
@@ -405,7 +418,7 @@ const ReceiptForm = () => {
             type="date"
             name="fecha"
             value={fecha}
-            onChange={(e) => setFecha(e.target.value)} // Permite al usuario cambiar la fecha si lo necesita
+            onChange={(e) => setFecha(e.target.value)}
             className="my-input"
           />
         </Form.Group>
@@ -428,107 +441,76 @@ const ReceiptForm = () => {
         </Button>
       </div>
 
-      <Form onSubmit={(e) => e.preventDefault()} className="w-50">
+      <Form className="w-50">
         <Form.Group className="mb-3">
           <Form.Label>Codigo de barra</Form.Label>
-          <div className="d-flex align-items-center">
-            <Form.Control
-              type="text"
-              name="codigo_de_barra"
-              value={product.codigo_de_barra}
-              onChange={(e) => {
-                setGeneratedCodes([]);
-                setCanGenerateCode(true);
-                const inputValue = e.target.value;
-                if (/^\d*$/.test(inputValue)) {
-                  setProduct({
-                    ...product,
-                    codigo_de_barra: inputValue,
-                    num_media: "",
-                    precio: 0,
-                    kg: "",
-                    tropa: "",
-                  });
-                } else {
-                  alert("El código de barras debe contener solo números");
-                }
-              }}
-              placeholder="Ingresa el codigo de barra"
-              className="my-input me-1"
-            />
-
-            <span className="ms-1">
-              <Button
-                variant="success"
-                onClick={() => processCodeBarHandler(product.codigo_de_barra)}
-                className="ml-1"
-                disabled={
-                  isCodeProcessing ||
-                  (categoria === "bovino" &&
-                    // product.codigo_de_barra.length !== 30) ||
-                    product.codigo_de_barra.length !== 30) ||
-                  (categoria === "porcino" &&
-                    product.codigo_de_barra.length !== 7) ||
-                  generatedCodes.length > 0 // Deshabilitar si generatedCodes tiene contenido
-                }
-              >
-                Procesar
-              </Button>
-            </span>
-
-            <span className="ms-1">
-              <Button
-                variant="danger"
-                onClick={handleCancel}
-                className="ml-1"
-                disabled={isCancelButtonDisabled}
-              >
-                Cancelar
-              </Button>
-            </span>
-          </div>
+          <Form.Control
+            type="text"
+            name="codigo_de_barra"
+            value={product.codigo_de_barra}
+            onChange={handleCodeBarChange}
+            placeholder="Ingresa el código de barra"
+            className="my-input"
+            disabled={manualEntry}
+          />
+          <Button
+            variant="success"
+            onClick={() => processCodeBarHandler(product.codigo_de_barra)}
+            className="mt-2"
+            disabled={
+              manualEntry ||
+              !(
+                (categoria === "bovino" &&
+                  product.codigo_de_barra.length === 30) ||
+                (categoria === "porcino" &&
+                  product.codigo_de_barra.length === 7)
+              )
+            }
+          >
+            Procesar
+          </Button>
         </Form.Group>
-        <Form.Group className="mb-3">
-          <span className="ms-1">
+        <div className="d-flex mb-3">
+          <Button
+            variant="success"
+            onClick={handleManualEntry}
+            disabled={manualEntry || !categoria}
+            className="mr-2"
+          >
+            Ingreso Manual
+          </Button>
+          {manualEntry && (
             <Button
-              variant="success"
-              onClick={() => handleGenerateCode()}
-              className="ml-1"
-              disabled={!categoria || product.codigo_de_barra.trim() !== ""}
+              variant="danger"
+              className="ms-2"
+              onClick={handleCancelManualEntry}
             >
-              Generar
+              Cancelar
             </Button>
-          </span>
-        </Form.Group>
-
+          )}
+        </div>
         <Form.Group className="mb-3">
           <Form.Label>Numero de media</Form.Label>
           <Form.Control
             type="number"
             name="num_media"
             value={product.num_media}
-            onChange={handleChange}
-            placeholder="Ingresa el numero de la media"
+            onChange={(e) => setProduct({ ...product, num_media: e.target.value })}
+            placeholder="Ingresa el número de media"
             className="my-input"
-            disabled
-            min="0"
+            disabled={fieldsDisabled}
           />
         </Form.Group>
         <Form.Group className="mb-3">
-          <Form.Label>Numero de Tropa</Form.Label>
+          <Form.Label>Numero de tropa</Form.Label>
           <Form.Control
             type="number"
             name="tropa"
             value={product.tropa}
-            onChange={handleChange}
-            placeholder="Ingresa el numero de la tropa"
+            onChange={(e) => setProduct({ ...product, tropa: e.target.value })}
+            placeholder="Ingresa el número de tropa"
             className="my-input"
-            disabled={
-              categoria !== "porcino" || generatedCodes.length !== 0
-                ? false
-                : true
-            }
-            min="0"
+            disabled={fieldsDisabled}
           />
         </Form.Group>
         <Form.Group className="mb-3">
@@ -537,26 +519,10 @@ const ReceiptForm = () => {
             type="number"
             name="kg"
             value={product.kg}
-            onChange={handleChange}
+            onChange={(e) => setProduct({ ...product, kg: e.target.value })}
             placeholder="Ingresa el peso de la media"
             className="my-input"
-            disabled={
-              categoria !== "porcino" || generatedCodes.length !== 0
-                ? false
-                : true
-            }
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Precio de la media</Form.Label>
-          <Form.Control
-            type="number"
-            name="precio"
-            value={product.precio}
-            onChange={handleChange}
-            placeholder="Ingresa el precio de la media"
-            className="my-input"
-            min="0"
+            disabled={fieldsDisabled}
           />
         </Form.Group>
         <Button
@@ -564,11 +530,11 @@ const ReceiptForm = () => {
           type="button"
           onClick={handleSave}
           disabled={!product.num_media}
-          style={{ position: "relative" }}
         >
           Guardar
         </Button>
       </Form>
+
       <h1 className="my-list-title dark-text">Productos a agregar</h1>
       <Table striped bordered hover>
         <thead>
@@ -582,7 +548,7 @@ const ReceiptForm = () => {
           </tr>
         </thead>
         <tbody>
-          {currentFilteredProducts.map((product, index) => (
+          {currentFilteredProducts.map((product) => (
             <tr key={product.codigo_de_barra}>
               <td>{product.codigo_de_barra}</td>
               <td>{product.num_media}</td>
@@ -592,8 +558,13 @@ const ReceiptForm = () => {
               <td className="text-center">
                 <Button
                   variant="danger"
-                  onClick={() => handleDelete(product.codigo_de_barra)}
-                  className="mx-2"
+                  onClick={() =>
+                    setProducts((prev) =>
+                      prev.filter(
+                        (p) => p.codigo_de_barra !== product.codigo_de_barra
+                      )
+                    )
+                  }
                 >
                   Eliminar
                 </Button>
@@ -611,18 +582,6 @@ const ReceiptForm = () => {
           {isSubmitting ? "Grabando..." : "Grabar"}
         </Button>
       </div>
-      <div>
-        {pageNumbers.map((number) => (
-          <Button
-            key={number}
-            onClick={() => paginate(number)}
-            className="mx-1"
-          >
-            {number}
-          </Button>
-        ))}
-      </div>
-      <CategorySummaryTable filteredProducts={products} />
     </Container>
   );
 };

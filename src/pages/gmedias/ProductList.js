@@ -128,12 +128,6 @@ export default function ProductList() {
     }
   };
 
-  // Define la función para convertir las fechas al formato deseado
-  // const parseDate = (dateString) => {
-  //   const [day, month, year] = dateString.split("/");
-  //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
-  // };
-
   const handleSearch = useCallback(() => {
     const searchTermLower = searchBarra.toLowerCase();
     const startDateFilter = startDate ? new Date(startDate) : null;

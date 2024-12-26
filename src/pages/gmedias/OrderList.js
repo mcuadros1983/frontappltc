@@ -19,7 +19,7 @@ export default function OrderList() {
 
   // paginacion
   const [currentPage, setCurrentPage] = useState(1);
-  const [ordersPerPage] = useState(4);
+  const [ordersPerPage] = useState(14);
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;

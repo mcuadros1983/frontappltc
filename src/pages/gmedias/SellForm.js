@@ -8,7 +8,24 @@ import { GenerateReceiptHTML } from "./GenerateReceiptHTML"; // Importa la funci
 import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable
 
 export default function SellForm() {
-  const toggleModal = () => setModal(!modal);
+  // const toggleModal = () => setModal(!modal);
+  const toggleModal = () => {
+    setModal(!modal);
+    setSearchMedia("");
+    setSearchPeso("");
+    setSearchTropa("");
+    setSearchGarron("");
+    setCurrentPage(1); // Reiniciar a la primera página
+    // if (!modal) {
+    //   // Restablecer filtros y paginación al abrir el modal
+    //   setSearchMedia("");
+    //   setSearchPeso("");
+    //   setSearchTropa("");
+    //   setSearchGarron("");
+    //   setCurrentPage(1); // Reiniciar a la primera página
+    // }
+  };
+
   const codigoDeBarraRef = useRef(null);
 
   const initialProductState = {
@@ -159,18 +176,6 @@ export default function SellForm() {
     setFilteredProducts(filtered);
   }, [searchMedia, searchPeso, searchTropa, searchGarron, availableProducts]);
 
-  // useEffect(() => {
-  //   if (filteredProducts) {
-  //     const indexOfLastProduct = currentPage * productsPerPage;
-  //     const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  //     const paginatedProducts = filteredProducts.slice(
-  //       indexOfFirstProduct,
-  //       indexOfLastProduct
-  //     );
-  //     setCurrentFilteredProducts(paginatedProducts);
-  //   }
-  // }, [filteredProducts, currentPage, productsPerPage]);
-
   // Función para manejar la venta exitosa y realizar la impresión del recibo
   const handleVentaExitosa = async (venta, productos) => {
     // setVentaExitosa(true); // Establecer ventaExitosa en true
@@ -290,77 +295,6 @@ export default function SellForm() {
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   if (!selectedCustomerId) {
-  //     alert("Por favor, seleccione un cliente antes de grabar.");
-  //     return;
-  //   }
-
-  //   if (!selectedWaypaysId) {
-  //     alert("Por favor, seleccione una forma de pago antes de grabar.");
-  //     return;
-  //   }
-
-  //   if (selectedCustomerId === 1) {
-  //     alert("No se pueden hacer ventas a la central, cambie de cliente.");
-  //     return;
-  //   }
-
-  //   // Verificar si algún producto tiene peso menor o igual a cero
-  //   if (products.some((product) => product.kg <= 0)) {
-  //     alert("Debe ingresar el peso para todos los productos.");
-  //     return;
-  //   }
-
-  //   const confirmDelete = window.confirm(
-  //     "¿Estás seguro de que deseas grabar esta venta?"
-  //   );
-  //   if (!confirmDelete) {
-  //     return;
-  //   }
-
-  //   const cantidad_total = products.length;
-  //   const peso_total = products.reduce(
-  //     (acum, product) => acum + Number(product.kg),
-  //     0
-  //   );
-
-  //   try {
-  //     const response = await fetch(`${apiUrl}/ventas`, {
-  //       credentials: "include",
-  //       method: "POST",
-  //       body: JSON.stringify({
-  //         cantidad_total,
-  //         peso_total,
-  //         cliente_id: selectedCustomerId,
-  //         formaPago_id: selectedWaypaysId,
-  //         productos: products,
-  //       }),
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error(
-  //         "Error al realizar la venta. Intente nuevamente más tarde."
-  //       );
-  //     }
-
-  //     const data = await response.json();
-
-  //     // Llamar a la función handleVentaExitosa después de que la venta sea exitosa
-  //     handleVentaExitosa(data.nuevaVenta, data.productosActualizados);
-  //     navigate("/sells");
-  //   } catch (error) {
-  //     console.error("Error al realizar la venta:", error.message);
-  //     alert(
-  //       "Ocurrió un error al realizar la venta. Intente nuevamente más tarde."
-  //     );
-  //   }
-  // };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProduct({
@@ -378,8 +312,72 @@ export default function SellForm() {
     }
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
+  // const handleSave = async (e) => {
+  //   e.preventDefault();
+  //   const productResponse = await fetch(
+  //     `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
+  //     {
+  //       credentials: "include",
+  //     }
+  //   );
+  //   const productData = await productResponse.json();
+
+  //   // Verificar si el producto existe en la base de datos
+  //   if (!productData) {
+  //     setModal(true);
+  //     return;
+  //   }
+
+  //   const formFields = ["codigo_de_barra"];
+  //   if (formFields.some((field) => !product[field])) {
+  //     alert("Todos los campos son obligatorios");
+  //     return;
+  //   }
+
+  //   if (productData.sucursal_id !== 18) {
+  //     alert("El producto ya no se encuentra en stock");
+  //     return;
+  //   }
+
+  //   const existingProductIndex = products.findIndex(
+  //     (prod) => prod.codigo_de_barra === productData.codigo_de_barra
+  //   );
+
+  //   if (existingProductIndex !== -1) {
+  //     alert("El código de barras ya existe en la lista");
+  //     return;
+  //   }
+
+  //   const barcodePattern = /^\d+$/;
+  //   if (!barcodePattern.test(product.codigo_de_barra)) {
+  //     alert("El código de barras debe contener solo números");
+  //     return;
+  //   }
+
+  //   //Obtener cliente
+  //   const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
+  //     credentials: "include",
+  //   });
+  //   const cliente = await res.json();
+
+  //   if (
+  //     !productData.precio &&
+  //     cliente.margen > 0 &&
+  //     productData.costo &&
+  //     productData.categoria_producto === "bovino"
+  //   ) {
+  //     productData.precio = (1 + cliente.margen / 100) * productData.costo;
+  //   }
+  //   setProducts([...products, productData]);
+  //   setProduct(initialProductState);
+  // };
+
+  const handleSave = async () => {
+    if (!product.codigo_de_barra) {
+      alert("El campo código de barra es requerido");
+      return;
+    }
+  
     const productResponse = await fetch(
       `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
       {
@@ -387,45 +385,38 @@ export default function SellForm() {
       }
     );
     const productData = await productResponse.json();
-
-    // Verificar si el producto existe en la base de datos
+  
+    // Validar si el producto existe en la base de datos
     if (!productData) {
-      setModal(true);
+      setModal(true); // Mostrar modal si no existe
       return;
     }
-
-    const formFields = ["codigo_de_barra"];
-    if (formFields.some((field) => !product[field])) {
-      alert("Todos los campos son obligatorios");
-      return;
-    }
-
+  
+    // Validar que el producto pertenezca a la sucursal esperada
     if (productData.sucursal_id !== 18) {
       alert("El producto ya no se encuentra en stock");
       return;
     }
-
-    const existingProductIndex = products.findIndex(
-      (prod) => prod.codigo_de_barra === productData.codigo_de_barra
-    );
-
-    if (existingProductIndex !== -1) {
+  
+    // Verificar si el producto ya está en la lista
+    if (products.some((prod) => prod.codigo_de_barra === productData.codigo_de_barra)) {
       alert("El código de barras ya existe en la lista");
       return;
     }
-
+  
+    // Validar que el código de barras sea numérico
     const barcodePattern = /^\d+$/;
     if (!barcodePattern.test(product.codigo_de_barra)) {
       alert("El código de barras debe contener solo números");
       return;
     }
-
-    //Obtener cliente
+  
+    // Ajustar precio del producto si no tiene asignado
     const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
       credentials: "include",
     });
     const cliente = await res.json();
-
+  
     if (
       !productData.precio &&
       cliente.margen > 0 &&
@@ -434,6 +425,8 @@ export default function SellForm() {
     ) {
       productData.precio = (1 + cliente.margen / 100) * productData.costo;
     }
+  
+    // Agregar producto a la lista y resetear el formulario
     setProducts([...products, productData]);
     setProduct(initialProductState);
   };
@@ -577,13 +570,27 @@ export default function SellForm() {
     setAvailableProducts(sortedProducts);
   };
 
-  // Cálculo de la paginación para modal
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  // // Cálculo de la paginación para modal
+  // const indexOfLastProduct = currentPage * productsPerPage;
+  // const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  // const currentProducts = filteredProducts.slice(
+  //   indexOfFirstProduct,
+  //   indexOfLastProduct
+  // );
+  useEffect(() => {
+    // Si hay filtros activos, restablece la página a 1
+    if (searchMedia || searchPeso || searchTropa || searchGarron) {
+      setCurrentPage(1);
+    }
+  }, [searchMedia, searchPeso, searchTropa, searchGarron]);
+  
+  // Cálculo de la paginación para modal (después de filtrar)
   const currentProducts = filteredProducts.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
   );
+
+  
   const pageNumbers = [];
   for (
     let i = 1;
@@ -598,10 +605,14 @@ export default function SellForm() {
   // Cálculo de la paginación para Ordenes
   const indexOfLastProductSell = currentPageSell * productsPerPageSell;
   const indexOfFirstProductSell = indexOfLastProductSell - productsPerPageSell;
-  const currentProductsSell = products.slice(
-    indexOfFirstProductSell,
-    indexOfLastProductSell
-  );
+  // const currentProductsSell = products.slice(
+  //   indexOfFirstProductSell,
+  //   indexOfLastProductSell
+  // );
+  const currentProductsSell = [...products]
+  .reverse()
+  .slice(indexOfFirstProductSell, indexOfLastProductSell);
+
   const pageNumbersSell = [];
   for (let i = 1; i <= Math.ceil(products.length / productsPerPageSell); i++) {
     pageNumbersSell.push(i);
@@ -756,13 +767,19 @@ export default function SellForm() {
             name="codigo_de_barra"
             value={product.codigo_de_barra}
             onChange={handleChange}
-            placeholder="Ingresa el codigo de barra"
+            placeholder="Ingresa el codigo de barra y presione ENTER"
             className="my-input"
             ref={codigoDeBarraRef}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault(); // Prevenir el comportamiento predeterminado del Enter
+                handleSave(); // Procesar automáticamente al presionar Enter
+              }
+            }}
           />
         </Form.Group>
 
-        <Button
+        {/* <Button
           variant="primary"
           type="button"
           onClick={handleSave}
@@ -770,7 +787,7 @@ export default function SellForm() {
           style={{ position: "relative" }}
         >
           Guardar
-        </Button>
+        </Button> */}
       </Form>
       <h1 className="my-list-title dark-text">Productos a agregar</h1>
       <Table striped bordered hover>

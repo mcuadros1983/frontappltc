@@ -15,7 +15,7 @@ export default function StockList() {
   const [endDate, setEndDate] = useState("");
   // const [products, setProducts] = useState([]); //agregado para el doble clickf
   const [currentPage, setCurrentPage] = useState(1);
-  const [ordersPerPage] = useState(10);
+  const [ordersPerPage] = useState(14);
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
