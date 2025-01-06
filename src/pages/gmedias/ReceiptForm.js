@@ -22,7 +22,7 @@ const ReceiptForm = () => {
   const [manualEntry, setManualEntry] = useState(false);
   const [fieldsDisabled, setFieldsDisabled] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(10);
+  const [productsPerPage] = useState(2);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [codeProcessed, setCodeProcessed] = useState(false);
@@ -78,92 +78,27 @@ const ReceiptForm = () => {
     setCodeProcessed(false);
   };
 
-  // const handleSave = async () => {
-  //   if (manualEntry) {
-  //     const { num_media, tropa, kg } = product;
-
-  //     if (!num_media || !tropa || !kg) {
-  //       alert("Todos los campos (Número de media, Tropa y Peso) son obligatorios.");
-  //       return;
-  //     }
-
-  //     if (!/^\d+$/.test(num_media) || !/^\d+$/.test(tropa) || !/^\d+$/.test(kg)) {
-  //       alert("Los campos Número de media, Tropa y Peso deben ser solo números.");
-  //       return;
-  //     }
-
-  //     console.log("productos", products)
-  //     console.log("product", num_media)
-
-  //     const mediaExists = products.some(
-  //       (prod) => prod.num_media == num_media
-  //     );
-
-  //     console.log("exists", mediaExists)
-  //     if (mediaExists) {
-  //       alert("La media ya existe en la lista.");
-  //       return;
-  //     }
-
-  //     const codigo_de_barra = `00${product.num_media}00${product.tropa}00${product.kg}`;
-  //     const productExists = await checkProductExistence(codigo_de_barra);
-  //     if (productExists) {
-  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-  //       return;
-  //     }
-
-  //     setProducts([...products, { ...product, codigo_de_barra }]);
-  //     setManualEntry(false);
-  //     setProduct(initialProductState);
-  //     setFieldsDisabled(true);
-  //   } else {
-  //     if (!product.codigo_de_barra) {
-  //       alert("El campo código de barra es requerido");
-  //       return;
-  //     }
-
-  //     const productExists = await checkProductExistence(product.codigo_de_barra);
-  //     if (productExists) {
-  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-  //       return;
-  //     }
-
-  //     const barcodeExists = products.some(
-  //       (prod) => prod.codigo_de_barra === product.codigo_de_barra
-  //     );
-  //     if (barcodeExists) {
-  //       alert("El código de barras ya existe en la lista.");
-  //       return;
-  //     }
-
-  //     setProducts([...products, product]);
-  //     setFieldsDisabled(true);
-  //   }
-  //   setProduct(initialProductState);
-  //   setManualEntry(false);
-  // };
-
   const handleSave = async () => {
     if (manualEntry) {
       const { num_media, tropa, kg } = product;
-  
+
       if (!num_media || !tropa || !kg) {
         alert("Todos los campos (Número de media, Tropa y Peso) son obligatorios.");
         return;
       }
-  
+
       if (!/^\d+$/.test(num_media) || !/^\d+$/.test(tropa) || !/^\d+$/.test(kg)) {
         alert("Los campos Número de media, Tropa y Peso deben ser solo números.");
         return;
       }
-  
+
       const mediaExists = products.some((prod) => prod.num_media == num_media);
-  
+
       if (mediaExists) {
         alert("La media ya existe en la lista.");
         return;
       }
-  
+
       let codigo_de_barra;
       if (categoria === "porcino") {
         // Si la categoría es porcino, el código de barra será igual al número de media
@@ -172,13 +107,13 @@ const ReceiptForm = () => {
         // Generar código de barra para otras categorías
         codigo_de_barra = `00${product.num_media}00${product.tropa}00${product.kg}`;
       }
-  
+
       const productExists = await checkProductExistence(codigo_de_barra);
       if (productExists) {
         alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
         return;
       }
-  
+
       setProducts([...products, { ...product, codigo_de_barra }]);
       setManualEntry(false);
       setProduct(initialProductState);
@@ -188,13 +123,13 @@ const ReceiptForm = () => {
         alert("El campo código de barra es requerido");
         return;
       }
-  
+
       const productExists = await checkProductExistence(product.codigo_de_barra);
       if (productExists) {
         alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
         return;
       }
-  
+
       const barcodeExists = products.some(
         (prod) => prod.codigo_de_barra === product.codigo_de_barra
       );
@@ -202,14 +137,14 @@ const ReceiptForm = () => {
         alert("El código de barras ya existe en la lista.");
         return;
       }
-  
+
       setProducts([...products, product]);
       setFieldsDisabled(true);
     }
     setProduct(initialProductState);
     setManualEntry(false);
   };
-  
+
 
   const checkProductExistence = async (codigoDeBarra) => {
     try {
@@ -272,69 +207,6 @@ const ReceiptForm = () => {
     }
   };
 
-  // const processCodeBarHandler = async (codigoDeBarra) => {
-  //   const processedData = processBarCode(codigoDeBarra, categoria);
-  //   if (processedData.success) {
-  //     setProduct((prevProduct) => ({
-  //       ...prevProduct,
-  //       num_media: processedData.data.num_media,
-  //       tropa: categoria === "porcino" ? "" : processedData.data.tropa,
-  //       kg: categoria === "porcino" ? "" : processedData.data.kg,
-  //       precio: 0,
-  //     }));
-  //     setFieldsDisabled(categoria !== "porcino");
-  //     setCodeProcessed(true);
-  //   } else {
-  //     alert(`Error al procesar el código de barras: ${processedData.message}`);
-  //   }
-  // };
-
-  // const processCodeBarHandler = async (codigoDeBarra) => {
-  //   const processedData = processBarCode(codigoDeBarra, categoria);
-  //   if (processedData.success) {
-  //     const productExists = await checkProductExistence(codigoDeBarra);
-  //     if (productExists) {
-  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-  //       return;
-  //     }
-
-  //     const barcodeExists = products.some(
-  //       (prod) => prod.codigo_de_barra === codigoDeBarra
-  //     );
-  //     if (barcodeExists) {
-  //       alert("El código de barras ya existe en la lista.");
-  //       return;
-  //     }
-
-  //     setProduct((prevProduct) => ({
-  //       ...prevProduct,
-  //       num_media: processedData.data.num_media,
-  //       tropa: categoria === "porcino" ? "" : processedData.data.tropa,
-  //       kg: categoria === "porcino" ? "" : processedData.data.kg,
-  //       precio: 0,
-  //     }));
-
-  //     // Agregar directamente el producto a la lista
-  //     setProducts((prevProducts) => [
-  //       ...prevProducts,
-  //       {
-  //         ...product,
-  //         codigo_de_barra: codigoDeBarra,
-  //         num_media: processedData.data.num_media,
-  //         tropa: processedData.data.tropa || "",
-  //         kg: processedData.data.kg || "",
-  //         precio: 0,
-  //       },
-  //     ]);
-
-  //     setFieldsDisabled(categoria !== "porcino");
-  //     setCodeProcessed(true);
-  //     setProduct(initialProductState);
-  //   } else {
-  //     alert(`Error al procesar el código de barras: ${processedData.message}`);
-  //   }
-  // };
-
   const processCodeBarHandler = async (codigoDeBarra) => {
     const processedData = processBarCode(codigoDeBarra, categoria);
     if (processedData.success) {
@@ -343,7 +215,7 @@ const ReceiptForm = () => {
         alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
         return;
       }
-  
+
       const barcodeExists = products.some(
         (prod) => prod.codigo_de_barra === codigoDeBarra
       );
@@ -351,7 +223,7 @@ const ReceiptForm = () => {
         alert("El código de barras ya existe en la lista.");
         return;
       }
-  
+
       setProduct((prevProduct) => ({
         ...prevProduct,
         num_media: processedData.data.num_media,
@@ -360,7 +232,7 @@ const ReceiptForm = () => {
         precio: 0,
         codigo_de_barra: codigoDeBarra,
       }));
-  
+
       if (categoria === "bovino") {
         // Agregar directamente el producto a la lista si la categoría es bovino
         setProducts((prevProducts) => [
@@ -379,7 +251,7 @@ const ReceiptForm = () => {
         // Habilitar campos para editar tropa y kg en categoría porcino
         setFieldsDisabled(false);
       }
-  
+
       setCodeProcessed(true);
     } else {
       alert(`Error al procesar el código de barras: ${processedData.message}`);
@@ -399,13 +271,16 @@ const ReceiptForm = () => {
 
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  // const currentFilteredProducts = products.slice(
-  //   indexOfFirstProduct,
-  //   indexOfLastProduct
-  // );
   const currentFilteredProducts = [...products]
-  .reverse()
-  .slice(indexOfFirstProduct, indexOfLastProduct);
+    .reverse()
+    .slice(indexOfFirstProduct, indexOfLastProduct);
+
+  const pageNumbers = [];
+  for (let i = 1; i <= Math.ceil(products.length / productsPerPage); i++) {
+    pageNumbers.push(i);
+  }
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <Container className="d-flex flex-column align-items-center">
@@ -582,6 +457,20 @@ const ReceiptForm = () => {
           {isSubmitting ? "Grabando..." : "Grabar"}
         </Button>
       </div>
+
+      <div>
+        {pageNumbers.map((number) => (
+          <Button
+            key={number}
+            onClick={() => paginate(number)}
+            className="mx-1"
+          >
+            {number}
+          </Button>
+        ))}
+      </div>
+
+      <CategorySummaryTable filteredProducts={products} />
     </Container>
   );
 };
