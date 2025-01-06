@@ -22,7 +22,7 @@ const ReceiptForm = () => {
   const [manualEntry, setManualEntry] = useState(false);
   const [fieldsDisabled, setFieldsDisabled] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(2);
+  const [productsPerPage] = useState(10);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
   const [codeProcessed, setCodeProcessed] = useState(false);
