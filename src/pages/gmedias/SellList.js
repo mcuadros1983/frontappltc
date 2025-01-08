@@ -23,7 +23,7 @@ export default function SellList() {
   const [clients, setClients] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sellsPerPage] = useState(14);
+  const [sellsPerPage] = useState(20);
 
   const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();

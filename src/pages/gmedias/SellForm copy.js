@@ -11,10 +11,6 @@ export default function SellForm() {
   // const toggleModal = () => setModal(!modal);
   const toggleModal = () => {
     setModal(!modal);
-    if (modal) {
-      setFilteredProducts(availableProducts);
-      setLoadAllProducts(true);
-    }
     setSearchMedia("");
     setSearchPeso("");
     setSearchTropa("");
@@ -34,26 +30,36 @@ export default function SellForm() {
 
   const [product, setProduct] = useState(initialProductState);
   const [products, setProducts] = useState([]);
+  // const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
+  // const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [waypays, setWaypays] = useState([]);
+  // const [loadingWaypays, setLoadingWaypays] = useState(true);
   const [selectedWaypaysId, setSelectedWaypaysId] = useState("");
   const [editingIndex, setEditingIndex] = useState(null);
   const [availableProducts, setAvailableProducts] = useState([]);
   const [modal, setModal] = useState(false);
+  // const [searchTerm, setSearchTerm] = useState(""); // Define setSearchTerm
+
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(20);
+
   const [currentPageSell, setCurrentPageSell] = useState(1);
   const [productsPerPageSell] = useState(10);
+
+  // ordenamiento
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
+
+  // filtros especificos
   const [searchMedia, setSearchMedia] = useState("");
   const [searchPeso, setSearchPeso] = useState("");
   const [searchTropa, setSearchTropa] = useState("");
   const [searchGarron, setSearchGarron] = useState("");
+
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadAllProducts, setLoadAllProducts] = useState(true);
 
   const navigate = useNavigate();
 
@@ -119,20 +125,20 @@ export default function SellForm() {
           credentials: "include",
         });
         const data = await response.json();
+        // Filtrar los productos que tengan sucursal_id igual a 1
         const filteredProducts = data.filter(
           (producto) => producto.sucursal_id === 18
         );
         setAvailableProducts(filteredProducts);
-        setFilteredProducts(filteredProducts);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
 
-    if (modal && loadAllProducts) {
+    if (modal) {
       fetchProducts();
     }
-  }, [modal, apiUrl, loadAllProducts]);
+  }, [modal, apiUrl]);
 
   // Actualizar los productos filtrados cada vez que se aplique un filtro
   useEffect(() => {
@@ -297,7 +303,7 @@ export default function SellForm() {
       alert("El campo código de barra es requerido");
       return;
     }
-
+  
     const productResponse = await fetch(
       `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
       {
@@ -305,102 +311,60 @@ export default function SellForm() {
       }
     );
     const productData = await productResponse.json();
-
+  
     // Validar si el producto existe en la base de datos
     if (!productData) {
       setModal(true); // Mostrar modal si no existe
       return;
     }
-
-    if (productData.categoria_producto === "bovino") {
-      // Validar que el producto pertenezca a la sucursal esperada
-      if (productData.sucursal_id !== 18) {
-        alert("El producto ya no se encuentra en stock");
-        return;
-      }
-
-      // Verificar si el producto ya está en la lista
-      if (
-        products.some(
-          (prod) => prod.id === productData.id
-        )
-      ) {
-        alert("El código2 de barras ya existe en la lista");
-        return;
-      }
-
-      // Validar que el código de barras sea numérico
-      const barcodePattern = /^\d+$/;
-      if (!barcodePattern.test(product.codigo_de_barra)) {
-        alert("El código de barras debe contener solo números");
-        return;
-      }
-
-      // Ajustar precio del producto si no tiene asignado
-      const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
-        credentials: "include",
-      });
-      const cliente = await res.json();
-
-      if (
-        !productData.precio &&
-        cliente.margen > 0 &&
-        productData.costo &&
-        productData.categoria_producto === "bovino"
-      ) {
-        productData.precio = (1 + cliente.margen / 100) * productData.costo;
-      }
-
-      // Agregar producto a la lista y resetear el formulario
-      setProducts([...products, productData]);
-      setProduct(initialProductState);
-    } else if (productData.categoria_producto === "porcino") {
-      // Lógica para porcino
-      const productsResponse = await fetch(
-        `${apiUrl}/productos/${product.codigo_de_barra}/productosbarra`,
-        {
-          credentials: "include",
-        }
-      );
-      const productsData = await productsResponse.json();
-
-      if (!productsData || productsData.length === 0) {
-        setModal(true); // Abre el modal si no se encuentran productos
-        return;
-      }
-
-      const validProducts = productsData.filter(
-        (prod) => prod.sucursal_id === 18
-      );
-
-      if (validProducts.length > 1) {
-        // Mostrar solo los productos coincidentes en el modal
-        setFilteredProducts(validProducts);
-        setLoadAllProducts(false); // No cargar todos los productos
-        setModal(true);
-        return;
-      }
-
-      if (!productData) {
-        setLoadAllProducts(true); // Cargar todos los productos al abrir el modal
-        setModal(true);
-        return;
-      }
-
-      // Agregar el único producto encontrado
-      setProducts([...products, validProducts[0]]);
-      setProduct(initialProductState);
+  
+    // Validar que el producto pertenezca a la sucursal esperada
+    if (productData.sucursal_id !== 18) {
+      alert("El producto ya no se encuentra en stock");
+      return;
     }
+  
+    // Verificar si el producto ya está en la lista
+    if (products.some((prod) => prod.codigo_de_barra === productData.codigo_de_barra)) {
+      alert("El código de barras ya existe en la lista");
+      return;
+    }
+  
+    // Validar que el código de barras sea numérico
+    const barcodePattern = /^\d+$/;
+    if (!barcodePattern.test(product.codigo_de_barra)) {
+      alert("El código de barras debe contener solo números");
+      return;
+    }
+  
+    // Ajustar precio del producto si no tiene asignado
+    const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
+      credentials: "include",
+    });
+    const cliente = await res.json();
+  
+    if (
+      !productData.precio &&
+      cliente.margen > 0 &&
+      productData.costo &&
+      productData.categoria_producto === "bovino"
+    ) {
+      productData.precio = (1 + cliente.margen / 100) * productData.costo;
+    }
+  
+    // Agregar producto a la lista y resetear el formulario
+    setProducts([...products, productData]);
+    setProduct(initialProductState);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (barcode) => {
     const confirmDelete = window.confirm(
       "¿Seguro que desea eliminar este producto?"
     );
 
     if (confirmDelete) {
       const updatedProducts = products.filter(
-        (prod) => prod.id !== id
+        (prod) => prod.codigo_de_barra !== barcode
       );
 
       setProducts(updatedProducts);
@@ -457,7 +421,7 @@ export default function SellForm() {
 
   const handleProductDoubleClick = async (product) => {
     const productResponse = await fetch(
-      `${apiUrl}/productos/${product.id}`,
+      `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
       {
         credentials: "include",
       }
@@ -484,7 +448,7 @@ export default function SellForm() {
     }
 
     const existingProductIndex = products.findIndex(
-      (prod) => prod.id === productData.id
+      (prod) => prod.codigo_de_barra === productData.codigo_de_barra
     );
 
     // Verificar si el código de barras ya existe en la lista
@@ -538,13 +502,14 @@ export default function SellForm() {
       setCurrentPage(1);
     }
   }, [searchMedia, searchPeso, searchTropa, searchGarron]);
-
+  
   // Cálculo de la paginación para modal (después de filtrar)
   const currentProducts = filteredProducts.slice(
     (currentPage - 1) * productsPerPage,
     currentPage * productsPerPage
   );
 
+  
   const pageNumbers = [];
   for (
     let i = 1;
@@ -560,8 +525,8 @@ export default function SellForm() {
   const indexOfLastProductSell = currentPageSell * productsPerPageSell;
   const indexOfFirstProductSell = indexOfLastProductSell - productsPerPageSell;
   const currentProductsSell = [...products]
-    .reverse()
-    .slice(indexOfFirstProductSell, indexOfLastProductSell);
+  .reverse()
+  .slice(indexOfFirstProductSell, indexOfLastProductSell);
 
   const pageNumbersSell = [];
   for (let i = 1; i <= Math.ceil(products.length / productsPerPageSell); i++) {
@@ -806,7 +771,7 @@ export default function SellForm() {
                   <div className="d-flex justify-content-center align-items-center">
                     <Button
                       variant="danger"
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => handleDelete(product.codigo_de_barra)}
                       className="mx-2"
                     >
                       Eliminar

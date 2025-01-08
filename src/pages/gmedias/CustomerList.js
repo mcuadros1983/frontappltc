@@ -7,7 +7,7 @@ import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 export default function CustomerList() {
   const [customers, setCustomers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [customersPerPage] = useState(10); // Número de clientes por página
+  const [customersPerPage] = useState(20); // Número de clientes por página
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;

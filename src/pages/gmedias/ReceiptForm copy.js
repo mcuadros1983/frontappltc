@@ -28,20 +28,15 @@ const ReceiptForm = () => {
 
   const [product, setProduct] = useState(initialProductState);
   const [products, setProducts] = useState([]);
-
   const [editingIndex, setEditingIndex] = useState(null);
-
   const [isCodeProcessing, setIsCodeProcessing] = useState(false);
   const [isCancelButtonDisabled, setIsCancelButtonDisabled] = useState(true);
   const [categoria, setCategoria] = useState(null);
   const [generatedCodes, setGeneratedCodes] = useState([]);
   const [canGenerateCode, setCanGenerateCode] = useState(true); // Estado para controlar la generación de códigos
-
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(10);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]);
 
   const navigate = useNavigate();

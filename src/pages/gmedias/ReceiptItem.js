@@ -8,7 +8,7 @@ import { GenerateReceiptReceiptHTML } from "./GenerateReceiptReceiptHTML";
 export default function ReceiptItem() {
   const [productsReceipt, setProductsReceipt] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(10); // Puedes ajustar este número según tus necesidades
+  const [productsPerPage] = useState(20); // Puedes ajustar este número según tus necesidades
 
   const apiUrl = process.env.REACT_APP_API_URL;
   const params = useParams();

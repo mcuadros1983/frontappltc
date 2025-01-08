@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from "react";
+  import React, { useContext, useEffect, useState, useRef } from "react";
   import { Container, Form, Button, Table, FormControl } from "react-bootstrap";
   import { useNavigate } from "react-router-dom";
   import "../../styles/styles.css";
@@ -10,30 +10,14 @@ import React, { useContext, useEffect, useState, useRef } from "react";
   export default function OrderForm() {
     const context = useContext(Contexts.UserContext);
     // const toggleModal = () => setModal(!modal);
-    // const toggleModal = () => {
-    //   setModal(!modal);
-    //   setSearchMedia("");
-    //   setSearchPeso("");
-    //   setSearchTropa("");
-    //   setSearchGarron("");
-    //   setCurrentPage(1); // Reiniciar a la primera página
-    // };
-
     const toggleModal = () => {
       setModal(!modal);
-    
-      // Al cerrar el modal, restablecer los filtros y mostrar todos los productos disponibles
-      if (modal) {
-        setFilteredProducts(availableProducts);
-      }
-    
       setSearchMedia("");
       setSearchPeso("");
       setSearchTropa("");
       setSearchGarron("");
       setCurrentPage(1); // Reiniciar a la primera página
     };
-    
     const codigoDeBarraRef = useRef(null);
 
     const initialProductState = {
@@ -68,7 +52,6 @@ import React, { useContext, useEffect, useState, useRef } from "react";
     // const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
     const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // Fecha actual en formato YYYY-MM-DD
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [loadAllProducts, setLoadAllProducts] = useState(false);
 
     const navigate = useNavigate();
     const apiUrl = process.env.REACT_APP_API_URL;
@@ -90,28 +73,6 @@ import React, { useContext, useEffect, useState, useRef } from "react";
       fetchBranches();
     }, [apiUrl]);
 
-    // useEffect(() => {
-    //   const fetchProducts = async () => {
-    //     try {
-    //       const response = await fetch(`${apiUrl}/productos`, {
-    //         credentials: "include",
-    //       });
-    //       const data = await response.json();
-    //       // Filtrar los productos que tengan sucursal_id igual a 1
-    //       const filteredProducts = data.filter(
-    //         (producto) => producto.sucursal_id === 18
-    //       );
-    //       setAvailableProducts(filteredProducts);
-    //     } catch (error) {
-    //       console.error("Error fetching products:", error);
-    //     }
-    //   };
-
-    //   if (modal) {
-    //     fetchProducts();
-    //   }
-    // }, [modal, apiUrl]);
-
     useEffect(() => {
       const fetchProducts = async () => {
         try {
@@ -119,7 +80,7 @@ import React, { useContext, useEffect, useState, useRef } from "react";
             credentials: "include",
           });
           const data = await response.json();
-          // Filtrar los productos que tengan sucursal_id igual a 18
+          // Filtrar los productos que tengan sucursal_id igual a 1
           const filteredProducts = data.filter(
             (producto) => producto.sucursal_id === 18
           );
@@ -128,11 +89,11 @@ import React, { useContext, useEffect, useState, useRef } from "react";
           console.error("Error fetching products:", error);
         }
       };
-    
-      if (modal && loadAllProducts) {
+
+      if (modal) {
         fetchProducts();
       }
-    }, [modal, apiUrl, loadAllProducts]);
+    }, [modal, apiUrl]);
 
     // Actualizar los productos filtrados cada vez que se aplique un filtro
     useEffect(() => {
@@ -274,65 +235,13 @@ import React, { useContext, useEffect, useState, useRef } from "react";
       }
     };
 
-    // const handleSave = async () => {
-    //   if (!product.codigo_de_barra) {
-    //     alert("El campo código de barra es requerido");
-    //     return;
-    //   }
-    
-    //   // Buscar el producto en la base de datos
-    //   const productResponse = await fetch(
-    //     ${apiUrl}/productos/${product.codigo_de_barra}/barra,
-    //     {
-    //       credentials: "include",
-    //     }
-    //   );
-    //   const productData = await productResponse.json();
-
-    //   // const productsResponse = await fetch(
-    //   //   ${apiUrl}/productos/${product.codigo_de_barra}/productosbarra,
-    //   //   {
-    //   //     credentials: "include",
-    //   //   }
-    //   // );
-    //   // const productsData = await productsResponse.json();
-
-    //   // console.log("productsData", productsData)
-
-    
-    //   if (!productData) {
-    //     setModal(true); // Abre el modal si el producto no se encuentra
-    //     return;
-    //   }
-    
-    //   if (productData.sucursal_id !== 18) {
-    //     alert("El producto ya no se encuentra en stock");
-    //     return;
-    //   }
-    
-    //   if (products.some((prod) => prod.codigo_de_barra === product.codigo_de_barra)) {
-    //     alert("El código de barras ya existe en la lista");
-    //     return;
-    //   }
-    
-    //   const barcodePattern = /^\d+$/;
-    //   if (!barcodePattern.test(product.codigo_de_barra)) {
-    //     alert("El código de barras debe contener solo números");
-    //     return;
-    //   }
-    
-    //   // Agregar producto y limpiar formulario
-    //   setProducts([...products, productData]);
-    //   setProduct(initialProductState);
-    // };
-
     const handleSave = async () => {
       if (!product.codigo_de_barra) {
         alert("El campo código de barra es requerido");
         return;
       }
-
-            // Buscar el producto en la base de datos
+    
+      // Buscar el producto en la base de datos
       const productResponse = await fetch(
         `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
         {
@@ -340,100 +249,34 @@ import React, { useContext, useEffect, useState, useRef } from "react";
         }
       );
       const productData = await productResponse.json();
-      console.log("productData", productData)
-
+    
       if (!productData) {
         setModal(true); // Abre el modal si el producto no se encuentra
         return;
       }
-
-
+    
+      if (productData.sucursal_id !== 18) {
+        alert("El producto ya no se encuentra en stock");
+        return;
+      }
+    
+      if (products.some((prod) => prod.codigo_de_barra === product.codigo_de_barra)) {
+        alert("El código de barras ya existe en la lista");
+        return;
+      }
+    
       const barcodePattern = /^\d+$/;
       if (!barcodePattern.test(product.codigo_de_barra)) {
         alert("El código de barras debe contener solo números");
         return;
       }
     
-      if (productData.categoria_producto === "bovino") {
-        // Lógica para bovino
-        const productResponse2 = await fetch(
-          `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
-          {
-            credentials: "include",
-          }
-        );
-        const productData2 = await productResponse2.json();
-    
-        if (!productData2) {
-          setModal(true); // Abre el modal si el producto no se encuentra
-          return;
-        }
-    
-        if (productData2.sucursal_id !== 18) {
-          alert("El producto ya no se encuentra en stock");
-          return;
-        }
-    
-        // Agregar producto y limpiar formulario
-        setProducts([...products, productData2]);
-        setProduct(initialProductState);
-      } else if (productData.categoria_producto === "porcino") {
-        // Lógica para porcino
-        const productsResponse = await fetch(
-          `${apiUrl}/productos/${product.codigo_de_barra}/productosbarra`,
-          {
-            credentials: "include",
-          }
-        );
-        const productsData = await productsResponse.json();
-    
-        if (!productsData || productsData.length === 0) {
-          setModal(true); // Abre el modal si no se encuentran productos
-          return;
-        }
-
-
-    
-        const validProducts = productsData.filter(
-          (prod) => prod.sucursal_id === 18
-        );
-    
-        // if (validProducts.length === 0) {
-        //   alert("El producto ya no se encuentra en stock");
-        //   return;
-        // }
-
-        // console.log("validProducts", validProducts.length, filteredProducts)
-    
-        // if (validProducts.length > 1) {
-        //   // Mostrar solo los productos coincidentes en el modal
-        //   setFilteredProducts(validProducts);
-        //   setModal(true);
-        //   return;
-        // }
-
-        if (validProducts.length > 1) {
-          // Mostrar solo los productos coincidentes en el modal
-          setFilteredProducts(validProducts);
-          setLoadAllProducts(false); // No cargar todos los productos
-          setModal(true);
-          return;
-        }
-
-        if (!productData) {
-          setLoadAllProducts(true); // Cargar todos los productos al abrir el modal
-          setModal(true);
-          return;
-        }
-    
-        // Agregar el único producto encontrado
-        setProducts([...products, validProducts[0]]);
-        setProduct(initialProductState);
-      }
+      // Agregar producto y limpiar formulario
+      setProducts([...products, productData]);
+      setProduct(initialProductState);
     };
-    
 
-    const handleDelete = (id) => {
+    const handleDelete = (barcode) => {
       // Mostrar una alerta de confirmación
       const confirmDelete = window.confirm(
         "¿Seguro que desea eliminar este producto?"
@@ -443,7 +286,7 @@ import React, { useContext, useEffect, useState, useRef } from "react";
       if (confirmDelete) {
         // Filtrar los productos para obtener una nueva lista sin el producto a eliminar
         const updatedProducts = products.filter(
-          (prod) => prod.id !== id
+          (prod) => prod.codigo_de_barra !== barcode
         );
 
         // Actualizar el estado de products con la nueva lista de productos
@@ -485,8 +328,7 @@ import React, { useContext, useEffect, useState, useRef } from "react";
 
     const handleProductDoubleClick = async (product) => {
       const productResponse = await fetch(
-        `${apiUrl}/productos/${product.id}`,
-        // `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
+        `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
         {
           credentials: "include",
         }
@@ -513,12 +355,12 @@ import React, { useContext, useEffect, useState, useRef } from "react";
       }
 
       const existingProductIndex = products.findIndex(
-        (prod) => prod.id === productData.id
+        (prod) => prod.codigo_de_barra === productData.codigo_de_barra
       );
 
       // Verificar si el código de barras ya existe en la lista
       if (existingProductIndex !== -1) {
-        alert("El producto ya existe en la lista");
+        alert("El código de barras ya existe en la lista");
         return;
       }
 
@@ -840,7 +682,7 @@ import React, { useContext, useEffect, useState, useRef } from "react";
                     <div className="d-flex justify-content-center align-items-center">
                       <Button
                         variant="danger"
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => handleDelete(product.codigo_de_barra)}
                         className="mx-2"
                       >
                         Eliminar

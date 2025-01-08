@@ -14,7 +14,7 @@ export default function ProductList() {
   const [searchTropa, setSearchTropa] = useState("");
   const [searchCategoria, setSearchCategoria] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(14);
+  const [productsPerPage] = useState(20);
   const [branches, setBranches] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [searchSucursal, setSearchSucursal] = useState("");

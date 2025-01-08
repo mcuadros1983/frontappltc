@@ -15,7 +15,7 @@ export default function ReceiptList() {
 
   // paginacion
   const [currentPage, setCurrentPage] = useState(1);
-  const [receiptsPerPage] = useState(4);
+  const [receiptsPerPage] = useState(20);
 
   const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
