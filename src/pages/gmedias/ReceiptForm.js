@@ -157,18 +157,18 @@ const ReceiptForm = () => {
           );
           return;
         }
-      }
 
-      // Validar que los campos sean números
-      if (
-        !/^\d+$/.test(num_media) ||
-        !/^\d+$/.test(tropa) ||
-        !/^\d+$/.test(kg)
-      ) {
-        alert(
-          "Los campos Número de media, Tropa y Peso deben ser solo números."
-        );
-        return;
+        // Validar que los campos sean números
+        if (
+          !/^\d+$/.test(num_media) ||
+          !/^\d+$/.test(tropa) ||
+          !/^\d+$/.test(kg)
+        ) {
+          alert(
+            "Los campos Número de media, Tropa y Peso deben ser solo números."
+          );
+          return;
+        }
       }
 
       // Verificar si la media ya existe en la lista
