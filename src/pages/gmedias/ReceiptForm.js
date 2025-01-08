@@ -149,15 +149,25 @@ const ReceiptForm = () => {
     if (manualEntry) {
       const { num_media, tropa, kg } = product;
 
-      // Validar campos obligatorios
-      if (!num_media || !tropa || !kg) {
-        alert("Todos los campos (Número de media, Tropa y Peso) son obligatorios.");
-        return;
+      if (categoria !== "porcino") {
+        // Validar campos obligatorios
+        if (!num_media || !tropa || !kg) {
+          alert(
+            "Todos los campos (Número de media, Tropa y Peso) son obligatorios."
+          );
+          return;
+        }
       }
 
       // Validar que los campos sean números
-      if (!/^\d+$/.test(num_media) || !/^\d+$/.test(tropa) || !/^\d+$/.test(kg)) {
-        alert("Los campos Número de media, Tropa y Peso deben ser solo números.");
+      if (
+        !/^\d+$/.test(num_media) ||
+        !/^\d+$/.test(tropa) ||
+        !/^\d+$/.test(kg)
+      ) {
+        alert(
+          "Los campos Número de media, Tropa y Peso deben ser solo números."
+        );
         return;
       }
 
@@ -172,7 +182,7 @@ const ReceiptForm = () => {
       const productoFinal = {
         ...product,
         tropa: tropa || "0", // Valor predeterminado
-        kg: kg || "0",       // Valor predeterminado
+        kg: kg || "0", // Valor predeterminado
       };
 
       // Generar el código de barra
@@ -219,12 +229,14 @@ const ReceiptForm = () => {
       const productoFinal = {
         ...product,
         tropa: product.tropa || "0", // Valor predeterminado
-        kg: product.kg || "0",       // Valor predeterminado
+        kg: product.kg || "0", // Valor predeterminado
       };
 
       // Verificar la existencia del producto si no es porcino
       if (categoria !== "porcino") {
-        const productExists = await checkProductExistence(product.codigo_de_barra);
+        const productExists = await checkProductExistence(
+          product.codigo_de_barra
+        );
         if (productExists) {
           alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
           return;
@@ -240,8 +252,6 @@ const ReceiptForm = () => {
     setProduct(initialProductState);
     setManualEntry(false);
   };
-
-
 
   const checkProductExistence = async (codigoDeBarra) => {
     try {
@@ -408,7 +418,6 @@ const ReceiptForm = () => {
     }
   };
 
-
   const handleCodeBarChange = (e) => {
     const newCode = e.target.value;
     setProduct(initialProductState);
@@ -521,7 +530,9 @@ const ReceiptForm = () => {
             type="number"
             name="num_media"
             value={product.num_media}
-            onChange={(e) => setProduct({ ...product, num_media: e.target.value })}
+            onChange={(e) =>
+              setProduct({ ...product, num_media: e.target.value })
+            }
             placeholder="Ingresa el número de media"
             className="my-input"
             disabled={fieldsDisabled}
@@ -535,7 +546,9 @@ const ReceiptForm = () => {
               type="number"
               name="tropa"
               value={product.tropa}
-              onChange={(e) => setProduct({ ...product, tropa: e.target.value })}
+              onChange={(e) =>
+                setProduct({ ...product, tropa: e.target.value })
+              }
               placeholder="Ingresa el número de tropa"
               className="my-input"
               disabled={fieldsDisabled}
