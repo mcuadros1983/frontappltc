@@ -21,12 +21,10 @@ import React, { useContext, useEffect, useState, useRef } from "react";
 
     const toggleModal = () => {
       setModal(!modal);
-    
-      // Al cerrar el modal, restablecer los filtros y mostrar todos los productos disponibles
       if (modal) {
         setFilteredProducts(availableProducts);
+        setLoadAllProducts(true);
       }
-    
       setSearchMedia("");
       setSearchPeso("");
       setSearchTropa("");
@@ -68,7 +66,7 @@ import React, { useContext, useEffect, useState, useRef } from "react";
     // const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
     const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // Fecha actual en formato YYYY-MM-DD
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [loadAllProducts, setLoadAllProducts] = useState(false);
+    const [loadAllProducts, setLoadAllProducts] = useState(true);
 
     const navigate = useNavigate();
     const apiUrl = process.env.REACT_APP_API_URL;
@@ -124,6 +122,7 @@ import React, { useContext, useEffect, useState, useRef } from "react";
             (producto) => producto.sucursal_id === 18
           );
           setAvailableProducts(filteredProducts);
+          setFilteredProducts(filteredProducts);
         } catch (error) {
           console.error("Error fetching products:", error);
         }
