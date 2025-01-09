@@ -67,7 +67,7 @@ export default function SellList() {
     } catch (error) {
       console.error(error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   const loadClients = useCallback(async () => {
     try {
@@ -79,7 +79,7 @@ export default function SellList() {
     } catch (error) {
       console.error(error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   const loadPaymentMethods = useCallback(async () => {
     try {
@@ -91,7 +91,7 @@ export default function SellList() {
     } catch (error) {
       console.error(error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   const handleSearch = useCallback(() => {
     const searchTermLower = searchTerm.toLowerCase();
@@ -119,14 +119,14 @@ export default function SellList() {
 
       setFilteredSells(filtered);
     }
-  },[searchTerm,startDate,endDate,sells]);
+  }, [searchTerm, startDate, endDate, sells]);
 
   useEffect(() => {
     loadSells();
     loadClients();
     loadPaymentMethods();
   }, [loadSells, loadClients, loadPaymentMethods]);
-  
+
   useEffect(() => {
     handleSearch();
   }, [handleSearch, startDate, endDate]);
@@ -200,12 +200,19 @@ export default function SellList() {
     }
   };
 
-  
+
 
   // Pagination logic
+  // const indexOfLastSell = currentPage * sellsPerPage;
+  // const indexOfFirstSell = indexOfLastSell - sellsPerPage;
+  // const currentSells = filteredSells.slice(indexOfFirstSell, indexOfLastSell);
+
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
-  const currentSells = filteredSells.slice(indexOfFirstSell, indexOfLastSell);
+  const currentSells = [...filteredSells] // Crea una copia para evitar modificar el original
+    .reverse() // Invierte el orden de los elementos
+    .slice(indexOfFirstSell, indexOfLastSell); // Aplica la paginación
+
 
   const nextPage = () => {
     setCurrentPage(currentPage + 1);
@@ -272,8 +279,8 @@ export default function SellList() {
               <td>{sell.fecha}</td>
               <td>
                 {editingSellId &&
-                editingSellId.id === sell.id &&
-                editingSellId.type === "client" ? (
+                  editingSellId.id === sell.id &&
+                  editingSellId.type === "client" ? (
                   <Dropdown onSelect={handleChangeClient}>
                     <Dropdown.Toggle variant="success" id="dropdown-basic">
                       {selectedClient
@@ -296,8 +303,8 @@ export default function SellList() {
               </td>
               <td>
                 {editingSellId &&
-                editingSellId.id === sell.id &&
-                editingSellId.type === "paymentMethod" ? (
+                  editingSellId.id === sell.id &&
+                  editingSellId.type === "paymentMethod" ? (
                   <Dropdown onSelect={handleChangePaymentMethod}>
                     <Dropdown.Toggle variant="success" id="dropdown-basic">
                       {selectedPaymentMethod

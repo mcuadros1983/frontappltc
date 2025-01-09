@@ -41,7 +41,7 @@ export default function OrderList() {
     } catch (error) {
       console.error(error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   const loadBranches = useCallback(async () => {
     try {
@@ -53,12 +53,12 @@ export default function OrderList() {
     } catch (error) {
       console.error("Error fetching branches:", error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   useEffect(() => {
     loadOrders();
     loadBranches();
-  }, [loadOrders,loadBranches]);
+  }, [loadOrders, loadBranches]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -69,7 +69,7 @@ export default function OrderList() {
     }
 
     try {
-     await fetch(`${apiUrl}/ordenes/${id}`, {
+      await fetch(`${apiUrl}/ordenes/${id}`, {
         credentials: "include",
         method: "DELETE",
       });
@@ -99,11 +99,6 @@ export default function OrderList() {
     }
   };
 
-  // const parseDate = (dateString) => {
-  //   const [day, month, year] = dateString.split("/");
-  //   return parse(`${year}-${month}-${day}`, "yyyy-MM-dd", new Date());
-  // };
-
   const handleSearch = useCallback(() => {
     const searchTermLower = searchTerm.toLowerCase();
     const startDateFilter = startDate ? startDate : null;
@@ -126,16 +121,16 @@ export default function OrderList() {
       });
       setFilteredOrders(filtered);
     }
-  },[searchTerm,startDate,endDate,orders]);
+  }, [searchTerm, startDate, endDate, orders]);
 
   useEffect(() => {
     loadOrders();
     loadBranches();
-  }, [loadOrders,loadBranches]);
+  }, [loadOrders, loadBranches]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, orders, startDate, endDate,handleSearch]);
+  }, [searchTerm, orders, startDate, endDate, handleSearch]);
 
   const handleEdit = (id, currentBranchId, currentDate) => {
     setIsEditing(true);
@@ -152,12 +147,20 @@ export default function OrderList() {
   };
 
   // Cálculo de la paginación para los productos filtrados
+  // const indexOfLastOrder = currentPage * ordersPerPage;
+  // const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  // const currentFilteredOrders = filteredOrders.slice(
+  //   indexOfFirstOrder,
+  //   indexOfLastOrder
+  // );
+
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentFilteredOrders = filteredOrders.slice(
-    indexOfFirstOrder,
-    indexOfLastOrder
-  );
+  const currentFilteredOrders = [...filteredOrders] // Crea una copia para evitar modificar el estado original
+    .reverse() // Invierte el orden de los elementos
+    .slice(indexOfFirstOrder, indexOfLastOrder); // Aplica la paginación
+
+
   const pageNumbers = [];
   for (let i = 1; i <= Math.ceil(filteredOrders.length / ordersPerPage); i++) {
     pageNumbers.push(i);

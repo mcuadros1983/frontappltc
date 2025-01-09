@@ -78,73 +78,6 @@ const ReceiptForm = () => {
     setCodeProcessed(false);
   };
 
-  // const handleSave = async () => {
-  //   if (manualEntry) {
-  //     const { num_media, tropa, kg } = product;
-
-  //     if (!num_media || !tropa || !kg) {
-  //       alert("Todos los campos (Número de media, Tropa y Peso) son obligatorios.");
-  //       return;
-  //     }
-
-  //     if (!/^\d+$/.test(num_media) || !/^\d+$/.test(tropa) || !/^\d+$/.test(kg)) {
-  //       alert("Los campos Número de media, Tropa y Peso deben ser solo números.");
-  //       return;
-  //     }
-
-  //     const mediaExists = products.some((prod) => prod.num_media == num_media);
-
-  //     if (mediaExists) {
-  //       alert("La media ya existe en la lista.");
-  //       return;
-  //     }
-
-  //     let codigo_de_barra;
-  //     if (categoria === "porcino") {
-  //       // Si la categoría es porcino, el código de barra será igual al número de media
-  //       codigo_de_barra = num_media;
-  //     } else {
-  //       // Generar código de barra para otras categorías
-  //       codigo_de_barra = `00${product.num_media}00${product.tropa}00${product.kg}`;
-  //     }
-
-  //     const productExists = await checkProductExistence(codigo_de_barra);
-  //     if (productExists) {
-  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-  //       return;
-  //     }
-
-  //     setProducts([...products, { ...product, codigo_de_barra }]);
-  //     setManualEntry(false);
-  //     setProduct(initialProductState);
-  //     setFieldsDisabled(true);
-  //   } else {
-  //     if (!product.codigo_de_barra) {
-  //       alert("El campo código de barra es requerido");
-  //       return;
-  //     }
-
-  //     const productExists = await checkProductExistence(product.codigo_de_barra);
-  //     if (productExists) {
-  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-  //       return;
-  //     }
-
-  //     const barcodeExists = products.some(
-  //       (prod) => prod.codigo_de_barra === product.codigo_de_barra
-  //     );
-  //     if (barcodeExists) {
-  //       alert("El código de barras ya existe en la lista.");
-  //       return;
-  //     }
-
-  //     setProducts([...products, product]);
-  //     setFieldsDisabled(true);
-  //   }
-  //   setProduct(initialProductState);
-  //   setManualEntry(false);
-  // };
-
   const handleSave = async () => {
     if (manualEntry) {
       const { num_media, tropa, kg } = product;
@@ -313,57 +246,6 @@ const ReceiptForm = () => {
       setIsSubmitting(false);
     }
   };
-
-  // const processCodeBarHandler = async (codigoDeBarra) => {
-  //   const processedData = processBarCode(codigoDeBarra, categoria);
-  //   if (processedData.success) {
-  //     const productExists = await checkProductExistence(codigoDeBarra);
-  //     if (productExists) {
-  //       alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-  //       return;
-  //     }
-
-  //     const barcodeExists = products.some(
-  //       (prod) => prod.codigo_de_barra === codigoDeBarra
-  //     );
-  //     if (barcodeExists) {
-  //       alert("El código de barras ya existe en la lista.");
-  //       return;
-  //     }
-
-  //     setProduct((prevProduct) => ({
-  //       ...prevProduct,
-  //       num_media: processedData.data.num_media,
-  //       tropa: categoria === "porcino" ? "" : processedData.data.tropa,
-  //       kg: categoria === "porcino" ? "" : processedData.data.kg,
-  //       precio: 0,
-  //       codigo_de_barra: codigoDeBarra,
-  //     }));
-
-  //     if (categoria === "bovino") {
-  //       // Agregar directamente el producto a la lista si la categoría es bovino
-  //       setProducts((prevProducts) => [
-  //         ...prevProducts,
-  //         {
-  //           ...product,
-  //           codigo_de_barra: codigoDeBarra,
-  //           num_media: processedData.data.num_media,
-  //           tropa: processedData.data.tropa || "",
-  //           kg: processedData.data.kg || "",
-  //           precio: 0,
-  //         },
-  //       ]);
-  //       setProduct(initialProductState);
-  //     } else {
-  //       // Habilitar campos para editar tropa y kg en categoría porcino
-  //       setFieldsDisabled(false);
-  //     }
-
-  //     setCodeProcessed(true);
-  //   } else {
-  //     alert(`Error al procesar el código de barras: ${processedData.message}`);
-  //   }
-  // };
 
   const processCodeBarHandler = async (codigoDeBarra) => {
     const processedData = processBarCode(codigoDeBarra, categoria);

@@ -30,7 +30,7 @@ export default function ReceiptList() {
     const sortedReceipts = data.sort((a, b) => a.id - b.id);
     setReceipts(sortedReceipts);
     setFilteredReceipts(sortedReceipts); // Inicialmente mostramos todos los recibos
-  },[apiUrl]);
+  }, [apiUrl]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -96,7 +96,7 @@ export default function ReceiptList() {
 
       setFilteredReceipts(filtered);
     }
-  },[startDate,endDate,receipts,searchCategoria]);
+  }, [startDate, endDate, receipts, searchCategoria]);
 
   useEffect(() => {
     loadReceipts();
@@ -104,17 +104,23 @@ export default function ReceiptList() {
 
   useEffect(() => {
     handleFilter();
-  }, [startDate, endDate, searchCategoria,handleFilter]);
+  }, [startDate, endDate, searchCategoria, handleFilter]);
 
   // Cálculo de la paginación para los productos filtrados
+  // const indexOfLastReceipt = currentPage * receiptsPerPage;
+  // const indexOfFirstReceipt = indexOfLastReceipt - receiptsPerPage;
+  // const currentFilteredReceipts = filteredReceipts.slice(
+  //   indexOfFirstReceipt,
+  //   indexOfLastReceipt
+  // );
+
   const indexOfLastReceipt = currentPage * receiptsPerPage;
   const indexOfFirstReceipt = indexOfLastReceipt - receiptsPerPage;
-  const currentFilteredReceipts = filteredReceipts.slice(
-    indexOfFirstReceipt,
-    indexOfLastReceipt
-  );
+  const currentFilteredReceipts = [...filteredReceipts] // Crea una copia para evitar modificar el original
+    .reverse() // Invierte el orden de los elementos
+    .slice(indexOfFirstReceipt, indexOfLastReceipt); // Aplica la paginación 
 
-   const nextPage = () => {
+  const nextPage = () => {
     if (currentPage < Math.ceil(filteredReceipts.length / receiptsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
