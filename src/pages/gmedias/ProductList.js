@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 // import { parse } from "date-fns";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import * as XLSX from "xlsx"; // Importar la biblioteca xlsx
 
 export default function ProductList() {
   const [products, setProducts] = useState([]);
