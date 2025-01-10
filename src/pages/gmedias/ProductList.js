@@ -1,4 +1,4 @@
-import { useEffect, useState ,useCallback} from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
@@ -36,7 +36,7 @@ export default function ProductList() {
     });
     const data = await res.json();
     setBranches(data);
-  },[apiUrl]);
+  }, [apiUrl]);
 
   // Función para cargar clientes
   const loadCustomers = useCallback(async () => {
@@ -45,7 +45,7 @@ export default function ProductList() {
     });
     const data = await res.json();
     setCustomers(data);
-  },[apiUrl]);
+  }, [apiUrl]);
 
   const loadProducts = useCallback(async () => {
     try {
@@ -100,7 +100,7 @@ export default function ProductList() {
     } catch (error) {
       console.error("Error al cargar productos:", error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -132,7 +132,7 @@ export default function ProductList() {
     const searchTermLower = searchBarra.toLowerCase();
     const startDateFilter = startDate ? new Date(startDate) : null;
     const endDateFilter = endDate ? new Date(endDate) : null;
-  
+
     if (
       searchTermLower === "" &&
       searchMedia === "" &&
@@ -156,14 +156,14 @@ export default function ProductList() {
           .find((branch) => branch.id === product.sucursal_id)
           ?.nombre.toLowerCase()
           .includes(searchSucursal.toLowerCase());
-  
+
         // Convertir la fecha de creación al formato de objeto Date si es necesario
         const productDate = new Date(product.fecha);
-  
+
         // Verificar si la fecha de creación está dentro del rango especificado
         const startDateMatch = !startDateFilter || productDate >= startDateFilter;
         const endDateMatch = !endDateFilter || productDate <= endDateFilter;
-  
+
         return (
           codigoMatch &&
           mediaMatch &&
@@ -175,7 +175,7 @@ export default function ProductList() {
           endDateMatch
         );
       });
-  
+
       setFilteredProducts(filtered);
     }
   }, [
@@ -190,7 +190,7 @@ export default function ProductList() {
     products,
     branches
   ]); // Asegúrate de incluir todas las dependencias relevantes aquí.
-  
+
 
   const handleSort = (columnName) => {
     // Cambiar la dirección de orden si la columna es la misma que la columna actualmente ordenada
@@ -240,7 +240,7 @@ export default function ProductList() {
     loadProducts();
     loadBranches();
     loadCustomers();
-  }, [loadProducts,loadBranches,loadCustomers]);
+  }, [loadProducts, loadBranches, loadCustomers]);
 
   useEffect(() => {
     handleSearch();
@@ -282,10 +282,49 @@ export default function ProductList() {
     return summary;
   }, {});
 
+  // Función para exportar los productos filtrados a Excel
+  const handleExportToExcel = () => {
+    const dataToExport = filteredProducts.map((product) => ({
+      ID: product.id,
+      Fecha: product.fecha,
+      Categoría: product.categoria_producto,
+      Subcategoría: product.subcategoria,
+      "Número de Media": product.num_media,
+      Garrón: product.garron,
+      Precio: product.precio,
+      Costo: product.costo,
+      Peso: product.kg,
+      Tropa: product.tropa,
+      Sucursal:
+        branches.find((branch) => branch.id === product.sucursal_id)?.nombre ||
+        "Sucursal Desconocida",
+      Cliente:
+        customers.find((customer) => customer.id === product.cliente_id)
+          ?.nombre || "Cliente Desconocido",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Productos");
+
+    // Descargar el archivo Excel
+    XLSX.writeFile(workbook, "productos_filtrados.xlsx");
+  };
+
+
 
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Productos</h1>
+
+      {/* Botón para exportar a Excel */}
+      <div className="mb-3">
+        <Button onClick={handleExportToExcel} variant="success">
+          Exportar a Excel
+        </Button>
+      </div>
+
+
       <div className="mb-3">
         <div className="d-inline-block w-auto">
           <label className="mr-2">DESDE: </label>
