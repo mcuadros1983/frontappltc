@@ -302,7 +302,12 @@ export default function ProductList() {
       Cliente:
         customers.find((customer) => customer.id === product.cliente_id)
           ?.nombre || "Cliente Desconocido",
-    }));
+          Orden: product.orden_id || "",
+          Venta: product.venta_id || "",
+          Mov: product.updatedAt
+          ? new Date(product.updatedAt).toISOString().split("T")[0]
+          : "", // Convertir a YYYY-MM-DD
+      }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
@@ -312,7 +317,10 @@ export default function ProductList() {
     XLSX.writeFile(workbook, "productos_filtrados.xlsx");
   };
 
-
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toISOString().split("T")[0];
+  };
 
   return (
     <Container>
@@ -465,6 +473,9 @@ export default function ProductList() {
             >
               Cliente
             </th>
+            <th>Orden</th>
+            <th>Venta</th>
+            <th>Mov</th>
             <th>Operaciones</th>
           </tr>
         </thead>
@@ -492,6 +503,9 @@ export default function ProductList() {
                   (customer) => customer.id === product.cliente_id
                 )?.nombre || "Cliente Desconocido"}
               </td>
+              <td>{product.orden_id || ""}</td>
+              <td>{product.venta_id || ""}</td>
+              <td>{formatDate(product.updatedAt)}</td>
               <td className="text-center">
                 <div className="d-flex justify-content-center align-items-center">
                   <Button
