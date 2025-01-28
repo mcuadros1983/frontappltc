@@ -142,7 +142,7 @@ export default function ReceiptList() {
       };
     }
 
-    summary[category].cantidad += receipt.cantidad_total;
+    summary[category].cantidad += Number(receipt.cantidad_total);
 
     return summary;
   }, {});

@@ -3,16 +3,22 @@ export function processBarCode(codBar, categoria) {
   let num_media;
   let tropa;
   let kg;
+  // "05-00000519263-00608802720111500"
+  // "04-00001000399-00670103010105200"
 
   if (categoria === "bovino") {
     num_media = parseFloat(codBar.slice(2, 13)); // Número de media
     tropa = parseFloat(codBar.slice(14,19)); // Número de tropa
     kg = parseInt(codBar.slice(25,28), 10); // Peso en kg (incluye ceros iniciales)
   } else if (categoria === "porcino") {
-    longitudRequerida = 7;
-    num_media = codBar;
-    tropa = 0;
-    kg = 0;
+    // longitudRequerida = 30;
+    // // longitudRequerida = 7;
+    // num_media = codBar;
+    // tropa = 0;
+    // kg = 0;
+    num_media = parseFloat(codBar.slice(7, 13)); // Número de media
+    tropa = parseFloat(codBar.slice(14,19)); // Número de tropa
+    kg = parseInt(codBar.slice(25,28), 10); // Peso en kg (incluye ceros iniciales)
   } else {
     return {
       success: false,

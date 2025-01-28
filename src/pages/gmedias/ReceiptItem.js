@@ -9,6 +9,9 @@ export default function ReceiptItem() {
   const [productsReceipt, setProductsReceipt] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(20); // Puedes ajustar este número según tus necesidades
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
   const apiUrl = process.env.REACT_APP_API_URL;
   const params = useParams();
@@ -17,7 +20,7 @@ export default function ReceiptItem() {
     const res = await fetch(`${apiUrl}/ingresos/${id}/productos`, {
       credentials: "include",
     });
-    const data = await res.json();
+    const data = await res.json(); 
     setProductsReceipt(data);
   },[apiUrl]);
 
@@ -69,6 +72,29 @@ export default function ReceiptItem() {
       alert("No se pudo reimprimir el ingreso. Intente nuevamente más tarde.");
     }
   };
+
+  const handleSort = (columnName) => {
+    setSortDirection(
+      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
+    );
+
+    setSortColumn(columnName);
+
+    const sortedProducts = [...productsReceipt].sort((a, b) => {
+      const valueA = a[columnName];
+      const valueB = b[columnName];
+
+      if (valueA < valueB) {
+        return sortDirection === "asc" ? -1 : 1;
+      } else if (valueA > valueB) {
+        return sortDirection === "asc" ? 1 : -1;
+      } else {
+        return 0;
+      }
+    });
+
+    setProductsReceipt(sortedProducts);
+  };
   
   return (
     <Container>
@@ -83,12 +109,49 @@ export default function ReceiptItem() {
         <thead>
           <tr>
             <th>#</th>
-            <th>Codigo de Barra</th>
-            <th>Numero de Media</th>
-            <th>precio</th>
-            <th>Peso</th>
-            <th>Tropa</th>
-            <th>Categoria</th>
+            <th
+              onClick={() => handleSort("codigo_de_barra")}
+              style={{ cursor: "pointer" }}
+            >
+              Codigo de Barra
+            </th>
+
+            {/* <th>Codigo de Barra</th> */}
+            <th
+              onClick={() => handleSort("num_media")}
+              style={{ cursor: "pointer" }}
+            >
+              Numero de Media
+            </th>
+            {/* <th>Numero de Media</th> */}
+            <th
+              onClick={() => handleSort("precio")}
+              style={{ cursor: "pointer" }}
+            >
+              Precio
+            </th>
+            {/* <th>precio</th> */}
+            <th
+              onClick={() => handleSort("kg")}
+              style={{ cursor: "pointer" }}
+            >
+              Peso
+            </th>
+            {/* <th>Peso</th> */}
+            <th
+              onClick={() => handleSort("tropa")}
+              style={{ cursor: "pointer" }}
+            >
+              Tropa
+            </th>
+            {/* <th>Tropa</th> */}
+            <th
+              onClick={() => handleSort("categoria")}
+              style={{ cursor: "pointer" }}
+            >
+              Categoria
+            </th>
+            {/* <th>Categoria</th> */}
             <th>Subcategoria</th>
             {/* <th>Operaciones</th> */}
           </tr>

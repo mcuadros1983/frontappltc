@@ -46,7 +46,7 @@ const ProductUpdate = () => {
       const response = await fetch(`${apiUrl}/productos/upload`, {
         credentials: "include",
         method: "POST",
-        body: formData,
+        body: formData, 
       });
 
       const data = await response.json();
@@ -171,6 +171,7 @@ const ProductUpdate = () => {
       templateHeaders = [
         "categoria",
         "subcategoria",
+        "num_media",
         "garron",
         "precio",
         "costo",
@@ -299,6 +300,7 @@ const ProductUpdate = () => {
                 </option>
                 <option value="venta">Venta</option>
                 <option value="orden">Orden</option>
+                <option value="romaneo">Romaneo</option>
               </Form.Select>
             </Form.Group>
             {operacion === "orden" && (
@@ -361,14 +363,14 @@ const ProductUpdate = () => {
                 </Form.Group>
               </>
             )}
-
-            {(destino || formaPago) && (
+ 
+            {(destino || formaPago || operacion === "romaneo") && (
               <Form.Group controlId="formFile" className="mb-3">
                 <Form.Label>Seleccione un archivo Excel:</Form.Label>
                 <Form.Control type="file" onChange={handleFileChange} />
               </Form.Group>
             )}
-            {(operacion === "venta" || operacion === "orden") && (
+            {(operacion === "venta" || operacion === "orden" || operacion === "romaneo") && (
               <Button
                 variant="primary"
                 onClick={handleUploadButtonClick}

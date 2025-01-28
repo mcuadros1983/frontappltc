@@ -303,7 +303,7 @@ export default function SellForm() {
       alert("El campo código de barra es requerido");
       return;
     }
-  
+
     const productResponse = await fetch(
       `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
       {
@@ -311,38 +311,44 @@ export default function SellForm() {
       }
     );
     const productData = await productResponse.json();
-  
+
     // Validar si el producto existe en la base de datos
     if (!productData) {
       setModal(true); // Mostrar modal si no existe
       return;
     }
-  
+
     // Validar que el producto pertenezca a la sucursal esperada
-    if (productData.sucursal_id !== 18) {
+    // if (productData.sucursal_id !== 18) {
+    //   alert("El producto ya no se encuentra en stock");
+    //   return;
+    // }
+
+    const excludedSucursales = [18, 32];
+    if (!excludedSucursales.includes(productData.sucursal_id)) {
       alert("El producto ya no se encuentra en stock");
       return;
     }
-  
+
     // Verificar si el producto ya está en la lista
     if (products.some((prod) => prod.codigo_de_barra === productData.codigo_de_barra)) {
       alert("El código de barras ya existe en la lista");
       return;
     }
-  
+
     // Validar que el código de barras sea numérico
     const barcodePattern = /^\d+$/;
     if (!barcodePattern.test(product.codigo_de_barra)) {
       alert("El código de barras debe contener solo números");
       return;
     }
-  
+
     // Ajustar precio del producto si no tiene asignado
     const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
       credentials: "include",
     });
     const cliente = await res.json();
-  
+
     if (
       !productData.precio &&
       cliente.margen > 0 &&
@@ -351,7 +357,7 @@ export default function SellForm() {
     ) {
       productData.precio = (1 + cliente.margen / 100) * productData.costo;
     }
-  
+
     // Agregar producto a la lista y resetear el formulario
     setProducts([...products, productData]);
     setProduct(initialProductState);
@@ -442,7 +448,13 @@ export default function SellForm() {
     }
 
     // Verificar si el producto existe en la base de datos
-    if (productData.sucursal_id !== 18) {
+    // if (productData.sucursal_id !== 18) {
+    //   alert("El producto ya no se encuentra en stock");
+    //   return;
+    // }
+
+    const excludedSucursales = [18, 32];
+    if (!excludedSucursales.includes(productData.sucursal_id)) {
       alert("El producto ya no se encuentra en stock");
       return;
     }
@@ -502,14 +514,14 @@ export default function SellForm() {
       setCurrentPage(1);
     }
   }, [searchMedia, searchPeso, searchTropa, searchGarron]);
-  
+
   // Cálculo de la paginación para modal (después de filtrar)
   const currentProducts = filteredProducts.slice(
     (currentPage - 1) * productsPerPage,
     currentPage * productsPerPage
   );
 
-  
+
   const pageNumbers = [];
   for (
     let i = 1;
@@ -525,8 +537,8 @@ export default function SellForm() {
   const indexOfLastProductSell = currentPageSell * productsPerPageSell;
   const indexOfFirstProductSell = indexOfLastProductSell - productsPerPageSell;
   const currentProductsSell = [...products]
-  .reverse()
-  .slice(indexOfFirstProductSell, indexOfLastProductSell);
+    .reverse()
+    .slice(indexOfFirstProductSell, indexOfLastProductSell);
 
   const pageNumbersSell = [];
   for (let i = 1; i <= Math.ceil(products.length / productsPerPageSell); i++) {

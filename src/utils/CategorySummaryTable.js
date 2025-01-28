@@ -18,7 +18,7 @@ const CategorySummaryTable = ({ filteredProducts }) => {
 
     // Sumar el peso si es válido y no es NaN
     if (!isNaN(peso) && peso > 0) {
-      summary[category].pesoTotal += peso;
+      summary[category].pesoTotal += Number(peso);
     }
 
     return summary;

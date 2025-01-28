@@ -44,6 +44,7 @@ export default function StockList() {
       });
 
       const data = await res.json();
+      console.log("data orders",data)
       const sortedOrders = data.sort((a, b) => a.id - b.id);
       setOrders(sortedOrders);
     } catch (error) {
@@ -100,8 +101,8 @@ export default function StockList() {
         };
       }
 
-      totalsByBranch[branchId].cantidad_total += order.cantidad_total;
-      totalsByBranch[branchId].peso_total += order.peso_total;
+      totalsByBranch[branchId].cantidad_total += Number(order.cantidad_total);
+      totalsByBranch[branchId].peso_total += Number(order.peso_total);
 
       // console.log("data", totalsByBranch);
       // console.log("test2", orders);

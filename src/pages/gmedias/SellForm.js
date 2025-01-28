@@ -54,6 +54,7 @@ export default function SellForm() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadAllProducts, setLoadAllProducts] = useState(true);
+  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // Fecha actual en formato YYYY-MM-DD
 
   const navigate = useNavigate();
 
@@ -250,6 +251,7 @@ export default function SellForm() {
           cliente_id: selectedCustomerId,
           formaPago_id: selectedWaypaysId,
           productos: products,
+          fecha,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -314,20 +316,29 @@ export default function SellForm() {
 
     if (productData.categoria_producto === "bovino") {
       // Validar que el producto pertenezca a la sucursal esperada
-      if (productData.sucursal_id !== 18) {
+      // if (productData.sucursal_id !== 18) {
+      //   alert("El producto ya no se encuentra en stock");
+      //   return;
+      // }
+
+      const excludedSucursales = [18, 32];
+      if (!excludedSucursales.includes(productData.sucursal_id)) {
         alert("El producto ya no se encuentra en stock");
         return;
       }
 
       // Verificar si el producto ya está en la lista
-      if (
-        products.some(
-          (prod) => prod.id === productData.id
-        )
-      ) {
-        alert("El código2 de barras ya existe en la lista");
+      if (products.some((prod) => prod.id === productData.id)) {
+        alert("El producto ya existe en la lista");
         return;
       }
+
+      // Verificar si el producto ya está en la lista
+      if (products.some((prod) => prod.num_media == productData.num_media)) {
+        alert("El producto ya existe en la lista");
+        return;
+      }
+
 
       // Validar que el código de barras sea numérico
       const barcodePattern = /^\d+$/;
@@ -399,9 +410,7 @@ export default function SellForm() {
     );
 
     if (confirmDelete) {
-      const updatedProducts = products.filter(
-        (prod) => prod.id !== id
-      );
+      const updatedProducts = products.filter((prod) => prod.id !== id);
 
       setProducts(updatedProducts);
     }
@@ -456,12 +465,9 @@ export default function SellForm() {
   };
 
   const handleProductDoubleClick = async (product) => {
-    const productResponse = await fetch(
-      `${apiUrl}/productos/${product.id}`,
-      {
-        credentials: "include",
-      }
-    );
+    const productResponse = await fetch(`${apiUrl}/productos/${product.id}`, {
+      credentials: "include",
+    });
     const productData = await productResponse.json();
 
     // Verificar si el producto existe en la base de datos
@@ -478,7 +484,13 @@ export default function SellForm() {
     }
 
     // Verificar si el producto existe en la base de datos
-    if (productData.sucursal_id !== 18) {
+    // if (productData.sucursal_id !== 18) {
+    //   alert("El producto ya no se encuentra en stock");
+    //   return;
+    // }
+
+    const excludedSucursales = [18, 32];
+    if (!excludedSucursales.includes(productData.sucursal_id)) {
       alert("El producto ya no se encuentra en stock");
       return;
     }
@@ -489,7 +501,7 @@ export default function SellForm() {
 
     // Verificar si el código de barras ya existe en la lista
     if (existingProductIndex !== -1) {
-      alert("El código de barras ya existe en la lista");
+      alert("El producto ya existe en la lista");
       return;
     }
 
@@ -556,12 +568,10 @@ export default function SellForm() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Cálculo de la paginación para Ordenes
-  const indexOfLastProductSell = currentPageSell * productsPerPageSell;
-  const indexOfFirstProductSell = indexOfLastProductSell - productsPerPageSell;
-  const currentProductsSell = [...products]
-    .reverse()
-    .slice(indexOfFirstProductSell, indexOfLastProductSell);
+// Cálculo de la paginación para Ordenes
+const indexOfLastProductSell = currentPageSell * productsPerPageSell;
+const indexOfFirstProductSell = indexOfLastProductSell - productsPerPageSell;
+const currentProductsSell = products.slice(indexOfFirstProductSell, indexOfLastProductSell);
 
   const pageNumbersSell = [];
   for (let i = 1; i <= Math.ceil(products.length / productsPerPageSell); i++) {
@@ -692,6 +702,8 @@ export default function SellForm() {
           </Form.Select>
         </Form.Group>
 
+
+
         <Form.Group className="mb-3 text-center">
           {/* <Form.Label className="px-2">Seleccione una forma de pago</Form.Label> */}
           <Form.Select
@@ -709,7 +721,16 @@ export default function SellForm() {
             ))}
           </Form.Select>
         </Form.Group>
-
+        <Form.Group className="mb-3 justify-content-center">
+          <Form.Label>Fecha de la Venta</Form.Label>
+          <Form.Control
+            type="date"
+            name="fecha"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="my-input-date" // Clase personalizada
+          />
+        </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label>Codigo de barra</Form.Label>
           <Form.Control

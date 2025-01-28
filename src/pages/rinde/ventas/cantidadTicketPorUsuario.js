@@ -67,7 +67,7 @@ export default function CantidadTicketPorUsuario() {
           total_monto: 0,
         };
       }
-      acc[key].cantidad += venta.cantidad;
+      acc[key].cantidad += Number(venta.cantidad);
       acc[key].total_monto += parseFloat(venta.total_monto);
       return acc;
     }, {});
@@ -84,7 +84,7 @@ export default function CantidadTicketPorUsuario() {
           total_monto: 0,
         };
       }
-      acc[key].cantidad += venta.cantidad;
+      acc[key].cantidad += Number(venta.cantidad);
       acc[key].total_monto += parseFloat(venta.total_monto);
       return acc;
     }, {});

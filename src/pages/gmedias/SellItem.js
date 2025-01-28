@@ -48,13 +48,13 @@ export default function SellItem() {
       console.error("Error al cargar la venta:", error);
     }
   }, [apiUrl]);
-  
+
   const handleSearch = useCallback(() => {
     const searchTermLower = searchTerm.toLowerCase();
     if (searchTermLower === "") {
       setFilteredProducts(productsSell);
     } else {
-      const filtered = productsSell.filter((product) => 
+      const filtered = productsSell.filter((product) =>
         product.codigo_de_barra.toLowerCase().includes(searchTermLower) ||
         product.num_media.toString().includes(searchTermLower) ||
         product.tropa.toString().includes(searchTermLower) ||
@@ -68,7 +68,7 @@ export default function SellItem() {
     loadVenta(params.id);
     loadProductsSell(params.id);
   }, [params.id, loadProductsSell]);  // include loadProductsSell as a dependency
-  
+
   useEffect(() => {
     handleSearch();
   }, [searchTerm, productsSell, handleSearch]);  // include handleSearch as a dependency
@@ -132,11 +132,11 @@ export default function SellItem() {
 
   useEffect(() => {
     loadProductsSell(params.id);
-  }, [params.id,loadProductsSell]);
+  }, [params.id, loadProductsSell]);
 
   useEffect(() => {
     handleSearch();
-  }, [searchTerm, productsSell,handleSearch]);
+  }, [searchTerm, productsSell, handleSearch]);
 
   // Función para manejar la edición de una fila
   const handleEdit = (index) => {
@@ -302,50 +302,52 @@ export default function SellItem() {
           {currentFilteredProducts.map((product, index) => (
             <tr key={product.id}>
               <td>{product.id}</td>
-              <td>{product.ingreso_id}</td>
-              <td>{product.codigo_de_barra}</td>
-              <td>{product.num_media}</td>
+              <td>{product.ingreso_id || ""}</td>
+              <td>{product.codigo_de_barra || ""}</td>
+              <td>{product.num_media || ""}</td>
               <td>
                 {editingIndex === index ? (
                   <Form.Control
                     type="text"
-                    inputMode="numeric" // Establecer el modo de entrada numérico
-                    value={editedPrice} // Usar el valor del estado local editado
-                    onChange={(e) => setEditedPrice(e.target.value)} // Actualizar el estado local
-                    min="0" // Establecer el valor mínimo como 0
+                    inputMode="numeric"
+                    value={editedPrice}
+                    onChange={(e) => setEditedPrice(e.target.value)}
+                    min="0"
                   />
                 ) : (
-                  product.precio.toLocaleString("es-AR", {
-                    style: "currency",
-                    currency: "ARS",
-                  })
+                  product.precio
+                    ? product.precio.toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                    })
+                    : ""
                 )}
               </td>
               <td>
                 {editingIndex === index ? (
                   <Form.Control
                     type="text"
-                    inputMode="numeric" // Establecer el modo de entrada numérico
-                    value={editedWeight} // Usar el valor del estado local editado
-                    onChange={(e) => setEditedWeight(e.target.value)} // Actualizar el estado local
-                    min="0" // Establecer el valor mínimo como 0
+                    inputMode="numeric"
+                    value={editedWeight}
+                    onChange={(e) => setEditedWeight(e.target.value)}
+                    min="0"
                   />
                 ) : (
-                  product.kg
+                  product.kg || ""
                 )}
               </td>
               <td>
                 {editingIndex === index ? (
                   <Form.Control
                     type="text"
-                    value={editedTropa} // Usar el valor del estado local editado
-                    onChange={(e) => setEditedTropa(e.target.value)} // Actualizar el estado local
+                    value={editedTropa}
+                    onChange={(e) => setEditedTropa(e.target.value)}
                   />
                 ) : (
-                  product.tropa
+                  product.tropa || ""
                 )}
               </td>
-              <td>{product.categoria_producto}</td>
+              <td>{product.categoria_producto || ""}</td>
               {context.user.usuario === "admin" && (
                 <td className="text-center">
                   {editingIndex === index ? (
@@ -354,13 +356,13 @@ export default function SellItem() {
                         variant="success"
                         onClick={() =>
                           handleSaveChanges(index, product.id, {
-                            precio: editedPrice, // Aquí puedes obtener los valores de los campos actualizados desde la interfaz de usuario
+                            precio: editedPrice,
                             kg: editedWeight,
                             tropa: editedTropa,
                           })
                         }
                         className="me-2 mx-2"
-                        style={{ width: "100px" }} // Establecer el mismo ancho para ambos botones
+                        style={{ width: "100px" }}
                       >
                         Guardar
                       </Button>
@@ -368,7 +370,7 @@ export default function SellItem() {
                         variant="danger"
                         onClick={handleCancelEdit}
                         className="me-2"
-                        style={{ width: "100px" }} // Establecer el mismo ancho para ambos botones
+                        style={{ width: "100px" }}
                       >
                         Cancelar
                       </Button>

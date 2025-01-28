@@ -82,32 +82,32 @@ const ReceiptForm = () => {
     if (manualEntry) {
       const { num_media, tropa, kg } = product;
 
-      // if (categoria !== "porcino") {
-      // Validar campos obligatorios
-      if (!num_media || !tropa || !kg) {
-        alert(
-          "Todos los campos (Número de media, Tropa y Peso) son obligatorios."
-        );
-        return;
-      }
+      if (categoria !== "porcino") {
+        // Validar campos obligatorios
+        if (!num_media || !tropa || !kg) {
+          alert(
+            "Todos los campos (Número de media, Tropa y Peso) son obligatorios."
+          );
+          return;
+        }
 
-      // Validar que los campos sean números
-      if (
-        !/^\d+$/.test(num_media) ||
-        !/^\d+$/.test(tropa) ||
-        !/^\d+$/.test(kg)
-      ) {
-        alert(
-          "Los campos Número de media, Tropa y Peso deben ser solo números."
-        );
-        return;
+        // Validar que los campos sean números
+        if (
+          !/^\d+$/.test(num_media) ||
+          !/^\d+$/.test(tropa) ||
+          !/^\d+$/.test(kg)
+        ) {
+          alert(
+            "Los campos Número de media, Tropa y Peso deben ser solo números."
+          );
+          return;
+        }
       }
-      // }
 
       // Verificar si la media ya existe en la lista
       const mediaExists = products.some((prod) => prod.num_media == num_media);
       if (mediaExists) {
-        alert("El producto ya existe en la lista.");
+        alert("La media ya existe en la lista.");
         return;
       }
 
@@ -120,39 +120,20 @@ const ReceiptForm = () => {
 
       // Generar el código de barra
       let codigo_de_barra;
-      // if (categoria === "porcino") {
-      //   codigo_de_barra = num_media;
-      // } else {
-      codigo_de_barra = `00${productoFinal.num_media}00${productoFinal.tropa}00${productoFinal.kg}`;
-      // }
+      if (categoria === "porcino") {
+        codigo_de_barra = num_media;
+      } else {
+        codigo_de_barra = `00${productoFinal.num_media}00${productoFinal.tropa}00${productoFinal.kg}`;
+      }
 
       // Verificar la existencia del producto si no es porcino
-      // if (categoria !== "porcino") {
-      const productExists = await checkProductExistence(codigo_de_barra);
-      // if (productExists) {
-      //   alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-      //   return;
-      // }
-      if (productExists && productExists.sucursal_id !== 32) {
-        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-        return;
+      if (categoria !== "porcino") {
+        const productExists = await checkProductExistence(codigo_de_barra);
+        if (productExists) {
+          alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+          return;
+        }
       }
-
-      // }
-
-      // const productExistsNumMedia = await checkProductExistenceNumMedia(num_media);
-      // if (productExistsNumMedia) {
-      //   alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-      //   return;
-      // }
-
-      const productExistsNumMedia = await checkProductExistenceNumMedia(num_media);
-      console.log("productexist", productExistsNumMedia, productExistsNumMedia.sucursal_id)
-      if (productExistsNumMedia && productExistsNumMedia.sucursal_id !== 32) {
-        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-        return;
-      }
-
 
       // Guardar el producto
       setProducts([...products, { ...productoFinal, codigo_de_barra }]);
@@ -167,15 +148,15 @@ const ReceiptForm = () => {
       }
 
       // Verificar si el código de barras ya existe en la lista para bovino
-      // if (categoria === "bovino") {
-      //   const barcodeExists = products.some(
-      //     (prod) => prod.codigo_de_barra === product.codigo_de_barra
-      //   );
-      //   if (barcodeExists) {
-      //     alert("El código de barras ya existe en la lista.");
-      //     return;
-      //   }
-      // }
+      if (categoria === "bovino") {
+        const barcodeExists = products.some(
+          (prod) => prod.codigo_de_barra === product.codigo_de_barra
+        );
+        if (barcodeExists) {
+          alert("El código de barras ya existe en la lista.");
+          return;
+        }
+      }
 
       // Asignar valores predeterminados para tropa y kg si están vacíos
       const productoFinal = {
@@ -185,15 +166,15 @@ const ReceiptForm = () => {
       };
 
       // Verificar la existencia del producto si no es porcino
-      // if (categoria !== "porcino") {
-      const productExists = await checkProductExistence(
-        product.codigo_de_barra
-      );
-      if (productExists) {
-        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-        return;
+      if (categoria !== "porcino") {
+        const productExists = await checkProductExistence(
+          product.codigo_de_barra
+        );
+        if (productExists) {
+          alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+          return;
+        }
       }
-      // }
 
       // Guardar el producto
       setProducts([...products, productoFinal]);
@@ -214,23 +195,7 @@ const ReceiptForm = () => {
         }
       );
       const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error al verificar la existencia del producto", error);
-      return false;
-    }
-  };
-
-  const checkProductExistenceNumMedia = async (num_media) => {
-    try {
-      const response = await fetch(
-        `${apiUrl}/productos/${num_media}/numeromedia`,
-        {
-          credentials: "include",
-        }
-      );
-      const data = await response.json();
-      return data;
+      return !!data;
     } catch (error) {
       console.error("Error al verificar la existencia del producto", error);
       return false;
@@ -282,42 +247,24 @@ const ReceiptForm = () => {
     }
   };
 
-  const processCodeBarHandler = async (codigoDeBarra, numeroMedia) => {
-
-    const numMedia = parseFloat(codigoDeBarra.slice(2, 13))
-    console.log("numero", numMedia)
-
+  const processCodeBarHandler = async (codigoDeBarra) => {
     const processedData = processBarCode(codigoDeBarra, categoria);
     if (processedData.success) {
-      // if (categoria !== "porcino") {
-      const productExists = await checkProductExistence(codigoDeBarra);
-      // if (productExists) {
-      //   alert("¡Alerta2! El producto ya ha sido ingresado anteriormente.");
-      //   return;
-      // }
+      if (categoria !== "porcino") {
+        const productExists = await checkProductExistence(codigoDeBarra);
+        if (productExists) {
+          alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+          return;
+        }
 
-      if (productExists && productExists.sucursal_id !== 32) {
-        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-        return;
+        const barcodeExists = products.some(
+          (prod) => prod.codigo_de_barra === codigoDeBarra
+        );
+        if (barcodeExists) {
+          alert("El código de barras ya existe en la lista.");
+          return;
+        }
       }
-      
-
-      const barcodeExists = products.some(
-        (prod) => prod.codigo_de_barra === codigoDeBarra
-      );
-      if (barcodeExists) {
-        alert("El producto ya existe en la lista.");
-        return;
-      }
-
-      const numMediaExists = products.some(
-        (prod) => prod.num_media == numMedia
-      );
-      if (numMediaExists) {
-        alert("El producto ya existe en la lista.");
-        return;
-      }
-      // }
 
       setProduct((prevProduct) => ({
         ...prevProduct,
@@ -328,24 +275,24 @@ const ReceiptForm = () => {
         codigo_de_barra: codigoDeBarra,
       }));
 
-      // if (categoria === "bovino") {
-      // Agregar directamente el producto a la lista si la categoría es bovino
-      setProducts((prevProducts) => [
-        ...prevProducts,
-        {
-          ...product,
-          codigo_de_barra: codigoDeBarra,
-          num_media: processedData.data.num_media,
-          tropa: processedData.data.tropa || "",
-          kg: processedData.data.kg || "",
-          precio: 0,
-        },
-      ]);
-      setProduct(initialProductState);
-      // } else {
-      //   // Habilitar campos para editar tropa y kg en categoría porcino
-      //   setFieldsDisabled(false);
-      // }
+      if (categoria === "bovino") {
+        // Agregar directamente el producto a la lista si la categoría es bovino
+        setProducts((prevProducts) => [
+          ...prevProducts,
+          {
+            ...product,
+            codigo_de_barra: codigoDeBarra,
+            num_media: processedData.data.num_media,
+            tropa: processedData.data.tropa || "",
+            kg: processedData.data.kg || "",
+            precio: 0,
+          },
+        ]);
+        setProduct(initialProductState);
+      } else {
+        // Habilitar campos para editar tropa y kg en categoría porcino
+        setFieldsDisabled(false);
+      }
 
       setCodeProcessed(true);
     } else {
@@ -425,7 +372,7 @@ const ReceiptForm = () => {
           />
           <Button
             variant="success"
-            onClick={() => processCodeBarHandler(product.codigo_de_barra, product.num_media)}
+            onClick={() => processCodeBarHandler(product.codigo_de_barra)}
             className="mt-2"
             disabled={
               manualEntry ||
@@ -433,7 +380,7 @@ const ReceiptForm = () => {
                 (categoria === "bovino" &&
                   product.codigo_de_barra.length === 30) ||
                 (categoria === "porcino" &&
-                  product.codigo_de_barra.length === 30)
+                  product.codigo_de_barra.length === 7)
               )
             }
           >
@@ -474,22 +421,22 @@ const ReceiptForm = () => {
           />
         </Form.Group>
         {/* Renderizar el campo "Número de Tropa" solo si la categoría no es porcino */}
-        {/* {categoria !== "porcino" && ( */}
-        <Form.Group className="mb-3">
-          <Form.Label>Numero de tropa</Form.Label>
-          <Form.Control
-            type="number"
-            name="tropa"
-            value={product.tropa}
-            onChange={(e) =>
-              setProduct({ ...product, tropa: e.target.value })
-            }
-            placeholder="Ingresa el número de tropa"
-            className="my-input"
-            disabled={fieldsDisabled}
-          />
-        </Form.Group>
-        {/* )} */}
+        {categoria !== "porcino" && (
+          <Form.Group className="mb-3">
+            <Form.Label>Numero de tropa</Form.Label>
+            <Form.Control
+              type="number"
+              name="tropa"
+              value={product.tropa}
+              onChange={(e) =>
+                setProduct({ ...product, tropa: e.target.value })
+              }
+              placeholder="Ingresa el número de tropa"
+              className="my-input"
+              disabled={fieldsDisabled}
+            />
+          </Form.Group>
+        )}
         <Form.Group className="mb-3">
           <Form.Label>Peso de la media</Form.Label>
           <Form.Control

@@ -149,24 +149,49 @@ export default function SellList() {
     }
   };
 
+  // const handleEditClient = (sellId) => {
+  //   setEditingSellId({ id: sellId, type: "client" });
+  // };
+
+  // const handleEditPaymentMethod = (sellId) => {
+  //   setEditingSellId({ id: sellId, type: "paymentMethod" });
+  // };
+
   const handleEditClient = (sellId) => {
+    const sell = sells.find((s) => s.id === sellId);
+    if (sell && sell.Cliente) {
+      setSelectedClient(sell.Cliente); // Asigna el cliente, no todo el objeto `sell`.
+    } else {
+      setSelectedClient(null); // Si no hay cliente, reinicia el estado.
+    }
     setEditingSellId({ id: sellId, type: "client" });
   };
-
+  
   const handleEditPaymentMethod = (sellId) => {
+    console.log("primero", sellId, sells)
+    const sell = sells.find((s) => s.id === sellId);
+    console.log("segundo", sell)
+    if (sell && sell.FormaPago) {
+      setSelectedPaymentMethod(sell.FormaPago); // Establecer la forma de pago actual
+      setSelectedClient(sell.Cliente);
+    }
     setEditingSellId({ id: sellId, type: "paymentMethod" });
   };
 
   const handleChangeClient = (eventKey) => {
     const selectedClient = clients.find((client) => client.nombre === eventKey);
+
     setSelectedClient(selectedClient);
   };
 
   const handleChangePaymentMethod = (eventKey) => {
+
     const selectedPaymentMethod = paymentMethods.find(
       (method) => method.tipo === eventKey
     );
+
     setSelectedPaymentMethod(selectedPaymentMethod);
+
   };
 
   const handleCancelEdit = () => {
@@ -184,6 +209,7 @@ export default function SellList() {
       if (selectedPaymentMethod !== "") {
         requestBody.formaPagoId = selectedPaymentMethod.id;
       }
+
       await fetch(`${apiUrl}/ventas/${editingSellId.id}`, {
         credentials: "include",
         method: "PUT",
@@ -206,13 +232,10 @@ export default function SellList() {
   // const indexOfLastSell = currentPage * sellsPerPage;
   // const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   // const currentSells = filteredSells.slice(indexOfFirstSell, indexOfLastSell);
-
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = [...filteredSells] // Crea una copia para evitar modificar el original
-    .reverse() // Invierte el orden de los elementos
     .slice(indexOfFirstSell, indexOfLastSell); // Aplica la paginación
-
 
   const nextPage = () => {
     setCurrentPage(currentPage + 1);
@@ -281,9 +304,9 @@ export default function SellList() {
                 {editingSellId &&
                   editingSellId.id === sell.id &&
                   editingSellId.type === "client" ? (
-                  <Dropdown onSelect={handleChangeClient}>
+                    <Dropdown onSelect={handleChangeClient}>
                     <Dropdown.Toggle variant="success" id="dropdown-basic">
-                      {selectedClient
+                      {selectedClient && selectedClient.nombre
                         ? selectedClient.nombre
                         : "Seleccionar cliente"}
                     </Dropdown.Toggle>

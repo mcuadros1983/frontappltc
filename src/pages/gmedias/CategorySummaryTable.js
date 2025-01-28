@@ -20,7 +20,7 @@ const CategorySummaryTable = ({filteredProducts}) => {
       if (peso === 0) {
         summary[category].pesoTotal = "N/A"; // Si el peso es cero, establecemos "N/A"
       } else {
-        summary[category].pesoTotal += peso; // Si el peso no es cero, lo sumamos
+        summary[category].pesoTotal += Number(peso); // Si el peso no es cero, lo sumamos
       }
     }
 
