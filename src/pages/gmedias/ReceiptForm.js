@@ -147,7 +147,7 @@ const ReceiptForm = () => {
       // }
 
       const productExistsNumMedia = await checkProductExistenceNumMedia(num_media);
-      console.log("productexist", productExistsNumMedia, productExistsNumMedia.sucursal_id)
+      // console.log("productexist", productExistsNumMedia, productExistsNumMedia.sucursal_id)
       if (productExistsNumMedia && productExistsNumMedia.sucursal_id !== 32) {
         alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
         return;
