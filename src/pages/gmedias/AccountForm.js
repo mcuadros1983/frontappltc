@@ -18,6 +18,9 @@ export default function AccountForm() {
   // const [currentMovimientos, setCurrentMovimientos] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [movimientosPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState(null);
+const [sortDirection, setSortDirection] = useState("asc");
+
 
   const navigate = useNavigate();
 
@@ -100,6 +103,28 @@ export default function AccountForm() {
     // Abre el formulario modal para registrar cobranza
     setShowModal(true);
   };
+
+  const handleSort = (columnName) => {
+    const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    setSortColumn(columnName);
+    setSortDirection(newSortDirection);
+  
+    const sortedMovimientos = [...movimientos].sort((a, b) => {
+      const valueA = a[columnName] ?? "";
+      const valueB = b[columnName] ?? "";
+  
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
+      }
+  
+      return newSortDirection === "asc"
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
+    });
+  
+    setMovimientos(sortedMovimientos);
+  };
+  
 
   const handleCloseModal = () => {
     // Cierra el formulario modal
@@ -227,13 +252,13 @@ export default function AccountForm() {
           <h2>Movimientos de Cuenta Corriente</h2>
 
           <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Descripción</th>
-                <th>Monto</th>
-              </tr>
-            </thead>
+          <thead>
+  <tr>
+    <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha</th>
+    <th onClick={() => handleSort("descripcion")} style={{ cursor: "pointer" }}>Descripción</th>
+    <th onClick={() => handleSort("monto_total")} style={{ cursor: "pointer" }}>Monto</th>
+  </tr>
+</thead>
             <tbody>
               {/* Iterar sobre los movimientos y mostrarlos en la tabla */}
               {movimientos.map((movimiento, index) => (

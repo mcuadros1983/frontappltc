@@ -19,6 +19,12 @@ const ProductUpdate = () => {
   const [sucursales, setSucursales] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [formasPago, setFormasPago] = useState([]);
+  const [fechaOperacion, setFechaOperacion] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0]; // Formato YYYY-MM-DD
+  });
+
+
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const handleFileChange = (event) => {
@@ -42,11 +48,12 @@ const ProductUpdate = () => {
       formData.append("destino", destino);
       formData.append("cliente", cliente);
       formData.append("formaPago", formaPago);
+      formData.append("fechaOperacion", fechaOperacion); 
 
       const response = await fetch(`${apiUrl}/productos/upload`, {
         credentials: "include",
         method: "POST",
-        body: formData, 
+        body: formData,
       });
 
       const data = await response.json();
@@ -256,6 +263,8 @@ const ProductUpdate = () => {
             <option value="actualizar">Actualizar Productos</option>
           </Form.Select>
         </Form.Group>
+
+
         {tipoSeleccionado && tipo === "actualizar" && (
           <>
             {/* Selector de archivo */}
@@ -303,6 +312,21 @@ const ProductUpdate = () => {
                 <option value="romaneo">Romaneo</option>
               </Form.Select>
             </Form.Group>
+
+            {(operacion === "venta" || operacion === "orden") && (
+              <Form.Group controlId="fechaOperacion" className="mb-3">
+                <Form.Label>Fecha de Operación:</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={fechaOperacion}
+                  onChange={(e) => setFechaOperacion(e.target.value)}
+                  className="my-input custom-style-select"
+                  size="lg"
+                  style={{ width: "auto", minWidth: "140px" }} // Ajuste de ancho automático
+                />
+              </Form.Group>
+            )}
+
             {operacion === "orden" && (
               <Form.Group controlId="destino" className="mb-3">
                 <Form.Label>Sucursal:</Form.Label>
@@ -322,6 +346,7 @@ const ProductUpdate = () => {
                 </Form.Select>
               </Form.Group>
             )}
+
             {operacion === "venta" && (
               <>
                 <Form.Group controlId="cliente" className="mb-3">
@@ -343,6 +368,9 @@ const ProductUpdate = () => {
                 </Form.Group>
               </>
             )}
+
+
+
             {operacion === "venta" && destino && (
               <>
                 <Form.Group controlId="formaPago" className="mb-3">
@@ -363,7 +391,7 @@ const ProductUpdate = () => {
                 </Form.Group>
               </>
             )}
- 
+
             {(destino || formaPago || operacion === "romaneo") && (
               <Form.Group controlId="formFile" className="mb-3">
                 <Form.Label>Seleccione un archivo Excel:</Form.Label>

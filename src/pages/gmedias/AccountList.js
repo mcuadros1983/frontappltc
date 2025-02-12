@@ -8,6 +8,9 @@ const AccountList = () => {
   const [totalSaldo, setTotalSaldo] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [clientesPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState(null);
+const [sortDirection, setSortDirection] = useState("asc");
+
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -67,16 +70,38 @@ const AccountList = () => {
     }
   };
 
+  const handleSort = (columnName) => {
+    const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    setSortColumn(columnName);
+    setSortDirection(newSortDirection);
+  
+    const sortedClientes = [...clientesConCuenta].sort((a, b) => {
+      const valueA = a[columnName] ?? "";
+      const valueB = b[columnName] ?? "";
+  
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
+      }
+  
+      return newSortDirection === "asc"
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
+    });
+  
+    setClientesConCuenta(sortedClientes);
+  };
+  
+
   return (
     <Container>
       <h1>Saldos de Clientes</h1>
       <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Saldo</th>
-          </tr>
-        </thead>
+      <thead>
+  <tr>
+    <th onClick={() => handleSort("nombre")} style={{ cursor: "pointer" }}>Nombre</th>
+    <th onClick={() => handleSort("saldo")} style={{ cursor: "pointer" }}>Saldo</th>
+  </tr>
+</thead>
         <tbody>
           {currentClientes.map((cliente) => (
             <tr key={cliente.id}>

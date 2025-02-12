@@ -24,6 +24,9 @@ export default function SellList() {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [sellsPerPage] = useState(20);
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+
 
   const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
@@ -166,7 +169,7 @@ export default function SellList() {
     }
     setEditingSellId({ id: sellId, type: "client" });
   };
-  
+
   const handleEditPaymentMethod = (sellId) => {
     console.log("primero", sellId, sells)
     const sell = sells.find((s) => s.id === sellId);
@@ -226,12 +229,27 @@ export default function SellList() {
     }
   };
 
+  const handleSort = (columnName) => {
+    const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    setSortColumn(columnName);
+    setSortDirection(newSortDirection);
 
+    const sortedSells = [...filteredSells].sort((a, b) => {
+      const valueA = a[columnName] ?? "";
+      const valueB = b[columnName] ?? "";
 
-  // Pagination logic
-  // const indexOfLastSell = currentPage * sellsPerPage;
-  // const indexOfFirstSell = indexOfLastSell - sellsPerPage;
-  // const currentSells = filteredSells.slice(indexOfFirstSell, indexOfLastSell);
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
+      }
+
+      return newSortDirection === "asc"
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
+    });
+
+    setFilteredSells(sortedSells);
+  };
+
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = [...filteredSells] // Crea una copia para evitar modificar el original
@@ -281,7 +299,7 @@ export default function SellList() {
       </div>
 
       <Table striped bordered hover>
-        <thead>
+        {/* <thead>
           <tr>
             <th>#</th>
             <th>Fecha de venta</th>
@@ -290,7 +308,19 @@ export default function SellList() {
             <th>Monto</th>
             <th>Operaciones</th>
           </tr>
+        </thead> */}
+
+        <thead>
+          <tr>
+            <th onClick={() => handleSort("id")} style={{ cursor: "pointer" }}>#</th>
+            <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha de venta</th>
+            <th onClick={() => handleSort("Cliente.nombre")} style={{ cursor: "pointer" }}>Cliente</th>
+            <th onClick={() => handleSort("FormaPago.tipo")} style={{ cursor: "pointer" }}>Forma Pago</th>
+            <th onClick={() => handleSort("monto_total")} style={{ cursor: "pointer" }}>Monto</th>
+            <th>Operaciones</th>
+          </tr>
         </thead>
+
         <tbody>
           {currentSells.map((sell) => (
             <tr
@@ -304,7 +334,7 @@ export default function SellList() {
                 {editingSellId &&
                   editingSellId.id === sell.id &&
                   editingSellId.type === "client" ? (
-                    <Dropdown onSelect={handleChangeClient}>
+                  <Dropdown onSelect={handleChangeClient}>
                     <Dropdown.Toggle variant="success" id="dropdown-basic">
                       {selectedClient && selectedClient.nombre
                         ? selectedClient.nombre

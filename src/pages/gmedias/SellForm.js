@@ -309,10 +309,16 @@ export default function SellForm() {
     const productData = await productResponse.json();
 
     // Validar si el producto existe en la base de datos
-    if (!productData) {
-      setModal(true); // Mostrar modal si no existe
+    // if (!productData) {
+    //   setModal(true); // Mostrar modal si no existe
+    //   return;
+    // }
+
+    if (!productData || productData.sucursal_id === 32) {
+      setModal(true); // Mostrar modal si no existe o si la sucursal es 32
       return;
     }
+    
 
     if (productData.categoria_producto === "bovino") {
       // Validar que el producto pertenezca a la sucursal esperada
@@ -352,15 +358,34 @@ export default function SellForm() {
         credentials: "include",
       });
       const cliente = await res.json();
+      console.log("client", cliente)
+
+      // if (
+      //   !productData.precio &&
+      //   cliente.margen > 0 &&
+      //   productData.costo &&
+      //   productData.categoria_producto === "bovino"
+      // ) {
+      //   productData.precio = (1 + cliente.margen / 100) * productData.costo;
+      // }
 
       if (
-        !productData.precio &&
-        cliente.margen > 0 &&
-        productData.costo &&
-        productData.categoria_producto === "bovino"
+        cliente?.margen !== undefined &&
+        cliente?.margen !== null &&
+        cliente?.margen !== 0 &&
+        !isNaN(cliente.margen) &&
+        productData?.costo !== undefined &&
+        productData?.costo !== null &&
+        productData?.costo !== 0 &&
+        !isNaN(productData.costo)
       ) {
-        productData.precio = (1 + cliente.margen / 100) * productData.costo;
+        productData.precio = parseFloat(
+          ((1 + Number(cliente.margen) / 100) * Number(productData.costo)).toFixed(2)
+        );
+      } else {
+        productData.precio = productData.precio || 0; // Mantiene el precio actual si no se puede calcular
       }
+
 
       // Agregar producto a la lista y resetear el formulario
       setProducts([...products, productData]);
@@ -437,11 +462,45 @@ export default function SellForm() {
       return updatedProducts;
     });
   };
-
-  const handleSaveEdit = (index) => {
-    // Aquí puedes agregar la lógica para guardar los cambios del producto editado
-    setEditingIndex(null); // Una vez guardado, establece el índice de edición en null
+  const handleSaveEdit = async (index) => {
+    const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
+      credentials: "include",
+    });
+    const cliente = await res.json();
+    console.log("client", cliente);
+  
+    setProducts((prevProducts) => {
+      const updatedProducts = [...prevProducts];
+      const product = updatedProducts[index];
+  
+      if (
+        product?.precio === 0 || product?.precio === null || product?.precio === undefined
+      ) {
+        if (
+          cliente?.margen !== undefined &&
+          cliente?.margen !== null &&
+          cliente?.margen !== 0 &&
+          !isNaN(cliente.margen) &&
+          product?.costo !== undefined &&
+          product?.costo !== null &&
+          product?.costo !== 0 &&
+          !isNaN(product.costo)
+        ) {
+          product.precio = parseFloat(
+            ((1 + Number(cliente.margen) / 100) * Number(product.costo)).toFixed(2)
+          );
+        } else {
+          product.precio = product.precio || 0;
+        }
+      }
+  
+      return updatedProducts;
+    });
+  
+    setEditingIndex(null);
   };
+  
+
 
   const handleCancelEdit = () => {
     setEditingIndex(null); // Al cancelar la edición, simplemente establece el índice de edición en null
@@ -512,7 +571,27 @@ export default function SellForm() {
       return;
     }
 
+    const cliente = customers.find((customer) => customer.id == selectedCustomerId);
     // Agregar el producto a la lista de productos y limpiar el formulario
+    // Calcular precio si se cumplen las condiciones
+    if (
+      cliente?.margen !== undefined &&
+      cliente?.margen !== null &&
+      cliente?.margen !== 0 &&
+      !isNaN(cliente.margen) &&
+      productData?.costo !== undefined &&
+      productData?.costo !== null &&
+      productData?.costo !== 0 &&
+      !isNaN(productData.costo)
+    ) {
+      productData.precio = parseFloat(
+        ((1 + Number(cliente.margen) / 100) * Number(productData.costo)).toFixed(2)
+      );
+    }
+
+    console.log("data", productData.costo, cliente, selectedCustomerId, customers);
+
+
     setProducts([...products, productData]);
     setProduct(initialProductState);
     toggleModal(); // Cierra el modal después de agregar el producto
@@ -568,10 +647,10 @@ export default function SellForm() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-// Cálculo de la paginación para Ordenes
-const indexOfLastProductSell = currentPageSell * productsPerPageSell;
-const indexOfFirstProductSell = indexOfLastProductSell - productsPerPageSell;
-const currentProductsSell = products.slice(indexOfFirstProductSell, indexOfLastProductSell);
+  // Cálculo de la paginación para Ordenes
+  const indexOfLastProductSell = currentPageSell * productsPerPageSell;
+  const indexOfFirstProductSell = indexOfLastProductSell - productsPerPageSell;
+  const currentProductsSell = products.slice(indexOfFirstProductSell, indexOfLastProductSell);
 
   const pageNumbersSell = [];
   for (let i = 1; i <= Math.ceil(products.length / productsPerPageSell); i++) {

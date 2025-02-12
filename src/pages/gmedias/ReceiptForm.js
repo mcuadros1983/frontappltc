@@ -166,17 +166,6 @@ const ReceiptForm = () => {
         return;
       }
 
-      // Verificar si el código de barras ya existe en la lista para bovino
-      // if (categoria === "bovino") {
-      //   const barcodeExists = products.some(
-      //     (prod) => prod.codigo_de_barra === product.codigo_de_barra
-      //   );
-      //   if (barcodeExists) {
-      //     alert("El código de barras ya existe en la lista.");
-      //     return;
-      //   }
-      // }
-
       // Asignar valores predeterminados para tropa y kg si están vacíos
       const productoFinal = {
         ...product,
@@ -296,8 +285,19 @@ const ReceiptForm = () => {
       //   return;
       // }
 
+      // if (productExists && productExists.sucursal_id !== 32) {
+      //   alert("¡Alerta! El producto ya ha sido ingresado anteriormente2.");
+      //   return;
+      // }
+      
       if (productExists && productExists.sucursal_id !== 32) {
-        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+        if (productExists.orden_id) {
+          alert(`¡Alerta! El producto ya fue despachado bajo la Orden Número ${productExists.orden_id}`);
+        } else if (productExists.venta_id) {
+          alert(`¡Alerta! El producto ya fue despachado bajo la Venta Número ${productExists.venta_id}`);
+        } else {
+          alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+        }
         return;
       }
       

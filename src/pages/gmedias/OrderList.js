@@ -16,6 +16,8 @@ export default function OrderList() {
   const [branches, setBranches] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState(null); // Nuevo estado para el ID de la orden que se está editando
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
 
   // paginacion
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,13 +148,27 @@ export default function OrderList() {
     setEditingOrderId(null); // Restablecer el ID de la orden que se está editando
   };
 
-  // Cálculo de la paginación para los productos filtrados
-  // const indexOfLastOrder = currentPage * ordersPerPage;
-  // const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  // const currentFilteredOrders = filteredOrders.slice(
-  //   indexOfFirstOrder,
-  //   indexOfLastOrder
-  // );
+  const handleSort = (columnName) => {
+    const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    setSortColumn(columnName);
+    setSortDirection(newSortDirection);
+
+    const sortedOrders = [...filteredOrders].sort((a, b) => {
+      const valueA = a[columnName] ?? "";
+      const valueB = b[columnName] ?? "";
+
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
+      }
+
+      return newSortDirection === "asc"
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
+    });
+
+    setFilteredOrders(sortedOrders);
+  };
+
 
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
@@ -203,7 +219,7 @@ export default function OrderList() {
       </div>
 
       <Table striped bordered hover>
-        <thead>
+        {/* <thead>
           <tr>
             <th>#</th>
             <th>Fecha de ingreso</th>
@@ -212,7 +228,19 @@ export default function OrderList() {
             <th>Sucursal</th>
             <th>Operaciones</th>
           </tr>
+        </thead> */}
+
+        <thead>
+          <tr>
+            <th onClick={() => handleSort("id")} style={{ cursor: "pointer" }}>#</th>
+            <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha de ingreso</th>
+            <th onClick={() => handleSort("cantidad_total")} style={{ cursor: "pointer" }}>Cantidad de medias</th>
+            <th onClick={() => handleSort("peso_total")} style={{ cursor: "pointer" }}>Peso total</th>
+            <th onClick={() => handleSort("Sucursal.nombre")} style={{ cursor: "pointer" }}>Sucursal</th>
+            <th>Operaciones</th>
+          </tr>
         </thead>
+
         <tbody>
           {currentFilteredOrders.map((order) => (
             <tr

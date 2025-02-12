@@ -440,129 +440,6 @@ export default function ProductList() {
           Limpiar Selección
         </Button>
       </div>
-      {/* <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th
-              onClick={() => handleSort("fecha")}
-              style={{ cursor: "pointer" }}
-            >
-              Fecha
-            </th>
-            <th
-              onClick={() => handleSort("categoria_producto")}
-              style={{ cursor: "pointer" }}
-            >
-              Categoria
-            </th>
-            <th
-              onClick={() => handleSort("subcategoria")}
-              style={{ cursor: "pointer" }}
-            >
-              Subcategoria
-            </th>
-            <th
-              onClick={() => handleSort("num_media")}
-              style={{ cursor: "pointer" }}
-            >
-              Numero de Media
-            </th>
-            <th
-              onClick={() => handleSort("garron")}
-              style={{ cursor: "pointer" }}
-            >
-              Garron
-            </th>
-            <th
-              onClick={() => handleSort("precio")}
-              style={{ cursor: "pointer" }}
-            >
-              Precio
-            </th>
-            <th
-              onClick={() => handleSort("costo")}
-              style={{ cursor: "pointer" }}
-            >
-              Costo
-            </th>
-            <th onClick={() => handleSort("kg")} style={{ cursor: "pointer" }}>
-              Peso
-            </th>
-            <th
-              onClick={() => handleSort("tropa")}
-              style={{ cursor: "pointer" }}
-            >
-              Tropa
-            </th>
-            <th
-              onClick={() => handleSort("sucursal")}
-              style={{ cursor: "pointer" }}
-            >
-              Sucursal
-            </th>
-            <th
-              onClick={() => handleSort("cliente")}
-              style={{ cursor: "pointer" }}
-            >
-              Cliente
-            </th>
-            <th onClick={() => handleSort("ingreso_id")} style={{ cursor: "pointer" }}>
-              Ingreso ID
-            </th>
-            <th>Orden</th>
-            <th>Venta</th>
-            <th>Mov</th>
-            <th>Operaciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentProducts.map((product) => (
-            <tr key={product.id}>
-              <td>{product.id}</td>
-              <td>{product.fecha}</td>
-              <td>{product.categoria_producto}</td>
-              <td>{product.subcategoria}</td>
-              <td>{product.num_media}</td>
-              <td>{product.garron}</td>
-              <td>{product.precio}</td>
-              <td>{product.costo}</td>
-              <td>{product.kg}</td>
-              <td>{product.tropa}</td>
-              <td>
-                {branches.find((branch) => branch.id === product.sucursal_id)
-                  ?.nombre || "Sucursal Desconocida"}
-              </td>
-              <td>
-                {customers.find(
-                  (customer) => customer.id === product.cliente_id
-                )?.nombre || "Cliente Desconocido"}
-              </td>
-              <td>{product.ingreso_id || ""}</td>
-              <td>{product.orden_id || ""}</td>
-              <td>{product.venta_id || ""}</td>
-              <td>{formatDate(product.updatedAt)}</td>
-              <td className="text-center">
-                <div className="d-flex justify-content-center align-items-center">
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDelete(product.id)}
-                    className="mx-2"
-                  >
-                    Eliminar
-                  </Button>
-                  <Button
-                    color="inherit"
-                    onClick={() => navigate(`/products/${product.id}/edit`)}
-                  >
-                    Editar
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table> */}
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -701,11 +578,11 @@ export default function ProductList() {
                   </div>
                 </td>
               </tr>
-            );
+            )
           })}
         </tbody>
       </Table>
-      ;
+      
       <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
           <BsChevronLeft />
@@ -751,5 +628,5 @@ export default function ProductList() {
         </Table>
       </div>
     </Container>
-  );
+  )
 }
