@@ -242,15 +242,6 @@ export default function SellItem() {
         </Button>
       </div>
 
-      <div className="mb-3">
-        <FormControl
-          type="text"
-          placeholder="Buscar por código de barras, numero de ingreso, número de media o tropa"
-          className="mr-sm-2"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
 
       <Table striped bordered hover>
         <thead>

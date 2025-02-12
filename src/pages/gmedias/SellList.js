@@ -64,7 +64,8 @@ export default function SellList() {
 
       const data = await res.json();
       // console.log("info", data);
-      const sortedSells = data.sort((a, b) => a.id - b.id);
+      // const sortedSells = data.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      const sortedSells = data.sort((a, b) => b.id - a.id);
       setSells(sortedSells);
       // console.log("sells", sortedSells);
     } catch (error) {
