@@ -99,8 +99,16 @@ export default function AccountForm() {
     }
   };
 
+  // const handleRegistrarCobranza = () => {
+  //   // Abre el formulario modal para registrar cobranza
+  //   setShowModal(true);
+  // };
+
   const handleRegistrarCobranza = () => {
-    // Abre el formulario modal para registrar cobranza
+    // Limpiar los campos antes de abrir el modal
+    setMontoCobranza("");
+    setDescripcionCobranza("");
+    setFormaCobro("");
     setShowModal(true);
   };
 
@@ -371,7 +379,7 @@ export default function AccountForm() {
             <option value="Efectivo">EFECTIVO</option>
             <option value="Transferencia">TRANSFERENCIA</option>
             <option value="Tarjeta">TARJETA</option>
-            <option value="Tarjeta">COMPENSACION</option>
+            <option value="Compensacion">COMPENSACION</option>
           </Form.Select>
         </Modal.Body>
         <Modal.Footer>
