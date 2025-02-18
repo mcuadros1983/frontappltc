@@ -144,11 +144,12 @@ const [sortDirection, setSortDirection] = useState("asc");
           Total Saldo:{" "}
           {
             <td>
-              {totalSaldo.toLocaleString("es-AR", {
+              {totalSaldo != null
+                      ? totalSaldo.toLocaleString("es-AR", {
                 style: "currency",
                 currency: "ARS",
                 minimumFractionDigits: 2,
-              })}
+              }):"$0,00"}
             </td>
           }
         </strong>

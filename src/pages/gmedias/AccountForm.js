@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { Table, Container, Button, FormControl, Modal, Form } from "react-bootstrap";
+import {
+  Table,
+  Container,
+  Button,
+  FormControl,
+  Modal,
+  Form,
+} from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { useNavigate } from "react-router-dom";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
@@ -21,14 +28,11 @@ export default function AccountForm() {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
-
   const navigate = useNavigate();
-
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const obtenerClientes = useCallback(async () => {
-
     try {
       const response = await fetch(`${apiUrl}/clientes/`, {
         credentials: "include",
@@ -45,17 +49,13 @@ export default function AccountForm() {
   useEffect(() => {
     // Obtener lista de clientes al cargar el componente
     obtenerClientes();
-
   }, [obtenerClientes]);
 
   const obtenerCliente = async (clienteId) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/clientes/${clienteId}/`,
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${apiUrl}/clientes/${clienteId}/`, {
+        credentials: "include",
+      });
       const cliente = await response.json();
       return cliente;
     } catch (error) {
@@ -64,19 +64,14 @@ export default function AccountForm() {
     }
   };
   const handleClienteChange = async (clienteId) => {
-
     try {
       // Obtener datos del cliente y operaciones de cuenta corriente
       const [cliente, operaciones] = await Promise.all([
         obtenerCliente(clienteId),
-        fetch(
-          `${apiUrl}/cuentas-corrientes/${clienteId}/operaciones`,
-          {
-            credentials: "include",
-          }
-        ).then((response) => response.json()),
+        fetch(`${apiUrl}/cuentas-corrientes/${clienteId}/operaciones`, {
+          credentials: "include",
+        }).then((response) => response.json()),
       ]);
-
 
       // Verificar si el cliente tiene cuenta corriente
       if (cliente && cliente.cuentaCorriente) {
@@ -113,7 +108,8 @@ export default function AccountForm() {
   };
 
   const handleSort = (columnName) => {
-    const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    const newSortDirection =
+      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
     setSortColumn(columnName);
     setSortDirection(newSortDirection);
 
@@ -132,7 +128,6 @@ export default function AccountForm() {
 
     setMovimientos(sortedMovimientos);
   };
-
 
   const handleCloseModal = () => {
     // Cierra el formulario modal
@@ -191,7 +186,6 @@ export default function AccountForm() {
       // Actualiza los movimientos en el estado
       setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
       setSaldoActual(operaciones.saldoActual);
-
     } catch (error) {
       console.error(
         "Error al guardar la cobranza o al obtener movimientos y saldo después de la cobranza",
@@ -204,7 +198,6 @@ export default function AccountForm() {
     setMontoCobranza("");
     handleCloseModal();
   };
-
 
   // Paginación de los movimientos
   // const indexOfLastMovimiento = currentPage * movimientosPerPage;
@@ -262,9 +255,24 @@ export default function AccountForm() {
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha</th>
-                <th onClick={() => handleSort("descripcion")} style={{ cursor: "pointer" }}>Descripción</th>
-                <th onClick={() => handleSort("monto_total")} style={{ cursor: "pointer" }}>Monto</th>
+                <th
+                  onClick={() => handleSort("fecha")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Fecha
+                </th>
+                <th
+                  onClick={() => handleSort("descripcion")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Descripción
+                </th>
+                <th
+                  onClick={() => handleSort("monto_total")}
+                  style={{ cursor: "pointer" }}
+                >
+                  Monto
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -280,16 +288,16 @@ export default function AccountForm() {
                     }
                   }}
                 >
-                  <td>
-                    {movimiento.fecha}
-                  </td>
+                  <td>{movimiento.fecha}</td>
                   <td>{movimiento.productos ? "Venta" : "Cobranza"}</td>
                   <td>
-                    {movimiento.monto_total != null ? movimiento.monto_total.toLocaleString("es-AR", {
-                      style: "currency",
-                      currency: "ARS",
-                      minimumFractionDigits: 2,
-                    }) : "$0,00"}
+                    {movimiento.monto_total != null
+                      ? movimiento.monto_total.toLocaleString("es-AR", {
+                          style: "currency",
+                          currency: "ARS",
+                          minimumFractionDigits: 2,
+                        })
+                      : "$0,00"}
                   </td>
                 </tr>
               ))}
@@ -299,8 +307,17 @@ export default function AccountForm() {
             <Button onClick={handlePrevPage} disabled={currentPage === 1}>
               <BsChevronLeft />
             </Button>
-            <span className="mx-2">Página {currentPage} de {Math.ceil(movimientos.length / movimientosPerPage)}</span>
-            <Button onClick={handleNextPage} disabled={currentPage === Math.ceil(movimientos.length / movimientosPerPage)}>
+            <span className="mx-2">
+              Página {currentPage} de{" "}
+              {Math.ceil(movimientos.length / movimientosPerPage)}
+            </span>
+            <Button
+              onClick={handleNextPage}
+              disabled={
+                currentPage ===
+                Math.ceil(movimientos.length / movimientosPerPage)
+              }
+            >
               <BsChevronRight />
             </Button>
           </div>
@@ -313,15 +330,15 @@ export default function AccountForm() {
           >
             {/* Aquí puedes mostrar el saldo actual o cualquier otra información */}
             <tr>
+              <td>Saldo Actual: </td>
               <td>
-                Saldo Actual:{" "}
-              </td>
-              <td>
-                {saldoActual.toLocaleString("es-AR", {
-                  style: "currency",
-                  currency: "ARS",
-                  minimumFractionDigits: 2,
-                })}
+                {saldoActual != null
+                  ? saldoActual.toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                      minimumFractionDigits: 2,
+                    })
+                  : "$0,00"}
               </td>
             </tr>
           </div>
@@ -367,7 +384,7 @@ export default function AccountForm() {
             type="text"
             value={descripcionCobranza}
             onChange={(e) => setDescripcionCobranza(e.target.value)}
-          // min="0" // Establecer el valor mínimo como 0
+            // min="0" // Establecer el valor mínimo como 0
           />
           <Form.Label>Forma de pago:</Form.Label>
           <Form.Select
