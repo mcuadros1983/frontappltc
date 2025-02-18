@@ -19,14 +19,14 @@ export default function AccountForm() {
   const [currentPage, setCurrentPage] = useState(1);
   const [movimientosPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
-const [sortDirection, setSortDirection] = useState("asc");
+  const [sortDirection, setSortDirection] = useState("asc");
 
 
   const navigate = useNavigate();
 
 
   const apiUrl = process.env.REACT_APP_API_URL;
-  
+
   const obtenerClientes = useCallback(async () => {
 
     try {
@@ -40,7 +40,7 @@ const [sortDirection, setSortDirection] = useState("asc");
     } catch (error) {
       console.error("Error al obtener clientes", error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   useEffect(() => {
     // Obtener lista de clientes al cargar el componente
@@ -108,23 +108,23 @@ const [sortDirection, setSortDirection] = useState("asc");
     const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
     setSortColumn(columnName);
     setSortDirection(newSortDirection);
-  
+
     const sortedMovimientos = [...movimientos].sort((a, b) => {
       const valueA = a[columnName] ?? "";
       const valueB = b[columnName] ?? "";
-  
+
       if (typeof valueA === "number" && typeof valueB === "number") {
         return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
       }
-  
+
       return newSortDirection === "asc"
         ? String(valueA).localeCompare(String(valueB))
         : String(valueB).localeCompare(String(valueA));
     });
-  
+
     setMovimientos(sortedMovimientos);
   };
-  
+
 
   const handleCloseModal = () => {
     // Cierra el formulario modal
@@ -197,7 +197,7 @@ const [sortDirection, setSortDirection] = useState("asc");
     handleCloseModal();
   };
 
-  
+
   // Paginación de los movimientos
   // const indexOfLastMovimiento = currentPage * movimientosPerPage;
   // const indexOfFirstMovimiento = indexOfLastMovimiento - movimientosPerPage;
@@ -252,13 +252,13 @@ const [sortDirection, setSortDirection] = useState("asc");
           <h2>Movimientos de Cuenta Corriente</h2>
 
           <Table striped bordered hover>
-          <thead>
-  <tr>
-    <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha</th>
-    <th onClick={() => handleSort("descripcion")} style={{ cursor: "pointer" }}>Descripción</th>
-    <th onClick={() => handleSort("monto_total")} style={{ cursor: "pointer" }}>Monto</th>
-  </tr>
-</thead>
+            <thead>
+              <tr>
+                <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha</th>
+                <th onClick={() => handleSort("descripcion")} style={{ cursor: "pointer" }}>Descripción</th>
+                <th onClick={() => handleSort("monto_total")} style={{ cursor: "pointer" }}>Monto</th>
+              </tr>
+            </thead>
             <tbody>
               {/* Iterar sobre los movimientos y mostrarlos en la tabla */}
               {movimientos.map((movimiento, index) => (
@@ -277,11 +277,11 @@ const [sortDirection, setSortDirection] = useState("asc");
                   </td>
                   <td>{movimiento.productos ? "Venta" : "Cobranza"}</td>
                   <td>
-                    {movimiento.monto_total.toLocaleString("es-AR", {
+                    {movimiento.monto_total != null ? movimiento.monto_total.toLocaleString("es-AR", {
                       style: "currency",
                       currency: "ARS",
                       minimumFractionDigits: 2,
-                    })}
+                    }) : "$0,00"}
                   </td>
                 </tr>
               ))}
