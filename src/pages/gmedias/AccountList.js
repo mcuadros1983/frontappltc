@@ -28,13 +28,15 @@ const [sortDirection, setSortDirection] = useState("asc");
         (cliente) => cliente.cuentaCorriente !== null
       );
 
+      
       // Mapear los clientes con cuenta corriente
       const clientes = clientesConCuenta.map((cliente) => ({
         id: cliente.id,
         nombre: cliente.nombre,
         saldo: cliente.cuentaCorriente.saldoActual,
       }));
-
+      
+      console.log("clientes", clientes)
       setClientesConCuenta(clientes);
 
       // // Calcular la suma total de los saldos
@@ -102,20 +104,22 @@ const [sortDirection, setSortDirection] = useState("asc");
     <th onClick={() => handleSort("saldo")} style={{ cursor: "pointer" }}>Saldo</th>
   </tr>
 </thead>
-        <tbody>
-          {currentClientes.map((cliente) => (
-            <tr key={cliente.id}>
-              <td>{cliente.nombre}</td>
-              <td>
-                {cliente.saldo.toLocaleString("es-AR", {
-                  style: "currency",
-                  currency: "ARS",
-                  minimumFractionDigits: 2,
-                })}
-              </td>
-            </tr>
-          ))}
-        </tbody>
+<tbody>
+  {currentClientes.map((cliente) => (
+    <tr key={cliente.id}>
+      <td>{cliente.nombre}</td>
+      <td>
+        {cliente.saldo != null
+          ? cliente.saldo.toLocaleString("es-AR", {
+              style: "currency",
+              currency: "ARS",
+              minimumFractionDigits: 2,
+            })
+          : "$0,00"}
+      </td>
+    </tr>
+  ))}
+</tbody>
       </Table>
       <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
