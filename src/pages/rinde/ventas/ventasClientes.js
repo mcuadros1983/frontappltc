@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect, useCallback } from "react";
 import { Container, Table, Button, Form } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
+import * as XLSX from "xlsx";
 
 export default function VentasClientes() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
@@ -25,13 +26,13 @@ export default function VentasClientes() {
       const sucursales = await response.json();
       context.setSucursalesTabla(sucursales);
     }
-  }, [apiUrl, context]); // Agrega 'context' a las dependencias
+  }, [apiUrl, context]);
 
   useEffect(() => {
     if (!context.sucursalesTabla.length) {
       fetchSucursales();
     }
-  }, [context.sucursalesTabla.length, fetchSucursales]); // Añade 'context.sucursalesTabla.length' a las dependencias
+  }, [context.sucursalesTabla.length, fetchSucursales]);
 
   const handleFilter = async () => {
     try {
@@ -55,13 +56,12 @@ export default function VentasClientes() {
         const data = await response.json();
         if (data.length === 0) {
           alert("No existen ventas para la fecha indicada.");
-          // setVentasFiltradas([]);
           return;
         }
 
         setVentasFiltradas(data);
-        setClientes([...new Set(data.map((venta) => venta.cliente))]); // Extract unique clients
-        setSelectedCliente(""); // Reset selected client
+        setClientes([...new Set(data.map((venta) => venta.cliente))]);
+        setSelectedCliente("");
       } else {
         throw new Error("Error al obtener las ventas por cliente filtradas");
       }
@@ -72,6 +72,32 @@ export default function VentasClientes() {
 
   const handleSearchClick = () => {
     handleFilter();
+  };
+
+  const handleExport = () => {
+    if (ventasFiltradas.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    const dataToExport = ventasFiltradas.map((venta) => ({
+      Fecha: venta.fecha,
+      Cliente: venta.cliente,
+      Monto: parseFloat(venta.monto).toLocaleString("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+      Sucursal:
+        context.sucursalesTabla.find(
+          (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
+        )?.nombre || "Desconocido",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas Por Cliente");
+
+    XLSX.writeFile(workbook, "VentasPorCliente.xlsx");
   };
 
   const handleSort = (columnName) => {
@@ -130,7 +156,6 @@ export default function VentasClientes() {
     <Container>
       <h1 className="my-list-title dark-text">Ventas Por Cliente</h1>
       <div className="mb-3">
-        {/* Date selectors */}
         <div className="d-inline-block w-auto">
           <label className="mr-2">DESDE: </label>
           <input
@@ -151,7 +176,6 @@ export default function VentasClientes() {
         </div>
       </div>
       <div className="mb-3">
-        {/* Sucursal selector */}
         <Form.Control
           as="select"
           className="mr-2"
@@ -168,7 +192,6 @@ export default function VentasClientes() {
         </Form.Control>
       </div>
       <div className="mb-3">
-        {/* Client selector */}
         <Form.Control
           as="select"
           className="mr-2"
@@ -185,49 +208,20 @@ export default function VentasClientes() {
           ))}
         </Form.Control>
       </div>
-      <Button onClick={handleSearchClick}>Filtrar</Button>
+      <div className="mb-3">
+        <Button onClick={handleSearchClick} className="mr-2">Filtrar</Button>
+        <Button onClick={handleExport}>Exportar a Excel</Button>
+      </div>
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th
-              onClick={() => handleSort("fecha")}
-              style={{ cursor: "pointer" }}
-            >
-              Fecha
-            </th>
-            <th
-              onClick={() => handleSort("cliente")}
-              style={{ cursor: "pointer" }}
-            >
-              Cliente
-            </th>
-            <th
-              onClick={() => handleSort("monto")}
-              style={{ cursor: "pointer" }}
-            >
-              Monto
-            </th>
-            <th
-              onClick={() => handleSort("sucursal_id")}
-              style={{ cursor: "pointer" }}
-            >
-              Sucursal
-            </th>
+            <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha</th>
+            <th onClick={() => handleSort("cliente")} style={{ cursor: "pointer" }}>Cliente</th>
+            <th onClick={() => handleSort("monto")} style={{ cursor: "pointer" }}>Monto</th>
+            <th onClick={() => handleSort("sucursal_id")} style={{ cursor: "pointer" }}>Sucursal</th>
           </tr>
         </thead>
         <tbody>
-          {/* {currentSells.map((venta) => (
-              <tr key={venta.id}>
-                <td>{venta.fecha}</td>
-                <td>{venta.cliente}</td>
-                <td>{venta.monto}</td>
-                <td>
-                  {context.sucursalesTabla.find(
-                    (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
-                  )?.nombre || "Desconocido"}
-                </td>
-              </tr>
-            ))} */}
           {currentSells.map((venta) => (
             <tr key={venta.id}>
               <td>{venta.fecha}</td>
@@ -252,14 +246,11 @@ export default function VentasClientes() {
           <BsChevronLeft />
         </Button>
         <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(ventasFiltradas.length / sellsPerPage)}
+          Página {currentPage} de {Math.ceil(ventasFiltradas.length / sellsPerPage)}
         </span>
         <Button
           onClick={nextPage}
-          disabled={
-            currentPage === Math.ceil(ventasFiltradas.length / sellsPerPage)
-          }
+          disabled={currentPage === Math.ceil(ventasFiltradas.length / sellsPerPage)}
         >
           <BsChevronRight />
         </Button>
