@@ -24,7 +24,7 @@ export default function SellItem() {
 
   // paginacion
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(5);
+  const [productsPerPage] = useState(20);
 
   const apiUrl = process.env.REACT_APP_API_URL;
   const params = useParams();
