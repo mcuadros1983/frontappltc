@@ -4,7 +4,6 @@ import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
 
 const SaldosCtaCteSucursal = () => {
-  // const [saldos, setSaldos] = useState([]);
   const [saldosFiltrados, setSaldosFiltrados] = useState([]);
   const [sucursalSeleccionada, setSucursalSeleccionada] = useState("");
   const [paginaActual, setPaginaActual] = useState(1);
@@ -28,7 +27,6 @@ const SaldosCtaCteSucursal = () => {
       const data = await response.json();
       if (data.length === 0) {
         alert("No existen cuentas corrientes para esta sucursal.");
-        // setSaldos([]);
         setSaldosFiltrados([]);
         return;
       }

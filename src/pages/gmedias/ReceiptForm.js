@@ -278,18 +278,8 @@ const ReceiptForm = () => {
 
     const processedData = processBarCode(codigoDeBarra, categoria);
     if (processedData.success) {
-      // if (categoria !== "porcino") {
       const productExists = await checkProductExistence(codigoDeBarra);
-      // if (productExists) {
-      //   alert("¡Alerta2! El producto ya ha sido ingresado anteriormente.");
-      //   return;
-      // }
-
-      // if (productExists && productExists.sucursal_id !== 32) {
-      //   alert("¡Alerta! El producto ya ha sido ingresado anteriormente2.");
-      //   return;
-      // }
-      
+     
       if (productExists && productExists.sucursal_id !== 32) {
         if (productExists.orden_id) {
           alert(`¡Alerta! El producto ya fue despachado bajo la Orden Número ${productExists.orden_id}`);
@@ -328,7 +318,6 @@ const ReceiptForm = () => {
         codigo_de_barra: codigoDeBarra,
       }));
 
-      // if (categoria === "bovino") {
       // Agregar directamente el producto a la lista si la categoría es bovino
       setProducts((prevProducts) => [
         ...prevProducts,

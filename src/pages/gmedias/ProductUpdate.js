@@ -31,15 +31,58 @@ const ProductUpdate = () => {
     setFile(event.target.files[0]);
   };
 
+  // const handleUpload = async () => {
+  //   if (!file || !tipoSeleccionado || !operacion) {
+  //     console.error("Falta información requerida para la carga del archivo.");
+  //     return;
+  //   }
+
+  //   try {
+  //     setButtonDisabled(true);
+
+  //     const formData = new FormData();
+  //     formData.append("file", file);
+  //     formData.append("tipo", tipo);
+  //     formData.append("tipoSeleccionado", tipoSeleccionado);
+  //     formData.append("operacion", operacion);
+  //     formData.append("destino", destino);
+  //     formData.append("cliente", cliente);
+  //     formData.append("formaPago", formaPago);
+  //     formData.append("fechaOperacion", fechaOperacion);
+
+  //     const response = await fetch(`${apiUrl}/productos/upload`, {
+  //       credentials: "include",
+  //       method: "POST",
+  //       body: formData,
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (response.ok) {
+  //       setUploadSuccess(true);
+  //       setUploadMessage(data.mensaje);
+  //     } else {
+  //       setUploadSuccess(false);
+  //       setUploadMessage(data.mensaje);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error al subir el archivo:", error);
+  //     setUploadMessage("Error al subir el archivo: " + error.message);
+  //     setUploadSuccess(false);
+  //   } finally {
+  //     setButtonDisabled(false);
+  //   }
+  // };
+
   const handleUpload = async () => {
     if (!file || !tipoSeleccionado || !operacion) {
       console.error("Falta información requerida para la carga del archivo.");
       return;
     }
-
+  
     try {
       setButtonDisabled(true);
-
+  
       const formData = new FormData();
       formData.append("file", file);
       formData.append("tipo", tipo);
@@ -48,22 +91,23 @@ const ProductUpdate = () => {
       formData.append("destino", destino);
       formData.append("cliente", cliente);
       formData.append("formaPago", formaPago);
-      formData.append("fechaOperacion", fechaOperacion); 
-
+      formData.append("fechaOperacion", fechaOperacion);
+  
       const response = await fetch(`${apiUrl}/productos/upload`, {
         credentials: "include",
         method: "POST",
         body: formData,
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         setUploadSuccess(true);
         setUploadMessage(data.mensaje);
       } else {
+        // Mostrar el mensaje de error que viene desde el backend
         setUploadSuccess(false);
-        setUploadMessage(data.mensaje);
+        setUploadMessage(data.mensaje || "Error al subir el archivo.");
       }
     } catch (error) {
       console.error("Error al subir el archivo:", error);
@@ -73,6 +117,7 @@ const ProductUpdate = () => {
       setButtonDisabled(false);
     }
   };
+  
 
   const validateFile = async (file) => {
     try {
@@ -97,6 +142,20 @@ const ProductUpdate = () => {
           );
           return;
         }
+
+              // Validar que ninguna fila tenga el campo num_media vacío
+      const missingNumMedia = jsonData.slice(1).some((row, index) => {
+        const numMedia = row[2]; // Índice 2 corresponde a num_media
+        return !numMedia || numMedia.toString().trim() === "";
+      });
+
+      if (missingNumMedia) {
+        setUploadSuccess(false);
+        setUploadMessage(
+          "El archivo contiene filas sin el campo 'num_media'. Por favor, complete todos los campos antes de subir el archivo."
+        );
+        return;
+      }
 
         // Validar la primera columna para "bovino" o "porcino" y que solo haya una categoría por archivo
         const categories = jsonData.slice(1).map((row) => row[0]);
@@ -310,10 +369,11 @@ const ProductUpdate = () => {
                 <option value="venta">Venta</option>
                 <option value="orden">Orden</option>
                 <option value="romaneo">Romaneo</option>
+                <option value="ingreso">Ingreso</option> {/* Nueva opción agregada */}
               </Form.Select>
             </Form.Group>
 
-            {(operacion === "venta" || operacion === "orden") && (
+            {/* {(operacion === "venta" || operacion === "orden") && (
               <Form.Group controlId="fechaOperacion" className="mb-3">
                 <Form.Label>Fecha de Operación:</Form.Label>
                 <Form.Control
@@ -323,6 +383,20 @@ const ProductUpdate = () => {
                   className="my-input custom-style-select"
                   size="lg"
                   style={{ width: "auto", minWidth: "140px" }} // Ajuste de ancho automático
+                />
+              </Form.Group>
+            )} */}
+
+            {(operacion === "venta" || operacion === "orden" || operacion === "ingreso") && ( // Incluye ingreso
+              <Form.Group controlId="fechaOperacion" className="mb-3">
+                <Form.Label>Fecha de Operación:</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={fechaOperacion}
+                  onChange={(e) => setFechaOperacion(e.target.value)}
+                  className="my-input custom-style-select"
+                  size="lg"
+                  style={{ width: "auto", minWidth: "140px" }}
                 />
               </Form.Group>
             )}
@@ -392,13 +466,21 @@ const ProductUpdate = () => {
               </>
             )}
 
-            {(destino || formaPago || operacion === "romaneo") && (
+            {/* {(destino || formaPago || operacion === "romaneo") && (
+              <Form.Group controlId="formFile" className="mb-3">
+                <Form.Label>Seleccione un archivo Excel:</Form.Label>
+                <Form.Control type="file" onChange={handleFileChange} />
+              </Form.Group>
+            )} */}
+
+            {(destino || formaPago || operacion === "romaneo" || operacion === "ingreso") && ( // Incluye ingreso
               <Form.Group controlId="formFile" className="mb-3">
                 <Form.Label>Seleccione un archivo Excel:</Form.Label>
                 <Form.Control type="file" onChange={handleFileChange} />
               </Form.Group>
             )}
-            {(operacion === "venta" || operacion === "orden" || operacion === "romaneo") && (
+
+            {/* {(operacion === "venta" || operacion === "orden" || operacion === "romaneo") && (
               <Button
                 variant="primary"
                 onClick={handleUploadButtonClick}
@@ -406,7 +488,18 @@ const ProductUpdate = () => {
               >
                 Crear Productos
               </Button>
+            )} */}
+
+            {(operacion === "venta" || operacion === "orden" || operacion === "romaneo" || operacion === "ingreso") && ( // Incluye ingreso
+              <Button
+                variant="primary"
+                onClick={handleUploadButtonClick}
+                disabled={!file || buttonDisabled}
+              >
+                Crear Productos
+              </Button>
             )}
+
           </Form>
           <div style={{ marginTop: "20px" }}>
             <Button variant="secondary" onClick={downloadTemplate}>
