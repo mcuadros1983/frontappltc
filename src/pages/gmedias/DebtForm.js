@@ -135,6 +135,7 @@ export default function DebtForm() {
             <option value="Efectivo">Efectivo</option>
             <option value="Transferencia">Transferencia</option>
             <option value="Tarjeta">Tarjeta</option>
+            <option value="Compensacion">Compensacion</option>
           </Form.Select>
         </Form.Group>
 
