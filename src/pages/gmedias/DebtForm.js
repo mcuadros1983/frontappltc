@@ -120,7 +120,7 @@ export default function DebtForm() {
             onChange={handleChange}
             placeholder="Ingresa el monto total"
             className="my-input"
-            min="0" // Establecer el valor mínimo como 0
+            // min="0" // Establecer el valor mínimo como 0
           />
         </Form.Group>
         <Form.Group className="mb-3">
