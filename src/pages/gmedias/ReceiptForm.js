@@ -120,34 +120,17 @@ const ReceiptForm = () => {
 
       // Generar el código de barra
       let codigo_de_barra;
-      // if (categoria === "porcino") {
-      //   codigo_de_barra = num_media;
-      // } else {
-      codigo_de_barra = `00${productoFinal.num_media}00${productoFinal.tropa}00${productoFinal.kg}`;
-      // }
 
+      codigo_de_barra = `00${productoFinal.num_media}00${productoFinal.tropa}00${productoFinal.kg}`;
       // Verificar la existencia del producto si no es porcino
-      // if (categoria !== "porcino") {
       const productExists = await checkProductExistence(codigo_de_barra);
-      // if (productExists) {
-      //   alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-      //   return;
-      // }
+
       if (productExists && productExists.sucursal_id !== 32) {
         alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
         return;
       }
 
-      // }
-
-      // const productExistsNumMedia = await checkProductExistenceNumMedia(num_media);
-      // if (productExistsNumMedia) {
-      //   alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-      //   return;
-      // }
-
       const productExistsNumMedia = await checkProductExistenceNumMedia(num_media);
-      // console.log("productexist", productExistsNumMedia, productExistsNumMedia.sucursal_id)
       if (productExistsNumMedia && productExistsNumMedia.sucursal_id !== 32) {
         alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
         return;
@@ -174,16 +157,14 @@ const ReceiptForm = () => {
       };
 
       // Verificar la existencia del producto si no es porcino
-      // if (categoria !== "porcino") {
-      const productExists = await checkProductExistence(
+     const productExists = await checkProductExistence(
         product.codigo_de_barra
       );
       if (productExists) {
         alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
         return;
       }
-      // }
-
+   
       // Guardar el producto
       setProducts([...products, productoFinal]);
       setFieldsDisabled(true);
@@ -331,11 +312,6 @@ const ReceiptForm = () => {
         },
       ]);
       setProduct(initialProductState);
-      // } else {
-      //   // Habilitar campos para editar tropa y kg en categoría porcino
-      //   setFieldsDisabled(false);
-      // }
-
       setCodeProcessed(true);
     } else {
       alert(`Error al procesar el código de barras: ${processedData.message}`);
@@ -463,8 +439,7 @@ const ReceiptForm = () => {
           />
         </Form.Group>
         {/* Renderizar el campo "Número de Tropa" solo si la categoría no es porcino */}
-        {/* {categoria !== "porcino" && ( */}
-        <Form.Group className="mb-3">
+         <Form.Group className="mb-3">
           <Form.Label>Numero de tropa</Form.Label>
           <Form.Control
             type="number"

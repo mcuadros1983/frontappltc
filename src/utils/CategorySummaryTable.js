@@ -2,6 +2,8 @@ import React from "react";
 import { Table } from "react-bootstrap";
 
 const CategorySummaryTable = ({ filteredProducts }) => {
+console.log("category", filteredProducts)
+
   const categorySummary = filteredProducts.reduce((summary, product) => {
     const category = product.categoria_producto;
     const peso = parseFloat(product.kg);

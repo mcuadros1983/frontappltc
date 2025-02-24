@@ -31,49 +31,6 @@ const ProductUpdate = () => {
     setFile(event.target.files[0]);
   };
 
-  // const handleUpload = async () => {
-  //   if (!file || !tipoSeleccionado || !operacion) {
-  //     console.error("Falta información requerida para la carga del archivo.");
-  //     return;
-  //   }
-
-  //   try {
-  //     setButtonDisabled(true);
-
-  //     const formData = new FormData();
-  //     formData.append("file", file);
-  //     formData.append("tipo", tipo);
-  //     formData.append("tipoSeleccionado", tipoSeleccionado);
-  //     formData.append("operacion", operacion);
-  //     formData.append("destino", destino);
-  //     formData.append("cliente", cliente);
-  //     formData.append("formaPago", formaPago);
-  //     formData.append("fechaOperacion", fechaOperacion);
-
-  //     const response = await fetch(`${apiUrl}/productos/upload`, {
-  //       credentials: "include",
-  //       method: "POST",
-  //       body: formData,
-  //     });
-
-  //     const data = await response.json();
-
-  //     if (response.ok) {
-  //       setUploadSuccess(true);
-  //       setUploadMessage(data.mensaje);
-  //     } else {
-  //       setUploadSuccess(false);
-  //       setUploadMessage(data.mensaje);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error al subir el archivo:", error);
-  //     setUploadMessage("Error al subir el archivo: " + error.message);
-  //     setUploadSuccess(false);
-  //   } finally {
-  //     setButtonDisabled(false);
-  //   }
-  // };
-
   const handleUpload = async () => {
     if (!file || !tipoSeleccionado || !operacion) {
       console.error("Falta información requerida para la carga del archivo.");
@@ -373,20 +330,6 @@ const ProductUpdate = () => {
               </Form.Select>
             </Form.Group>
 
-            {/* {(operacion === "venta" || operacion === "orden") && (
-              <Form.Group controlId="fechaOperacion" className="mb-3">
-                <Form.Label>Fecha de Operación:</Form.Label>
-                <Form.Control
-                  type="date"
-                  value={fechaOperacion}
-                  onChange={(e) => setFechaOperacion(e.target.value)}
-                  className="my-input custom-style-select"
-                  size="lg"
-                  style={{ width: "auto", minWidth: "140px" }} // Ajuste de ancho automático
-                />
-              </Form.Group>
-            )} */}
-
             {(operacion === "venta" || operacion === "orden" || operacion === "ingreso") && ( // Incluye ingreso
               <Form.Group controlId="fechaOperacion" className="mb-3">
                 <Form.Label>Fecha de Operación:</Form.Label>
@@ -465,30 +408,12 @@ const ProductUpdate = () => {
                 </Form.Group>
               </>
             )}
-
-            {/* {(destino || formaPago || operacion === "romaneo") && (
-              <Form.Group controlId="formFile" className="mb-3">
-                <Form.Label>Seleccione un archivo Excel:</Form.Label>
-                <Form.Control type="file" onChange={handleFileChange} />
-              </Form.Group>
-            )} */}
-
             {(destino || formaPago || operacion === "romaneo" || operacion === "ingreso") && ( // Incluye ingreso
               <Form.Group controlId="formFile" className="mb-3">
                 <Form.Label>Seleccione un archivo Excel:</Form.Label>
                 <Form.Control type="file" onChange={handleFileChange} />
               </Form.Group>
             )}
-
-            {/* {(operacion === "venta" || operacion === "orden" || operacion === "romaneo") && (
-              <Button
-                variant="primary"
-                onClick={handleUploadButtonClick}
-                disabled={!file || buttonDisabled}  // Asegúrate de que el botón esté deshabilitado según el estado
-              >
-                Crear Productos
-              </Button>
-            )} */}
 
             {(operacion === "venta" || operacion === "orden" || operacion === "romaneo" || operacion === "ingreso") && ( // Incluye ingreso
               <Button
