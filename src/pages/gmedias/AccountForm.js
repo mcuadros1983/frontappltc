@@ -16,17 +16,16 @@ export default function AccountForm() {
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
   const [saldoActual, setSaldoActual] = useState(0);
-  // const [loaded, setLoaded] = useState(false);
   const [showModal, setShowModal] = useState(false); // Nuevo estado para controlar la visibilidad del modal
   const [montoCobranza, setMontoCobranza] = useState(""); // Nuevo estado para el monto de la cobranza
   const [descripcionCobranza, setDescripcionCobranza] = useState(""); // Nuevo estado para el monto de la cobranza
   const [formaCobro, setFormaCobro] = useState(""); // Nuevo estado para el monto de la cobranza
-  // const [isLoading, setIsLoading] = useState(false); // Estado para indicar si se están cargando los datos
-  // const [currentMovimientos, setCurrentMovimientos] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [movimientosPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
+  // Nuevo estado para la fecha de la cobranza
+  const [fechaCobranza, setFechaCobranza] = useState("");
 
   const navigate = useNavigate();
 
@@ -81,6 +80,7 @@ export default function AccountForm() {
 
           setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
           setSaldoActual(operaciones.saldoActual);
+          setCurrentPage(1); // Reinicia la página al cambiar de cliente
         }
         setSelectedCliente(cliente);
       } else {
@@ -93,11 +93,6 @@ export default function AccountForm() {
       console.error("Error al obtener movimientos y saldo", error);
     }
   };
-
-  // const handleRegistrarCobranza = () => {
-  //   // Abre el formulario modal para registrar cobranza
-  //   setShowModal(true);
-  // };
 
   const handleRegistrarCobranza = () => {
     // Limpiar los campos antes de abrir el modal
@@ -169,6 +164,7 @@ export default function AccountForm() {
           descripcionCobranza,
           formaCobro,
           montoTotal: montoCobranza,
+          fecha:fechaCobranza,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -186,6 +182,7 @@ export default function AccountForm() {
       // Actualiza los movimientos en el estado
       setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
       setSaldoActual(operaciones.saldoActual);
+      setCurrentPage(1); // Reinicia la página luego de actualizar movimientos
     } catch (error) {
       console.error(
         "Error al guardar la cobranza o al obtener movimientos y saldo después de la cobranza",
@@ -199,19 +196,35 @@ export default function AccountForm() {
     handleCloseModal();
   };
 
-  // Paginación de los movimientos
-  // const indexOfLastMovimiento = currentPage * movimientosPerPage;
-  // const indexOfFirstMovimiento = indexOfLastMovimiento - movimientosPerPage;
+  // // Paginación de los movimientos
+  // const handleNextPage = () => {
+  //   setCurrentPage(currentPage + 1);
+  // };
+  // const handlePrevPage = () => {
+  //   setCurrentPage(currentPage - 1);
+  // };
+
+  // *** LÓGICA DE PAGINACIÓN ***
+  // Calcular el índice del último movimiento y del primero según la página actual
+  const indexOfLastMovimiento = currentPage * movimientosPerPage;
+  const indexOfFirstMovimiento = indexOfLastMovimiento - movimientosPerPage;
+  // Obtener el subconjunto de movimientos a mostrar
+  const currentMovimientos = movimientos.slice(
+    indexOfFirstMovimiento,
+    indexOfLastMovimiento
+  );
+
   const handleNextPage = () => {
-    setCurrentPage(currentPage + 1);
-  };
-  const handlePrevPage = () => {
-    setCurrentPage(currentPage - 1);
+    if (currentPage < Math.ceil(movimientos.length / movimientosPerPage)) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
-  // useEffect(() => {
-  //   setCurrentMovimientos(movimientos.slice(indexOfFirstMovimiento, indexOfLastMovimiento));
-  // }, [currentPage, movimientos]);
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   return (
     <Container>
@@ -240,8 +253,6 @@ export default function AccountForm() {
           <div className="mb-3" style={{ width: "30%", float: "right" }}>
             <Button
               variant="primary"
-              // style={{ marginLeft: "10px" }}
-              // style={{ width: "30%", float: "rigth" }}
               onClick={handleRegistrarCobranza}
               disabled={!selectedCliente.cuentaCorriente} // Deshabilitar el botón si el cliente no tiene cuenta corriente
             >
@@ -277,7 +288,7 @@ export default function AccountForm() {
             </thead>
             <tbody>
               {/* Iterar sobre los movimientos y mostrarlos en la tabla */}
-              {movimientos.map((movimiento, index) => (
+              {currentMovimientos.map((movimiento, index) => (
                 <tr
                   key={index}
                   onDoubleClick={() => {
@@ -293,10 +304,10 @@ export default function AccountForm() {
                   <td>
                     {movimiento.monto_total != null
                       ? movimiento.monto_total.toLocaleString("es-AR", {
-                          style: "currency",
-                          currency: "ARS",
-                          minimumFractionDigits: 2,
-                        })
+                        style: "currency",
+                        currency: "ARS",
+                        minimumFractionDigits: 2,
+                      })
                       : "$0,00"}
                   </td>
                 </tr>
@@ -334,10 +345,10 @@ export default function AccountForm() {
               <td>
                 {saldoActual != null
                   ? saldoActual.toLocaleString("es-AR", {
-                      style: "currency",
-                      currency: "ARS",
-                      minimumFractionDigits: 2,
-                    })
+                    style: "currency",
+                    currency: "ARS",
+                    minimumFractionDigits: 2,
+                  })
                   : "$0,00"}
               </td>
             </tr>
@@ -372,6 +383,13 @@ export default function AccountForm() {
           <Modal.Title>Registrar Cobranza</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <label>Fecha:</label>
+          <FormControl
+            type="date"
+            value={fechaCobranza}
+            onChange={(e) => setFechaCobranza(e.target.value)}
+          />
+          <label>Monto:</label>
           <label>Monto:</label>
           <FormControl
             type="number"
@@ -384,7 +402,7 @@ export default function AccountForm() {
             type="text"
             value={descripcionCobranza}
             onChange={(e) => setDescripcionCobranza(e.target.value)}
-            // min="0" // Establecer el valor mínimo como 0
+          // min="0" // Establecer el valor mínimo como 0
           />
           <Form.Label>Forma de pago:</Form.Label>
           <Form.Select
