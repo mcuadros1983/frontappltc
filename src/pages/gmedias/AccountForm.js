@@ -37,7 +37,12 @@ export default function AccountForm() {
         credentials: "include",
       }); // Ajusta la ruta de la API
       const data = await response.json();
-      setClientes(data);
+      // Ordenar los clientes alfabéticamente por el nombre
+      const sortedClientes = [...data].sort((a, b) =>
+        a.nombre.localeCompare(b.nombre)
+      );
+      setClientes(sortedClientes);
+      // setClientes(data);
 
       // setLoaded(true);
     } catch (error) {
@@ -78,7 +83,10 @@ export default function AccountForm() {
         if (cliente.id !== selectedCliente?.id) {
           // Restablecer movimientos y saldo actual
 
-          setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
+          // setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
+          const allMovimientos = [...operaciones.ventas, ...operaciones.cobranzas]
+            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+          setMovimientos(allMovimientos);
           setSaldoActual(operaciones.saldoActual);
           setCurrentPage(1); // Reinicia la página al cambiar de cliente
         }
@@ -164,7 +172,7 @@ export default function AccountForm() {
           descripcionCobranza,
           formaCobro,
           montoTotal: montoCobranza,
-          fecha:fechaCobranza,
+          fecha: fechaCobranza,
         }),
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +188,10 @@ export default function AccountForm() {
       const operaciones = await response.json();
 
       // Actualiza los movimientos en el estado
-      setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
+      // setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
+      const allMovimientos = [...operaciones.ventas, ...operaciones.cobranzas]
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      setMovimientos(allMovimientos);
       setSaldoActual(operaciones.saldoActual);
       setCurrentPage(1); // Reinicia la página luego de actualizar movimientos
     } catch (error) {
@@ -195,14 +206,6 @@ export default function AccountForm() {
     setMontoCobranza("");
     handleCloseModal();
   };
-
-  // // Paginación de los movimientos
-  // const handleNextPage = () => {
-  //   setCurrentPage(currentPage + 1);
-  // };
-  // const handlePrevPage = () => {
-  //   setCurrentPage(currentPage - 1);
-  // };
 
   // *** LÓGICA DE PAGINACIÓN ***
   // Calcular el índice del último movimiento y del primero según la página actual

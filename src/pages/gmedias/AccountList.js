@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Table, Container, Button } from "react-bootstrap";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
@@ -9,7 +9,7 @@ const AccountList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [clientesPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
-const [sortDirection, setSortDirection] = useState("asc");
+  const [sortDirection, setSortDirection] = useState("asc");
 
 
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -28,16 +28,29 @@ const [sortDirection, setSortDirection] = useState("asc");
         (cliente) => cliente.cuentaCorriente !== null
       );
 
-      
+
+      // Mapear los clientes con cuenta corriente
+      // const clientes = clientesConCuenta.map((cliente) => ({
+      //   id: cliente.id,
+      //   nombre: cliente.nombre,
+      //   saldo: cliente.cuentaCorriente.saldoActual,
+      // }));
+
+      // setClientesConCuenta(clientes);
+
       // Mapear los clientes con cuenta corriente
       const clientes = clientesConCuenta.map((cliente) => ({
         id: cliente.id,
         nombre: cliente.nombre,
         saldo: cliente.cuentaCorriente.saldoActual,
       }));
-      
-      console.log("clientes", clientes)
-      setClientesConCuenta(clientes);
+
+      // Ordenar alfabéticamente por el nombre (de A a Z)
+      const sortedClientes = [...clientes].sort((a, b) =>
+        a.nombre.localeCompare(b.nombre)
+      );
+
+      setClientesConCuenta(sortedClientes);
 
       // // Calcular la suma total de los saldos
       const total = clientes.reduce((suma, cliente) => suma + cliente.saldo, 0);
@@ -45,7 +58,7 @@ const [sortDirection, setSortDirection] = useState("asc");
     } catch (error) {
       console.error("Error al obtener clientes con cuenta corriente", error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   useEffect(() => {
     // Lógica para obtener la lista de clientes con cuenta corriente
@@ -76,50 +89,50 @@ const [sortDirection, setSortDirection] = useState("asc");
     const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
     setSortColumn(columnName);
     setSortDirection(newSortDirection);
-  
+
     const sortedClientes = [...clientesConCuenta].sort((a, b) => {
       const valueA = a[columnName] ?? "";
       const valueB = b[columnName] ?? "";
-  
+
       if (typeof valueA === "number" && typeof valueB === "number") {
         return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
       }
-  
+
       return newSortDirection === "asc"
         ? String(valueA).localeCompare(String(valueB))
         : String(valueB).localeCompare(String(valueA));
     });
-  
+
     setClientesConCuenta(sortedClientes);
   };
-  
+
 
   return (
     <Container>
       <h1>Saldos de Clientes</h1>
       <Table striped bordered hover>
-      <thead>
-  <tr>
-    <th onClick={() => handleSort("nombre")} style={{ cursor: "pointer" }}>Nombre</th>
-    <th onClick={() => handleSort("saldo")} style={{ cursor: "pointer" }}>Saldo</th>
-  </tr>
-</thead>
-<tbody>
-  {currentClientes.map((cliente) => (
-    <tr key={cliente.id}>
-      <td>{cliente.nombre}</td>
-      <td>
-        {cliente.saldo != null
-          ? cliente.saldo.toLocaleString("es-AR", {
-              style: "currency",
-              currency: "ARS",
-              minimumFractionDigits: 2,
-            })
-          : "$0,00"}
-      </td>
-    </tr>
-  ))}
-</tbody>
+        <thead>
+          <tr>
+            <th onClick={() => handleSort("nombre")} style={{ cursor: "pointer" }}>Nombre</th>
+            <th onClick={() => handleSort("saldo")} style={{ cursor: "pointer" }}>Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentClientes.map((cliente) => (
+            <tr key={cliente.id}>
+              <td>{cliente.nombre}</td>
+              <td>
+                {cliente.saldo != null
+                  ? cliente.saldo.toLocaleString("es-AR", {
+                    style: "currency",
+                    currency: "ARS",
+                    minimumFractionDigits: 2,
+                  })
+                  : "$0,00"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
       </Table>
       <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
@@ -145,11 +158,11 @@ const [sortDirection, setSortDirection] = useState("asc");
           {
             <td>
               {totalSaldo != null
-                      ? totalSaldo.toLocaleString("es-AR", {
-                style: "currency",
-                currency: "ARS",
-                minimumFractionDigits: 2,
-              }):"$0,00"}
+                ? totalSaldo.toLocaleString("es-AR", {
+                  style: "currency",
+                  currency: "ARS",
+                  minimumFractionDigits: 2,
+                }) : "$0,00"}
             </td>
           }
         </strong>
