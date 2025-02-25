@@ -157,6 +157,15 @@ export default function SellItem() {
     setFilteredProducts([...editedProducts]);
   };
 
+  const handlePriceChange = (e) => {
+    const value = e.target.value;
+    const regex = /^\d*(\.\d{0,2})?$/; // Acepta números con hasta dos decimales separados por punto
+    if (regex.test(value)) {
+      setEditedPrice(value);
+    }
+  };
+
+
   // Función para guardar los cambios de la fila editada
   const handleSaveChanges = async (index, productId, updatedProduct) => {
     try {
@@ -300,10 +309,10 @@ export default function SellItem() {
                 {editingIndex === index ? (
                   <Form.Control
                     type="text"
-                    inputMode="numeric"
+                    inputMode="decimal"
                     value={editedPrice}
-                    onChange={(e) => setEditedPrice(e.target.value)}
-                    min="0"
+                    onChange={handlePriceChange}
+                    placeholder="0.00"
                   />
                 ) : (
                   product.precio
