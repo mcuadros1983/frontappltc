@@ -343,9 +343,7 @@ export default function ProductList() {
       // Mov: product.updatedAt
       //   ? new Date(product.updatedAt).toISOString().split("T")[0]
       //   : "", // Convertir a YYYY-MM-DD
-      Mov: movimientos[product.id]
-        ? new Date(movimientos[product.id]).toISOString().split("T")[0]
-        : "",
+      Mov:safeFormatDate(movimientos[product.id]),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -354,6 +352,11 @@ export default function ProductList() {
 
     // Descargar el archivo Excel
     XLSX.writeFile(workbook, "productos_filtrados.xlsx");
+  };
+
+  const safeFormatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
   };
 
   const formatDate = (dateString) => {
@@ -608,7 +611,7 @@ export default function ProductList() {
                 <td>{product.orden_id || ""}</td>
                 <td>{product.venta_id || ""}</td>
 
-                <td>{formatDate(movimientos[product.id])}</td>
+                <td>{safeFormatDate(movimientos[product.id])}</td>
 
                 <td>{isCorrelative ? "" : "X"}</td>
                 <td className="text-center">
