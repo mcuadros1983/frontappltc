@@ -24,7 +24,6 @@ export default function ProductList() {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
   const [loading, setLoading] = useState(false);
-  const [movimientos, setMovimientos] = useState({});
 
   const navigate = useNavigate();
 
@@ -238,49 +237,6 @@ export default function ProductList() {
   };
 
   useEffect(() => {
-    const fetchFechasDeMovimientos = async () => {
-      const nuevosMovimientos = {};
-
-      for (const product of filteredProducts) {
-        if (product.orden_id) {
-          try {
-            const res = await fetch(`${apiUrl}/ordenes/${product.orden_id}`, {
-              credentials: "include",
-            });
-            const orden = await res.json();
-            nuevosMovimientos[product.id] = isValidDate(orden.fecha)
-            ? orden.fecha
-            : product.updatedAt;
-          } catch (error) {
-            console.error(`Error obteniendo orden ${product.orden_id}:`, error);
-          }
-        } else if (product.venta_id) {
-          try {
-            const res = await fetch(`${apiUrl}/ventas/${product.venta_id}`, {
-              credentials: "include",
-            });
-            const venta = await res.json();
-            // nuevosMovimientos[product.id] = venta.fecha || "";
-            nuevosMovimientos[product.id] = isValidDate(venta.fecha)
-            ? venta.fecha
-            : product.updatedAt;
-          } catch (error) {
-            console.error(`Error obteniendo venta ${product.venta_id}:`, error);
-          }
-        } else {
-          nuevosMovimientos[product.id] = product.updatedAt;
-        }
-      }
-
-      setMovimientos(nuevosMovimientos);
-    };
-
-    if (filteredProducts.length > 0) {
-      fetchFechasDeMovimientos();
-    }
-  }, [filteredProducts, apiUrl]);
-
-  useEffect(() => {
     loadBranches();
     loadCustomers();
   }, [loadBranches, loadCustomers]);
@@ -345,10 +301,9 @@ export default function ProductList() {
       Orden: product.orden_id || "",
       Venta: product.venta_id || "",
       Ingreso: product.ingreso_id || "",
-      // Mov: product.updatedAt
-      //   ? new Date(product.updatedAt).toISOString().split("T")[0]
-      //   : "", // Convertir a YYYY-MM-DD
-      Mov:safeFormatDate(movimientos[product.id]),
+      Mov: product.createdAt
+        ? new Date(product.createdAt).toISOString().split("T")[0]
+        : "", // Convertir a YYYY-MM-DD
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -359,30 +314,15 @@ export default function ProductList() {
     XLSX.writeFile(workbook, "productos_filtrados.xlsx");
   };
 
-  const safeFormatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
-  };
-
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toISOString().split("T")[0];
   };
 
-  const isValidDate = (d) => {
-    return !isNaN(new Date(d).getTime());
-  };
-
-  // const formatDate = (dateString) => {
-  //   if (!dateString) return "";
-  //   const date = new Date(dateString);
-  //   return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
-  // };
-
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Productos</h1>
-
+      {/* Botón para exportar a Excel */}
       <div className="mb-3">
         <Button onClick={handleExportToExcel} variant="success">
           Exportar a Excel
@@ -495,7 +435,7 @@ export default function ProductList() {
         </div>
         <Button
           variant="secondary"
-          onClick={() => setSelectedBranches([])}
+          onClick={() => setSelectedBranches([])} // Limpiar la selección
           className="ml-2"
         >
           Limpiar Selección
@@ -577,7 +517,7 @@ export default function ProductList() {
             <th>Orden</th>
             <th>Venta</th>
             <th>Mov</th>
-            <th>ID</th>
+            <th>ID</th> {/* Nueva columna */}
             <th>Operaciones</th>
           </tr>
         </thead>
@@ -619,10 +559,8 @@ export default function ProductList() {
                 <td>{product.ingreso_id || ""}</td>
                 <td>{product.orden_id || ""}</td>
                 <td>{product.venta_id || ""}</td>
-
-                <td>{safeFormatDate(movimientos[product.id])}</td>
-
-                <td>{isCorrelative ? "" : "X"}</td>
+                <td>{formatDate(product.createdAt)}</td>
+                <td>{isCorrelative ? "" : "X"}</td> {/* Columna ID */}
                 <td className="text-center">
                   <div className="d-flex justify-content-center align-items-center">
                     <Button
@@ -641,11 +579,11 @@ export default function ProductList() {
                   </div>
                 </td>
               </tr>
-            );
+            )
           })}
         </tbody>
       </Table>
-
+      
       <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
           <BsChevronLeft />
@@ -664,6 +602,7 @@ export default function ProductList() {
         </Button>
       </div>
       <div style={{ maxWidth: "25%", marginTop: "20px" }}>
+        {/* Añade un estilo inline para limitar el ancho de la tabla */}
         <Table striped bordered hover>
           <thead>
             <tr>
@@ -690,5 +629,5 @@ export default function ProductList() {
         </Table>
       </div>
     </Container>
-  );
+  )
 }
