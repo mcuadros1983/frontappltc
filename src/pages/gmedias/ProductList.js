@@ -339,9 +339,13 @@ export default function ProductList() {
           ?.nombre || "Cliente Desconocido",
       Orden: product.orden_id || "",
       Venta: product.venta_id || "",
-      Mov: product.updatedAt
-        ? new Date(product.updatedAt).toISOString().split("T")[0]
-        : "", // Convertir a YYYY-MM-DD
+      Ingreso: product.ingreso_id || "",
+      // Mov: product.updatedAt
+      //   ? new Date(product.updatedAt).toISOString().split("T")[0]
+      //   : "", // Convertir a YYYY-MM-DD
+      Mov: movimientos[product.id]
+        ? new Date(movimientos[product.id]).toISOString().split("T")[0]
+        : "",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -352,21 +356,21 @@ export default function ProductList() {
     XLSX.writeFile(workbook, "productos_filtrados.xlsx");
   };
 
-  // const formatDate = (dateString) => {
-  //   const date = new Date(dateString);
-  //   return date.toISOString().split("T")[0];
-  // };
-
   const formatDate = (dateString) => {
-    if (!dateString) return "";
     const date = new Date(dateString);
-    return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
+    return date.toISOString().split("T")[0];
   };
+
+  // const formatDate = (dateString) => {
+  //   if (!dateString) return "";
+  //   const date = new Date(dateString);
+  //   return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
+  // };
 
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Productos</h1>
-      {/* Botón para exportar a Excel */}
+
       <div className="mb-3">
         <Button onClick={handleExportToExcel} variant="success">
           Exportar a Excel
@@ -479,7 +483,7 @@ export default function ProductList() {
         </div>
         <Button
           variant="secondary"
-          onClick={() => setSelectedBranches([])} // Limpiar la selección
+          onClick={() => setSelectedBranches([])}
           className="ml-2"
         >
           Limpiar Selección
@@ -561,7 +565,7 @@ export default function ProductList() {
             <th>Orden</th>
             <th>Venta</th>
             <th>Mov</th>
-            <th>ID</th> {/* Nueva columna */}
+            <th>ID</th>
             <th>Operaciones</th>
           </tr>
         </thead>
@@ -603,9 +607,10 @@ export default function ProductList() {
                 <td>{product.ingreso_id || ""}</td>
                 <td>{product.orden_id || ""}</td>
                 <td>{product.venta_id || ""}</td>
-                {/* <td>{formatDate(product.updatedAt)}</td> */}
+
                 <td>{formatDate(movimientos[product.id])}</td>
-                <td>{isCorrelative ? "" : "X"}</td> {/* Columna ID */}
+
+                <td>{isCorrelative ? "" : "X"}</td>
                 <td className="text-center">
                   <div className="d-flex justify-content-center align-items-center">
                     <Button
@@ -647,7 +652,6 @@ export default function ProductList() {
         </Button>
       </div>
       <div style={{ maxWidth: "25%", marginTop: "20px" }}>
-        {/* Añade un estilo inline para limitar el ancho de la tabla */}
         <Table striped bordered hover>
           <thead>
             <tr>
