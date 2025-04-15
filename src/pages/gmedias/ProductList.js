@@ -24,6 +24,7 @@ export default function ProductList() {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
   const [loading, setLoading] = useState(false);
+  const [movimientos, setMovimientos] = useState({});
 
   const navigate = useNavigate();
 
@@ -237,6 +238,44 @@ export default function ProductList() {
   };
 
   useEffect(() => {
+    const fetchFechasDeMovimientos = async () => {
+      const nuevosMovimientos = {};
+
+      for (const product of filteredProducts) {
+        if (product.orden_id) {
+          try {
+            const res = await fetch(`${apiUrl}/ordenes/${product.orden_id}`, {
+              credentials: "include",
+            });
+            const orden = await res.json();
+            nuevosMovimientos[product.id] = orden.fecha || "";
+          } catch (error) {
+            console.error(`Error obteniendo orden ${product.orden_id}:`, error);
+          }
+        } else if (product.venta_id) {
+          try {
+            const res = await fetch(`${apiUrl}/ventas/${product.venta_id}`, {
+              credentials: "include",
+            });
+            const venta = await res.json();
+            nuevosMovimientos[product.id] = venta.fecha || "";
+          } catch (error) {
+            console.error(`Error obteniendo venta ${product.venta_id}:`, error);
+          }
+        } else {
+          nuevosMovimientos[product.id] = product.updatedAt;
+        }
+      }
+
+      setMovimientos(nuevosMovimientos);
+    };
+
+    if (filteredProducts.length > 0) {
+      fetchFechasDeMovimientos();
+    }
+  }, [filteredProducts, apiUrl]);
+
+  useEffect(() => {
     loadBranches();
     loadCustomers();
   }, [loadBranches, loadCustomers]);
@@ -313,9 +352,15 @@ export default function ProductList() {
     XLSX.writeFile(workbook, "productos_filtrados.xlsx");
   };
 
+  // const formatDate = (dateString) => {
+  //   const date = new Date(dateString);
+  //   return date.toISOString().split("T")[0];
+  // };
+
   const formatDate = (dateString) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
+    return isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
   };
 
   return (
@@ -558,7 +603,8 @@ export default function ProductList() {
                 <td>{product.ingreso_id || ""}</td>
                 <td>{product.orden_id || ""}</td>
                 <td>{product.venta_id || ""}</td>
-                <td>{formatDate(product.updatedAt)}</td>
+                {/* <td>{formatDate(product.updatedAt)}</td> */}
+                <td>{formatDate(movimientos[product.id])}</td>
                 <td>{isCorrelative ? "" : "X"}</td> {/* Columna ID */}
                 <td className="text-center">
                   <div className="d-flex justify-content-center align-items-center">
@@ -578,11 +624,11 @@ export default function ProductList() {
                   </div>
                 </td>
               </tr>
-            )
+            );
           })}
         </tbody>
       </Table>
-      
+
       <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
           <BsChevronLeft />
@@ -628,5 +674,5 @@ export default function ProductList() {
         </Table>
       </div>
     </Container>
-  )
+  );
 }

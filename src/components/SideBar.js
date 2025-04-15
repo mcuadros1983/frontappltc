@@ -26,6 +26,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
   const [infoRinde, setInfoRinde] = useState(false);
   const [maintenanceItem, setMaintenanceItem] = useState(false);
   const [customerOneShotItem, setCustomerOneShotItem] = useState(false);
+  const [sellStatics, setSellStatics] = useState(false);
 
   // Agregamos estados para Mensajes y Horarios
   const [messageItem, setMessageItem] = useState(false);
@@ -232,7 +233,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </div>
                       </Collapse>
 
-                      <Nav.Item >
+                      <Nav.Item>
                         <Link
                           to="/sync"
                           className="nav-link"
@@ -242,7 +243,6 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           Sincronizar
                         </Link>
                       </Nav.Item>
-                    
                     </>
                   )}
                 </>
@@ -262,7 +262,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 <Link
                   to="/sells/new"
                   className="nav-link"
-                  style={{ color: "white", whiteSpace: "nowrap" }}  
+                  style={{ color: "white", whiteSpace: "nowrap" }}
                   onClick={handleLinkClick}
                 >
                   Crear Venta
@@ -914,6 +914,36 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               </Link>
             </div>
           </Collapse>
+
+          {/* Estadistica de ventas */}
+          {/*<Nav.Item onClick={() => setSellStatics(!sellStatics)}>
+            <Link
+              to="#"
+              className="nav-link"
+              style={{ color: "white", whiteSpace: "nowrap" }}
+            >
+              Ventas Stats
+            </Link>
+          </Nav.Item>
+          <Collapse in={sellStatics}>
+            <div className="ml-3">
+              <Link
+                to="/statics/sell-upload"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+              >
+                Subir Archivo
+              </Link>
+              <Link
+                to="/statics/sells-report"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+              >
+                Reporte Ventas
+              </Link>
+            </div>
+          </Collapse>
+          */}
         </>
       )}
 

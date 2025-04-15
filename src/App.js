@@ -93,6 +93,9 @@ import MessageForm from "./pages/messages/MessageForm";
 import ScheduleList from "./pages/schedule/ScheduleList";
 import ScheduleForm from "./pages/schedule/ScheduleForm";
 import SyncForm from "./pages/sync/syncForm";
+import SellUpload from "./pages/statics/SellUploads.js";
+import VentasPivotTable from "./pages/statics/VentasPivotTable"; // Importa el componente
+import VentasReporte from "./pages/statics/VentasReporte.js"; // Importa el componente
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -326,6 +329,9 @@ export default function App() {
                   />
 
                   <Route path="/sync" element={<SyncForm />} />
+                  <Route path="/statics/sell-upload" element={<SellUpload />} />
+                  <Route path="/statics/sells" element={<VentasPivotTable />} />
+                  <Route path="/statics/sells-report" element={<VentasReporte />} />
                 </Routes>
               </Layout>
             }
