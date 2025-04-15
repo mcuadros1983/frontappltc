@@ -248,7 +248,9 @@ export default function ProductList() {
               credentials: "include",
             });
             const orden = await res.json();
-            nuevosMovimientos[product.id] = orden.fecha || "";
+            nuevosMovimientos[product.id] = isValidDate(orden.fecha)
+            ? orden.fecha
+            : product.updatedAt;
           } catch (error) {
             console.error(`Error obteniendo orden ${product.orden_id}:`, error);
           }
@@ -258,7 +260,10 @@ export default function ProductList() {
               credentials: "include",
             });
             const venta = await res.json();
-            nuevosMovimientos[product.id] = venta.fecha || "";
+            // nuevosMovimientos[product.id] = venta.fecha || "";
+            nuevosMovimientos[product.id] = isValidDate(venta.fecha)
+            ? venta.fecha
+            : product.updatedAt;
           } catch (error) {
             console.error(`Error obteniendo venta ${product.venta_id}:`, error);
           }
@@ -362,6 +367,10 @@ export default function ProductList() {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toISOString().split("T")[0];
+  };
+
+  const isValidDate = (d) => {
+    return !isNaN(new Date(d).getTime());
   };
 
   // const formatDate = (dateString) => {
