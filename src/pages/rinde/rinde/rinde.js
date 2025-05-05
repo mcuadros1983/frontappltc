@@ -17,6 +17,7 @@ export default function CalculoRinde() {
   const [searchSucursal, setSearchSucursal] = useState("");
   const [montoVentas, setMontoVentas] = useState(0);
   const [montoMovimientos, setMontoMovimientos] = useState(0);
+  const [montoMovimientosOtros, setMontoMovimientosOtros] = useState(0);
   const [montoInventarioInicial, setMontoInventarioInicial] = useState(0);
   const [montoInventarioFinal, setMontoInventarioFinal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,7 @@ export default function CalculoRinde() {
   useEffect(() => {
     setMontoVentas(0);
     setMontoMovimientos(0);
+    setMontoMovimientosOtros(0);
     setMontoInventarioInicial(0);
     setMontoInventarioFinal(0);
     setKgNovillo(0);
@@ -150,17 +152,6 @@ export default function CalculoRinde() {
     setShowModalCategories(true);
   };
 
-  // const handleSeleccionarCategoria = (categoriaId) => {
-  //   const index = selectedCategorias.indexOf(categoriaId);
-  //   if (index === -1) {
-  //     setSelectedCategorias([...selectedCategorias, categoriaId]);
-  //   } else {
-  //     setSelectedCategorias(
-  //       selectedCategorias.filter((id) => id !== categoriaId)
-  //     );
-  //   }
-  // };
-
   const handleObtenerDatos = async (url, operacion, excludedCategoriesId) => {
     try {
       setLoading(true);
@@ -184,7 +175,6 @@ export default function CalculoRinde() {
         sucursalId: searchSucursal,
       };
 
-      // Si excludedCategoriesId está definido, agregamos el parámetro al cuerpo de la solicitud
       if (excludedCategoriesId !== undefined) {
         bodyData.excludedCategories = excludedCategoriesId;
       }
@@ -199,7 +189,6 @@ export default function CalculoRinde() {
 
       if (response.ok) {
         const data = await response.json();
-        // console.log("data", data);
 
         if (operacion === "ventas" && data.montoTotalVenta === 0) {
           alert("No existen ventas para la fecha seleccionada.");
@@ -210,12 +199,20 @@ export default function CalculoRinde() {
         ) {
           alert("No existen movimientos para la fecha seleccionada.");
           return;
+        } else if (
+          operacion === "movimientosotros" &&
+          data.montoTotalMovimientos === 0
+        ) {
+          alert("No existen movimientos OTROS para la fecha seleccionada.");
+          return;
         }
 
         if (operacion === "ventas") {
           setMontoVentas(data.montoTotalVenta);
         } else if (operacion === "movimientos") {
           setMontoMovimientos(data.montoTotalMovimientos);
+        } else if (operacion === "movimientosotros") {
+          setMontoMovimientosOtros(data.montoTotalMovimientos);
         }
       } else {
         throw new Error("Error al obtener los datos.");
@@ -226,6 +223,7 @@ export default function CalculoRinde() {
       setLoading(false);
     }
   };
+
 
   const handleObtenerKg = async (url, subcategoria) => {
     try {
@@ -340,6 +338,7 @@ export default function CalculoRinde() {
     const montoVendidoParcial =
       montoVentas +
       montoMovimientos +
+      montoMovimientosOtros +
       montoInventarioFinal -
       montoInventarioInicial +
       montoAjuste; // Incluir los ajustes en la suma
@@ -367,11 +366,6 @@ export default function CalculoRinde() {
     // Actualizar el estado con el valor calculado de rinde
     setRinde(rindeCalculado);
   };
-
-  // Función para mostrar el modal de ver ingresos esperados
-  // const handleVerAjustesRinde = () => {
-  //   setShowAjustesModal(true);
-  // };
 
   const handleEliminarAjuste = (index) => {
     const nuevosAjustes = [...ajustes]; // Hacemos una copia de la lista actual de ajustes
@@ -469,6 +463,7 @@ export default function CalculoRinde() {
             sucursal_id: sucursalId,
             totalVentas: parseFloat(montoVentas),
             totalMovimientos: parseFloat(montoMovimientos),
+            totalMovimientosOtros: parseFloat(montoMovimientosOtros),
             totalInventarioInicial: parseFloat(montoInventarioInicial),
             totalInventarioFinal: parseFloat(montoInventarioFinal),
             ingresoEsperadoNovillo: parseFloat(novillosIngresos),
@@ -630,6 +625,26 @@ export default function CalculoRinde() {
             <td>
               {montoMovimientos !== null
                 ? `$${parseInt(montoMovimientos).toFixed(2)}`
+                : "-"}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <Button
+                onClick={() =>
+                  handleObtenerDatos(
+                    `${apiUrl}/movimientos-otro/monto`,
+                    "movimientosotros"
+                  )
+                }
+                disabled={loading}
+              >
+                Obtener Movimientos Otros
+              </Button>
+            </td>
+            <td>
+              {montoMovimientosOtros !== null
+                ? `$${parseInt(montoMovimientosOtros).toFixed(2)}`
                 : "-"}
             </td>
           </tr>

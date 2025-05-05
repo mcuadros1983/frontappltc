@@ -59,6 +59,8 @@ import DetalleDeCaja from "./pages/caja/detallecaja";
 import Inventario from "./pages/rinde/inventarios/inventarios";
 import InventariosArticulos from "./pages/rinde/inventarios/InventariosArticulos";
 import MovimientosInternos from "./pages/rinde/inventarios/movimientos";
+import MovimientosOtros from "./pages/rinde/inventarios/MovimientosOtrosList.js";
+import CrearMovimientosOtros from "./pages/rinde/inventarios/crearMovimientosOtros.js";
 import ArticulosPrecios from "./pages/tablas/articulosprecios";
 // import ArticulosPeciosActualizar from "./pages/tablas/articulosprecios_actualizar";
 import ArticulosPreciosActualizar from "./pages/tablas/articulosprecios_actualizar";
@@ -96,6 +98,7 @@ import SyncForm from "./pages/sync/syncForm";
 import SellUpload from "./pages/statics/SellUploads.js";
 import VentasPivotTable from "./pages/statics/VentasPivotTable"; // Importa el componente
 import VentasReporte from "./pages/statics/VentasReporte.js"; // Importa el componente
+import CrearInventario from "./pages/rinde/inventarios/crearInventario.js";
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -244,12 +247,24 @@ export default function App() {
                     element={<Inventario />}
                   />
                   <Route
+                    path="/inventory/create"
+                    element={<CrearInventario />}
+                  />
+                  <Route
                     path="/inventory/:inventarioId/articles"
                     element={<InventariosArticulos />}
                   />
                   <Route
                     path="/inventory/movements/"
                     element={<MovimientosInternos />}
+                  />
+                  <Route
+                    path="/inventory/movementsotherslist/"
+                    element={<MovimientosOtros />}
+                  />
+                  <Route
+                    path="/inventory/movementsothers/"
+                    element={<CrearMovimientosOtros />}
                   />
                   <Route
                     path="/inventory/performance/"

@@ -15,7 +15,7 @@ export default function CustomerOneShotList() {
   const [customersPerPage] = useState(10);
   const [totalAmount, setTotalAmount] = useState(0);
 
-  const context = useContext(Contexts.UserContext);
+  const context = useContext(Contexts.UserContext); 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 

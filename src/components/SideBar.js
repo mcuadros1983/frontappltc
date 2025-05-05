@@ -26,6 +26,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
   const [infoRinde, setInfoRinde] = useState(false);
   const [maintenanceItem, setMaintenanceItem] = useState(false);
   const [customerOneShotItem, setCustomerOneShotItem] = useState(false);
+  const [movimientosOtros, setMovimientosOtros] = useState(false);
   const [sellStatics, setSellStatics] = useState(false);
 
   // Agregamos estados para Mensajes y Horarios
@@ -790,12 +791,36 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 Inventarios
               </Link>
               <Link
+                to="/inventory/create"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Crear Inventario
+              </Link>
+              <Link
                 to="/inventory/movements"
                 className="nav-link"
                 style={{ color: "white", whiteSpace: "nowrap" }}
                 onClick={handleLinkClick}
               >
                 Mov. Internos
+              </Link>
+              <Link
+                to="/inventory/movementsotherslist"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Mov. Otros
+              </Link>
+              <Link
+                to="/inventory/movementsothers"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Crear Mov. Otros
               </Link>
               <Link
                 to="/inventory/performance"
@@ -911,6 +936,39 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 onClick={handleLinkClick}
               >
                 Crear Cliente
+              </Link>
+      
+            </div>
+          </Collapse>
+
+          <Nav.Item
+            onClick={() => setMovimientosOtros(!movimientosOtros)}
+          >
+            <Link
+              to="#"
+              className="nav-link"
+              style={{ color: "white", whiteSpace: "nowrap" }}
+            >
+              Movimientos
+            </Link>
+          </Nav.Item>
+          <Collapse in={movimientosOtros}>
+            <div className="ml-3">
+              <Link
+                to="/inventory/movements"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Mov. Internos
+              </Link>
+              <Link
+                to="/inventory/movementsotherslist"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Mov. Otros
               </Link>
             </div>
           </Collapse>
