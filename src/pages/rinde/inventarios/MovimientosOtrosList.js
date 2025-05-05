@@ -232,7 +232,7 @@ export default function MovimientosOtros() {
         <tbody>
           {currentMovimientos.map((movimiento) => (
             <tr key={movimiento.id}>
-              <td>{new Date(movimiento.fecha).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}</td>
+              <td>{movimiento.fecha}</td>
               <td>{movimiento.numerolote}</td>
               <td>{movimiento.articulocodigo}</td>
               <td>{movimiento.articulodescripcion}</td>
