@@ -516,7 +516,7 @@ export default function ProductList() {
             </th>
             <th>Orden</th>
             <th>Venta</th>
-            <th>Mov</th>
+            {/* <th>Mov</th> */}
             <th>ID</th> {/* Nueva columna */}
             <th>Operaciones</th>
           </tr>
@@ -539,8 +539,9 @@ export default function ProductList() {
               <tr key={product.id}>
                 <td>{product.id}</td>
                 <td>{product.fecha}</td>
+                
                 <td>{product.categoria_producto}</td>
-                <td>{product.subcategoria}</td>
+                <td>{product.subcategoria}</td> 
                 <td>{product.num_media}</td>
                 <td>{product.garron}</td>
                 <td>{product.precio}</td>
@@ -559,7 +560,7 @@ export default function ProductList() {
                 <td>{product.ingreso_id || ""}</td>
                 <td>{product.orden_id || ""}</td>
                 <td>{product.venta_id || ""}</td>
-                <td>{formatDate(product.createdAt)}</td>
+                {/* <td>{formatDate(product.createdAt)}</td> */}
                 <td>{isCorrelative ? "" : "X"}</td> {/* Columna ID */}
                 <td className="text-center">
                   <div className="d-flex justify-content-center align-items-center">
