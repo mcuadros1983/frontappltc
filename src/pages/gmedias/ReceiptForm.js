@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { processBarCode } from "../../utils/processBarCode";
 import { GenerateReceiptReceiptHTML } from "./GenerateReceiptReceiptHTML";
 import CategorySummaryTable from "../../utils/CategorySummaryTable";
-import { v4 as uuidv4 } from "uuid"; // Instala con: npm install uuid
 
 const ReceiptForm = () => {
   const initialProductState = {
