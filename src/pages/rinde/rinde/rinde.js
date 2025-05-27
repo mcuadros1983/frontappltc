@@ -65,7 +65,23 @@ export default function CalculoRinde() {
     setKgVaca(0);
     setKgCerdo(0);
     setRinde(0);
+    setAjustes([]);
   }, [startDate, endDate, searchSucursal]);
+
+  useEffect(() => {
+    console.log("Reiniciando rinde...");
+    setRinde(0);
+  }, [
+    montoVentas,
+    montoMovimientos,
+    montoMovimientosOtros,
+    montoInventarioInicial,
+    montoInventarioFinal,
+    kgNovillo,
+    kgVaca,
+    kgCerdo,
+    ajustes
+  ]);
 
   const isValidDate = (dateString) => {
     const regEx = /^\d{4}-\d{2}-\d{2}$/;
@@ -328,33 +344,58 @@ export default function CalculoRinde() {
     // console.log("calculando...");
 
     // Suma de importes de los ajustes si existen ajustes
+    // const montoAjuste = ajustes.reduce(
+    //   (total, ajuste) => total + ajuste.importe,
+    //   0
+    // );
+
     const montoAjuste = ajustes.reduce(
-      (total, ajuste) => total + ajuste.importe,
+      (total, ajuste) => parseFloat(total) + parseFloat(ajuste.importe),
       0
     );
-
     // Sumar montoVentas, montoMovimientos, montoInventarioFinal, y montoAjuste
     // Restar montoInventarioInicial
+    // const montoVendidoParcial =
+    //   montoVentas +
+    //   montoMovimientos +
+    //   montoMovimientosOtros +
+    //   montoInventarioFinal -
+    //   montoInventarioInicial +
+    //   montoAjuste; // Incluir los ajustes en la suma
+
+    const toNumber = (val) => {
+      const num = parseFloat(val);
+      return isNaN(num) ? 0 : num;
+    };
+
+    console.log("valores", "montoventas", montoVentas, "montoMovimientos", montoMovimientos, "montoMovimientosOtros", montoMovimientosOtros, "montoInventarioFinal", montoInventarioFinal, "montoInventarioInicial", montoInventarioInicial, "montoAjuste", toNumber(montoAjuste))
     const montoVendidoParcial =
-      montoVentas +
-      montoMovimientos +
-      montoMovimientosOtros +
-      montoInventarioFinal -
-      montoInventarioInicial +
-      montoAjuste; // Incluir los ajustes en la suma
+      toNumber(montoVentas) +
+      toNumber(montoMovimientos) +
+      toNumber(montoMovimientosOtros) +
+      toNumber(montoInventarioFinal) -
+      toNumber(montoInventarioInicial) +
+      toNumber(montoAjuste);
+
 
     // Multiplicar kgNovillo por novillosIngresos
     // Multiplicar kgVaca por exportacionIngresos
     // Multiplicar kgCerdo por cerdosIngresos
+
+    console.log("valores", kgNovillo, novillosIngresos, kgVaca, exportacionIngresos, kgCerdo, cerdosIngresos)
     const montoEsperadoParcial =
       kgNovillo * novillosIngresos +
       kgVaca * exportacionIngresos +
       kgCerdo * cerdosIngresos;
 
+    console.log("monto", montoEsperadoParcial, montoVendidoParcial)
+
     // Calcular el rinde
     let rindeCalculado =
       ((montoEsperadoParcial - montoVendidoParcial) / montoEsperadoParcial) *
       100;
+
+    console.log("rinde", rindeCalculado)
 
     // Verificar si el resultado es NaN y establecerlo en 0%
     if (isNaN(rindeCalculado)) {
@@ -750,7 +791,7 @@ export default function CalculoRinde() {
               <Button
                 onClick={() => setShowAjustesModal(true)}
                 disabled={loading}
-                // variant="success"
+              // variant="success"
               >
                 Agregar Ajuste
               </Button>
@@ -772,8 +813,11 @@ export default function CalculoRinde() {
                 Calcular Rinde
               </Button>
             </td>
-            <td>
+            {/* <td>
               {rinde !== null ? `${parseFloat(rinde).toFixed(2)} %` : "-"}
+            </td> */}
+            <td>
+              {typeof rinde === "number" ? `${rinde.toFixed(2)} %` : "-"}
             </td>
           </tr>
         </tbody>

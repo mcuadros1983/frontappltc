@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import ProductList from "./pages/gmedias/ProductList";
 import ProductUpdate from "./pages/gmedias/ProductUpdate";
+import ProductUpdateTropa from "./pages/gmedias/ProductUpdateTropa.js";
 import ProductForm from "./pages/gmedias/ProductForm";
 import BranchForm from "./pages/gmedias/BranchForm";
 import BranchList from "./pages/gmedias/BranchList";
@@ -135,6 +136,7 @@ export default function App() {
                   <Route path="/products/new" element={<ProductForm />} />
                   <Route path="/products/:id/edit" element={<ProductForm />} />
                   <Route path="/products_update" element={<ProductUpdate />} />
+                  <Route path="/products_update_tropa" element={<ProductUpdateTropa />} />
                   <Route path="/customers" element={<CustomerList />} />
                   <Route path="/customers/new" element={<CustomerForm />} />
                   <Route

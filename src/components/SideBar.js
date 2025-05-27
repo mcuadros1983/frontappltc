@@ -152,6 +152,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           >
                             Actualizar
                           </Link>
+                          <Link
+                            to="/products_update_tropa"
+                            className="nav-link"
+                            style={{ color: "white", whiteSpace: "nowrap" }}
+                            onClick={handleLinkClick}
+                          >
+                            Actualizar por Tropa
+                          </Link>
                         </div>
                       </Collapse>
                       <Nav.Item onClick={() => setSucitem(!sucitem)}>

@@ -180,8 +180,8 @@ const ProductUpdate = () => {
 
   const downloadTemplate = () => {
     let templateHeaders = [
-      "categoria (bovino,porcino)",
-      "subcategoria (nt,va,cerdo)",
+      "categoria",
+      "subcategoria",
       "num_media",
       "garron",
       "precio",

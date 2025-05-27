@@ -108,11 +108,22 @@ const CrearMovimientosOtros = () => {
         >
           Subir Movimientos
         </Button>
+        {/* <div className="mt-3">
+          <Button variant="secondary" onClick={downloadTemplate}>
+            Descargar Plantilla
+          </Button>
+        </div> */}
+
         <div className="mt-3">
           <Button variant="secondary" onClick={downloadTemplate}>
             Descargar Plantilla
           </Button>
         </div>
+
+        <Alert variant="info" className="mt-3">
+          <strong>Importante:</strong> En la columna <code>Tipo</code> se debe agregar <code>"EGRE"</code> para movimientos de fábrica o <code>"ACH"</code> para achuras. Para el campo <code>sucursal_codigo</code>, se deberá ingresar el código de la <strong>fábrica (20)</strong> para sus movimientos, o el de <strong>central (1) </strong> en el caso de las achuras.
+        </Alert>
+
       </Form>
     </Container>
   );

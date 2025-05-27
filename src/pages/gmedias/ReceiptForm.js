@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { processBarCode } from "../../utils/processBarCode";
 import { GenerateReceiptReceiptHTML } from "./GenerateReceiptReceiptHTML";
 import CategorySummaryTable from "../../utils/CategorySummaryTable";
+import { v4 as uuidv4 } from "uuid"; // Instala con: npm install uuid
 
 const ReceiptForm = () => {
   const initialProductState = {
@@ -79,101 +80,101 @@ const ReceiptForm = () => {
   };
 
   const handleSave = async () => {
+    const generateNumericId = () => {
+      const now = Date.now(); // ejemplo: 1716830456789
+      return now.toString().slice(-8); // últimos 8 dígitos: "30456789"
+    };
+
     if (manualEntry) {
-      const { num_media, tropa, kg } = product;
+      let { num_media, tropa, kg, subcategoria } = product;
 
-      // if (categoria !== "porcino") {
-      // Validar campos obligatorios
-      if (!num_media || !tropa || !kg) {
-        alert(
-          "Todos los campos (Número de media, Tropa y Peso) son obligatorios."
-        );
-        return;
+      // Validaciones para bovino
+      if (categoria === "bovino") {
+        if (!num_media || !tropa || !kg) {
+          alert("Todos los campos (Número de media, Tropa y Peso) son obligatorios.");
+          return;
+        }
+
+        if (!/^\d+$/.test(num_media) || !/^\d+$/.test(tropa) || !/^\d+$/.test(kg)) {
+          alert("Los campos Número de media, Tropa y Peso deben ser solo números.");
+          return;
+        }
+
+        const mediaExists = products.some((prod) => prod.num_media == num_media);
+        if (mediaExists) {
+          alert("El producto ya existe en la lista.");
+          return;
+        }
+
+        const productExists = await checkProductExistenceNumMedia(num_media);
+        if (productExists && productExists.sucursal_id !== 32) {
+          alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+          return;
+        }
       }
 
-      // Validar que los campos sean números
-      if (
-        !/^\d+$/.test(num_media) ||
-        !/^\d+$/.test(tropa) ||
-        !/^\d+$/.test(kg)
-      ) {
-        alert(
-          "Los campos Número de media, Tropa y Peso deben ser solo números."
-        );
-        return;
-      }
-      // }
-
-      // Verificar si la media ya existe en la lista
-      const mediaExists = products.some((prod) => prod.num_media == num_media);
-      if (mediaExists) {
-        alert("El producto ya existe en la lista.");
-        return;
+      // Generación para porcino
+      if (categoria === "porcino") {
+        num_media = generateNumericId();
+        subcategoria = "cerdo";
       }
 
-      // Asignar valores predeterminados para tropa y kg si están vacíos
       const productoFinal = {
         ...product,
-        tropa: tropa || "0", // Valor predeterminado
-        kg: kg || "0", // Valor predeterminado
+        num_media,
+        tropa: tropa || "0",
+        kg: kg || "0",
+        categoria_producto: categoria,
+        subcategoria: categoria === "porcino" ? "cerdo" : subcategoria || "",
       };
 
-      // Generar el código de barra
-      let codigo_de_barra;
+      // Generar código de barra
+      let codigo_de_barra = `00${num_media}00${productoFinal.tropa}00${productoFinal.kg}`;
 
-      codigo_de_barra = `00${productoFinal.num_media}00${productoFinal.tropa}00${productoFinal.kg}`;
-      // Verificar la existencia del producto si no es porcino
-      const productExists = await checkProductExistence(codigo_de_barra);
-
-      if (productExists && productExists.sucursal_id !== 32) {
-        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-        return;
+      if (categoria !== "porcino") {
+        const exists = await checkProductExistence(codigo_de_barra);
+        if (exists && exists.sucursal_id !== 32) {
+          alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
+          return;
+        }
       }
 
-      const productExistsNumMedia = await checkProductExistenceNumMedia(num_media);
-      if (productExistsNumMedia && productExistsNumMedia.sucursal_id !== 32) {
-        alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
-        return;
-      }
-
-
-      // Guardar el producto
+      // Guardar producto
       setProducts([...products, { ...productoFinal, codigo_de_barra }]);
       setManualEntry(false);
       setProduct(initialProductState);
       setFieldsDisabled(true);
     } else {
-      // Validar el campo código de barra
+      // Ingreso por escaneo de código de barras
       if (!product.codigo_de_barra) {
         alert("El campo código de barra es requerido");
         return;
       }
 
-      // Asignar valores predeterminados para tropa y kg si están vacíos
       const productoFinal = {
         ...product,
-        tropa: product.tropa || "0", // Valor predeterminado
-        kg: product.kg || "0", // Valor predeterminado
+        tropa: product.tropa || "0",
+        kg: product.kg || "0",
+        categoria_producto: categoria,
+        subcategoria: categoria === "porcino" ? "cerdo" : product.subcategoria || "",
       };
 
-      // Verificar la existencia del producto si no es porcino
-     const productExists = await checkProductExistence(
-        product.codigo_de_barra
-      );
-      if (productExists) {
+      const productExists = await checkProductExistence(product.codigo_de_barra);
+      if (productExists && productExists.sucursal_id !== 32) {
         alert("¡Alerta! El producto ya ha sido ingresado anteriormente.");
         return;
       }
-   
-      // Guardar el producto
+
       setProducts([...products, productoFinal]);
       setFieldsDisabled(true);
     }
 
-    // Reiniciar el estado
+    // Limpiar estado
     setProduct(initialProductState);
     setManualEntry(false);
   };
+
+
 
   const checkProductExistence = async (codigoDeBarra) => {
     try {
@@ -260,7 +261,7 @@ const ReceiptForm = () => {
     const processedData = processBarCode(codigoDeBarra, categoria);
     if (processedData.success) {
       const productExists = await checkProductExistence(codigoDeBarra);
-     
+
       if (productExists && productExists.sucursal_id !== 32) {
         if (productExists.orden_id) {
           alert(`¡Alerta! El producto ya fue despachado bajo la Orden Número ${productExists.orden_id}`);
@@ -271,7 +272,7 @@ const ReceiptForm = () => {
         }
         return;
       }
-      
+
 
       const barcodeExists = products.some(
         (prod) => prod.codigo_de_barra === codigoDeBarra
@@ -424,7 +425,23 @@ const ReceiptForm = () => {
             </Button>
           )}
         </div>
-        <Form.Group className="mb-3">
+        {categoria !== "porcino" && (
+          <Form.Group className="mb-3">
+            <Form.Label>Numero de media</Form.Label>
+            <Form.Control
+              type="number"
+              name="num_media"
+              value={product.num_media}
+              onChange={(e) =>
+                setProduct({ ...product, num_media: e.target.value })
+              }
+              placeholder="Ingresa el número de media"
+              className="my-input"
+              disabled={fieldsDisabled}
+            />
+          </Form.Group>
+        )}
+        {/* <Form.Group className="mb-3">
           <Form.Label>Numero de media</Form.Label>
           <Form.Control
             type="number"
@@ -437,9 +454,9 @@ const ReceiptForm = () => {
             className="my-input"
             disabled={fieldsDisabled}
           />
-        </Form.Group>
+        </Form.Group> */}
         {/* Renderizar el campo "Número de Tropa" solo si la categoría no es porcino */}
-         <Form.Group className="mb-3">
+        <Form.Group className="mb-3">
           <Form.Label>Numero de tropa</Form.Label>
           <Form.Control
             type="number"
@@ -466,11 +483,25 @@ const ReceiptForm = () => {
             disabled={fieldsDisabled}
           />
         </Form.Group>
-        <Button
+        {/* <Button
           variant="primary"
           type="button"
           onClick={handleSave}
           disabled={!product.num_media}
+        >
+          Guardar
+        </Button> */}
+        <Button
+          variant="primary"
+          type="button"
+          onClick={handleSave}
+          disabled={
+            manualEntry &&
+            (
+              (categoria === "bovino" && !product.num_media) ||
+              !categoria // Por si no eligieron aún la categoría
+            )
+          }
         >
           Guardar
         </Button>
