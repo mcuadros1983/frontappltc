@@ -106,24 +106,52 @@ export default function OrderList() {
     const startDateFilter = startDate ? startDate : null;
     const endDateFilter = endDate ? endDate : null;
 
-    if (searchTermLower === "" && !startDate && !endDate) {
-      setFilteredOrders(orders);
-    } else {
-      const filtered = orders.filter((order) => {
-        const matchesBranch =
-          order.Sucursal &&
-          order.Sucursal.nombre.toLowerCase().includes(searchTermLower);
-        const orderDate = order.fecha;
+    const filtered = orders.filter((order) => {
+      const matchesBranchName =
+        order.Sucursal &&
+        order.Sucursal.nombre.toLowerCase().includes(searchTermLower);
 
-        const matchesDate =
-          (!startDateFilter || orderDate >= startDateFilter) &&
-          (!endDateFilter || orderDate <= endDateFilter);
+      const matchesBranchId = selectedBranchId
+        ? order.sucursal_id === Number(selectedBranchId)
+        : true;
 
-        return matchesBranch && matchesDate;
-      });
-      setFilteredOrders(filtered);
-    }
-  }, [searchTerm, startDate, endDate, orders]);
+      const orderDate = order.fecha;
+      const matchesDate =
+        (!startDateFilter || orderDate >= startDateFilter) &&
+        (!endDateFilter || orderDate <= endDateFilter);
+
+      return matchesBranchName && matchesDate && matchesBranchId; // 🔄 NUEVO
+    });
+
+    setFilteredOrders(filtered);
+  }, [searchTerm, startDate, endDate, selectedBranchId, orders]); // 🔄 NUEVO
+
+  useEffect(() => {
+    handleSearch();
+  }, [searchTerm, orders, startDate, endDate, selectedBranchId, handleSearch]); // 🔄 NUEVO
+  // const handleSearch = useCallback(() => {
+  //   const searchTermLower = searchTerm.toLowerCase();
+  //   const startDateFilter = startDate ? startDate : null;
+  //   const endDateFilter = endDate ? endDate : null;
+
+  //   if (searchTermLower === "" && !startDate && !endDate) {
+  //     setFilteredOrders(orders);
+  //   } else {
+  //     const filtered = orders.filter((order) => {
+  //       const matchesBranch =
+  //         order.Sucursal &&
+  //         order.Sucursal.nombre.toLowerCase().includes(searchTermLower);
+  //       const orderDate = order.fecha;
+
+  //       const matchesDate =
+  //         (!startDateFilter || orderDate >= startDateFilter) &&
+  //         (!endDateFilter || orderDate <= endDateFilter);
+
+  //       return matchesBranch && matchesDate;
+  //     });
+  //     setFilteredOrders(filtered);
+  //   }
+  // }, [searchTerm, startDate, endDate, orders]);
 
   useEffect(() => {
     loadOrders();
@@ -149,7 +177,8 @@ export default function OrderList() {
   };
 
   const handleSort = (columnName) => {
-    const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    const newSortDirection =
+      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
     setSortColumn(columnName);
     setSortDirection(newSortDirection);
 
@@ -169,13 +198,11 @@ export default function OrderList() {
     setFilteredOrders(sortedOrders);
   };
 
-
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentFilteredOrders = [...filteredOrders] // Crea una copia para evitar modificar el estado original
     .reverse() // Invierte el orden de los elementos
     .slice(indexOfFirstOrder, indexOfLastOrder); // Aplica la paginación
-
 
   const pageNumbers = [];
   for (let i = 1; i <= Math.ceil(filteredOrders.length / ordersPerPage); i++) {
@@ -208,7 +235,7 @@ export default function OrderList() {
           />
         </div>
       </div>
-      <div className="mb-3">
+      {/* <div className="mb-3">
         <FormControl
           type="text"
           placeholder="Buscar por sucursal"
@@ -216,27 +243,57 @@ export default function OrderList() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+      </div> */}
+
+      <div className="mb-3">
+        <label className="mr-2">Sucursal:</label>
+        <FormControl
+          as="select"
+          value={selectedBranchId}
+          onChange={(e) => setSelectedBranchId(e.target.value)}
+          className="w-25 d-inline-block"
+        >
+          <option value="">Todas las sucursales</option>
+          {[...branches]
+            .sort((a, b) => a.nombre.localeCompare(b.nombre)) // ✅ Orden alfabético
+            .map((branch) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.nombre}
+              </option>
+            ))}
+        </FormControl>
       </div>
 
       <Table striped bordered hover>
-        {/* <thead>
-          <tr>
-            <th>#</th>
-            <th>Fecha de ingreso</th>
-            <th>Cantidad de medias</th>
-            <th>Peso total</th>
-            <th>Sucursal</th>
-            <th>Operaciones</th>
-          </tr>
-        </thead> */}
-
         <thead>
           <tr>
-            <th onClick={() => handleSort("id")} style={{ cursor: "pointer" }}>#</th>
-            <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha de ingreso</th>
-            <th onClick={() => handleSort("cantidad_total")} style={{ cursor: "pointer" }}>Cantidad de medias</th>
-            <th onClick={() => handleSort("peso_total")} style={{ cursor: "pointer" }}>Peso total</th>
-            <th onClick={() => handleSort("Sucursal.nombre")} style={{ cursor: "pointer" }}>Sucursal</th>
+            <th onClick={() => handleSort("id")} style={{ cursor: "pointer" }}>
+              #
+            </th>
+            <th
+              onClick={() => handleSort("fecha")}
+              style={{ cursor: "pointer" }}
+            >
+              Fecha de ingreso
+            </th>
+            <th
+              onClick={() => handleSort("cantidad_total")}
+              style={{ cursor: "pointer" }}
+            >
+              Cantidad de medias
+            </th>
+            <th
+              onClick={() => handleSort("peso_total")}
+              style={{ cursor: "pointer" }}
+            >
+              Peso total
+            </th>
+            <th
+              onClick={() => handleSort("Sucursal.nombre")}
+              style={{ cursor: "pointer" }}
+            >
+              Sucursal
+            </th>
             <th>Operaciones</th>
           </tr>
         </thead>

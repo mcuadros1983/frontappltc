@@ -9,16 +9,6 @@ import Contexts from "../../context/Contexts";
 
 export default function OrderForm() {
   const context = useContext(Contexts.UserContext);
-  // const toggleModal = () => setModal(!modal);
-  // const toggleModal = () => {
-  //   setModal(!modal);
-  //   setSearchMedia("");
-  //   setSearchPeso("");
-  //   setSearchTropa("");
-  //   setSearchGarron("");
-  //   setCurrentPage(1); // Reiniciar a la primera página
-  // };
-
   const toggleModal = () => {
     setModal(!modal);
     if (modal) {
@@ -87,28 +77,6 @@ export default function OrderForm() {
 
     fetchBranches();
   }, [apiUrl]);
-
-  // useEffect(() => {
-  //   const fetchProducts = async () => {
-  //     try {
-  //       const response = await fetch(`${apiUrl}/productos`, {
-  //         credentials: "include",
-  //       });
-  //       const data = await response.json();
-  //       // Filtrar los productos que tengan sucursal_id igual a 1
-  //       const filteredProducts = data.filter(
-  //         (producto) => producto.sucursal_id === 18
-  //       );
-  //       setAvailableProducts(filteredProducts);
-  //     } catch (error) {
-  //       console.error("Error fetching products:", error);
-  //     }
-  //   };
-
-  //   if (modal) {
-  //     fetchProducts();
-  //   }
-  // }, [modal, apiUrl]);
 
   useEffect(() => {
     const fetchProducts = async () => {
