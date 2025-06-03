@@ -396,6 +396,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 >
                   Listar Ordenes
                 </Link>
+                                <Link
+                  to="/orders/productsfromexcel"
+                  className="nav-link"
+                  style={{ color: "white", whiteSpace: "nowrap" }}
+                  onClick={handleLinkClick}
+                >
+                  Crear Orden Excel
+                </Link>
               </div>
             </Collapse>
             <Nav.Item onClick={() => setReceiptitem(!receiptitem)}>
@@ -844,7 +852,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 style={{ color: "white", whiteSpace: "nowrap" }}
                 onClick={handleLinkClick}
               >
-                Rendmientos
+                Rendimientos
+              </Link>
+              <Link
+                to="/inventory/performancelistcomparative"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Rendimientos Comparativos
               </Link>
               <Link
                 to="/inventory/stock"

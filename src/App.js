@@ -67,6 +67,7 @@ import ArticulosPrecios from "./pages/tablas/articulosprecios";
 import ArticulosPreciosActualizar from "./pages/tablas/articulosprecios_actualizar";
 import CalculoRinde from "./pages/rinde/rinde/rinde";
 import ListaRindes from "./pages/rinde/rinde/rindelist";
+import ListaRindesComparativo from "./pages/rinde/rinde/rindecomparativo.js";
 import ArticulosPorcentaje from "./pages/tablas/articulosporcentajes";
 import ArticulosPorcentajeActualizar from "./pages/tablas/articulosporcentajes_actualizar";
 import Formulas from "./pages/rinde/formulas/formulasList";
@@ -100,6 +101,7 @@ import SellUpload from "./pages/statics/SellUploads.js";
 import VentasPivotTable from "./pages/statics/VentasPivotTable"; // Importa el componente
 import VentasReporte from "./pages/statics/VentasReporte.js"; // Importa el componente
 import CrearInventario from "./pages/rinde/inventarios/crearInventario.js";
+import OrderFromExcel from "./pages/gmedias/OrderFromExcel.js";
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -186,6 +188,7 @@ export default function App() {
                   <Route path="/orders/new" element={<OrderForm />} />
                   <Route path="/orders/:id/edit" element={<OrderForm />} />
                   <Route path="/orders/:id/products" element={<OrderItem />} />
+                  <Route path="/orders/productsfromexcel" element={<OrderFromExcel />} />
                   <Route path="/receipts" element={<ReceiptList />} />
                   <Route
                     path="/receipts/products"
@@ -275,6 +278,10 @@ export default function App() {
                   <Route
                     path="/inventory/performancelist/"
                     element={<ListaRindes />}
+                  />
+                  <Route
+                    path="/inventory/performancelistcomparative/"
+                    element={<ListaRindesComparativo />}
                   />
                   <Route path="/inventory/stock/" element={<Stock />} />
                   <Route path="/prices" element={<ArticulosPrecios />} />

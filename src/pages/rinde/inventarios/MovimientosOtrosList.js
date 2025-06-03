@@ -30,6 +30,12 @@ export default function MovimientosOtros() {
   const context = useContext(Contexts.DataContext);
   const userContext = useContext(Contexts.UserContext);
 
+  useEffect(() => {
+    setMovimientos([]);
+    setNoResults(false);
+    setCurrentPage(1);
+  }, [startDate, endDate, searchSucursal, tipoSeleccionado]);
+
   const obtenerFechasUnicas = async () => {
     try {
       const res = await fetch(`${apiUrl}/movimientos-otro/fechas-unicas`, {
@@ -67,7 +73,6 @@ export default function MovimientosOtros() {
     try {
       setLoading(true);
       setNoResults(false);
-      setTipoSeleccionado("");
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         alert("Ingrese una fecha válida.");
         setLoading(false);
@@ -187,7 +192,17 @@ export default function MovimientosOtros() {
       </div>
 
       <div className="mb-3">
-        <FormControl as="select" value={searchSucursal} onChange={(e) => setSearchSucursal(e.target.value)} className="mr-2" style={{ width: "25%" }} disabled={loading}>
+        <FormControl
+          as="select"
+          value={searchSucursal}
+          onChange={(e) => {
+            setSearchSucursal(e.target.value);
+            setTipoSeleccionado("");
+          }}
+          className="mr-2"
+          style={{ width: "25%" }}
+          disabled={loading}
+        >
           <option value="">Seleccione una sucursal</option>
           {context.sucursalesTabla.map((sucursal) => (
             <option key={sucursal.id} value={sucursal.id}>{sucursal.nombre}</option>
@@ -207,14 +222,21 @@ export default function MovimientosOtros() {
       )}
 
       <div className="mb-3 d-flex gap-2">
-        <Button onClick={handleFilter} disabled={loading}>Filtrar</Button>   </div>
-        {userContext.user?.rol_id !== 4 && (
-                <div className="mb-3 d-flex gap-2"><Button variant="danger" onClick={() => { obtenerFechasUnicas(); setShowModal(true); }} disabled={loading}>Eliminación Masiva</Button>    </div>
-        )}
-  
+        <Button onClick={handleFilter} disabled={loading}>Filtrar</Button>
+      </div>
+
+      {userContext.user?.rol_id !== 4 && (
+        <div className="mb-3 d-flex gap-2">
+          <Button variant="danger" onClick={() => { obtenerFechasUnicas(); setShowModal(true); }} disabled={loading}>Eliminación Masiva</Button>
+        </div>
+      )}
 
       {loading && <Spinner animation="border" role="status"></Spinner>}
       {noResults && <p>No se encontraron movimientos para las fechas especificadas</p>}
+
+      {movimientos.length === 0 && !loading && (
+        <p className="text-muted">Modificaste filtros. Presioná "Filtrar" para ver resultados actualizados.</p>
+      )}
 
       <Table striped bordered hover>
         <thead>
@@ -225,7 +247,7 @@ export default function MovimientosOtros() {
             <th onClick={() => handleSort("articulodescripcion")} style={{ cursor: "pointer" }}>Descripción de Artículo</th>
             <th onClick={() => handleSort("cantidad")} style={{ cursor: "pointer" }}>Cantidad</th>
             <th onClick={() => handleSort("tipo")} style={{ cursor: "pointer" }}>Tipo</th>
-            <th onClick={() => handleSort("sucursal_id")} style={{ cursor: "pointer" }}>Sucursal</th>
+            <th onClick={() => handleSort("sucursaldestino_id")} style={{ cursor: "pointer" }}>Sucursal</th>
             {userContext.user?.rol_id !== 4 && <th>Operaciones</th>}
           </tr>
         </thead>
@@ -238,7 +260,7 @@ export default function MovimientosOtros() {
               <td>{movimiento.articulodescripcion}</td>
               <td>{movimiento.cantidad}</td>
               <td>{movimiento.tipo}</td>
-              <td>{context.sucursalesTabla.find((s) => s.id === parseInt(movimiento.sucursal_id))?.nombre || "Desconocido"}</td>
+              <td>{context.sucursalesTabla.find((s) => s.id === parseInt(movimiento.sucursaldestino_id))?.nombre || "Desconocido"}</td>
               {userContext.user?.rol_id !== 4 && (
                 <td>
                   <Button variant="danger" onClick={() => handleEliminarMovimiento(movimiento.id)} disabled={loading}>Eliminar</Button>

@@ -8,8 +8,8 @@ import {
   ListGroup,
   InputGroup,
 } from "react-bootstrap";
-// import { useNavigate } from "react-router-dom";
 import Contexts from "../../../context/Contexts";
+import { useNavigate } from "react-router-dom";
 
 export default function CalculoRinde() {
   const [startDate, setStartDate] = useState("");
@@ -23,7 +23,6 @@ export default function CalculoRinde() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [inventarios, setInventarios] = useState([]);
-  // const [selectedInventario, setSelectedInventario] = useState(null);
   const [isFinal, setIsFinal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedYear, setSelectedYear] = useState("");
@@ -33,8 +32,6 @@ export default function CalculoRinde() {
   const [kgNovillo, setKgNovillo] = useState(0);
   const [kgVaca, setKgVaca] = useState(0);
   const [kgCerdo, setKgCerdo] = useState(0);
-  // const [montoVendidoParcial, setMontoVendidoParcial] = useState(0);
-  // const [montoEsperadoParcial, setMontoEsperadoParcial] = useState(0);
   const [showModalCategories, setShowModalCategories] = useState(false);
   const [selectedCategorias, setSelectedCategorias] = useState([]);
   const [ajustes, setAjustes] = useState([]);
@@ -49,6 +46,32 @@ export default function CalculoRinde() {
   // Estados para el modal de ingresos esperados y ver
   const [showIngresosModal, setShowIngresosModal] = useState(false);
   const [showVerModal, setShowVerModal] = useState(false);
+
+  const [cantidadMedias, setCantidadMedias] = useState("");
+  const [totalKg, setTotalKg] = useState(null);
+  const [costoprom, setCostoprom] = useState("");
+  const [mgtotal, setMgtotal] = useState("");
+  const [mgporkg, setMgporkg] = useState("");
+  const [totalventa, setTotalventa] = useState("");
+  const [promdiario, setPromdiario] = useState("");
+  const [gastos, setGastos] = useState("");
+  const [costovacuno, setCostovacuno] = useState("");
+  const [achuras, setAchuras] = useState("");
+  const [difInventario, setDifInventario] = useState("");
+  const [ingEsperado, setIngEsperado] = useState("");
+  const [ingVendido, setIngVendido] = useState("");
+  const [difEsperado, setDifEsperado] = useState("");
+  const [difVendido, setDifVendido] = useState("");
+  const [valorRinde, setValorRinde] = useState("");
+  const [eficiencia, setEficiencia] = useState("");
+
+  // Ingreso manual
+  const [mbcerdo, setMbcerdo] = useState("");
+  const [cajagrande, setCajagrande] = useState("");
+  const [otros, setOtros] = useState("");
+  const [costoporcino, setCostoporcino] = useState("");
+
+  const navigate = useNavigate();
 
   const context = useContext(Contexts.DataContext);
   // const navigate = useNavigate();
@@ -66,6 +89,27 @@ export default function CalculoRinde() {
     setKgCerdo(0);
     setRinde(0);
     setAjustes([]);
+    setCantidadMedias(0);
+    setTotalKg(0);
+    setCostoprom(0);
+    setMgtotal(0);
+    setMgporkg(0);
+    setTotalventa(0);
+    setPromdiario(0);
+    setGastos(0);
+    setCostovacuno(0);
+    setAchuras(0);
+    setDifInventario(0);
+    setDifEsperado(0);
+    setDifVendido(0);
+    setValorRinde(0);
+    setEficiencia(0);
+    setMbcerdo(0);
+    setCajagrande(0);
+    setOtros(0);
+    setCostoporcino(0);
+    setIngEsperado(0);
+    setIngVendido(0);
   }, [startDate, endDate, searchSucursal]);
 
   useEffect(() => {
@@ -82,6 +126,92 @@ export default function CalculoRinde() {
     kgCerdo,
     ajustes
   ]);
+
+  // Resetear cantidadMedias si cambian kgNovillo, kgVaca o totalKg
+  useEffect(() => {
+    setCantidadMedias(0);
+  }, [kgNovillo, kgVaca, totalKg]);
+
+  // Resetear totalKg si cambian kgNovillo o kgVaca
+  useEffect(() => {
+    setTotalKg(0);
+  }, [kgNovillo, kgVaca]);
+
+  // Resetear costoprom si cambian totalKg o costovacuno
+  useEffect(() => {
+    setCostoprom(0);
+  }, [totalKg, costovacuno]);
+
+  // Resetear mgtotal si cambian montoVentas, montoMovimientos, montoMovimientosOtros, totalKg, costoprom, kgCerdo o cerdosIngresos
+  useEffect(() => {
+    setMgtotal(0);
+  }, [montoVentas, montoMovimientos, montoMovimientosOtros, totalKg, costoprom, kgCerdo, cerdosIngresos]);
+
+  // Resetear mgporkg si cambian mgtotal, montoInventarioFinal, montoInventarioInicial o totalKg
+  useEffect(() => {
+    setMgporkg(0);
+  }, [mgtotal, montoInventarioFinal, montoInventarioInicial, totalKg]);
+
+  // Resetear promdiario si cambia totalventa
+  useEffect(() => {
+    setPromdiario(0);
+  }, [totalventa]);
+
+  // Resetear costovacuno si cambia totalKg
+  useEffect(() => {
+    setCostovacuno(0);
+  }, [totalKg]);
+
+  // Resetear difInventario si cambian montoInventarioFinal o montoInventarioInicial
+  useEffect(() => {
+    setDifInventario(0);
+  }, [montoInventarioFinal, montoInventarioInicial]);
+
+  // Resetear mbcerdo si cambian cerdosIngresos o kgCerdo
+  useEffect(() => {
+    setMbcerdo(0);
+  }, [cerdosIngresos, kgCerdo]);
+
+  // Resetear costoporcino si cambian cerdosIngresos o kgCerdo
+  useEffect(() => {
+    setCostoporcino(0);
+  }, [cerdosIngresos, kgCerdo]);
+
+  // Resetear ingEsperado si cambian kgNovillo, kgVaca, novillosIngresos, exportacionIngresos o totalKg
+  useEffect(() => {
+    setIngEsperado(0);
+  }, [kgNovillo, kgVaca, novillosIngresos, exportacionIngresos, totalKg]);
+
+  // Resetear ingVendido si cambian montoVentas, montoMovimientos, montoMovimientosOtros, mbcerdo, montoInventarioFinal, montoInventarioInicial o totalKg
+  useEffect(() => {
+    setIngVendido(0);
+  }, [montoVentas, montoMovimientos, montoMovimientosOtros, mbcerdo, montoInventarioFinal, montoInventarioInicial, totalKg]);
+
+  // Resetear difEsperado si cambian ingEsperado o costoprom
+  useEffect(() => {
+    setDifEsperado(0);
+  }, [ingEsperado, costoprom]);
+
+  // Resetear difVendido si cambian ingVendido o costoprom
+  useEffect(() => {
+    setDifVendido(0);
+  }, [ingVendido, costoprom]);
+
+  // Resetear valorRinde si cambia ingVendido
+  useEffect(() => {
+    setValorRinde(0);
+  }, [ingVendido]);
+
+  // Resetear rinde si cambian kgNovillo, kgVaca, kgCerdo, montoVentas, montoMovimientos, montoMovimientosOtros, montoInventarioFinal, montoInventarioInicial o ajustes
+  useEffect(() => {
+    setRinde(0);
+  }, [kgNovillo, kgVaca, kgCerdo, montoVentas, montoMovimientos, montoMovimientosOtros, montoInventarioFinal, montoInventarioInicial, ajustes]);
+
+  // Resetear eficiencia si cambian rinde, valorRinde o totalKg
+  useEffect(() => {
+    setEficiencia(0);
+  }, [rinde, valorRinde, totalKg]);
+
 
   const isValidDate = (dateString) => {
     const regEx = /^\d{4}-\d{2}-\d{2}$/;
@@ -116,6 +246,7 @@ export default function CalculoRinde() {
           },
           body: JSON.stringify({
             sucursalId: searchSucursal,
+            excludedCategories: selectedCategorias, //modificacion para exceptuar articulos segun categorias en ventas
           }),
         }
       );
@@ -341,27 +472,11 @@ export default function CalculoRinde() {
   };
 
   const handleCalculoRinde = () => {
-    // console.log("calculando...");
-
-    // Suma de importes de los ajustes si existen ajustes
-    // const montoAjuste = ajustes.reduce(
-    //   (total, ajuste) => total + ajuste.importe,
-    //   0
-    // );
 
     const montoAjuste = ajustes.reduce(
       (total, ajuste) => parseFloat(total) + parseFloat(ajuste.importe),
       0
     );
-    // Sumar montoVentas, montoMovimientos, montoInventarioFinal, y montoAjuste
-    // Restar montoInventarioInicial
-    // const montoVendidoParcial =
-    //   montoVentas +
-    //   montoMovimientos +
-    //   montoMovimientosOtros +
-    //   montoInventarioFinal -
-    //   montoInventarioInicial +
-    //   montoAjuste; // Incluir los ajustes en la suma
 
     const toNumber = (val) => {
       const num = parseFloat(val);
@@ -371,16 +486,11 @@ export default function CalculoRinde() {
     console.log("valores", "montoventas", montoVentas, "montoMovimientos", montoMovimientos, "montoMovimientosOtros", montoMovimientosOtros, "montoInventarioFinal", montoInventarioFinal, "montoInventarioInicial", montoInventarioInicial, "montoAjuste", toNumber(montoAjuste))
     const montoVendidoParcial =
       toNumber(montoVentas) +
-      toNumber(montoMovimientos) +
+      toNumber(montoMovimientos) -
       toNumber(montoMovimientosOtros) +
       toNumber(montoInventarioFinal) -
       toNumber(montoInventarioInicial) +
       toNumber(montoAjuste);
-
-
-    // Multiplicar kgNovillo por novillosIngresos
-    // Multiplicar kgVaca por exportacionIngresos
-    // Multiplicar kgCerdo por cerdosIngresos
 
     console.log("valores", kgNovillo, novillosIngresos, kgVaca, exportacionIngresos, kgCerdo, cerdosIngresos)
     const montoEsperadoParcial =
@@ -413,6 +523,562 @@ export default function CalculoRinde() {
     nuevosAjustes.splice(index, 1); // Eliminamos el elemento en el índice especificado
     setAjustes(nuevosAjustes); // Actualizamos el estado con la nueva lista de ajustes
   };
+
+  const handleObtenerCantidadMedias = async () => {
+    try {
+      setLoading(true);
+      if (!startDate || !endDate || !searchSucursal) {
+        alert("Por favor complete las fechas y seleccione una sucursal.");
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/sumacantidad`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCantidadMedias(data.cantidadMedias);
+        console.log("Cantidad de medias bovino:", data.cantidadMedias);
+      } else {
+        alert("Error al obtener cantidad de medias.");
+      }
+    } catch (error) {
+      console.error("Error al obtener cantidad de medias:", error);
+      alert("Error al obtener cantidad de medias.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleObtenerTotalKg = () => {
+    const total =
+      (Number(kgNovillo) || 0) + (Number(kgVaca) || 0);
+
+    setTotalKg(total); // o solo `total` si no querés redondeo
+    console.log("Total Kg calculado:", total);
+  };
+  const handleObtenerCostoProm = async () => {
+    try {
+      setLoading(true);
+      if (!startDate || !endDate || !searchSucursal) {
+        alert("Por favor complete las fechas y seleccione una sucursal.");
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/ordenes/costopromedio`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+          totalKg: totalKg, // este valor ya calculado previamente
+        }),
+      });
+
+      const data = await response.json();
+      console.log("datacostoprom", data)
+
+      if (response.ok) {
+        setCostoprom(data.costoPromedio.toFixed(2));
+        console.log("Costo promedio:", data.costoPromedio);
+      } else {
+        alert("Error al obtener costo promedio.");
+      }
+    } catch (error) {
+      console.error("Error al obtener costo promedio:", error);
+      alert("Error al obtener costo promedio.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleObtenerMgtotal = () => {
+    try {
+      console.log("valores", "montoVentas", montoVentas, "montoMovimientos", montoMovimientos, "montoMovimientosOtros", montoMovimientosOtros, "montocosto", ((Number(totalKg) || 0) * (Number(costoprom) || 0)))
+      const total =
+        (Number(montoVentas) || 0) +
+        (Number(montoMovimientos) || 0) -
+        (Number(montoMovimientosOtros) || 0) -
+        ((Number(totalKg) || 0) * (Number(costoprom) || 0)) -
+        ((Number(kgCerdo) || 0) * (Number(cerdosIngresos) || 0));
+
+      setMgtotal(total.toFixed(2));
+      console.log("MG total:", total);
+    } catch (error) {
+      console.error("Error al calcular mgtotal:", error);
+      alert("Error al calcular mgtotal");
+    }
+  };
+  const handleObtenerMgporkg = () => {
+    try {
+      const total =
+        (Number(mgtotal) || 0) +
+        ((Number(montoInventarioFinal) || 0) - (Number(montoInventarioInicial) || 0));
+
+      const resultado = totalKg > 0 ? (total / Number(totalKg)) : 0;
+
+      setMgporkg(resultado.toFixed(2));
+      console.log("MG por Kg:", resultado);
+    } catch (error) {
+      console.error("Error al calcular mgporkg:", error);
+      alert("Error al calcular MG por Kg");
+    }
+  };
+
+  const handleObtenerTotalventa = async () => {
+    try {
+      setLoading(true);
+      if (!startDate || !endDate || !searchSucursal) {
+        alert("Por favor complete las fechas y seleccione una sucursal.");
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/ventas/filtradas`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al obtener las ventas filtradas");
+      }
+
+      const ventas = await response.json();
+
+      if (!Array.isArray(ventas) || ventas.length === 0) {
+        alert("No existen ventas para la fecha indicada.");
+        setMontoVentas(0);
+        return;
+      }
+
+      const total = ventas.reduce((sum, venta) => {
+        return sum + parseFloat(venta.monto || 0);
+      }, 0);
+
+      setTotalventa(total.toFixed(2));
+      console.log("Total ventas:", total);
+    } catch (error) {
+      console.error("Error al obtener monto de ventas:", error);
+      alert("Error al obtener monto de ventas.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleObtenerPromdiario = async () => {
+    try {
+      setLoading(true);
+
+      if (!startDate || !endDate || !searchSucursal) {
+        alert("Por favor complete las fechas y seleccione una sucursal.");
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/ventas/dias-con-ventas`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al obtener cantidad de días con ventas.");
+      }
+
+      const data = await response.json();
+      const cantidadDias = data.diasConVentas;
+
+      if (cantidadDias === 0) {
+        alert("No hubo días con ventas en el período seleccionado.");
+        return;
+      }
+
+      const promedio = totalventa / cantidadDias;
+      setPromdiario(promedio.toFixed(2));
+      console.log("Promedio diario de ventas:", promedio);
+    } catch (error) {
+      console.error("Error al calcular promedio diario:", error);
+      alert("Error al calcular promedio diario.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleObtenerGastos = async () => {
+    try {
+      setLoading(true);
+
+      if (!startDate || !endDate || !searchSucursal) {
+        alert("Por favor complete las fechas y seleccione una sucursal.");
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/caja/suma_gastos`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al obtener los gastos.");
+      }
+
+
+      const data = await response.json();
+
+      console.log("datagastos", data)
+      setGastos(parseFloat(data.totalGastos).toFixed(2)); // Guardamos en estado
+      console.log("Gastos totales:", data.totalGastos);
+    } catch (error) {
+      console.error("Error al obtener gastos:", error);
+      alert("Error al obtener gastos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleObtenerCostovacuno = async () => {
+    try {
+      setLoading(true);
+
+      if (!startDate || !endDate || !searchSucursal) {
+        alert("Por favor complete las fechas y seleccione una sucursal.");
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/ordenes/costovacuno_total`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCostovacuno(data.costoTotalVacuno.toFixed(2));
+        console.log("Costo total vacuno:", data.costoTotalVacuno);
+      } else {
+        alert("Error al obtener costo vacuno.");
+      }
+    } catch (error) {
+      console.error("Error al obtener costo vacuno:", error);
+      alert("Error al obtener costo vacuno.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleObtenerCostoporcino = async () => {
+    try {
+      setLoading(true);
+
+      if (!startDate || !endDate || !searchSucursal) {
+        alert("Por favor complete las fechas y seleccione una sucursal.");
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/ordenes/costoporcino_total`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setCostoporcino(data.costoTotalPorcino.toFixed(2));
+        console.log("Costo total porcino:", data.costoTotalPorcino);
+      } else {
+        alert("Error al obtener costo porcino.");
+      }
+    } catch (error) {
+      console.error("Error al obtener costo porcino:", error);
+      alert("Error al obtener costo porcino.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  const handleObtenerAchuras = async () => {
+    try {
+      setLoading(true);
+
+      if (!startDate || !endDate || !searchSucursal) {
+        alert("Por favor complete las fechas y seleccione una sucursal.");
+        return;
+      }
+
+      const response = await fetch(`${apiUrl}/movimientos-otro/achuras`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("dataachuras", data)
+
+      if (response.ok) {
+        setAchuras(data.montoTotalAchuras.toFixed(2));
+        console.log("Achuras totales:", data.montoTotalAchuras);
+      } else {
+        alert("Error al obtener achuras.");
+      }
+    } catch (error) {
+      console.error("Error al obtener achuras:", error);
+      alert("Error al obtener achuras.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleObtenerDifInventario = () => {
+    try {
+      const inicial = parseFloat(montoInventarioInicial) || 0;
+      const final = parseFloat(montoInventarioFinal) || 0;
+
+      const diferencia = final - inicial;
+
+      setDifInventario(diferencia.toFixed(2));
+      console.log("Diferencia de inventario:", diferencia);
+    } catch (error) {
+      console.error("Error al calcular diferencia de inventario:", error);
+      alert("Error al calcular diferencia de inventario.");
+    }
+  };
+
+  const handleObtenerIngEsperado = () => {
+    try {
+
+      const kgNov = parseFloat(kgNovillo) || 0;
+      const kgVac = parseFloat(kgVaca) || 0;
+      const novIngreso = parseFloat(novillosIngresos) || 0;
+      const expIngreso = parseFloat(exportacionIngresos) || 0;
+
+      console.log("kgnov", kgNov, "kgvac", kgVac, "noving", novIngreso, "expingreso", expIngreso)
+      // const totalKg = kgNov + kgVac;
+
+      if (totalKg === 0) {
+        setIngEsperado(0);
+        alert("No hay kilos de novillo ni exportación para calcular ingreso esperado.");
+        return;
+      }
+
+      const ingresoEsperado = ((novIngreso * kgNov) + (expIngreso * kgVac)) / totalKg;
+
+      setIngEsperado(ingresoEsperado.toFixed(2));
+      console.log("Ingreso esperado:", ingresoEsperado);
+    } catch (error) {
+      console.error("Error al calcular ingreso esperado:", error);
+      alert("Error al calcular ingreso esperado.");
+    }
+  };
+
+
+  const handleObtenerIngVendido = () => {
+    try {
+      const ventas = parseFloat(montoVentas) || 0;
+      const movimientos = parseFloat(montoMovimientos) || 0;
+      const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
+      const cerdoMb = parseFloat(mbcerdo) || 0;
+      const invFinal = parseFloat(montoInventarioFinal) || 0;
+      const invInicial = parseFloat(montoInventarioInicial) || 0;
+
+      console.log("ventas", ventas, "movimientos", movimientos, "movimientosotros", movimientosOtros, "cerdomb", cerdoMb, "invfinal", invFinal, "invinicial", invInicial)
+
+      // const kgNov = parseFloat(kgNovillo) || 0;
+      // const kgVac = parseFloat(kgVaca) || 0;
+      // const kgCerd = parseFloat(kgCerdo) || 0;
+
+      // const totalKg = kgNov + kgVac + kgCerd;
+
+      if (totalKg === 0) {
+        setIngVendido(0);
+        alert("No hay kilos suficientes para calcular ingreso vendido.");
+        return;
+      }
+
+      const ingresoVendido = (
+        ventas
+        + movimientos
+        - movimientosOtros
+        - cerdoMb
+        + (invFinal - invInicial)
+      ) / totalKg;
+
+      // Si el resultado no es un número válido, asignar 0
+      if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
+        ingresoVendido = 0;
+      }
+
+      setIngVendido(ingresoVendido.toFixed(2));
+      console.log("Ingreso vendido:", ingresoVendido);
+    } catch (error) {
+      console.error("Error al calcular ingreso vendido:", error);
+      alert("Error al calcular ingreso vendido.");
+    }
+  };
+
+  const handleObtenerDifEsperado = () => {
+    try {
+      const ingresoEsperado = parseFloat(ingEsperado) || 0;
+      const costoPromedio = parseFloat(costoprom) || 0;
+
+      let diferencia = ingresoEsperado - costoPromedio;
+
+      if (!isFinite(diferencia) || isNaN(diferencia)) {
+        diferencia = 0;
+      }
+
+      setDifEsperado(diferencia.toFixed(2));
+      console.log("Diferencia Esperado:", diferencia);
+    } catch (error) {
+      console.error("Error al calcular diferencia esperada:", error);
+      setDifEsperado("0");
+      alert("Error al calcular diferencia esperada.");
+    }
+  };
+
+  const handleObtenerDifVendido = () => {
+    try {
+      const ingresoVendido = parseFloat(ingVendido) || 0;
+      const costoPromedio = parseFloat(costoprom) || 0;
+
+      let diferencia = ingresoVendido - costoPromedio;
+
+      if (!isFinite(diferencia) || isNaN(diferencia)) {
+        diferencia = 0;
+      }
+
+      setDifVendido(diferencia.toFixed(2));
+      console.log("Diferencia Vendido:", diferencia);
+    } catch (error) {
+      console.error("Error al calcular diferencia vendida:", error);
+      setDifVendido("0");
+      alert("Error al calcular diferencia vendida.");
+    }
+  };
+
+
+  const handleObtenerValorRinde = () => {
+    try {
+      const ingresoVendido = parseFloat(ingVendido) || 0;
+
+      let valor = ingresoVendido / 93;
+
+      if (!isFinite(valor) || isNaN(valor)) {
+        valor = 0;
+      }
+
+      setValorRinde(valor.toFixed(2));
+      console.log("Valor Rinde:", valor);
+    } catch (error) {
+      console.error("Error al calcular Valor Rinde:", error);
+      setValorRinde("0");
+      alert("Error al calcular Valor Rinde.");
+    }
+  };
+
+
+  const handleObtenerEficiencia = () => {
+    try {
+      const r = parseFloat(rinde) || 0;
+      const valor = parseFloat(valorRinde) || 0;
+      const kg = parseFloat(totalKg) || 0;
+      console.log("rinde", ((r) / 100), "valor", valor, "totalkg", kg)
+      let resultado = ((r) / 100) * valor * kg * 100;
+
+      if (!isFinite(resultado) || isNaN(resultado)) {
+        resultado = 0;
+      }
+
+      setEficiencia(resultado.toFixed(2));
+      console.log("Eficiencia:", resultado);
+    } catch (error) {
+      console.error("Error al calcular eficiencia:", error);
+      setEficiencia("0");
+      alert("Error al calcular eficiencia.");
+    }
+  };
+
+  const handleObtenerMbCerdo = () => {
+    try {
+      const ingresos = parseFloat(cerdosIngresos) || 0;
+      const kg = parseFloat(kgCerdo) || 0;
+
+      const resultado = ingresos * kg;
+
+      if (!isFinite(resultado) || isNaN(resultado)) {
+        setMbcerdo(0);
+        alert("No se pudo calcular mbcerdo. Verifica los valores.");
+        return;
+      }
+
+      setMbcerdo(resultado.toFixed(2));
+      console.log("mbcerdo:", resultado);
+    } catch (error) {
+      console.error("Error al calcular mbcerdo:", error);
+      alert("Error al calcular mbcerdo.")
+    }
+  };
+
+
 
   const handleGuardarRinde = async () => {
     const confirmacion = window.confirm("¿Desea guardar el rinde?");
@@ -474,6 +1140,7 @@ export default function CalculoRinde() {
             alert(
               "Ya se ha guardado un rendimiento para la sucursal, mes y año indicados."
             );
+
             return;
           }
         } else {
@@ -515,11 +1182,33 @@ export default function CalculoRinde() {
             totalKgCerdo: parseFloat(kgCerdo),
             rinde: rindeCalculado,
             datosAjuste: ajustes,
+            cantidadMedias: parseFloat(cantidadMedias),
+            totalKg: parseFloat(totalKg),
+            mbcerdo: parseFloat(mbcerdo),
+            costoprom: parseFloat(costoprom),
+            mgtotal: parseFloat(mgtotal),
+            mgporkg: parseFloat(mgporkg),
+            promdiario: parseFloat(promdiario),
+            totalventa: parseFloat(totalventa),
+            gastos: parseFloat(gastos),
+            cajagrande: parseFloat(cajagrande),
+            otros: parseFloat(otros),
+            costovacuno: parseFloat(costovacuno),
+            achuras: parseFloat(achuras),
+            difInventario: parseFloat(difInventario),
+            costoporcino: parseFloat(costoporcino),
+            ingEsperado: parseFloat(ingEsperado),
+            ingVendido: parseFloat(ingVendido),
+            difEsperado: parseFloat(difEsperado),
+            difVendido: parseFloat(difVendido),
+            valorRinde: parseFloat(valorRinde),
+            eficiencia: parseFloat(eficiencia),
           }),
         });
 
         if (response.ok) {
           alert("Rinde guardado correctamente.");
+          navigate("/inventory/performancelist"); // 👈 Redirección
         } else {
           throw new Error("Error al guardar el rinde.");
         }
@@ -530,6 +1219,11 @@ export default function CalculoRinde() {
       }
     }
   };
+
+  // const total =
+  //   (Number(kgNovillo) || 0) + (Number(kgVaca) || 0) + (Number(kgCerdo) || 0);
+
+  // setTotalKg(total.toFixed(2));
 
   return (
     <Container>
@@ -632,10 +1326,6 @@ export default function CalculoRinde() {
             <td>
               <Button
                 onClick={() =>
-                  // handleObtenerDatos(
-                  //   `${apiUrl}/ventas/monto_con_articulo_filtradas`,
-                  //   "ventas"
-                  // )
                   handleSelectCategories()
                 }
                 disabled={loading}
@@ -774,6 +1464,15 @@ export default function CalculoRinde() {
 
           <tr>
             <td>
+              <Button onClick={handleObtenerCostovacuno} disabled={loading}>
+                Obtener Costo Vacuno
+              </Button>
+            </td>
+            <td>{costovacuno !== null ? `$${costovacuno}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
               <Button
                 onClick={() =>
                   handleObtenerKg(`${apiUrl}/ordenesfiltradas`, "cerdo")
@@ -784,6 +1483,15 @@ export default function CalculoRinde() {
               </Button>
             </td>
             <td>{kgCerdo !== null ? `${kgCerdo} Kg` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerCostoporcino} disabled={loading}>
+                Obtener Costo Porcino
+              </Button>
+            </td>
+            <td>{costoporcino !== null ? `$${costoporcino}` : "-"}</td>
           </tr>
 
           <tr>
@@ -806,6 +1514,194 @@ export default function CalculoRinde() {
             </td>
           </tr>
 
+          <tr>
+            <td>
+              <Button onClick={handleObtenerTotalKg} disabled={loading}>
+                Obtener Total Kg
+              </Button>
+            </td>
+            {/* <td>{totalKg !== "" ? totalKg : "-"}</td> */}
+            <td>{totalKg !== null ? `${totalKg} Kg` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerCantidadMedias} disabled={loading}>
+                Obtener Cantidad Medias
+              </Button>
+            </td>
+            <td>{cantidadMedias !== "" ? cantidadMedias : "-"}</td>
+          </tr>
+
+
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerCostoProm} disabled={loading}>
+                Obtener Costo Promedio
+              </Button>
+            </td>
+            <td>{costoprom !== null ? `$${costoprom}` : "-"}</td>
+
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerMgtotal} disabled={loading}>
+                Obtener Margen Total
+              </Button>
+            </td>
+            <td>{mgtotal !== null ? `$${mgtotal}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerMgporkg} disabled={loading}>
+                Obtener Margen por Kg
+              </Button>
+            </td>
+            <td>{mgporkg !== null ? `$${mgporkg}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerTotalventa} disabled={loading}>
+                Obtener Total Venta
+              </Button>
+            </td>
+            <td>{totalventa !== null ? `$${totalventa}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerPromdiario} disabled={loading}>
+                Obtener Promedio Diario
+              </Button>
+            </td>
+            <td>{promdiario !== null ? `$${promdiario}` : "-"}</td>
+          </tr>
+
+
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerGastos} disabled={loading}>
+                Obtener Gastos
+              </Button>
+            </td>
+            <td>{gastos !== null ? `$${gastos}` : "-"}</td>
+          </tr>
+
+
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerAchuras} disabled={loading}>
+                Obtener Achuras
+              </Button>
+            </td>
+            <td>{achuras !== null ? `$${achuras}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerDifInventario} disabled={loading}>
+                Obtener Diferencia Inventario
+              </Button>
+            </td>
+            <td>{difInventario !== null ? `$${difInventario}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerMbCerdo} disabled={loading}>
+                MB Cerdo
+              </Button>
+            </td>
+            <td>{mbcerdo !== null ? `$${mbcerdo}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              Caja Grande
+            </td>
+            <td>
+              <input
+                type="number"
+                value={cajagrande}
+                onChange={(e) => setCajagrande(e.target.value)}
+                className="form-control"
+              />
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              Otros
+            </td>
+            <td>
+              <input
+                type="number"
+                value={otros}
+                onChange={(e) => setOtros(e.target.value)}
+                className="form-control"
+              />
+            </td>
+          </tr>
+
+
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerIngEsperado} disabled={loading}>
+                Obtener Ingreso Esperado
+              </Button>
+            </td>
+            <td>{ingEsperado !== null ? `$${ingEsperado}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerIngVendido} disabled={loading}>
+                Obtener Ingreso Vendido
+              </Button>
+            </td>
+            <td>{ingVendido !== null ? `$${ingVendido}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerDifEsperado} disabled={loading}>
+                Obtener Diferencia Esperado
+              </Button>
+            </td>
+            <td>{difEsperado !== null ? `$${difEsperado}` : "-"}</td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerDifVendido} disabled={loading}>
+                Obtener Diferencia Vendido
+              </Button>
+            </td>
+            <td>{difVendido !== null ? `$${difVendido}` : "-"}</td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerValorRinde} disabled={loading}>
+                Obtener Valor Rinde
+              </Button>
+            </td>
+            <td>{valorRinde !== null ? `${valorRinde}` : "-"}</td>
+          </tr>
+
+
+
+
+
+
           {/* Botón para calcular el rinde */}
           <tr>
             <td>
@@ -819,6 +1715,16 @@ export default function CalculoRinde() {
             <td>
               {typeof rinde === "number" ? `${rinde.toFixed(2)} %` : "-"}
             </td>
+          </tr>
+
+
+          <tr>
+            <td>
+              <Button onClick={handleObtenerEficiencia} disabled={loading}>
+                Obtener Eficiencia
+              </Button>
+            </td>
+            <td>{eficiencia !== null ? `${eficiencia}` : "-"}</td>
           </tr>
         </tbody>
       </Table>

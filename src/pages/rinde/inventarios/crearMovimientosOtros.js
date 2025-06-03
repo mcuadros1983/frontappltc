@@ -8,6 +8,7 @@ const CrearMovimientosOtros = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
   const [buttonDisabled, setButtonDisabled] = useState(false);
+  const [tipoMovimiento, setTipoMovimiento] = useState(""); // "Fabrica" o "Achuras"
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -16,17 +17,23 @@ const CrearMovimientosOtros = () => {
   };
 
   const handleUpload = async () => {
-    if (!file) {
+    if (!file || !tipoMovimiento) {
       setUploadSuccess(false);
-      setUploadMessage("Debe seleccionar un archivo.");
+      setUploadMessage("Debe seleccionar tipo de movimiento y archivo.");
       return;
     }
 
     try {
       setButtonDisabled(true);
 
+      // Definir tipo y sucursal_codigo según selección
+      const tipo = tipoMovimiento === "Fabrica" ? "FABRICA" : "ACHURA";
+      const sucursal_codigo = tipoMovimiento === "Fabrica" ? 20 : 1;
+
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("tipo", tipo);
+      formData.append("sucursal_codigo", sucursal_codigo);
 
       const response = await fetch(`${apiUrl}/movimientos-otro-excel`, {
         method: "POST",
@@ -59,7 +66,6 @@ const CrearMovimientosOtros = () => {
       return;
     }
 
-    // Opcional: Validación básica de Excel
     const reader = new FileReader();
     reader.onload = (event) => {
       const data = new Uint8Array(event.target.result);
@@ -67,7 +73,7 @@ const CrearMovimientosOtros = () => {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-      // Aquí podrías validar campos obligatorios, por ahora solo sube
+      // Validaciones básicas si fueran necesarias
       handleUpload();
     };
     reader.readAsArrayBuffer(file);
@@ -76,11 +82,9 @@ const CrearMovimientosOtros = () => {
   const downloadTemplate = () => {
     const headers = [
       "fecha",
-      "tipo",
       "articulocodigo",
       "cantidad",
       "remito",
-      "sucursal_codigo",
       "sucursaldestino_codigo",
     ];
     const worksheet = XLSX.utils.aoa_to_sheet([headers]);
@@ -92,27 +96,41 @@ const CrearMovimientosOtros = () => {
   return (
     <Container>
       <h1 className="my-list-title dark-text">Cargar Movimientos Otros</h1>
+
       {uploadSuccess && <Alert variant="success">{uploadMessage}</Alert>}
       {!uploadSuccess && uploadMessage && (
         <Alert variant="danger">{uploadMessage}</Alert>
       )}
+
       <Form>
-        <Form.Group controlId="formFile" className="mb-3">
-          <Form.Label>Seleccione un archivo Excel:</Form.Label>
-          <Form.Control type="file" onChange={handleFileChange} />
+        <Form.Group controlId="tipoMovimiento" className="mb-3">
+          <Form.Label>Seleccione el tipo de movimiento:</Form.Label>
+          <Form.Select
+            value={tipoMovimiento}
+            onChange={(e) => setTipoMovimiento(e.target.value)}
+          >
+            <option value="">-- Seleccione --</option>
+            <option value="Fabrica">Fábrica</option>
+            <option value="Achuras">Achuras</option>
+          </Form.Select>
         </Form.Group>
-        <Button
-          variant="primary"
-          onClick={handleUploadButtonClick}
-          disabled={!file || buttonDisabled}
-        >
-          Subir Movimientos
-        </Button>
-        {/* <div className="mt-3">
-          <Button variant="secondary" onClick={downloadTemplate}>
-            Descargar Plantilla
-          </Button>
-        </div> */}
+
+        {tipoMovimiento && (
+          <>
+            <Form.Group controlId="formFile" className="mb-3">
+              <Form.Label>Seleccione un archivo Excel:</Form.Label>
+              <Form.Control type="file" onChange={handleFileChange} />
+            </Form.Group>
+
+            <Button
+              variant="primary"
+              onClick={handleUploadButtonClick}
+              disabled={!file || buttonDisabled}
+            >
+              Subir Movimientos
+            </Button>
+          </>
+        )}
 
         <div className="mt-3">
           <Button variant="secondary" onClick={downloadTemplate}>
@@ -121,9 +139,12 @@ const CrearMovimientosOtros = () => {
         </div>
 
         <Alert variant="info" className="mt-3">
-          <strong>Importante:</strong> En la columna <code>Tipo</code> se debe agregar <code>"EGRE"</code> para movimientos de fábrica o <code>"ACH"</code> para achuras. Para el campo <code>sucursal_codigo</code>, se deberá ingresar el código de la <strong>fábrica (20)</strong> para sus movimientos, o el de <strong>central (1) </strong> en el caso de las achuras.
+          <strong>Importante:</strong> El archivo debe contener las columnas{" "}
+          <code>fecha</code>, <code>articulocodigo</code>,{" "}
+          <code>cantidad</code>, <code>remito</code>,{" "}
+          <code>sucursaldestino_codigo</code>. El tipo y la sucursal de origen
+          se seleccionan automáticamente según el tipo de movimiento.
         </Alert>
-
       </Form>
     </Container>
   );
