@@ -396,7 +396,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 >
                   Listar Ordenes
                 </Link>
-                                <Link
+                <Link
                   to="/orders/productsfromexcel"
                   className="nav-link"
                   style={{ color: "white", whiteSpace: "nowrap" }}
@@ -828,7 +828,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 style={{ color: "white", whiteSpace: "nowrap" }}
                 onClick={handleLinkClick}
               >
-                Mov. Otros
+                Fabrica y Ach
               </Link>
               <Link
                 to="/inventory/movementsothers"
@@ -836,7 +836,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 style={{ color: "white", whiteSpace: "nowrap" }}
                 onClick={handleLinkClick}
               >
-                Crear Mov. Otros
+                Crear Fabrica y Ach
               </Link>
               <Link
                 to="/inventory/performance"
@@ -961,7 +961,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               >
                 Crear Cliente
               </Link>
-      
+
             </div>
           </Collapse>
 
@@ -992,42 +992,42 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 style={{ color: "white", whiteSpace: "nowrap" }}
                 onClick={handleLinkClick}
               >
-                Mov. Otros
+                Fabrica y Ach
               </Link>
             </div>
           </Collapse>
+        </>
+      )}
 
-          {/* Estadistica de ventas */}
-          {/*<Nav.Item onClick={() => setSellStatics(!sellStatics)}>
+
+      {(context.user.rol_id === 4) && (
+        <>
+          {/* Sección de Clientes OneShot */}
+          <Nav.Item onClick={() => setOrditem(!orditem)}>
             <Link
               to="#"
               className="nav-link"
               style={{ color: "white", whiteSpace: "nowrap" }}
             >
-              Ventas Stats
+              Ordenes
             </Link>
           </Nav.Item>
-          <Collapse in={sellStatics}>
+          <Collapse in={orditem}>
             <div className="ml-3">
               <Link
-                to="/statics/sell-upload"
+                to="/orders"
                 className="nav-link"
                 style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
               >
-                Subir Archivo
-              </Link>
-              <Link
-                to="/statics/sells-report"
-                className="nav-link"
-                style={{ color: "white", whiteSpace: "nowrap" }}
-              >
-                Reporte Ventas
+                Listar Ordenes
               </Link>
             </div>
           </Collapse>
-          */}
+
         </>
       )}
+
 
       <Nav.Item>
         <Link

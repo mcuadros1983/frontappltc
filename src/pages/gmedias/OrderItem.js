@@ -252,7 +252,7 @@ export default function OrderItem() {
               Subcategoria
             </th>
             <th>Sucursal</th>
-            <th>Operaciones</th>
+            {!(context.user && context.user.rol_id === 4) && <th>Operaciones</th>}
             {/* <th>Operaciones</th> */}
           </tr>
         </thead>
@@ -274,29 +274,31 @@ export default function OrderItem() {
                   ? product.sucursal.nombre
                   : "Sucursal Desconocida"}
               </td>
-              <td className="text-center">
-                <div className="d-flex justify-content-center align-items-center">
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDelete(product.id)}
-                    className="mx-2"
-                  >
-                    Eliminar
-                  </Button>
-                  {context.user && context.user.usuario === "admin" && (
+              {!(context.user && context.user.rol_id === 4) && (
+                <td className="text-center">
+                  <div className="d-flex justify-content-center align-items-center">
                     <Button
-                      color="inherit"
-                      onClick={() =>
-                        navigate(`/products/${product.id}/edit`, {
-                          state: { product },
-                        })
-                      }
+                      variant="danger"
+                      onClick={() => handleDelete(product.id)}
+                      className="mx-2"
                     >
-                      Editar
+                      Eliminar
                     </Button>
-                  )}
-                </div>
-              </td>
+                    {context.user && context.user.usuario === "admin" && (
+                      <Button
+                        color="inherit"
+                        onClick={() =>
+                          navigate(`/products/${product.id}/edit`, {
+                            state: { product },
+                          })
+                        }
+                      >
+                        Editar
+                      </Button>
+                    )}
+                  </div>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

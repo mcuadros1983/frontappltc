@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useContext, useEffect, useState, useCallback } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import Contexts from "../../context/Contexts";
+import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 // import { parse } from "  date-fns";
 // import Pagination from "../../utils/Pagination";
 
@@ -22,6 +24,8 @@ export default function OrderList() {
   // paginacion
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(20);
+
+  const context = useContext(Contexts.UserContext);
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -129,29 +133,6 @@ export default function OrderList() {
   useEffect(() => {
     handleSearch();
   }, [searchTerm, orders, startDate, endDate, selectedBranchId, handleSearch]); // 🔄 NUEVO
-  // const handleSearch = useCallback(() => {
-  //   const searchTermLower = searchTerm.toLowerCase();
-  //   const startDateFilter = startDate ? startDate : null;
-  //   const endDateFilter = endDate ? endDate : null;
-
-  //   if (searchTermLower === "" && !startDate && !endDate) {
-  //     setFilteredOrders(orders);
-  //   } else {
-  //     const filtered = orders.filter((order) => {
-  //       const matchesBranch =
-  //         order.Sucursal &&
-  //         order.Sucursal.nombre.toLowerCase().includes(searchTermLower);
-  //       const orderDate = order.fecha;
-
-  //       const matchesDate =
-  //         (!startDateFilter || orderDate >= startDateFilter) &&
-  //         (!endDateFilter || orderDate <= endDateFilter);
-
-  //       return matchesBranch && matchesDate;
-  //     });
-  //     setFilteredOrders(filtered);
-  //   }
-  // }, [searchTerm, startDate, endDate, orders]);
 
   useEffect(() => {
     loadOrders();
@@ -235,15 +216,6 @@ export default function OrderList() {
           />
         </div>
       </div>
-      {/* <div className="mb-3">
-        <FormControl
-          type="text"
-          placeholder="Buscar por sucursal"
-          className="mr-sm-2"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div> */}
 
       <div className="mb-3">
         <label className="mr-2">Sucursal:</label>
@@ -267,34 +239,12 @@ export default function OrderList() {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th onClick={() => handleSort("id")} style={{ cursor: "pointer" }}>
-              #
-            </th>
-            <th
-              onClick={() => handleSort("fecha")}
-              style={{ cursor: "pointer" }}
-            >
-              Fecha de ingreso
-            </th>
-            <th
-              onClick={() => handleSort("cantidad_total")}
-              style={{ cursor: "pointer" }}
-            >
-              Cantidad de medias
-            </th>
-            <th
-              onClick={() => handleSort("peso_total")}
-              style={{ cursor: "pointer" }}
-            >
-              Peso total
-            </th>
-            <th
-              onClick={() => handleSort("Sucursal.nombre")}
-              style={{ cursor: "pointer" }}
-            >
-              Sucursal
-            </th>
-            <th>Operaciones</th>
+            <th onClick={() => handleSort("id")} style={{ cursor: "pointer" }}>#</th>
+            <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha de ingreso</th>
+            <th onClick={() => handleSort("cantidad_total")} style={{ cursor: "pointer" }}>Cantidad de medias</th>
+            <th onClick={() => handleSort("peso_total")} style={{ cursor: "pointer" }}>Peso total</th>
+            <th onClick={() => handleSort("Sucursal.nombre")} style={{ cursor: "pointer" }}>Sucursal</th>
+            {!(context.user && context.user.rol_id === 4) && <th>Operaciones</th>}
           </tr>
         </thead>
 
@@ -341,58 +291,66 @@ export default function OrderList() {
                   "Sucursal Desconocida"
                 )}
               </td>
-              <td className="text-center">
-                {!isEditing || order.id !== editingOrderId ? (
-                  <>
-                    <Button
-                      variant="danger"
-                      onClick={() => handleDelete(order.id)}
-                      className="mx-2"
-                    >
-                      Eliminar
-                    </Button>
-                    <Button
-                      color="inherit"
-                      onClick={() =>
-                        handleEdit(order.id, order.sucursal_id, order.fecha)
-                      }
-                    >
-                      Editar
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="primary"
-                      onClick={() => handleSave(order.id)}
-                      className="mx-2"
-                    >
-                      Guardar
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleCancel}
-                      className="mx-2"
-                    >
-                      Cancelar
-                    </Button>
-                  </>
-                )}
-              </td>
+              {!(context.user && context.user.rol_id === 4) && (
+                <td className="text-center">
+                  {!isEditing || order.id !== editingOrderId ? (
+                    <>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDelete(order.id)}
+                        className="mx-2"
+                      >
+                        Eliminar
+                      </Button>
+                      <Button
+                        color="inherit"
+                        onClick={() =>
+                          handleEdit(order.id, order.sucursal_id, order.fecha)
+                        }
+                      >
+                        Editar
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="primary"
+                        onClick={() => handleSave(order.id)}
+                        className="mx-2"
+                      >
+                        Guardar
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={handleCancel}
+                        className="mx-2"
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
       </Table>
-      <div>
-        {pageNumbers.map((number) => (
-          <Button
-            key={number}
-            onClick={() => paginate(number)}
-            className="mx-1"
-          >
-            {number}
-          </Button>
-        ))}
+      <div className="d-flex justify-content-center align-items-center mt-3">
+        <Button onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)} disabled={currentPage === 1}>
+          <BsChevronLeft />
+        </Button>
+        <span className="mx-2">
+          Página {currentPage} de {Math.ceil(filteredOrders.length / ordersPerPage)}
+        </span>
+        <Button
+          onClick={() =>
+            currentPage < Math.ceil(filteredOrders.length / ordersPerPage) &&
+            setCurrentPage(currentPage + 1)
+          }
+          disabled={currentPage === Math.ceil(filteredOrders.length / ordersPerPage)}
+        >
+          <BsChevronRight />
+        </Button>
       </div>
     </Container>
   );
