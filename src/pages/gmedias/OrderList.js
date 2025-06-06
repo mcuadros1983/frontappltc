@@ -25,6 +25,8 @@ export default function OrderList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(20);
 
+  const [editingBranchId, setEditingBranchId] = useState("");
+
   const context = useContext(Contexts.UserContext);
 
   const navigate = useNavigate();
@@ -91,7 +93,7 @@ export default function OrderList() {
         credentials: "include",
         method: "PUT",
         body: JSON.stringify({
-          sucursal_id: selectedBranchId,
+          sucursal_id: editingBranchId, // ✅ nuevo estado
           fecha: selectedDate,
         }),
         headers: {
@@ -146,16 +148,16 @@ export default function OrderList() {
   const handleEdit = (id, currentBranchId, currentDate) => {
     setIsEditing(true);
     setSelectedDate(currentDate);
-    setSelectedBranchId(currentBranchId);
+    setEditingBranchId(currentBranchId); // ✅ usar editingBranchId en lugar de selectedBranchId
     setOriginalBranchId(currentBranchId);
-    setEditingOrderId(id); // Establecer el ID de la orden que se está editando
+    setEditingOrderId(id);
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setSelectedBranchId(originalBranchId);
-    setEditingOrderId(null); // Restablecer el ID de la orden que se está editando
-  };
+const handleCancel = () => {
+  setIsEditing(false);
+  setEditingBranchId("");
+  setEditingOrderId(null);
+};
 
   const handleSort = (columnName) => {
     const newSortDirection =
@@ -275,8 +277,8 @@ export default function OrderList() {
                 {isEditing && order.id === editingOrderId ? (
                   <FormControl
                     as="select"
-                    value={selectedBranchId}
-                    onChange={(e) => setSelectedBranchId(e.target.value)}
+                    value={editingBranchId}
+                    onChange={(e) => setEditingBranchId(e.target.value)}
                   >
                     <option value="">Seleccione una sucursal</option>
                     {branches.map((branch) => (

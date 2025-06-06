@@ -854,6 +854,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               >
                 Rendimientos
               </Link>
+
+
               <Link
                 to="/inventory/performancelistcomparative"
                 className="nav-link"
@@ -862,6 +864,34 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               >
                 Rendimientos Comparativos
               </Link>
+
+              <Link
+                to="/inventory/performancegeneral/"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Calculo Rinde Consolidado
+              </Link>
+
+              <Link
+                to="/inventory/performancegenerallist/"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Rendimientos Consolidados
+              </Link>
+
+              <Link
+                to="/inventory/performancelistgral"
+                className="nav-link"
+                style={{ color: "white", whiteSpace: "nowrap" }}
+                onClick={handleLinkClick}
+              >
+                Rendimientos Gral
+              </Link>
+
               <Link
                 to="/inventory/stock"
                 className="nav-link"

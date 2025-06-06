@@ -102,6 +102,9 @@ import VentasPivotTable from "./pages/statics/VentasPivotTable"; // Importa el c
 import VentasReporte from "./pages/statics/VentasReporte.js"; // Importa el componente
 import CrearInventario from "./pages/rinde/inventarios/crearInventario.js";
 import OrderFromExcel from "./pages/gmedias/OrderFromExcel.js";
+import CalculoRindeGeneral from "./pages/rinde/rinde/calculorindegeneral.js";
+import ListaRindesConsolidados from "./pages/rinde/rinde/listarindegeneral.js";
+import ListaRindesGenerales from "./pages/rinde/rinde/rindelistgeneral.js";
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -276,8 +279,20 @@ export default function App() {
                     element={<CalculoRinde />}
                   />
                   <Route
+                    path="/inventory/performancegeneral/"
+                    element={<CalculoRindeGeneral />}
+                  />
+                  <Route
                     path="/inventory/performancelist/"
                     element={<ListaRindes />}
+                  />
+                  <Route
+                    path="/inventory/performancegenerallist/"
+                    element={<ListaRindesConsolidados />}
+                  />
+                  <Route
+                    path="/inventory/performancelistgral/"
+                    element={<ListaRindesGenerales />}
                   />
                   <Route
                     path="/inventory/performancelistcomparative/"
