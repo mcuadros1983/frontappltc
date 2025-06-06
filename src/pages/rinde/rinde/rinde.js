@@ -1438,7 +1438,7 @@ export default function CalculoRinde() {
             <td>
               <Button
                 onClick={() =>
-                  handleObtenerKg(`${apiUrl}/ordenesfiltradas`, "nt")
+                  handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "nt")
                 }
                 disabled={loading}
               >
@@ -1452,7 +1452,7 @@ export default function CalculoRinde() {
             <td>
               <Button
                 onClick={() =>
-                  handleObtenerKg(`${apiUrl}/ordenesfiltradas`, "va")
+                  handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "va")
                 }
                 disabled={loading}
               >
@@ -1475,7 +1475,7 @@ export default function CalculoRinde() {
             <td>
               <Button
                 onClick={() =>
-                  handleObtenerKg(`${apiUrl}/ordenesfiltradas`, "cerdo")
+                  handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "cerdo")
                 }
                 disabled={loading}
               >
