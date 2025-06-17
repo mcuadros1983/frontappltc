@@ -80,3 +80,7 @@
     left: 0;
   }
 }
+
+button.sidebar-toggle:hover {
+  background-color: #495057;
+}

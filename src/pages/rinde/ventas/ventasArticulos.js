@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
+import * as XLSX from "xlsx";
 
 export default function VentasArticulos() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
@@ -19,6 +20,31 @@ export default function VentasArticulos() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const handleExportExcel = () => {
+    const exportData = ventasFiltradas
+      .filter(
+        (venta) =>
+          selectedArticulo === "" ||
+          venta.articuloCodigo === selectedArticulo
+      )
+      .map((venta) => ({
+        Fecha: venta.fecha,
+        Código: venta.articuloCodigo,
+        Descripción: venta.articuloDescripcion,
+        Cantidad: venta.cantidad,
+        Sucursal:
+          context.sucursalesTabla.find(
+            (s) => s.id === parseInt(venta.sucursal_id)
+          )?.nombre || "Desconocido",
+      }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ventas");
+
+    XLSX.writeFile(workbook, "ventas_articulos.xlsx");
+  };
+
   const handleFilter = async () => {
     try {
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
@@ -28,10 +54,10 @@ export default function VentasArticulos() {
 
       const body = selectedSucursal
         ? {
-            fechaDesde: startDate,
-            fechaHasta: endDate,
-            sucursalId: selectedSucursal,
-          }
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: selectedSucursal,
+        }
         : { fechaDesde: startDate, fechaHasta: endDate };
 
       const response = await fetch(`${apiUrl}/ventas/con_articulo_filtradas`, {
@@ -102,10 +128,10 @@ export default function VentasArticulos() {
             ? 1
             : -1
           : valueA > valueB
-          ? isAsc
-            ? -1
-            : 1
-          : 0;
+            ? isAsc
+              ? -1
+              : 1
+            : 0;
       })
     );
   };
@@ -191,8 +217,18 @@ export default function VentasArticulos() {
           ))}
         </FormControl>
       </div>
-      <div className="mb-3">
+      {/* <div className="mb-3">
         <Button onClick={handleFilter}>Filtrar</Button>
+      </div> */}
+      <div className="mb-3 d-flex gap-2">
+        <Button onClick={handleFilter}>Filtrar</Button>
+        <Button
+          variant="success"
+          onClick={handleExportExcel}
+          disabled={ventasFiltradas.length === 0}
+        >
+          Exportar Excel
+        </Button>
       </div>
 
       <Table striped bordered hover>

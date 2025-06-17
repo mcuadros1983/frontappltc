@@ -31,3 +31,17 @@
     background-color: white;
     z-index: 3;
   }
+
+  .fixed-table-container {
+  overflow-x: auto;
+  position: relative;
+}
+
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 2;
+  box-shadow: 2px 0 2px -1px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+}

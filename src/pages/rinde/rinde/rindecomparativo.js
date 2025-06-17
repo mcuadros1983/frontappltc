@@ -115,7 +115,7 @@ export default function ListaRindes() {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>{titulo}</th>
+              <th className="sticky-col">{titulo}</th> {/* Agregamos clase */}
               {columnas.map((col, i) => (
                 <th key={i}>{col.titulo}</th>
               ))}
@@ -125,14 +125,14 @@ export default function ListaRindes() {
             <tbody>
               {metricas.map((metrica, i) => (
                 <tr key={i}>
-                  <td>{metrica.label}</td>
+                  <td className="sticky-col">{metrica.label}</td> {/* Agregamos clase */}
                   {columnas.map((col, j) => (
                     <td key={j}>
                       {col[metrica.key] != null
                         ? `${metrica.prefix || ""}${parseFloat(col[metrica.key]).toLocaleString("es-AR", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}${metrica.suffix || ""}`
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}${metrica.suffix || ""}`
                         : "-"}
                     </td>
                   ))}

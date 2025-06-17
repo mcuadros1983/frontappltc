@@ -32,7 +32,7 @@ export default function ListaRindes() {
     } catch (error) {
       console.error("Error al obtener los rindes:", error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   useEffect(() => {
     obtenerRindes();
@@ -185,87 +185,25 @@ export default function ListaRindes() {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th onClick={() => handleSort("mes")} style={{ cursor: "pointer" }}>
-              Mes
-            </th>
-            <th
-              onClick={() => handleSort("anio")}
-              style={{ cursor: "pointer" }}
-            >
-              Año
-            </th>
-            <th
-              onClick={() => handleSort("totalVentas")}
-              style={{ cursor: "pointer" }}
-            >
-              Ventas
-            </th>
-            <th
-              onClick={() => handleSort("rinde")}
-              style={{ cursor: "pointer" }}
-            >
-              Rinde
-            </th>
-            <th
-              onClick={() => handleSort("sucursal_id")}
-              style={{ cursor: "pointer" }}
-            >
-              Sucursal
-            </th>
-            <th
-              onClick={() => handleSort("ingresoEsperadoCerdo")}
-              style={{ cursor: "pointer" }}
-            >
-              IE CE
-            </th>
-            <th
-              onClick={() => handleSort("ingresoEsperadoNovillo")}
-              style={{ cursor: "pointer" }}
-            >
-              IE NT
-            </th>
-            <th
-              onClick={() => handleSort("ingresoEsperadoVaca")}
-              style={{ cursor: "pointer" }}
-            >
-              IE EX
-            </th>
-            <th
-              onClick={() => handleSort("totalInventarioFinal")}
-              style={{ cursor: "pointer" }}
-            >
-              Inv. Final
-            </th>
-            <th
-              onClick={() => handleSort("totalInventarioInicial")}
-              style={{ cursor: "pointer" }}
-            >
-              Inv. Inicial
-            </th>
-            <th
-              onClick={() => handleSort("totalKgCerdo")}
-              style={{ cursor: "pointer" }}
-            >
-              KG CE
-            </th>
-            <th
-              onClick={() => handleSort("totalKgNovillo")}
-              style={{ cursor: "pointer" }}
-            >
-              KG NT
-            </th>
-            <th
-              onClick={() => handleSort("totalKgVaca")}
-              style={{ cursor: "pointer" }}
-            >
-              KG EX
-            </th>
-            <th
-              onClick={() => handleSort("totalMovimientos")}
-              style={{ cursor: "pointer" }}
-            >
-              Mov.
-            </th>
+            <th onClick={() => handleSort("mes")} style={{ cursor: "pointer" }}>Mes</th>
+            <th onClick={() => handleSort("anio")} style={{ cursor: "pointer" }}>Año</th>
+            <th onClick={() => handleSort("totalVentas")} style={{ cursor: "pointer" }}>Ventas</th>
+            <th onClick={() => handleSort("rinde")} style={{ cursor: "pointer" }}>Rinde</th>
+            <th onClick={() => handleSort("sucursal_id")} style={{ cursor: "pointer" }}>Sucursal</th>
+            <th onClick={() => handleSort("ingresoEsperadoCerdo")} style={{ cursor: "pointer" }}>IE CE</th>
+            <th onClick={() => handleSort("ingresoEsperadoNovillo")} style={{ cursor: "pointer" }}>IE NT</th>
+            <th onClick={() => handleSort("ingresoEsperadoVaca")} style={{ cursor: "pointer" }}>IE EX</th>
+            <th onClick={() => handleSort("totalInventarioFinal")} style={{ cursor: "pointer" }}>Inv. Final</th>
+            <th onClick={() => handleSort("totalInventarioInicial")} style={{ cursor: "pointer" }}>Inv. Inicial</th>
+            <th onClick={() => handleSort("totalKgCerdo")} style={{ cursor: "pointer" }}>KG CE</th>
+            <th onClick={() => handleSort("totalKgNovillo")} style={{ cursor: "pointer" }}>KG NT</th>
+            <th onClick={() => handleSort("totalKgVaca")} style={{ cursor: "pointer" }}>KG EX</th>
+            <th onClick={() => handleSort("totalMovimientos")} style={{ cursor: "pointer" }}>Mov.</th>
+            <th onClick={() => handleSort("totalventa")} style={{ cursor: "pointer" }}>Total Venta</th>
+            <th onClick={() => handleSort("costovacuno")} style={{ cursor: "pointer" }}>Costo Vacuno</th>
+            <th onClick={() => handleSort("costoporcino")} style={{ cursor: "pointer" }}>Costo Porcino</th>
+            <th onClick={() => handleSort("gastos")} style={{ cursor: "pointer" }}>Gastos</th>
+            <th onClick={() => handleSort("difInventario")} style={{ cursor: "pointer" }}>Dif. Inventario</th>
             <th>Operaciones</th>
           </tr>
         </thead>
@@ -277,7 +215,6 @@ export default function ListaRindes() {
               <td>{rinde.totalVentas}</td>
               <td>{rinde.rinde}%</td>
               <td>
-                {" "}
                 {context.sucursalesTabla.find(
                   (sucursal) => sucursal.id === parseInt(rinde.sucursal_id)
                 )?.nombre || "Desconocido"}
@@ -291,6 +228,11 @@ export default function ListaRindes() {
               <td>{rinde.totalKgNovillo}</td>
               <td>{rinde.totalKgVaca}</td>
               <td>{rinde.totalMovimientos}</td>
+              <td>{rinde.totalventa}</td>
+              <td>{rinde.costovacuno}</td>
+              <td>{rinde.costoporcino}</td>
+              <td>{rinde.gastos}</td>
+              <td>{rinde.difInventario}</td>
               <td>
                 <Button
                   variant="danger"
