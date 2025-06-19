@@ -160,6 +160,13 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           >
                             Actualizar por Tropa
                           </Link>
+                          <Link
+                            to="/products/verificar-tropa"
+                            className="nav-link"
+                            style={{ color: "white", whiteSpace: "nowrap" }}
+                          >
+                            Verificar por Tropa
+                          </Link>
                         </div>
                       </Collapse>
                       <Nav.Item onClick={() => setSucitem(!sucitem)}>
@@ -855,7 +862,6 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 Rendimientos
               </Link>
 
-
               <Link
                 to="/inventory/performancelistcomparative"
                 className="nav-link"
@@ -991,13 +997,10 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               >
                 Crear Cliente
               </Link>
-
             </div>
           </Collapse>
 
-          <Nav.Item
-            onClick={() => setMovimientosOtros(!movimientosOtros)}
-          >
+          <Nav.Item onClick={() => setMovimientosOtros(!movimientosOtros)}>
             <Link
               to="#"
               className="nav-link"
@@ -1029,8 +1032,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
         </>
       )}
 
-
-      {(context.user.rol_id === 4) && (
+      {context.user.rol_id === 4 && (
         <>
           {/* Sección de Clientes OneShot */}
           <Nav.Item onClick={() => setOrditem(!orditem)}>
@@ -1054,10 +1056,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               </Link>
             </div>
           </Collapse>
-
         </>
       )}
-
 
       <Nav.Item>
         <Link

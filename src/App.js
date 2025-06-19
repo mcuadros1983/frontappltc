@@ -105,6 +105,7 @@ import OrderFromExcel from "./pages/gmedias/OrderFromExcel.js";
 import CalculoRindeGeneral from "./pages/rinde/rinde/calculorindegeneral.js";
 import ListaRindesConsolidados from "./pages/rinde/rinde/listarindegeneral.js";
 import ListaRindesGenerales from "./pages/rinde/rinde/rindelistgeneral.js";
+import VerificarProductosPorTropa from "./pages/gmedias/VerificarProductosPorTropa";
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
@@ -142,6 +143,7 @@ export default function App() {
                   <Route path="/products/:id/edit" element={<ProductForm />} />
                   <Route path="/products_update" element={<ProductUpdate />} />
                   <Route path="/products_update_tropa" element={<ProductUpdateTropa />} />
+                  <Route path="/products/verificar-tropa" element={<VerificarProductosPorTropa />} />
                   <Route path="/customers" element={<CustomerList />} />
                   <Route path="/customers/new" element={<CustomerForm />} />
                   <Route
