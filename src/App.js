@@ -75,6 +75,7 @@ import FormulasItems from "./pages/rinde/formulas/formulasItems";
 import FormulasForm from "./pages/rinde/formulas/formulasForm";
 import Stock from "./pages/rinde/inventarios/stock";
 import Cierres from "./pages/caja/cierres";
+import ListadoCierresZ from "./pages/caja/ListadoCierresZ";
 import VentasComparativo from "./pages/rinde/ventas/ventasComparativo";
 import VentasPorUsuario from "./pages/rinde/ventas/ventasPorUsuario";
 import KgPorUsuario from "./pages/rinde/ventas/kgPorUsuario";
@@ -239,6 +240,7 @@ export default function App() {
                     element={<CobranzasCtaCte />}
                   />
                   <Route path="/info/cashclosure" element={<Cierres />} />
+                  <Route path="/info/cierrez" element={<ListadoCierresZ />} />
                   <Route
                     path="/info/balanceaccount"
                     element={<SaldosCtaCte />}

@@ -699,7 +699,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               </Link> */}
 
               <Link
-                to="/info/cashclosure"
+                to="/info/cierrez"
                 className="nav-link"
                 style={{ color: "white", whiteSpace: "nowrap" }}
                 onClick={handleLinkClick}
