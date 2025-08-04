@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext,useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
+import * as XLSX from "xlsx";
 
 export default function Gastos() {
   const [gastos, setGastos] = useState([]);
@@ -18,6 +19,32 @@ export default function Gastos() {
   const context = useContext(Contexts.DataContext);
 
   const apiUrl = process.env.REACT_APP_API_URL;
+
+  const exportarExcel = () => {
+  const datosParaExportar = gastos.map((gasto) => {
+    const sucursalNombre = context.sucursalesTabla.find(
+      (sucursal) => sucursal.id === parseInt(gasto.sucursal_id)
+    )?.nombre || "Desconocido";
+
+    const tipoGastoDescripcion = context.tipoDeGastoTabla.find(
+      (tipo) => tipo.id === parseInt(gasto.tipodegasto_id)
+    )?.descripcion || "Desconocido";
+
+    return {
+      Fecha: gasto.fecha,
+      Importe: gasto.importe,
+      Sucursal: sucursalNombre,
+      Descripción: gasto.descripcion,
+      "Tipo de Gasto": tipoGastoDescripcion,
+    };
+  });
+
+  const ws = XLSX.utils.json_to_sheet(datosParaExportar);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Gastos");
+  XLSX.writeFile(wb, "gastos.xlsx");
+};
+
 
   const handleTipoGastoFilter = useCallback(() => {
     if (gastos.length > 0) {
@@ -197,10 +224,10 @@ export default function Gastos() {
         </FormControl>
       </div>
 
-      <div className="mb-3">
-        <Button onClick={handleSearchClick}>Filtrar</Button>
-      </div>
-
+<div className="mb-3">
+  <Button onClick={handleSearchClick} className="mr-2">Filtrar</Button>
+  <Button onClick={exportarExcel} disabled={gastos.length === 0}>Exportar a Excel</Button>
+</div>
       <Table striped bordered hover>
         <thead>
           <tr>
