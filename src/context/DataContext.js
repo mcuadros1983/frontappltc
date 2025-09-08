@@ -2,19 +2,19 @@ import React, { useState, useEffect } from "react";
 import Contexts from "./Contexts";
 
 export default function DataContextProvider({ children }) {
-  const [data, setData] = useState(null);
-  const [sucursales, setSucursales] = useState(null);
-  const [clientes, setClientes] = useState(null);
-  const [formasPago, setFormasPago] = useState(null);
-  const [sucursalesTabla, setSucursalesTabla] = useState(null);
-  const [subcategoriasTabla, setSubcategoriasTabla] = useState(null);
-  const [articulosTabla, setArticulosTabla] = useState(null);
-  const [tipoDeIngresoTabla, setTipoDeIngresoTabla] = useState(null);
-  const [tipoDeGastoTabla, setTipoDeGastoTabla] = useState(null);
-  const [planTarjetaTabla, setPlanTarjetaTabla] = useState(null);
-  const [clientesTabla, setClientesTabla] = useState(null);
-  const [empleados, setEmpleados] = useState(null);
-  const [usuariosTabla, setUsuariosTabla] = useState(null);
+  const [data, setData] = useState([]);
+  const [sucursales, setSucursales] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [formasPago, setFormasPago] =useState([]);
+  const [sucursalesTabla, setSucursalesTabla] =useState([]);
+  const [subcategoriasTabla, setSubcategoriasTabla] = useState([]);
+  const [articulosTabla, setArticulosTabla] = useState([]);
+  const [tipoDeIngresoTabla, setTipoDeIngresoTabla] = useState([]);
+  const [tipoDeGastoTabla, setTipoDeGastoTabla] = useState([]);
+  const [planTarjetaTabla, setPlanTarjetaTabla] = useState([]);
+  const [clientesTabla, setClientesTabla] = useState([]);
+  const [empleados, setEmpleados] = uuseState([]);
+  const [usuariosTabla, setUsuariosTabla] =useState([]);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
