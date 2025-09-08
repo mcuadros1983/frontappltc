@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback, useMemo } from "react";
 import { Container, Table, Button, FormControl, Spinner, Row, Col, Card } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import * as XLSX from "xlsx";
 import Contexts from "../../context/Contexts";
 
 export default function Cupones() {
@@ -39,6 +40,14 @@ export default function Cupones() {
     manejadorFiltroClienteSeleccionado();
   }, [clienteSeleccionado, manejadorFiltroClienteSeleccionado]);
 
+  const esFechaValida = (cadenaFecha) => {
+    const regEx = /^\d{4}-\d{2}-\d{2}$/;
+    if (!cadenaFecha.match(regEx)) return false;
+    const fecha = new Date(cadenaFecha);
+    if (!fecha.getTime()) return false;
+    return fecha.toISOString().slice(0, 10) === cadenaFecha;
+  };
+
   const manejarFiltro = async () => {
     try {
       setCargando(true);
@@ -68,7 +77,7 @@ export default function Cupones() {
           setClienteSeleccionado("");
           const clientes = datos.map((cupon) => parseInt(cupon.cliente_id));
           const clientesUnicos = [...new Set(clientes)];
-          const _clientesFiltrados = contexto.clientesTabla.filter((cliente) =>
+          const _clientesFiltrados = (contexto?.clientesTabla || []).filter((cliente) =>
             clientesUnicos.includes(cliente.id)
           );
           setClientesFiltrados(_clientesFiltrados);
@@ -84,9 +93,9 @@ export default function Cupones() {
   };
 
   const manejarOrden = (nombreColumna) => {
-    setDireccionOrden(
-      nombreColumna === columnaOrden && direccionOrden === "asc" ? "desc" : "asc"
-    );
+    const nuevaDireccion =
+      nombreColumna === columnaOrden && direccionOrden === "asc" ? "desc" : "asc";
+    setDireccionOrden(nuevaDireccion);
     setColumnaOrden(nombreColumna);
 
     const cuponesOrdenados = [...cupones].sort((a, b) => {
@@ -98,20 +107,12 @@ export default function Cupones() {
         valorB = parseFloat(valorB);
       }
 
-      if (valorA < valorB) return direccionOrden === "asc" ? -1 : 1;
-      if (valorA > valorB) return direccionOrden === "asc" ? 1 : -1;
+      if (valorA < valorB) return nuevaDireccion === "asc" ? -1 : 1;
+      if (valorA > valorB) return nuevaDireccion === "asc" ? 1 : -1;
       return 0;
     });
 
     setCupones(cuponesOrdenados);
-  };
-
-  const esFechaValida = (cadenaFecha) => {
-    const regEx = /^\d{4}-\d{2}-\d{2}$/;
-    if (!cadenaFecha.match(regEx)) return false;
-    const fecha = new Date(cadenaFecha);
-    if (!fecha.getTime()) return false;
-    return fecha.toISOString().slice(0, 10) === cadenaFecha;
   };
 
   const manejarBusqueda = () => {
@@ -125,9 +126,7 @@ export default function Cupones() {
 
     for (const c of cupones) {
       const importe = Number(c?.importecupon) || 0;
-      const conRecargo =
-        Number(c?.importecuponconrecargo) ||
-        importe; // si no viene, tomamos el importe base
+      const conRecargo = Number(c?.importecuponconrecargo) || importe;
       _totalImporte += importe;
       _totalConRecargo += conRecargo;
     }
@@ -160,6 +159,101 @@ export default function Cupones() {
     if (paginaActual > 1) {
       setPaginaActual(paginaActual - 1);
     }
+  };
+
+  // ====== Exportar a Excel (xlsx) ======
+  const exportarExcel = () => {
+    if (!cupones || cupones.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    const headers = [
+      "Fecha",
+      "Importe",
+      "Sucursal",
+      "Cliente",
+      "Caja",
+      "Recargo",
+      "Lote",
+      "Cupon",
+      "Plan",
+    ];
+
+    const rows = cupones.map((cupon) => {
+      const sucursalNombre =
+        (contexto?.sucursalesTabla || []).find(
+          (s) => s.id === parseInt(cupon.sucursal_id)
+        )?.nombre || "Desconocido";
+
+      const clienteObj = (contexto?.clientesTabla || []).find(
+        (c) => c.id === parseInt(cupon.cliente_id)
+      );
+      const clienteNombre = `${clienteObj?.nombre || ""} ${clienteObj?.apellido || "Desconocido"}`.trim();
+
+      const recargo =
+        (Number(cupon.importecuponconrecargo) || Number(cupon.importecupon) || 0) -
+        (Number(cupon.importecupon) || 0);
+
+      const planDesc =
+        (contexto?.planTarjetaTabla || []).find(
+          (p) => p.id === parseInt(cupon.plantarjeta_id)
+        )?.descripcion || "Desconocido";
+
+      return [
+        cupon.fecha,
+        Number(cupon.importecupon) || 0,
+        sucursalNombre,
+        clienteNombre,
+        cupon.caja_id ?? "",
+        Number(recargo) || 0,
+        cupon.lote ?? "",
+        cupon.nrocupon ?? "",
+        planDesc,
+      ];
+    });
+
+    const data = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // Auto-filtro y anchos
+    const lastRow = data.length;
+    const lastCol = headers.length - 1;
+    const colLetter = (n) => {
+      let s = "";
+      while (n >= 0) {
+        s = String.fromCharCode((n % 26) + 65) + s;
+        n = Math.floor(n / 26) - 1;
+      }
+      return s;
+    };
+    ws["!autofilter"] = { ref: `A1:${colLetter(lastCol)}${lastRow}` };
+    ws["!cols"] = [
+      { wch: 12 }, // Fecha
+      { wch: 12 }, // Importe
+      { wch: 18 }, // Sucursal
+      { wch: 24 }, // Cliente
+      { wch: 8 },  // Caja
+      { wch: 12 }, // Recargo
+      { wch: 12 }, // Lote
+      { wch: 14 }, // Cupon
+      { wch: 20 }, // Plan
+    ];
+
+    // Tipos numéricos (para que Excel los trate como números)
+    for (let r = 2; r <= lastRow; r++) {
+      if (ws[`B${r}`]) ws[`B${r}`].t = "n"; // Importe
+      if (ws[`F${r}`]) ws[`F${r}`].t = "n"; // Recargo
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Cupones");
+
+    const rango =
+      fechaDesde && fechaHasta
+        ? `_${fechaDesde}_a_${fechaHasta}`
+        : `_${new Date().toISOString().slice(0, 10)}`;
+    XLSX.writeFile(wb, `cupones_filtrados${rango}.xlsx`);
   };
 
   return (
@@ -197,7 +291,7 @@ export default function Cupones() {
           style={{ width: "25%" }}
         >
           <option value="">Seleccione una sucursal</option>
-          {contexto.sucursalesTabla.map((sucursal) => (
+          {(contexto?.sucursalesTabla || []).map((sucursal) => (
             <option key={sucursal.id} value={sucursal.id}>
               {sucursal.nombre}
             </option>
@@ -222,8 +316,8 @@ export default function Cupones() {
         </FormControl>
       </div>
 
-      <div className="mb-3">
-        <Button onClick={manejarBusqueda} disabled={cargando}>
+      <div className="mb-3 d-flex align-items-center gap-2">
+        <Button onClick={manejarBusqueda} disabled={cargando} className="me-2">
           {cargando ? (
             <span>
               Cargando... <Spinner as="span" animation="border" size="sm" />
@@ -231,6 +325,14 @@ export default function Cupones() {
           ) : (
             "Filtrar"
           )}
+        </Button>
+
+        <Button
+          variant="success"
+          onClick={exportarExcel}
+          disabled={cargando || cupones.length === 0}
+        >
+          Exportar a Excel
         </Button>
       </div>
 
@@ -292,16 +394,15 @@ export default function Cupones() {
               <td>{cupon.fecha}</td>
               <td>{(Number(cupon.importecupon) || 0).toFixed(2)}</td>
               <td>
-                {contexto.sucursalesTabla.find(
+                {(contexto?.sucursalesTabla || []).find(
                   (sucursal) => sucursal.id === parseInt(cupon.sucursal_id)
                 )?.nombre || "Desconocido"}
               </td>
               <td>
-                {contexto.clientesTabla.find(
+                {(contexto?.clientesTabla || []).find(
                   (cliente) => cliente.id === parseInt(cupon.cliente_id)
-                )?.nombre || ""}
-                &nbsp;
-                {contexto.clientesTabla.find(
+                )?.nombre || ""}{" "}
+                {(contexto?.clientesTabla || []).find(
                   (cliente) => cliente.id === parseInt(cupon.cliente_id)
                 )?.apellido || "Desconocido"}
               </td>
@@ -315,7 +416,7 @@ export default function Cupones() {
               <td>{cupon.lote}</td>
               <td>{cupon.nrocupon}</td>
               <td>
-                {contexto.planTarjetaTabla.find(
+                {(contexto?.planTarjetaTabla || []).find(
                   (plan) => plan.id === parseInt(cupon.plantarjeta_id)
                 )?.descripcion || "Desconocido"}
               </td>
