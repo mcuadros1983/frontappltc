@@ -13,7 +13,7 @@ export default function DataContextProvider({ children }) {
   const [tipoDeGastoTabla, setTipoDeGastoTabla] = useState([]);
   const [planTarjetaTabla, setPlanTarjetaTabla] = useState([]);
   const [clientesTabla, setClientesTabla] = useState([]);
-  const [empleados, setEmpleados] = uuseState([]);
+  const [empleados, setEmpleados] = useState([]);
   const [usuariosTabla, setUsuariosTabla] =useState([]);
 
   const apiUrl = process.env.REACT_APP_API_URL;
