@@ -939,8 +939,8 @@ export default function CalculoRinde() {
       const cerdoMb = parseFloat(mbcerdo) || 0;
       const invFinal = parseFloat(montoInventarioFinal) || 0;
       const invInicial = parseFloat(montoInventarioInicial) || 0;
-
-      console.log("ventas", ventas, "movimientos", movimientos, "movimientosotros", movimientosOtros, "cerdomb", cerdoMb, "invfinal", invFinal, "invinicial", invInicial)
+      const ach = parseFloat(achuras) || 0; // ⬅️ Nuevo: achuras
+      console.log("ventas", ventas, "movimientos", movimientos, "movimientosotros", movimientosOtros, "cerdomb", cerdoMb, "invfinal", invFinal, "invinicial", invInicial, "achuras", ach)
 
       // const kgNov = parseFloat(kgNovillo) || 0;
       // const kgVac = parseFloat(kgVaca) || 0;
@@ -959,6 +959,7 @@ export default function CalculoRinde() {
         + movimientos
         - movimientosOtros
         - cerdoMb
+        - ach
         + (invFinal - invInicial)
       ) / totalKg;
 
