@@ -472,53 +472,25 @@ export default function CalculoRinde() {
     setShowVerModal(false);
   };
 
+// Reemplazá COMPLETO el handler por esta versión basada en: rinde = (1 - ingresoVendido / ingresoEsperado) * 100
 const handleCalculoRinde = () => {
+  const esperado = parseFloat(ingEsperado) || 0; // $/kg esperado
+  const vendido  = parseFloat(ingVendido)  || 0; // $/kg vendido
 
-    const montoAjuste = ajustes.reduce(
-      (total, ajuste) => parseFloat(total) + parseFloat(ajuste.importe),
-      0
-    );
+  if (esperado <= 0) {
+    setRinde(0);
+    alert("Primero calculá el Ingreso Esperado (y el Ingreso Vendido) para poder obtener el rinde.");
+    return;
+  }
 
-    const toNumber = (val) => {
-      const num = parseFloat(val);
-      return isNaN(num) ? 0 : num;
-    };
+  let rindeCalculado = (1 - (vendido / esperado)) * 100;
 
-    console.log("valores", "montoventas", montoVentas, "montoMovimientos", montoMovimientos, "montoMovimientosOtros", montoMovimientosOtros, "montoInventarioFinal", montoInventarioFinal, "montoInventarioInicial", montoInventarioInicial, "montoAjuste", toNumber(montoAjuste))
-    const montoVendidoParcial =
-      toNumber(montoVentas) +
-      toNumber(montoMovimientos) -
-      toNumber(montoMovimientosOtros) +
-      toNumber(montoInventarioFinal) -
-      toNumber(montoInventarioInicial) +
-      toNumber(montoAjuste);
+  if (!isFinite(rindeCalculado) || isNaN(rindeCalculado)) {
+    rindeCalculado = 0;
+  }
 
-    console.log("valores", kgNovillo, novillosIngresos, kgVaca, exportacionIngresos, kgCerdo, cerdosIngresos)
-    const montoEsperadoParcial =
-      kgNovillo * novillosIngresos +
-      kgVaca * exportacionIngresos +
-      kgCerdo * cerdosIngresos;
-
-    console.log("monto", montoEsperadoParcial, montoVendidoParcial)
-
-    // Calcular el rinde
-    let rindeCalculado =
-      ((montoEsperadoParcial - montoVendidoParcial) / montoEsperadoParcial) *
-      100;
-
-    console.log("rinde", rindeCalculado)
-
-    // Verificar si el resultado es NaN y establecerlo en 0%
-    if (isNaN(rindeCalculado)) {
-      rindeCalculado = 0;
-      setRinde(rindeCalculado);
-      alert("Falta información para el cáculo del rinde");
-    }
-
-    // Actualizar el estado con el valor calculado de rinde
-    setRinde(rindeCalculado);
-  };
-
+  setRinde(Number(rindeCalculado.toFixed(2)));
+};
 
  const handleEliminarAjuste = (index) => {
   const nuevosAjustes = [...ajustes];
