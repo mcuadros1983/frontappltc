@@ -185,7 +185,7 @@ export default function CalculoRinde() {
   // Resetear ingVendido si cambian montoVentas, montoMovimientos, montoMovimientosOtros, mbcerdo, montoInventarioFinal, montoInventarioInicial o totalKg
   useEffect(() => {
     setIngVendido(0);
-  }, [montoVentas, montoMovimientos, montoMovimientosOtros, mbcerdo, montoInventarioFinal, montoInventarioInicial, totalKg]);
+  }, [montoVentas, montoMovimientos, montoMovimientosOtros, mbcerdo, montoInventarioFinal, montoInventarioInicial, totalKg, ajustes, achuras]);
 
   // Resetear difEsperado si cambian ingEsperado o costoprom
   useEffect(() => {
@@ -271,11 +271,12 @@ export default function CalculoRinde() {
   };
 
   const handleAddAjuste = () => {
-    if (nuevoAjuste.descripcion.trim() && nuevoAjuste.importe.trim()) {
-      setAjustes([...ajustes, { ...nuevoAjuste }]);
-      setNuevoAjuste({ descripcion: "", importe: "" });
-    }
-  };
+  if (nuevoAjuste.descripcion.trim() && nuevoAjuste.importe.trim()) {
+    setAjustes([...ajustes, { ...nuevoAjuste }]);
+    setNuevoAjuste({ descripcion: "", importe: "" });
+    setIngVendido(0); // ⬅️ opcional
+  }
+};
 
   const handleGuardarAjustes = () => {
     setShowAjustesModal(false);
@@ -471,58 +472,43 @@ export default function CalculoRinde() {
     setShowVerModal(false);
   };
 
-  const handleCalculoRinde = () => {
-
-    const montoAjuste = ajustes.reduce(
-      (total, ajuste) => parseFloat(total) + parseFloat(ajuste.importe),
-      0
-    );
-
-    const toNumber = (val) => {
-      const num = parseFloat(val);
-      return isNaN(num) ? 0 : num;
-    };
-
-    console.log("valores", "montoventas", montoVentas, "montoMovimientos", montoMovimientos, "montoMovimientosOtros", montoMovimientosOtros, "montoInventarioFinal", montoInventarioFinal, "montoInventarioInicial", montoInventarioInicial, "montoAjuste", toNumber(montoAjuste))
-    const montoVendidoParcial =
-      toNumber(montoVentas) +
-      toNumber(montoMovimientos) -
-      toNumber(montoMovimientosOtros) +
-      toNumber(montoInventarioFinal) -
-      toNumber(montoInventarioInicial) +
-      toNumber(montoAjuste);
-
-    console.log("valores", kgNovillo, novillosIngresos, kgVaca, exportacionIngresos, kgCerdo, cerdosIngresos)
-    const montoEsperadoParcial =
-      kgNovillo * novillosIngresos +
-      kgVaca * exportacionIngresos +
-      kgCerdo * cerdosIngresos;
-
-    console.log("monto", montoEsperadoParcial, montoVendidoParcial)
-
-    // Calcular el rinde
-    let rindeCalculado =
-      ((montoEsperadoParcial - montoVendidoParcial) / montoEsperadoParcial) *
-      100;
-
-    console.log("rinde", rindeCalculado)
-
-    // Verificar si el resultado es NaN y establecerlo en 0%
-    if (isNaN(rindeCalculado)) {
-      rindeCalculado = 0;
-      setRinde(rindeCalculado);
-      alert("Falta información para el cáculo del rinde");
-    }
-
-    // Actualizar el estado con el valor calculado de rinde
-    setRinde(rindeCalculado);
+// Reemplazá COMPLETO este handler (ahora SIN aplicar ajustes acá)
+const handleCalculoRinde = () => {
+  const toNumber = (val) => {
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : num;
   };
 
-  const handleEliminarAjuste = (index) => {
-    const nuevosAjustes = [...ajustes]; // Hacemos una copia de la lista actual de ajustes
-    nuevosAjustes.splice(index, 1); // Eliminamos el elemento en el índice especificado
-    setAjustes(nuevosAjustes); // Actualizamos el estado con la nueva lista de ajustes
-  };
+  const montoVendidoParcial =
+    toNumber(montoVentas) +
+    toNumber(montoMovimientos) -
+    toNumber(montoMovimientosOtros) +
+    toNumber(montoInventarioFinal) -
+    toNumber(montoInventarioInicial); // ⬅️ se quitó el + montoAjuste
+
+  const montoEsperadoParcial =
+    (parseFloat(kgNovillo) || 0) * (parseFloat(novillosIngresos) || 0) +
+    (parseFloat(kgVaca) || 0) * (parseFloat(exportacionIngresos) || 0) +
+    (parseFloat(kgCerdo) || 0) * (parseFloat(cerdosIngresos) || 0);
+
+  let rindeCalculado =
+    ((montoEsperadoParcial - montoVendidoParcial) / montoEsperadoParcial) * 100;
+
+  if (isNaN(rindeCalculado)) {
+    rindeCalculado = 0;
+    alert("Falta información para el cáculo del rinde");
+  }
+
+  setRinde(rindeCalculado);
+};
+
+
+ const handleEliminarAjuste = (index) => {
+  const nuevosAjustes = [...ajustes];
+  nuevosAjustes.splice(index, 1);
+  setAjustes(nuevosAjustes);
+  setIngVendido(0); // ⬅️ opcional
+};
 
   const handleObtenerCantidadMedias = async () => {
     try {
@@ -931,50 +917,51 @@ export default function CalculoRinde() {
   };
 
 
-  const handleObtenerIngVendido = () => {
-    try {
-      const ventas = parseFloat(montoVentas) || 0;
-      const movimientos = parseFloat(montoMovimientos) || 0;
-      const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
-      const cerdoMb = parseFloat(mbcerdo) || 0;
-      const invFinal = parseFloat(montoInventarioFinal) || 0;
-      const invInicial = parseFloat(montoInventarioInicial) || 0;
-      const ach = parseFloat(achuras) || 0; // ⬅️ Nuevo: achuras
-      console.log("ventas", ventas, "movimientos", movimientos, "movimientosotros", movimientosOtros, "cerdomb", cerdoMb, "invfinal", invFinal, "invinicial", invInicial, "achuras", ach)
+  // Reemplazá COMPLETO este handler (ahora SÍ aplica ajustes acá)
+const handleObtenerIngVendido = () => {
+  try {
+    const ventas = parseFloat(montoVentas) || 0;
+    const movimientos = parseFloat(montoMovimientos) || 0;
+    const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
+    const cerdoMb = parseFloat(mbcerdo) || 0;
+    const invFinal = parseFloat(montoInventarioFinal) || 0;
+    const invInicial = parseFloat(montoInventarioInicial) || 0;
+    const ach = parseFloat(achuras) || 0;
 
-      // const kgNov = parseFloat(kgNovillo) || 0;
-      // const kgVac = parseFloat(kgVaca) || 0;
-      // const kgCerd = parseFloat(kgCerdo) || 0;
+    // 🔹 Nuevo: sumar (o restar si viene negativo) los ajustes al ingreso vendido
+    const montoAjuste = (ajustes || []).reduce(
+      (total, a) => total + (parseFloat(a.importe) || 0),
+      0
+    );
 
-      // const totalKg = kgNov + kgVac + kgCerd;
+    if (!totalKg || totalKg === 0) {
+      setIngVendido(0);
+      alert("No hay kilos suficientes para calcular ingreso vendido.");
+      return;
+    }
 
-      if (totalKg === 0) {
-        setIngVendido(0);
-        alert("No hay kilos suficientes para calcular ingreso vendido.");
-        return;
-      }
-
-      const ingresoVendido = (
-        ventas
-        + movimientos
-        - movimientosOtros
-        - cerdoMb
-        - ach
-        + (invFinal - invInicial)
+    let ingresoVendido =
+      (ventas +
+        movimientos -
+        movimientosOtros -
+        cerdoMb -
+        ach +
+        (invFinal - invInicial) +
+        montoAjuste // ⬅️ Ajustes se incorporan acá
       ) / totalKg;
 
-      // Si el resultado no es un número válido, asignar 0
-      if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
-        ingresoVendido = 0;
-      }
-
-      setIngVendido(ingresoVendido.toFixed(2));
-      console.log("Ingreso vendido:", ingresoVendido);
-    } catch (error) {
-      console.error("Error al calcular ingreso vendido:", error);
-      alert("Error al calcular ingreso vendido.");
+    if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
+      ingresoVendido = 0;
     }
-  };
+
+    setIngVendido(ingresoVendido.toFixed(2));
+    console.log("Ingreso vendido (con ajustes):", ingresoVendido, "Ajustes:", montoAjuste);
+  } catch (error) {
+    console.error("Error al calcular ingreso vendido:", error);
+    alert("Error al calcular ingreso vendido.");
+  }
+};
+
 
   const handleObtenerDifEsperado = () => {
     try {
