@@ -472,35 +472,52 @@ export default function CalculoRinde() {
     setShowVerModal(false);
   };
 
-// Reemplazá COMPLETO este handler (ahora SIN aplicar ajustes acá)
 const handleCalculoRinde = () => {
-  const toNumber = (val) => {
-    const num = parseFloat(val);
-    return isNaN(num) ? 0 : num;
+
+    const montoAjuste = ajustes.reduce(
+      (total, ajuste) => parseFloat(total) + parseFloat(ajuste.importe),
+      0
+    );
+
+    const toNumber = (val) => {
+      const num = parseFloat(val);
+      return isNaN(num) ? 0 : num;
+    };
+
+    console.log("valores", "montoventas", montoVentas, "montoMovimientos", montoMovimientos, "montoMovimientosOtros", montoMovimientosOtros, "montoInventarioFinal", montoInventarioFinal, "montoInventarioInicial", montoInventarioInicial, "montoAjuste", toNumber(montoAjuste))
+    const montoVendidoParcial =
+      toNumber(montoVentas) +
+      toNumber(montoMovimientos) -
+      toNumber(montoMovimientosOtros) +
+      toNumber(montoInventarioFinal) -
+      toNumber(montoInventarioInicial) +
+      toNumber(montoAjuste);
+
+    console.log("valores", kgNovillo, novillosIngresos, kgVaca, exportacionIngresos, kgCerdo, cerdosIngresos)
+    const montoEsperadoParcial =
+      kgNovillo * novillosIngresos +
+      kgVaca * exportacionIngresos +
+      kgCerdo * cerdosIngresos;
+
+    console.log("monto", montoEsperadoParcial, montoVendidoParcial)
+
+    // Calcular el rinde
+    let rindeCalculado =
+      ((montoEsperadoParcial - montoVendidoParcial) / montoEsperadoParcial) *
+      100;
+
+    console.log("rinde", rindeCalculado)
+
+    // Verificar si el resultado es NaN y establecerlo en 0%
+    if (isNaN(rindeCalculado)) {
+      rindeCalculado = 0;
+      setRinde(rindeCalculado);
+      alert("Falta información para el cáculo del rinde");
+    }
+
+    // Actualizar el estado con el valor calculado de rinde
+    setRinde(rindeCalculado);
   };
-
-  const montoVendidoParcial =
-    toNumber(montoVentas) +
-    toNumber(montoMovimientos) -
-    toNumber(montoMovimientosOtros) +
-    toNumber(montoInventarioFinal) -
-    toNumber(montoInventarioInicial); // ⬅️ se quitó el + montoAjuste
-
-  const montoEsperadoParcial =
-    (parseFloat(kgNovillo) || 0) * (parseFloat(novillosIngresos) || 0) +
-    (parseFloat(kgVaca) || 0) * (parseFloat(exportacionIngresos) || 0) +
-    (parseFloat(kgCerdo) || 0) * (parseFloat(cerdosIngresos) || 0);
-
-  let rindeCalculado =
-    ((montoEsperadoParcial - montoVendidoParcial) / montoEsperadoParcial) * 100;
-
-  if (isNaN(rindeCalculado)) {
-    rindeCalculado = 0;
-    alert("Falta información para el cáculo del rinde");
-  }
-
-  setRinde(rindeCalculado);
-};
 
 
  const handleEliminarAjuste = (index) => {
