@@ -23,7 +23,7 @@ export default function DocumentoFormPage() {
   const isEdit = Boolean(editingId);
 
   // rol del contexto global
-  const UserContext = useContext(Contexts.UserContext);
+  const UserContext = useContext(Contexts.UserContext); 
   const userRolId = UserContext?.user?.rol_id;
   const esAdmin = String(userRolId) === "1";
 
