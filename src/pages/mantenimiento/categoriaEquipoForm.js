@@ -15,7 +15,7 @@ export default function CategoriaEquipoForm() {
       const fetchCategoria = async () => {
         setLoading(true);
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL}/categorias-equipos/${id}`);
+          const response = await fetch(`${process.env.REACT_APP_API_URL}/categorias-equipos/${id}`, {credentials: 'include'});
           const data = await response.json();
           setNombre(data.nombre);
         } catch (error) {
@@ -47,7 +47,7 @@ export default function CategoriaEquipoForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(categoriaData),
+        body: JSON.stringify(categoriaData),credentials: 'include'
       });
 
       if (response.ok) {

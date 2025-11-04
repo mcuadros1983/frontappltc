@@ -1,0 +1,107 @@
+/* Página */
+.rpm-page {
+  background:
+    radial-gradient(1200px 420px at -10% -10%, rgba(59,130,246,.06), transparent 55%),
+    radial-gradient(1000px 360px at 110% -10%, rgba(16,185,129,.06), transparent 55%);
+  border-radius: 12px;
+  padding-bottom: 8px;
+}
+
+/* Tarjeta principal */
+.rpm-card {
+  border: 1px solid rgba(2,6,23,.08);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(2,6,23,.08);
+}
+
+/* Header */
+.rpm-header {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid rgba(2,6,23,.08);
+  color: #0f172a;
+}
+
+/* Body */
+.rpm-body {
+  background: #ffffff;
+}
+
+/* Toolbar de filtros */
+.rpm-toolbar {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 16px rgba(2,6,23,.06);
+}
+
+/* Inputs y selects */
+.rpm-input {
+  background: #fff;
+  border: 1px solid rgba(2,6,23,.12) !important;
+  box-shadow: none !important;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.rpm-input:focus {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15) !important;
+}
+
+/* Botones */
+.rpm-btn {
+  box-shadow: 0 6px 14px rgba(15, 23, 42, .12);
+  transition: transform .06s ease, box-shadow .16s ease, filter .16s ease;
+}
+.rpm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15,23,42,.16);
+  filter: saturate(1.05);
+}
+
+.rpm-btn-outline {
+  border-color: rgba(2,6,23,.15);
+}
+.rpm-btn-outline:hover {
+  background: #f3f4f6;
+}
+
+/* Tabla */
+.rpm-tablewrap {
+  border-radius: 12px;
+  border: 1px solid rgba(2,6,23,.08);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(2,6,23,.08);
+}
+
+.rpm-table {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Encabezado de tabla */
+.rpm-table thead th {
+  background: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 100%);
+  color: #0f172a;
+  border-bottom: 1px solid rgba(2,6,23,.12);
+}
+
+/* Hover filas */
+.rpm-table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+/* Badge */
+.rpm-badge {
+  border: 1px solid rgba(255,255,255,.7);
+  box-shadow: 0 2px 6px rgba(2,6,23,.12);
+}
+
+/* Paginación / pie */
+.rpm-pager {
+  padding-top: 6px;
+}
+
+/* Alerta */
+.rpm-alert {
+  border-radius: 10px;
+}

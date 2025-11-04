@@ -2,13 +2,145 @@ import React, { useEffect, useState, useRef } from "react";
 import { Container, Form, Button, Table, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "../../styles/styles.css";
-// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
-import { GenerateReceiptHTML } from "./GenerateReceiptHTML"; // Importa la función de receiptGenerator
-import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable
+import { GenerateReceiptHTML } from "./GenerateReceiptHTML";
+import CategorySummaryTable from "../../utils/CategorySummaryTable";
 
 export default function SellForm() {
-  // const toggleModal = () => setModal(!modal);
+  const navigate = useNavigate();
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const codigoDeBarraRef = useRef(null);
+
+  // "bovino" => lógica actual
+  // "cerdo"  => carga manual de productos nuevos porcinos
+  const [saleMode, setSaleMode] = useState("bovino");
+
+  const initialProductState = {
+    codigo_de_barra: "",
+    num_media: "",
+    precio: "",
+    kg: "",
+    tropa: "",
+    garron: "",
+    categoria_producto: "",
+    subcategoria: "",
+  };
+
+  const [product, setProduct] = useState(initialProductState);
+  const [products, setProducts] = useState([]);
+
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+
+  const [waypays, setWaypays] = useState([]);
+  const [selectedWaypaysId, setSelectedWaypaysId] = useState("");
+
+  const [editingIndex, setEditingIndex] = useState(null);
+
+  const [availableProducts, setAvailableProducts] = useState([]); // catálogo stock (solo bovino)
+  const [modal, setModal] = useState(false);
+
+  // paginación modal
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(20);
+
+  // paginación tabla productos en la venta
+  const [currentPageSell, setCurrentPageSell] = useState(1);
+  const [productsPerPageSell] = useState(10);
+
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+
+  // filtros modal
+  const [searchMedia, setSearchMedia] = useState("");
+  const [searchPeso, setSearchPeso] = useState("");
+  const [searchTropa, setSearchTropa] = useState("");
+  const [searchGarron, setSearchGarron] = useState("");
+
+  const [filteredProducts, setFilteredProducts] = useState([]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadAllProducts, setLoadAllProducts] = useState(true);
+
+  // --- cache de num_media de porcino ya existentes en la BD ---
+  const [existingPorcinoNumMedias, setExistingPorcinoNumMedias] = useState(new Set());
+
+  // helper para saber si ya lo tenemos en la lista parcial actual
+  const localPorcinoNumMedias = new Set(
+    products
+      .filter((p) => p?.categoria_producto === "porcino" && p?.num_media)
+      .map((p) => String(p.num_media))
+  );
+
+
+  const [fecha, setFecha] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+
+  /**
+ * Genera un num_media único considerando:
+ * - existentes en DB (existingSet)
+ * - existentes en la lista parcial (localSet)
+ * Reglas:
+ *  - si base no existe -> devuelve base
+ *  - si existe -> prueba base+"1"
+ *  - si también existe -> base+"2", etc.
+ */
+  const generateUniqueNumMedia = (base, existingSet, localSet) => {
+    if (!base) return "";
+    let candidate = String(base);
+    let sufijo = 0;
+
+    const taken = (v) =>
+      existingSet.has(String(v)) || localSet.has(String(v));
+
+    if (!taken(candidate)) return candidate;
+
+    while (true) {
+      sufijo += 1; // 1, 2, 3...
+      candidate = `${base}${sufijo}`;
+      if (!taken(candidate)) return candidate;
+      // seguridad ante loops raros
+      if (sufijo > 9999) break;
+    }
+    return ""; // si no encontró (muy improbable), devolvemos vacío (forzará validación).
+  };
+
+  // --- helpers de modo ---
+  // const resetForMode = (mode) => {
+  //   // limpiar la lista ya armada
+  //   setProducts([]);
+  //   setCurrentPageSell(1);
+
+  //   if (mode === "cerdo") {
+  //     setProduct({
+  //       ...initialProductState,
+  //       categoria_producto: "porcino",
+  //       subcategoria: "cerdo",
+  //     });
+  //   } else {
+  //     setProduct(initialProductState);
+  //   }
+  // };
+  const resetForMode = (mode) => {
+    // limpiar la lista ya armada
+    setProducts([]);
+    setCurrentPageSell(1);
+
+    if (mode === "cerdo") {
+      setProduct({
+        ...initialProductState,
+        categoria_producto: "porcino",
+        subcategoria: "cerdo",
+      });
+      // opcional: no vaciamos existingPorcinoNumMedias (viene de la BD)
+    } else {
+      setProduct(initialProductState);
+    }
+  };
+
+
+  // --- modal toggle ---
   const toggleModal = () => {
     setModal(!modal);
     if (modal) {
@@ -19,57 +151,15 @@ export default function SellForm() {
     setSearchPeso("");
     setSearchTropa("");
     setSearchGarron("");
-    setCurrentPage(1); // Reiniciar a la primera página
+    setCurrentPage(1);
   };
 
-  const codigoDeBarraRef = useRef(null);
-
-  const initialProductState = {
-    codigo_de_barra: "",
-    num_media: "",
-    precio: "",
-    kg: "",
-    tropa: "",
-  };
-
-  const [product, setProduct] = useState(initialProductState);
-  const [products, setProducts] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [waypays, setWaypays] = useState([]);
-  const [selectedWaypaysId, setSelectedWaypaysId] = useState("");
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [availableProducts, setAvailableProducts] = useState([]);
-  const [modal, setModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(20);
-  const [currentPageSell, setCurrentPageSell] = useState(1);
-  const [productsPerPageSell] = useState(10);
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState("asc");
-  const [searchMedia, setSearchMedia] = useState("");
-  const [searchPeso, setSearchPeso] = useState("");
-  const [searchTropa, setSearchTropa] = useState("");
-  const [searchGarron, setSearchGarron] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadAllProducts, setLoadAllProducts] = useState(true);
-  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // Fecha actual en formato YYYY-MM-DD
-
-  const navigate = useNavigate();
-
-  const apiUrl = process.env.REACT_APP_API_URL;
-
+  // evitar que el usuario salga sin querer (lo dejo igual que tu código original)
   useEffect(() => {
     const handleBeforeUnload = (event) => {
-      // Aquí puedes realizar las acciones que desees al cerrar la ventana de impresión manualmente
-      // Por ejemplo, puedes limpiar el estado o mostrar un mensaje de confirmación al usuario
-      // En este caso, puedes limpiar el estado o realizar otras acciones necesarias
-
-      // Para cancelar el cierre de la ventana de impresión, puedes devolver un mensaje
       const confirmationMessage = "¿Estás seguro de que deseas salir?";
-      event.returnValue = confirmationMessage; // Muestra un mensaje de confirmación al usuario
-      return confirmationMessage; // Devuelve el mensaje de confirmación
+      event.returnValue = confirmationMessage;
+      return confirmationMessage;
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -79,6 +169,7 @@ export default function SellForm() {
     };
   }, []);
 
+  // clientes y formas de pago
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -113,18 +204,24 @@ export default function SellForm() {
     fetchWaypays();
   }, [apiUrl]);
 
+  // stock disponible (solo se usa en bovino)
   useEffect(() => {
+    if (saleMode === "cerdo") return; // en cerdo no buscamos stock existente
     const fetchProducts = async () => {
       try {
         const response = await fetch(`${apiUrl}/productos`, {
           credentials: "include",
         });
         const data = await response.json();
-        const filteredProducts = data.filter(
-          (producto) => producto.sucursal_id === 18
+
+        // stock disponible sucursal 18 PERO solo bovino
+        const filtered = data.filter(
+          (producto) =>
+            producto.sucursal_id === 18 &&
+            producto.categoria_producto === "bovino"
         );
-        setAvailableProducts(filteredProducts);
-        setFilteredProducts(filteredProducts);
+        setAvailableProducts(filtered);
+        setFilteredProducts(filtered);
       } catch (error) {
         console.error("Error fetching products:", error);
       }
@@ -133,19 +230,56 @@ export default function SellForm() {
     if (modal && loadAllProducts) {
       fetchProducts();
     }
-  }, [modal, apiUrl, loadAllProducts]);
+  }, [modal, apiUrl, loadAllProducts, saleMode]);
 
-  // Actualizar los productos filtrados cada vez que se aplique un filtro
+  // Cargar num_media existentes de porcino desde la BD cuando entro al modo "cerdo"
   useEffect(() => {
-    const filtered = availableProducts.filter((product) => {
-      // Verifica si num_media es null o undefined, y asigna una cadena vacía en ese caso
-      const numMedia = product.num_media ?? "";
-      // Verifica si kg es null o undefined, y asigna una cadena vacía en ese caso
-      const kg = product.kg ?? "";
-      // Verifica si tropa es null o undefined, y asigna una cadena vacía en ese caso
-      const tropa = product.tropa ?? "";
-      // Verifica si garron es null o undefined, y asigna una cadena vacía en ese caso
-      const garron = product.garron ?? "";
+    const fetchPorcinoNumMedias = async () => {
+      try {
+        // Opción A (recomendada): endpoint dedicado super liviano
+        // GET /productos/num_media/porcino  ->  ["1001","1002","10021",...]
+        let res = await fetch(`${apiUrl}/productos/num_media/porcino`, {
+          credentials: "include",
+        });
+
+        // Si no existe ese endpoint en tu backend, probamos un fallback genérico
+        if (!res.ok) {
+          res = await fetch(`${apiUrl}/productos?categoria=porcino`, {
+            credentials: "include",
+          });
+        }
+
+        if (!res.ok) throw new Error("No se pudo obtener num_media porcino");
+
+        const data = await res.json();
+        // normalizo a Set de strings
+        const nums = new Set(
+          (Array.isArray(data) ? data : [])
+            .map((x) => (typeof x === "string" ? x : x?.num_media))
+            .filter(Boolean)
+            .map(String)
+        );
+        setExistingPorcinoNumMedias(nums);
+      } catch (err) {
+        console.error("fetchPorcinoNumMedias error:", err);
+        setExistingPorcinoNumMedias(new Set()); // fallback vacío
+      }
+    };
+
+    if (saleMode === "cerdo") {
+      fetchPorcinoNumMedias();
+    }
+  }, [saleMode, apiUrl]);
+
+
+
+  // filtros del modal
+  useEffect(() => {
+    const filtered = availableProducts.filter((p) => {
+      const numMedia = p.num_media ?? "";
+      const kg = p.kg ?? "";
+      const tropa = p.tropa ?? "";
+      const garron = p.garron ?? "";
 
       const mediaMatch = numMedia.toString().includes(searchMedia);
       const pesoMatch = kg.toString().includes(searchPeso);
@@ -158,18 +292,16 @@ export default function SellForm() {
     setFilteredProducts(filtered);
   }, [searchMedia, searchPeso, searchTropa, searchGarron, availableProducts]);
 
-  // Función para manejar la venta exitosa y realizar la impresión del recibo
+  // impresión
   const handleVentaExitosa = async (venta, productos) => {
-    // setVentaExitosa(true); // Establecer ventaExitosa en true
-
     try {
-      // Obtener el nombre del cliente
       const cliente = customers.find(
         (customer) => customer.id === venta.cliente_id
       );
-      const nombreCliente = cliente ? cliente.nombre : "Cliente Desconocido";
+      const nombreCliente = cliente
+        ? cliente.nombre
+        : "Cliente Desconocido";
 
-      // Obtener el nombre de la forma de pago
       const formaPago = waypays.find(
         (waypay) => waypay.id === venta.formaPago_id
       );
@@ -177,7 +309,6 @@ export default function SellForm() {
         ? formaPago.tipo
         : "Forma de Pago Desconocida";
 
-      // Generar el contenido HTML del comprobante
       const receiptHTML = GenerateReceiptHTML(
         venta,
         productos,
@@ -185,15 +316,12 @@ export default function SellForm() {
         nombreFormaPago
       );
 
-      // Crear un nuevo elemento HTML para el contenido del comprobante
       const printWindow = window.open("", "_blank");
       printWindow.document.open();
       printWindow.document.write(receiptHTML);
       printWindow.document.close();
 
-      // Imprimir el contenido del comprobante
       printWindow.print();
-      // Cerrar la ventana emergente después de imprimir
       printWindow.close();
     } catch (error) {
       console.error("Error al imprimir el recibo:", error);
@@ -203,6 +331,7 @@ export default function SellForm() {
     }
   };
 
+  // submit venta
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -216,12 +345,12 @@ export default function SellForm() {
       return;
     }
 
-    if (selectedCustomerId === 1) {
+    if (selectedCustomerId === "1" || selectedCustomerId === 1) {
       alert("No se pueden hacer ventas a la central, cambie de cliente.");
       return;
     }
 
-    if (products.some((product) => product.kg <= 0)) {
+    if (products.some((p) => Number(p.kg) <= 0)) {
       alert("Debe ingresar el peso para todos los productos.");
       return;
     }
@@ -229,20 +358,23 @@ export default function SellForm() {
     const confirmDelete = window.confirm(
       "¿Estás seguro de que deseas grabar esta venta?"
     );
-    if (!confirmDelete) {
-      return;
-    }
+    if (!confirmDelete) return;
 
     const cantidad_total = products.length;
     const peso_total = products.reduce(
-      (acum, product) => acum + Number(product.kg),
+      (acum, p) => acum + Number(p.kg || 0),
       0
     );
 
-    setIsSubmitting(true); // Desactiva el botón
+    setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${apiUrl}/ventas`, {
+      const endpoint =
+        saleMode === "cerdo"
+          ? `${apiUrl}/ventas/cerdo`
+          : `${apiUrl}/ventas`;
+
+      const response = await fetch(endpoint, {
         credentials: "include",
         method: "POST",
         body: JSON.stringify({
@@ -259,14 +391,14 @@ export default function SellForm() {
       });
 
       if (!response.ok) {
-        throw new Error(
-          "Error al realizar la venta. Intente nuevamente más tarde."
-        );
+        throw new Error("Error al realizar la venta.");
       }
 
       const data = await response.json();
+      const productosRespuesta =
+        data.productosActualizados || data.productosCreados || [];
 
-      handleVentaExitosa(data.nuevaVenta, data.productosActualizados);
+      handleVentaExitosa(data.nuevaVenta, productosRespuesta);
       navigate("/sells");
     } catch (error) {
       console.error("Error al realizar la venta:", error.message);
@@ -274,27 +406,146 @@ export default function SellForm() {
         "Ocurrió un error al realizar la venta. Intente nuevamente más tarde."
       );
     } finally {
-      setIsSubmitting(false); // Reactiva el botón
+      setIsSubmitting(false);
     }
   };
 
+  // cambio en inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // selección de cliente => guardo cliente y hago focus al código
+    if (name === "cliente_destino") {
+      setSelectedCustomerId(value);
+      if (codigoDeBarraRef.current) {
+        codigoDeBarraRef.current.focus();
+      }
+      return;
+    }
+
+    // selección de forma de pago
+    if (name === "tipo") {
+      setSelectedWaypaysId(value);
+      return;
+    }
+
+    // modo cerdo: num_media y codigo_de_barra son el mismo campo espejo
+    if (saleMode === "cerdo") {
+      if (name === "num_media") {
+        setProduct((prev) => ({
+          ...prev,
+          num_media: value,
+          codigo_de_barra: value,
+          categoria_producto: "porcino",
+          subcategoria: "cerdo",
+        }));
+        return;
+      }
+      if (name === "codigo_de_barra") {
+        setProduct((prev) => ({
+          ...prev,
+          num_media: value,
+          codigo_de_barra: value,
+          categoria_producto: "porcino",
+          subcategoria: "cerdo",
+        }));
+        return;
+      }
+    }
+
+    // default
     setProduct({
       ...product,
       [name]: name === "kg" ? Number(value) : value,
     });
-
-    if (name === "cliente_destino" && codigoDeBarraRef.current) {
-      setSelectedCustomerId(value);
-      codigoDeBarraRef.current.focus();
-    }
-
-    if (name === "tipo") {
-      setSelectedWaypaysId(value);
-    }
   };
+
+  // agregar producto a la lista
   const handleSave = async () => {
+    if (saleMode === "cerdo") {
+      // Validación de campos obligatorios
+      if (
+        !product.num_media ||
+        !product.kg ||
+        !product.tropa ||
+        !product.garron ||
+        Number(product.kg) <= 0
+      ) {
+        alert("Todos los campos son obligatorios y el peso debe ser mayor a 0.");
+        return;
+      }
+
+      // BASE: el que ingresó el usuario (también espeja código de barra)
+      const baseNum = String(product.num_media).trim();
+
+      // 1) Generar candidato único considerando BD + lista parcial actual
+      let candidate = generateUniqueNumMedia(
+        baseNum,
+        existingPorcinoNumMedias,
+        localPorcinoNumMedias
+      );
+
+      if (!candidate) {
+        alert("No fue posible generar un num_media único. Reintente con otro número.");
+        return;
+      }
+
+      // 2) Armamos el item con el candidate
+      const porcinoItem = {
+        codigo_de_barra: candidate,
+        num_media: candidate,
+        kg: Number(product.kg) || 0,
+        tropa: product.tropa || "",
+        garron: product.garron || "",
+        categoria_producto: "porcino",
+        subcategoria: "cerdo",
+        precio: 0, // precio inicial 0; luego se puede asignar masivamente
+        costo: 0,
+        fecha,
+      };
+
+      // 3) Evitar duplicados exactos en la lista parcial (por si el usuario cargó igual)
+      const alreadyInList = products.some(
+        (p) =>
+          p?.categoria_producto === "porcino" &&
+          String(p?.num_media) === candidate
+      );
+      if (alreadyInList) {
+        // Si justo chocó con otro que acaban de agregar en la UI,
+        // intentamos una vuelta más de sufijo para lista local (no toca BD).
+        const localOnlySet = new Set([...localPorcinoNumMedias, candidate]);
+        const nextCandidate = generateUniqueNumMedia(candidate, new Set(), localOnlySet);
+        if (!nextCandidate) {
+          alert("El num_media ya está en la lista. Intente con otro.");
+          return;
+        }
+        porcinoItem.codigo_de_barra = nextCandidate;
+        porcinoItem.num_media = nextCandidate;
+      }
+
+      // 4) Actualizamos lista parcial
+      setProducts((prev) => [...prev, porcinoItem]);
+
+      // 5) (Opcional) Actualizamos el Set de BD en memoria con el nuevo candidate,
+      //     para minimizar re-consultas al backend en esta misma sesión de carga.
+      setExistingPorcinoNumMedias((prev) => {
+        const clone = new Set(prev);
+        clone.add(porcinoItem.num_media);
+        return clone;
+      });
+
+      // 6) Reset del form porcino (manteniendo modo y categoría)
+      setProduct({
+        ...initialProductState,
+        categoria_producto: "porcino",
+        subcategoria: "cerdo",
+      });
+
+      return;
+    }
+
+
+    // saleMode === "bovino": lógica actual
     if (!product.codigo_de_barra) {
       alert("El campo código de barra es requerido");
       return;
@@ -308,66 +559,47 @@ export default function SellForm() {
     );
     const productData = await productResponse.json();
 
-    // Validar si el producto existe en la base de datos
-    // if (!productData) {
-    //   setModal(true); // Mostrar modal si no existe
-    //   return;
-    // }
-
+    // si no existe o está en sucursal 32 => abrir modal
     if (!productData || productData.sucursal_id === 32) {
-      setModal(true); // Mostrar modal si no existe o si la sucursal es 32
+      setModal(true);
       return;
     }
-    
 
     if (productData.categoria_producto === "bovino") {
-      // Validar que el producto pertenezca a la sucursal esperada
-      // if (productData.sucursal_id !== 18) {
-      //   alert("El producto ya no se encuentra en stock");
-      //   return;
-      // }
-
+      // validar sucursal (stock habilitado)
       const excludedSucursales = [18, 32];
       if (!excludedSucursales.includes(productData.sucursal_id)) {
         alert("El producto ya no se encuentra en stock");
         return;
       }
 
-      // Verificar si el producto ya está en la lista
+      // evitar duplicados por id / num_media
       if (products.some((prod) => prod.id === productData.id)) {
         alert("El producto ya existe en la lista");
         return;
       }
-
-      // Verificar si el producto ya está en la lista
-      if (products.some((prod) => prod.num_media == productData.num_media)) {
+      if (
+        products.some(
+          (prod) => prod.num_media == productData.num_media
+        )
+      ) {
         alert("El producto ya existe en la lista");
         return;
       }
 
-
-      // Validar que el código de barras sea numérico
+      // validar código de barra numérico
       const barcodePattern = /^\d+$/;
       if (!barcodePattern.test(product.codigo_de_barra)) {
         alert("El código de barras debe contener solo números");
         return;
       }
 
-      // Ajustar precio del producto si no tiene asignado
-      const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
-        credentials: "include",
-      });
+      // calcular precio según margen del cliente
+      const res = await fetch(
+        `${apiUrl}/clientes/${selectedCustomerId}/`,
+        { credentials: "include" }
+      );
       const cliente = await res.json();
-      console.log("client", cliente)
-
-      // if (
-      //   !productData.precio &&
-      //   cliente.margen > 0 &&
-      //   productData.costo &&
-      //   productData.categoria_producto === "bovino"
-      // ) {
-      //   productData.precio = (1 + cliente.margen / 100) * productData.costo;
-      // }
 
       if (
         cliente?.margen !== undefined &&
@@ -380,18 +612,19 @@ export default function SellForm() {
         !isNaN(productData.costo)
       ) {
         productData.precio = parseFloat(
-          ((1 + Number(cliente.margen) / 100) * Number(productData.costo)).toFixed(2)
+          (
+            (1 + Number(cliente.margen) / 100) *
+            Number(productData.costo)
+          ).toFixed(2)
         );
       } else {
-        productData.precio = productData.precio || 0; // Mantiene el precio actual si no se puede calcular
+        productData.precio = productData.precio || 0;
       }
 
-
-      // Agregar producto a la lista y resetear el formulario
-      setProducts([...products, productData]);
+      setProducts((prev) => [...prev, productData]);
       setProduct(initialProductState);
     } else if (productData.categoria_producto === "porcino") {
-      // Lógica para porcino
+      // porcino "de stock" cuando estás en modo bovino (puede pasar)
       const productsResponse = await fetch(
         `${apiUrl}/productos/${product.codigo_de_barra}/productosbarra`,
         {
@@ -401,7 +634,7 @@ export default function SellForm() {
       const productsData = await productsResponse.json();
 
       if (!productsData || productsData.length === 0) {
-        setModal(true); // Abre el modal si no se encuentran productos
+        setModal(true);
         return;
       }
 
@@ -410,35 +643,38 @@ export default function SellForm() {
       );
 
       if (validProducts.length > 1) {
-        // Mostrar solo los productos coincidentes en el modal
         setFilteredProducts(validProducts);
-        setLoadAllProducts(false); // No cargar todos los productos
+        setLoadAllProducts(false);
         setModal(true);
         return;
       }
 
       if (!productData) {
-        setLoadAllProducts(true); // Cargar todos los productos al abrir el modal
+        setLoadAllProducts(true);
         setModal(true);
         return;
       }
 
-      // Agregar el único producto encontrado
-      setProducts([...products, validProducts[0]]);
+      setProducts((prev) => [...prev, validProducts[0]]);
       setProduct(initialProductState);
     }
   };
 
-  const handleDelete = (id) => {
+  // delete producto de la lista
+  const handleDelete = (idOrIndex) => {
     const confirmDelete = window.confirm(
       "¿Seguro que desea eliminar este producto?"
     );
+    if (!confirmDelete) return;
 
-    if (confirmDelete) {
-      const updatedProducts = products.filter((prod) => prod.id !== id);
-
-      setProducts(updatedProducts);
-    }
+    setProducts((prev) =>
+      prev.filter((prod, idx) => {
+        if (prod.id !== undefined) {
+          return prod.id !== idOrIndex;
+        }
+        return idx !== idOrIndex;
+      })
+    );
   };
 
   const handleEdit = (index) => {
@@ -447,71 +683,74 @@ export default function SellForm() {
 
   const handlePriceChange = (e, index) => {
     const newPrice = e.target.value;
-    setProducts((prevProducts) => {
-      const updatedProducts = [...prevProducts];
-      updatedProducts[index].precio = newPrice;
-      return updatedProducts;
+    setProducts((prev) => {
+      const updated = [...prev];
+      updated[index].precio = newPrice;
+      return updated;
     });
   };
 
   const handleWeightChange = (e, index) => {
     const newWeight = e.target.value;
-    setProducts((prevProducts) => {
-      const updatedProducts = [...prevProducts];
-      updatedProducts[index].kg = newWeight;
-      return updatedProducts;
+    setProducts((prev) => {
+      const updated = [...prev];
+      updated[index].kg = newWeight;
+      return updated;
     });
   };
+
   const handleSaveEdit = async (index) => {
+    // recalcular precio si estaba en 0
     const res = await fetch(`${apiUrl}/clientes/${selectedCustomerId}/`, {
       credentials: "include",
     });
     const cliente = await res.json();
-    console.log("client", cliente);
-  
-    setProducts((prevProducts) => {
-      const updatedProducts = [...prevProducts];
-      const product = updatedProducts[index];
-  
+
+    setProducts((prev) => {
+      const updated = [...prev];
+      const p = updated[index];
+
       if (
-        product?.precio === 0 || product?.precio === null || product?.precio === undefined
+        p?.precio === 0 ||
+        p?.precio === null ||
+        p?.precio === undefined
       ) {
         if (
           cliente?.margen !== undefined &&
           cliente?.margen !== null &&
           cliente?.margen !== 0 &&
           !isNaN(cliente.margen) &&
-          product?.costo !== undefined &&
-          product?.costo !== null &&
-          product?.costo !== 0 &&
-          !isNaN(product.costo)
+          p?.costo !== undefined &&
+          p?.costo !== null &&
+          p?.costo !== 0 &&
+          !isNaN(p.costo)
         ) {
-          product.precio = parseFloat(
-            ((1 + Number(cliente.margen) / 100) * Number(product.costo)).toFixed(2)
+          p.precio = parseFloat(
+            (
+              (1 + Number(cliente.margen) / 100) * Number(p.costo)
+            ).toFixed(2)
           );
         } else {
-          product.precio = product.precio || 0;
+          p.precio = p.precio || 0;
         }
       }
-  
-      return updatedProducts;
+
+      return updated;
     });
-  
+
     setEditingIndex(null);
   };
-  
-
 
   const handleCancelEdit = () => {
-    setEditingIndex(null); // Al cancelar la edición, simplemente establece el índice de edición en null
+    setEditingIndex(null);
   };
 
+  // asignar precio masivo a todos los porcinos cargados en modo cerdo
   const handleSetPigPrice = () => {
     const pigPrice = prompt("Ingrese el precio del cerdo:");
-    if (pigPrice === null) return; // Si el usuario cancela el prompt, no hacemos nada
+    if (pigPrice === null) return;
     const numericPigPrice = parseFloat(pigPrice);
     if (!isNaN(numericPigPrice)) {
-      // Verificar si el valor ingresado es un número válido
       const updatedProducts = products.map((prod) =>
         prod.categoria_producto === "porcino"
           ? { ...prod, precio: numericPigPrice }
@@ -523,30 +762,26 @@ export default function SellForm() {
     }
   };
 
-  const handleProductDoubleClick = async (product) => {
-    const productResponse = await fetch(`${apiUrl}/productos/${product.id}`, {
-      credentials: "include",
-    });
+  // doble click desde el modal (solo bovino usa el modal)
+  const handleProductDoubleClick = async (rowProduct) => {
+    const productResponse = await fetch(
+      `${apiUrl}/productos/${rowProduct.id}`,
+      {
+        credentials: "include",
+      }
+    );
     const productData = await productResponse.json();
 
-    // Verificar si el producto existe en la base de datos
     if (!productData) {
       setModal(true);
       return;
     }
 
-    // Validar los datos del formulario antes de guardar
     const formFields = ["codigo_de_barra"];
-    if (formFields.some((field) => !product[field])) {
+    if (formFields.some((field) => !rowProduct[field])) {
       alert("Todos los campos son obligatorios");
       return;
     }
-
-    // Verificar si el producto existe en la base de datos
-    // if (productData.sucursal_id !== 18) {
-    //   alert("El producto ya no se encuentra en stock");
-    //   return;
-    // }
 
     const excludedSucursales = [18, 32];
     if (!excludedSucursales.includes(productData.sucursal_id)) {
@@ -558,22 +793,21 @@ export default function SellForm() {
       (prod) => prod.id === productData.id
     );
 
-    // Verificar si el código de barras ya existe en la lista
     if (existingProductIndex !== -1) {
       alert("El producto ya existe en la lista");
       return;
     }
 
-    // Verificar si el código de barras solo contiene números
     const barcodePattern = /^\d+$/;
-    if (!barcodePattern.test(product.codigo_de_barra)) {
+    if (!barcodePattern.test(rowProduct.codigo_de_barra)) {
       alert("El código de barras debe contener solo números");
       return;
     }
 
-    const cliente = customers.find((customer) => customer.id == selectedCustomerId);
-    // Agregar el producto a la lista de productos y limpiar el formulario
-    // Calcular precio si se cumplen las condiciones
+    // calcular precio con margen del cliente
+    const cliente = customers.find(
+      (customer) => customer.id == selectedCustomerId
+    );
     if (
       cliente?.margen !== undefined &&
       cliente?.margen !== null &&
@@ -585,28 +819,26 @@ export default function SellForm() {
       !isNaN(productData.costo)
     ) {
       productData.precio = parseFloat(
-        ((1 + Number(cliente.margen) / 100) * Number(productData.costo)).toFixed(2)
+        (
+          (1 + Number(cliente.margen) / 100) *
+          Number(productData.costo)
+        ).toFixed(2)
       );
     }
 
-    console.log("data", productData.costo, cliente, selectedCustomerId, customers);
-
-
-    setProducts([...products, productData]);
+    setProducts((prev) => [...prev, productData]);
     setProduct(initialProductState);
-    toggleModal(); // Cierra el modal después de agregar el producto
+    toggleModal();
   };
 
   const handleSort = (columnName) => {
-    // Cambiar la dirección de orden si la columna es la misma que la columna actualmente ordenada
     setSortDirection(
-      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
+      columnName === sortColumn && sortDirection === "asc"
+        ? "desc"
+        : "asc"
     );
-
-    // Actualizar la columna actualmente ordenada
     setSortColumn(columnName);
 
-    // Ordenar los productos
     const sortedProducts = [...availableProducts].sort((a, b) => {
       const valueA = a[columnName];
       const valueB = b[columnName];
@@ -623,15 +855,14 @@ export default function SellForm() {
     setAvailableProducts(sortedProducts);
   };
 
+  // paginación modal
   useEffect(() => {
-    // Si hay filtros activos, restablece la página a 1
     if (searchMedia || searchPeso || searchTropa || searchGarron) {
       setCurrentPage(1);
     }
   }, [searchMedia, searchPeso, searchTropa, searchGarron]);
 
-  // Cálculo de la paginación para modal (después de filtrar)
-  const currentProducts = filteredProducts.slice(
+  const currentProductsModal = filteredProducts.slice(
     (currentPage - 1) * productsPerPage,
     currentPage * productsPerPage
   );
@@ -644,23 +875,33 @@ export default function SellForm() {
   ) {
     pageNumbers.push(i);
   }
-
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Cálculo de la paginación para Ordenes
-  const indexOfLastProductSell = currentPageSell * productsPerPageSell;
-  const indexOfFirstProductSell = indexOfLastProductSell - productsPerPageSell;
-  const currentProductsSell = products.slice(indexOfFirstProductSell, indexOfLastProductSell);
+  // paginación tabla de venta
+  const indexOfLastProductSell =
+    currentPageSell * productsPerPageSell;
+  const indexOfFirstProductSell =
+    indexOfLastProductSell - productsPerPageSell;
+  const currentProductsSell = products.slice(
+    indexOfFirstProductSell,
+    indexOfLastProductSell
+  );
 
   const pageNumbersSell = [];
-  for (let i = 1; i <= Math.ceil(products.length / productsPerPageSell); i++) {
+  for (
+    let i = 1;
+    i <= Math.ceil(products.length / productsPerPageSell);
+    i++
+  ) {
     pageNumbersSell.push(i);
   }
 
-  const paginateSell = (pageNumberSell) => setCurrentPageSell(pageNumberSell);
+  const paginateSell = (pageNumberSell) =>
+    setCurrentPageSell(pageNumberSell);
 
   return (
     <Container className="d-flex flex-column align-items-center">
+      {/* MODAL solo útil en bovino */}
       <Modal isOpen={modal} toggle={toggleModal}>
         <ModalHeader toggle={toggleModal}>Buscar Producto</ModalHeader>
         <ModalBody>
@@ -701,7 +942,6 @@ export default function SellForm() {
             <thead>
               <tr>
                 <th>Categoría</th>
-
                 <th
                   onClick={() => handleSort("num_media")}
                   style={{ cursor: "pointer" }}
@@ -729,16 +969,16 @@ export default function SellForm() {
               </tr>
             </thead>
             <tbody>
-              {currentProducts.map((product) => (
+              {currentProductsModal.map((p) => (
                 <tr
-                  key={product.id}
-                  onDoubleClick={() => handleProductDoubleClick(product)}
+                  key={p.id}
+                  onDoubleClick={() => handleProductDoubleClick(p)}
                 >
-                  <td>{product.categoria_producto}</td>
-                  <td>{product.num_media}</td>
-                  <td>{product.kg}</td>
-                  <td>{product.tropa}</td>
-                  <td>{product.garron}</td>
+                  <td>{p.categoria_producto}</td>
+                  <td>{p.num_media}</td>
+                  <td>{p.kg}</td>
+                  <td>{p.tropa}</td>
+                  <td>{p.garron}</td>
                 </tr>
               ))}
             </tbody>
@@ -750,7 +990,7 @@ export default function SellForm() {
               <Button
                 key={number}
                 onClick={() => paginate(number)}
-                className="mx-1 btn btn-primary" // Agrega las clases btn y btn-primary
+                className="mx-1 btn btn-primary"
               >
                 {number}
               </Button>
@@ -761,15 +1001,46 @@ export default function SellForm() {
           </Button>
         </ModalFooter>
       </Modal>
+
       <h1 className="my-form-title text-center">Ventas</h1>
-      <Form onSubmit={handleSave} className="w-50">
+
+      {/* Selector de categoría/mode */}
+      <div className="mb-3 d-flex gap-2">
+        <Button
+          variant={saleMode === "bovino" ? "primary" : "outline-primary"}
+          onClick={() => {
+            setSaleMode("bovino");
+            resetForMode("bovino");
+          }}
+        >
+          Venta Bovino
+        </Button>
+
+        <Button
+          variant={saleMode === "cerdo" ? "primary" : "outline-primary"}
+          onClick={() => {
+            setSaleMode("cerdo");
+            resetForMode("cerdo");
+          }}
+        >
+          Venta Cerdo
+        </Button>
+      </div>
+
+      <Form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSave();
+        }}
+        className="w-50"
+      >
+        {/* Cliente */}
         <Form.Group className="mb-3 text-center">
-          {/* <Form.Label className="px-2">Seleccione el cliente</Form.Label> */}
           <Form.Select
             name="cliente_destino"
             value={selectedCustomerId}
             onChange={handleChange}
-            className="my-input custom-style-select"
+            className="my-input form-control"
             size="lg"
           >
             <option value="">Seleccione un cliente</option>
@@ -781,15 +1052,13 @@ export default function SellForm() {
           </Form.Select>
         </Form.Group>
 
-
-
+        {/* Forma de pago */}
         <Form.Group className="mb-3 text-center">
-          {/* <Form.Label className="px-2">Seleccione una forma de pago</Form.Label> */}
           <Form.Select
             name="tipo"
             value={selectedWaypaysId}
             onChange={handleChange}
-            className="my-input custom-style-select"
+            className="my-input form-control"
             size="lg"
           >
             <option value="">Seleccione una forma de pago</option>
@@ -800,6 +1069,8 @@ export default function SellForm() {
             ))}
           </Form.Select>
         </Form.Group>
+
+        {/* Fecha */}
         <Form.Group className="mb-3 justify-content-center">
           <Form.Label>Fecha de la Venta</Form.Label>
           <Form.Control
@@ -807,39 +1078,94 @@ export default function SellForm() {
             name="fecha"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
-            className="my-input-date" // Clase personalizada
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Codigo de barra</Form.Label>
-          <Form.Control
-            type="text"
-            name="codigo_de_barra"
-            value={product.codigo_de_barra}
-            onChange={handleChange}
-            placeholder="Ingresa el codigo de barra y presione ENTER"
-            className="my-input"
-            ref={codigoDeBarraRef}
-            onKeyPress={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault(); // Prevenir el comportamiento predeterminado del Enter
-                handleSave(); // Procesar automáticamente al presionar Enter
-              }
-            }}
+            className="my-input form-control"
           />
         </Form.Group>
 
-        {/* <Button
-          variant="primary"
-          type="button"
-          onClick={handleSave}
-          // disabled={loading}
-          style={{ position: "relative" }}
-        >
-          Guardar
-        </Button> */}
+        {/* Captura del producto */}
+        {saleMode === "cerdo" ? (
+          <>
+            <Form.Group className="mb-3">
+              <Form.Label>Número de Media / Código</Form.Label>
+              <Form.Control
+                type="text"
+                name="num_media"
+                value={product.num_media}
+                onChange={handleChange}
+                placeholder="num_media (también será código de barra)"
+                className="my-input"
+                ref={codigoDeBarraRef}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Peso (kg)</Form.Label>
+              <Form.Control
+                type="number"
+                name="kg"
+                value={product.kg}
+                onChange={handleChange}
+                className="my-input"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Tropa</Form.Label>
+              <Form.Control
+                type="text"
+                name="tropa"
+                value={product.tropa}
+                onChange={handleChange}
+                className="my-input"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Garrón</Form.Label>
+              <Form.Control
+                type="text"
+                name="garron"
+                value={product.garron}
+                onChange={handleChange}
+                className="my-input"
+              />
+            </Form.Group>
+
+            <div className="text-muted small mb-3">
+              categoria_producto: porcino / subcategoria: cerdo (automático).
+              Precio inicial: 0
+            </div>
+
+            <div className="mb-3">
+              <Button variant="success" type="submit">
+                Agregar Cerdo
+              </Button>
+            </div>
+          </>
+        ) : (
+          <Form.Group className="mb-3">
+            <Form.Label>Codigo de barra</Form.Label>
+            <Form.Control
+              type="text"
+              name="codigo_de_barra"
+              value={product.codigo_de_barra}
+              onChange={handleChange}
+              placeholder="Ingresa el codigo de barra y presione ENTER"
+              className="my-input"
+              ref={codigoDeBarraRef}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSave();
+                }
+              }}
+            />
+          </Form.Group>
+        )}
       </Form>
+
       <h1 className="my-list-title dark-text">Productos a agregar</h1>
+
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -853,38 +1179,44 @@ export default function SellForm() {
           </tr>
         </thead>
         <tbody>
-          {currentProductsSell.map((product, index) => (
-            <tr key={product.codigo_de_barra}>
-              <td>{product.codigo_de_barra}</td>
-              <td>{product.num_media}</td>
+          {currentProductsSell.map((p, index) => (
+            <tr
+              key={
+                p.codigo_de_barra ||
+                p.num_media ||
+                p.id ||
+                `${index}-temp`
+              }
+            >
+              <td>{p.codigo_de_barra}</td>
+              <td>{p.num_media}</td>
               <td>
                 {editingIndex === index ? (
                   <Form.Control
                     type="number"
-                    value={product.precio}
+                    value={p.precio}
                     onChange={(e) => handlePriceChange(e, index)}
-                    min="0" // Establecer el valor mínimo como 0
+                    min="0"
                   />
                 ) : (
-                  product.precio
+                  p.precio
                 )}
               </td>
               <td>
                 {editingIndex === index ? (
                   <Form.Control
                     type="number"
-                    value={product.kg}
+                    value={p.kg}
                     onChange={(e) => handleWeightChange(e, index)}
-                    min="0" // Establecer el valor mínimo como 0
+                    min="0"
                   />
                 ) : (
-                  product.kg
+                  p.kg
                 )}
               </td>
-              <td>{product.tropa}</td>
-              <td>{product.categoria_producto}</td>
+              <td>{p.tropa}</td>
+              <td>{p.categoria_producto}</td>
               <td className="text-center">
-                {/* Renderizado condicional para mostrar botones de editar o guardar/cancelar */}
                 {editingIndex === index ? (
                   <div className="d-flex justify-content-center align-items-center">
                     <Button
@@ -906,7 +1238,11 @@ export default function SellForm() {
                   <div className="d-flex justify-content-center align-items-center">
                     <Button
                       variant="danger"
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() =>
+                        handleDelete(
+                          p.id !== undefined ? p.id : index
+                        )
+                      }
                       className="mx-2"
                     >
                       Eliminar
@@ -925,37 +1261,46 @@ export default function SellForm() {
           ))}
         </tbody>
       </Table>
+
       <div className="py-2">
         <Button
           variant="primary"
           onClick={handleSubmit}
           disabled={isSubmitting || products.length === 0}
         >
-          {isSubmitting ? "Grabando..." : "Grabar"}
+          {isSubmitting
+            ? "Grabando..."
+            : saleMode === "cerdo"
+              ? "Grabar Venta Cerdo"
+              : "Grabar Venta"}
         </Button>
+
         <Button
           variant="secondary"
           onClick={handleSetPigPrice}
           className="mx-2"
           disabled={
-            !products.some((prod) => prod.categoria_producto === "porcino")
+            !products.some(
+              (prod) => prod.categoria_producto === "porcino"
+            )
           }
         >
           Asignar precio Cerdo
         </Button>
       </div>
+
       <div>
         {pageNumbersSell.map((numberSell) => (
           <Button
             key={numberSell}
             onClick={() => paginateSell(numberSell)}
-            className="mx-1" // Agrega una pequeña separación horizontal entre los botones
+            className="mx-1"
           >
             {numberSell}
           </Button>
         ))}
       </div>
-      {/* Agregar el componente CategorySummaryTable aquí */}
+
       <CategorySummaryTable filteredProducts={products} />
     </Container>
   );

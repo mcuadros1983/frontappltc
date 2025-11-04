@@ -14,20 +14,24 @@ import Contexts from "../../context/Contexts";
 
 export default function MantenimientoPreventivoList() {
   const [mantenimientos, setMantenimientos] = useState([]);
-  const [filteredMantenimientos, setFilteredMantenimientos] = useState([]); // Filtrados por sucursal y fecha
-  const [sucursalId, setSucursalId] = useState(""); // Filtro de sucursal
+  const [filteredMantenimientos, setFilteredMantenimientos] = useState([]);
+  const [sucursalId, setSucursalId] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [mantenimientosPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
-  const context = useContext(Contexts.DataContext);
-  const userContext = useContext(Contexts.UserContext); // Obtenemos el rol_id del usuario
-  const navigate = useNavigate();
 
+  // Sucursales por fetch (no context)
+  const [branches, setBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+
+  const userContext = useContext(Contexts.UserContext);
+  const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // Fetch mantenimientos preventivos
   useEffect(() => {
     const fetchMantenimientos = async () => {
       try {
@@ -35,42 +39,63 @@ export default function MantenimientoPreventivoList() {
           credentials: "include",
         });
         const data = await response.json();
-        setMantenimientos(Array.isArray(data) ? data : []);
-        setFilteredMantenimientos(Array.isArray(data) ? data : []); // Inicialmente, mostrar todos los mantenimientos
+        const arr = Array.isArray(data) ? data : [];
+        setMantenimientos(arr);
+        setFilteredMantenimientos(arr);
       } catch (error) {
-        console.error(
-          "Error al obtener los mantenimientos preventivos:",
-          error
-        );
+        console.error("Error al obtener los mantenimientos preventivos:", error);
+        setMantenimientos([]);
+        setFilteredMantenimientos([]);
       }
     };
-
     fetchMantenimientos();
   }, [apiUrl]);
 
-  // Filtrar mantenimientos por sucursal seleccionada
+  // Fetch sucursales
   useEffect(() => {
-    let filtered = mantenimientos;
+    const fetchBranches = async () => {
+      try {
+        setLoadingBranches(true);
+        const res = await fetch(`${apiUrl}/sucursales`, { credentials: "include" });
+        const data = await res.json();
+        setBranches(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error al obtener sucursales:", err);
+        setBranches([]);
+      } finally {
+        setLoadingBranches(false);
+      }
+    };
+    fetchBranches();
+  }, [apiUrl]);
+
+  const sucursalNombreById = (id) => {
+    const s = branches.find((b) => Number(b.id) === Number(id));
+    return s?.nombre || "Desconocido";
+  };
+
+  // Filtrar por sucursal y fechas
+  useEffect(() => {
+    let filtered = [...mantenimientos];
 
     if (sucursalId) {
       filtered = filtered.filter(
-        (mantenimiento) => mantenimiento.sucursal_id === parseInt(sucursalId)
+        (m) => Number(m.sucursal_id) === Number(sucursalId)
       );
     }
-
     if (fechaDesde) {
       filtered = filtered.filter(
-        (mantenimiento) => new Date(mantenimiento.fecha) >= new Date(fechaDesde)
+        (m) => new Date(m.fecha) >= new Date(fechaDesde)
       );
     }
-
     if (fechaHasta) {
       filtered = filtered.filter(
-        (mantenimiento) => new Date(mantenimiento.fecha) <= new Date(fechaHasta)
+        (m) => new Date(m.fecha) <= new Date(fechaHasta)
       );
     }
 
     setFilteredMantenimientos(filtered);
+    setCurrentPage(1);
   }, [sucursalId, fechaDesde, fechaHasta, mantenimientos]);
 
   const handleSort = (columnName) => {
@@ -79,103 +104,76 @@ export default function MantenimientoPreventivoList() {
     );
     setSortColumn(columnName);
 
-    const sortedMantenimientos = [...filteredMantenimientos].sort((a, b) => {
+    const sorted = [...filteredMantenimientos].sort((a, b) => {
       let valueA = a[columnName];
       let valueB = b[columnName];
 
       if (typeof valueA === "string") {
-        valueA = valueA.toUpperCase();
-        valueB = valueB.toUpperCase();
+        valueA = (valueA ?? "").toString().toUpperCase();
+        valueB = (valueB ?? "").toString().toUpperCase();
       }
 
-      if (valueA < valueB) {
-        return sortDirection === "asc" ? -1 : 1;
-      } else if (valueA > valueB) {
-        return sortDirection === "asc" ? 1 : -1;
-      } else {
-        return 0;
-      }
+      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
     });
 
-    setFilteredMantenimientos(sortedMantenimientos);
+    setFilteredMantenimientos(sorted);
   };
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/mantenimientos/preventivo/${id}`,
-        {
-          credentials: "include",
-        }
-      );
+      // Chequear si tiene mantenimiento asociado
+      const response = await fetch(`${apiUrl}/mantenimientos/preventivo/${id}`, {
+        credentials: "include",
+      });
       const mantenimiento = await response.json();
 
       if (mantenimiento && mantenimiento.id) {
-        alert(
-          "No se puede eliminar este mantenimiento preventivo porque tiene un mantenimiento asociado."
-        );
+        alert("No se puede eliminar este preventivo porque tiene un mantenimiento asociado.");
         return;
       }
 
-      const confirmDelete = window.confirm(
-        "¿Está seguro que desea eliminar este mantenimiento preventivo?"
-      );
+      const confirmDelete = window.confirm("¿Está seguro que desea eliminar este mantenimiento preventivo?");
       if (!confirmDelete) return;
 
-      try {
-        const deleteResponse = await fetch(
-          `${apiUrl}/mantenimientos-preventivos/${id}`,
-          {
-            method: "DELETE",
-            credentials: "include",
-          }
-        );
+      const deleteResponse = await fetch(`${apiUrl}/mantenimientos-preventivos/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-        if (deleteResponse.ok) {
-          setMantenimientos((prevMantenimientos) =>
-            prevMantenimientos.filter(
-              (mantenimiento) => mantenimiento.id !== id
-            )
-          );
-        } else {
-          throw new Error("Error al eliminar el mantenimiento preventivo");
-        }
-      } catch (error) {
-        console.error("Error al eliminar el mantenimiento preventivo:", error);
+      if (deleteResponse.ok) {
+        setMantenimientos((prev) => prev.filter((m) => m.id !== id));
+        setFilteredMantenimientos((prev) => prev.filter((m) => m.id !== id));
+      } else {
+        throw new Error("Error al eliminar el mantenimiento preventivo");
       }
     } catch (error) {
-      console.error("Error al verificar el mantenimiento asociado:", error);
+      console.error("Error al eliminar/verificar preventivo:", error);
     }
   };
 
   const indexOfLastMantenimiento = currentPage * mantenimientosPerPage;
-  const indexOfFirstMantenimiento =
-    indexOfLastMantenimiento - mantenimientosPerPage;
+  const indexOfFirstMantenimiento = indexOfLastMantenimiento - mantenimientosPerPage;
   const currentMantenimientos = filteredMantenimientos.slice(
     indexOfFirstMantenimiento,
     indexOfLastMantenimiento
   );
 
   const nextPage = () => {
-    if (
-      currentPage <
-      Math.ceil(filteredMantenimientos.length / mantenimientosPerPage)
-    ) {
+    if (currentPage < Math.ceil(filteredMantenimientos.length / mantenimientosPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
-
   const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   const handleExecute = async (preventivo) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/mantenimientos/preventivo/${preventivo.id}`
-      );
+      const response = await fetch(`${apiUrl}/mantenimientos/preventivo/${preventivo.id}`, {
+        credentials: "include",
+      });
       const mantenimiento = await response.json();
 
       if (mantenimiento && mantenimiento.id) {
@@ -195,166 +193,163 @@ export default function MantenimientoPreventivoList() {
     }
   };
 
+  const canCreate = userContext?.user?.rol_id !== 4;
+  const canEditDelete = userContext?.user?.rol_id !== 4;
+
   return (
-    <Container fluid>
-      <h1 className="my-list-title dark-text text-center">
+    <Container fluid className="vt-page">
+      <h1 className="my-list-title dark-text vt-title text-center">
         Mantenimientos Preventivos
       </h1>
 
-      {/* Filtro por sucursal y fechas */}
-      <Row className="mb-3 d-flex align-items-center justify-content-start">
-        <Col xs={12} md={8} className="d-flex align-items-center">
+      {/* Toolbar superior */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">Sucursal</label>
           <FormControl
             as="select"
             value={sucursalId}
             onChange={(e) => setSucursalId(e.target.value)}
-            className="mr-2"
-            style={{ fontSize: "14px", maxWidth: "200px" }}
-            disabled={mantenimientos.length === 0}
+            className="vt-input"
+            style={{ minWidth: 240 }}
+            disabled={loadingBranches || mantenimientos.length === 0}
           >
-            <option value="">Seleccione una sucursal</option>
-            {context.sucursalesTabla.map((sucursal) => (
-              <option key={sucursal.id} value={sucursal.id}>
-                {sucursal.nombre}
+            <option value="">
+              {loadingBranches ? "Cargando sucursales..." : "Seleccione una sucursal"}
+            </option>
+            {branches.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nombre}
               </option>
             ))}
           </FormControl>
+        </div>
 
-          {userContext.user.rol_id !== 4 && (
+        {canCreate && (
+          <div className="d-inline-block">
             <Link
               to="/mantenimiento-preventivo/new"
-              className="btn btn-primary"
+              className="btn btn-primary shadow-sm d-inline-flex align-items-center justify-content-center"
               style={{
-                fontSize: "14px",
-                maxWidth: "200px",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                padding: '8px 18px',
+                borderRadius: '8px',
+                fontWeight: 500,
+                textDecoration: 'none',
+                transition: 'all 0.2s ease-in-out',
+                height: '40px', // altura consistente
+                whiteSpace: 'nowrap',
+                marginLeft: "12px", // 👈 fuerza el espacio
               }}
             >
               Crear Preventivo
             </Link>
-          )}
-        </Col>
-      </Row>
+          </div>
+        )}
+      </div>
 
-      {/* Filtros de Fecha */}
-      <Row className="mb-3 d-flex align-items-end justify-content-start">
-        <Col xs={12} md={3}>
-          <Form.Group controlId="fechaDesde">
-            <Form.Label>Desde</Form.Label>
-            <Form.Control
-              type="date"
-              value={fechaDesde}
-              onChange={(e) => setFechaDesde(e.target.value)}
-              className="mb-2"
-              style={{ fontSize: "14px" }}
-            />
-          </Form.Group>
-        </Col>
-        <Col xs={12} md={3}>
-          <Form.Group controlId="fechaHasta">
-            <Form.Label>Hasta</Form.Label>
-            <Form.Control
-              type="date"
-              value={fechaHasta}
-              onChange={(e) => setFechaHasta(e.target.value)}
-              className="mb-2"
-              style={{ fontSize: "14px" }}
-            />
-          </Form.Group>
-        </Col>
-      </Row>
+      {/* Filtros de fecha */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">Desde</label>
+          <Form.Control
+            type="date"
+            value={fechaDesde}
+            onChange={(e) => setFechaDesde(e.target.value)}
+            className="vt-input text-center"
+            style={{ minWidth: 180 }}
+          />
+        </div>
 
-      <Table striped bordered hover responsive="sm" className="table-sm">
-        <thead>
-          <tr>
-            <th
-              onClick={() => handleSort("fecha")}
-              style={{ cursor: "pointer", fontSize: "12px" }}
-            >
-              Fecha
-            </th>
-            <th style={{ fontSize: "12px" }}>Equipo</th>
-            <th
-              onClick={() => handleSort("sucursal_id")}
-              style={{ cursor: "pointer", fontSize: "12px" }}
-            >
-              Sucursal
-            </th>
-            <th
-              onClick={() => handleSort("detalle")}
-              style={{ cursor: "pointer", fontSize: "12px" }}
-            >
-              Detalle
-            </th>
-            <th
-              onClick={() => handleSort("estado")}
-              style={{ cursor: "pointer", fontSize: "12px" }}
-            >
-              Estado
-            </th>
-            <th style={{ fontSize: "12px" }}>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentMantenimientos.map((mantenimiento) => (
-            <tr key={mantenimiento.id}>
-              <td>{mantenimiento.fecha}</td>
-              <td>
-                {mantenimiento.Equipo?.nombre || "Equipo desconocido"}
-              </td>
-              <td>
-                {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === mantenimiento.sucursal_id
-                )?.nombre || "Desconocido"}
-              </td>
-              <td>{mantenimiento.detalle}</td>
-              <td>
-                {mantenimiento.estado ? "Procesado" : "Pendiente"}
-              </td>
-              <td 
-              // className="d-flex justify-content-around"
-              >
-                {userContext.user.rol_id !== 4 && (
-                  <>
-                    <Link
-                      to={`/mantenimiento-preventivo/${mantenimiento.id}/edit`}
-                      className="btn btn-warning mb-2 mb-md-0 mr-md-2 btn-sm"
-                    >
-                      Editar
-                    </Link>
-                    <Button
-                      variant="danger"
-                      className="btn btn-warning mb-2 mb-md-0 mr-md-2 btn-sm"
-                      onClick={() => handleDelete(mantenimiento.id)}
-                    >
-                      Eliminar
-                    </Button>
-                  </>
-                )}
-                <Button
-                  variant="success"
-                  className="btn mb-2 mb-md-0 mr-md-2 btn-sm"
-                  onClick={() => handleExecute(mantenimiento)}
-                >
-                  Ejecutar
-                </Button>
-              </td>
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">Hasta</label>
+          <Form.Control
+            type="date"
+            value={fechaHasta}
+            onChange={(e) => setFechaHasta(e.target.value)}
+            className="vt-input text-center"
+            style={{ minWidth: 180 }}
+          />
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover responsive="sm" className="mb-2 table-sm">
+          <thead>
+            <tr>
+              <th onClick={() => handleSort("fecha")} className="vt-th-sort">
+                Fecha
+              </th>
+              <th className="vt-th-sort">Equipo</th>
+              <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">
+                Sucursal
+              </th>
+              <th onClick={() => handleSort("detalle")} className="vt-th-sort">
+                Detalle
+              </th>
+              <th onClick={() => handleSort("estado")} className="vt-th-sort">
+                Estado
+              </th>
+              <th className="text-center">Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {currentMantenimientos.map((m) => (
+              <tr key={m.id}>
+                <td>{m.fecha}</td>
+                <td>{m.Equipo?.nombre || "Equipo desconocido"}</td>
+                <td>{sucursalNombreById(m.sucursal_id)}</td>
+                <td>{m.detalle}</td>
+                <td>{m.estado ? "Procesado" : "Pendiente"}</td>
+                <td className="text-center">
+                  <div className="d-inline-flex gap-2">
+                    {canEditDelete && (
+                      <>
+                        <Link
+                          to={`/mantenimiento-preventivo/${m.id}/edit`}
+                          className="btn btn-warning vt-btn-sm"
+                        >
+                          <i className="bi bi-pencil-square me-1"></i> Editar
+                        </Link>
 
-      <div className="d-flex justify-content-center align-items-center mt-3">
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="vt-btn-danger"
+                          onClick={() => handleDelete(m.id)}
+                        >
+                          <i className="bi bi-trash me-1"></i> Eliminar
+                        </Button>
+                      </>
+                    )}
+
+                    <Button
+                      variant="success"
+                      size="sm"
+                      className="vt-btn-success"
+                      onClick={() => handleExecute(m)}
+                    >
+                      <i className="bi bi-play-fill me-1"></i> Ejecutar
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vt-pager">
         <Button
           onClick={prevPage}
           disabled={currentPage === 1}
-          className="btn-sm"
+          variant="light"
+          className="vt-btn-sm"
         >
           <BsChevronLeft />
         </Button>
-        <span className="mx-2" style={{ fontSize: "14px" }}>
+        <span className="mx-2">
           Página {currentPage} de{" "}
           {Math.ceil(filteredMantenimientos.length / mantenimientosPerPage)}
         </span>
@@ -364,7 +359,8 @@ export default function MantenimientoPreventivoList() {
             currentPage ===
             Math.ceil(filteredMantenimientos.length / mantenimientosPerPage)
           }
-          className="btn-sm"
+          variant="light"
+          className="vt-btn-sm"
         >
           <BsChevronRight />
         </Button>

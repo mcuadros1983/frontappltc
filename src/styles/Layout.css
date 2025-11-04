@@ -1,0 +1,86 @@
+/* ====== GlobalSearch ====== */
+.gs-wrapper {
+  position: relative;
+  max-width: 720px;
+  margin: 12px 16px;
+}
+.gs-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: .5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+  z-index: 50;
+  max-height: 360px;
+  overflow: auto;
+}
+
+/* ====== ShortcutsBar ====== */
+.sc-wrapper {
+  margin: 4px 16px 16px 16px;
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,.06);
+}
+.sc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.sc-title {
+  font-weight: 600;
+  font-size: 14px;
+  opacity: .85;
+}
+.sc-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+.sc-empty {
+  padding: 6px 0;
+  color: #666;
+  font-size: 13px;
+}
+.sc-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sc-chip {
+  flex: 1;
+  background: #f7f9fc;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 999px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.sc-chip:hover { background: #eef2f7; }
+.sc-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+.sc-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin-left: 4px;
+}
+.layout-topbar {
+  background: #eef2f7;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  padding-top: 6px;
+  padding-bottom: 6px;
+}

@@ -1,47 +1,38 @@
-/* Estilos para hacer la primera columna fija */
+/* Contenedor con scroll horizontal */
 .fixed-table-container {
-    width: 100%;
-    overflow-x: scroll;
-    overflow-y: hidden;
-}
-
-.fixed-table-container table {
-    width: auto;
-    border-collapse: separate;
-}
-
-.fixed-first-column {
-    position: -webkit-sticky; /* para Safari */
-    position: sticky;
-    left: 0;
-    background-color: white; /* asegura que la columna fija tenga fondo para no ver datos "tras" ella */
-    z-index: 1; /* asegura que la columna fija se muestre sobre el scroll de otras columnas */
-}
-
-.fixed-header thead th {
-    position: sticky;
-    top: 0;
-    background-color: white;
-    z-index: 2;
-  }
-  
-  .fixed-first-column {
-    position: sticky;
-    left: 0;
-    background-color: white;
-    z-index: 3;
-  }
-
-  .fixed-table-container {
-  overflow-x: auto;
+  width: 100%;
   position: relative;
+  overflow-x: auto;   /* horizontal */
+  overflow-y: hidden; /* evita scroll vertical dentro del wrapper */
 }
 
+/* La tabla debe crecer si hay muchas columnas,
+   pero nunca ser más chica que el contenedor */
+.fixed-table-container table,
+.ventas-table {
+  min-width: 100%;
+  width: max-content;      /* permite expandirse según columnas */
+  border-collapse: separate;
+}
+
+/* Primera columna pegajosa (sticky) */
 .sticky-col {
   position: sticky;
   left: 0;
-  background: white;
-  z-index: 2;
-  box-shadow: 2px 0 2px -1px rgba(0, 0, 0, 0.1);
+  background: #fff; /* para que no “transparente” al hacer scroll */
+  z-index: 3;       /* por encima del resto de celdas */
   white-space: nowrap;
+}
+
+/* Sombra sutil a la derecha de la col fija para separar visualmente */
+.shadow-right {
+  box-shadow: 2px 0 3px -1px rgba(0, 0, 0, 0.15);
+}
+
+/* (Opcional) Si luego quieres header sticky: */
+thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 4;
 }

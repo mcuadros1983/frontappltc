@@ -1,0 +1,113 @@
+/* Página */
+.vtp-page {
+  /* fondo sutil; no cambia tamaños */
+  background:
+    radial-gradient(1200px 400px at -10% -10%, rgba(59,130,246,.06), transparent 60%),
+    radial-gradient(1000px 380px at 110% -10%, rgba(16,185,129,.06), transparent 55%);
+  border-radius: 12px;
+  padding-bottom: 8px;
+}
+
+/* Título */
+.vtp-title {
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: #0f172a; /* slate-900 */
+}
+
+/* Barra de filtros (mismo orden/tamaño) */
+.vtp-toolbar {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 6px 16px rgba(2,6,23,.06);
+}
+
+.vtp-toolbar .form-control {
+  background: #fff;
+  border: 1px solid rgba(2,6,23,.12);
+  box-shadow: none !important;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.vtp-toolbar .form-control:focus {
+  border-color: #60a5fa;         /* azul */
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15) !important;
+}
+
+/* Botones */
+.vtp-actions .vtp-btn {
+  box-shadow: 0 6px 14px rgba(15, 23, 42, .12);
+  transition: transform .06s ease, box-shadow .16s ease, filter .16s ease;
+}
+
+.vtp-actions .vtp-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15,23,42,.16);
+  filter: saturate(1.05);
+}
+
+/* Contenedor de tabla (scrollable) */
+.vtp-tablewrap {
+  border-radius: 12px;
+  border: 1px solid rgba(2,6,23,.08);
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(2,6,23,.08);
+}
+
+/* Tabla */
+.vtp-table {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Encabezado sticky con color */
+.vtp-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 100%); /* gris suave */
+  color: #0f172a;
+  border-bottom: 1px solid rgba(2,6,23,.12);
+}
+
+/* Primera columna pegajosa */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: #ffffff;
+  z-index: 4;
+}
+
+/* Sombra interior a la derecha de la col sticky */
+.shadow-right {
+  box-shadow: inset -10px 0 10px -10px rgba(0,0,0,.10);
+}
+
+/* Hover suave en cuerpo */
+.vtp-table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+/* Números (todas las celdas excepto la columna sticky) */
+.vtp-table td:not(.sticky-col) {
+  text-align: right;
+}
+
+/* Fila TOTAL (última) */
+.vtp-total-row td {
+  background: #f1f5f9; /* slate-100 */
+  border-top: 2px solid rgba(2,6,23,.18);
+}
+
+/* Alertas */
+.vtp-alert {
+  border-radius: 12px;
+}
+
+/* Responsivo fino */
+@media (max-width: 576px) {
+  .vtp-toolbar {
+    padding: 10px 12px;
+  }
+}

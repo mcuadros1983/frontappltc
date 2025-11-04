@@ -50,6 +50,7 @@ export default function FormulasForm() {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
         }
       );
       if (!response.ok) {
@@ -86,6 +87,7 @@ export default function FormulasForm() {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include"
         }
       );
       if (!response.ok) {
@@ -167,6 +169,7 @@ export default function FormulasForm() {
           descripcion: formula.descripcion,
           articulos: formula.articulos,
         }),
+        credentials: "include"
       });
       if (!response.ok) {
         throw new Error("Error al guardar la fórmula");
@@ -182,102 +185,107 @@ export default function FormulasForm() {
       setLoading(false);
     }
   };
-  return (
-    <Container className="d-flex flex-column align-items-center">
-      <h1 className="my-form-title text-center">Agregar Fórmula</h1>
-      <Form onSubmit={handleSubmit} className="w-50">
-        <Form.Group className="mb-3">
-          <Form.Label>Código de la Fórmula</Form.Label>
-          <div className="d-flex align-items-center">
-            <Form.Control
-              type="text"
-              name="codigoFormula"
-              value={formula.codigoFormula}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Ingrese el código del artículo"
-              className="my-input"
-            />
-            <Button
-              variant="primary"
-              onClick={handleSearchArticulo}
-              disabled={searching}
-            >
-              {searching ? (
-                <Spinner
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                />
-              ) : (
-                "Buscar"
-              )}
-            </Button>
-          </div>
-        </Form.Group>
+ return (
+  <Container className="vt-page">
+    <h1 className="my-form-title text-center vt-title">Agregar Fórmula</h1>
 
-        <Form.Group className="mb-3">
-          <Form.Label>Descripción</Form.Label>
+    <Form onSubmit={handleSubmit} className="vt-form vt-form-narrow">
+      {/* Código de la fórmula */}
+      <Form.Group className="mb-3">
+        <Form.Label className="vt-label">Código de la Fórmula</Form.Label>
+        <div className="d-flex align-items-center gap-2">
           <Form.Control
             type="text"
-            name="descripcion"
-            value={formula.descripcion}
+            name="codigoFormula"
+            value={formula.codigoFormula}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder="Ingrese la descripción de la fórmula"
-            className="my-input"
-            disabled
+            placeholder="Ingrese el código del artículo"
+            className="vt-input"
           />
-        </Form.Group>
+          <Button
+            variant="primary"
+            onClick={handleSearchArticulo}
+            disabled={searching}
+            className="vt-btn"
+          >
+            {searching ? (
+              <Spinner animation="border" size="sm" role="status" aria-hidden="true" />
+            ) : (
+              "Buscar"
+            )}
+          </Button>
+        </div>
+      </Form.Group>
 
-        <hr />
+      {/* Descripción */}
+      <Form.Group className="mb-3">
+        <Form.Label className="vt-label">Descripción</Form.Label>
+        <Form.Control
+          type="text"
+          name="descripcion"
+          value={formula.descripcion}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Ingrese la descripción de la fórmula"
+          className="vt-input"
+          disabled
+        />
+      </Form.Group>
 
-        <h2>Artículos</h2>
-        <Form.Group className="mb-3">
-          <Form.Label>Código Artículo</Form.Label>
-          <div className="d-flex align-items-center">
-            <Form.Control
-              type="text"
-              name="codigo"
-              value={articuloInput.codigo}
-              onChange={handleArticuloChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Ingrese el código del artículo"
-              className="my-input"
-            />
-          </div>
-        </Form.Group>
+      <hr className="vt-sep" />
 
-        <Form.Group className="mb-3">
-          <Form.Label>Porcentaje</Form.Label>
-          <div className="d-flex align-items-center">
-            <Form.Control
-              type="number"
-              name="cantidad"
-              value={articuloInput.cantidad}
-              onChange={handleArticuloChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Ingrese la cantidad"
-              className="my-input"
-            />
-            <Button
-              variant="primary"
-              onClick={handleAddArticulo}
-              disabled={searching}
-            >
-              Agregar
-            </Button>
-          </div>
-        </Form.Group>
+      <h2 className="vt-subtitle">Artículos</h2>
 
-        <Table striped bordered hover>
+      {/* Código artículo */}
+      <Form.Group className="mb-3">
+        <Form.Label className="vt-label">Código Artículo</Form.Label>
+        <div className="d-flex align-items-center">
+          <Form.Control
+            type="text"
+            name="codigo"
+            value={articuloInput.codigo}
+            onChange={handleArticuloChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Ingrese el código del artículo"
+            className="vt-input"
+          />
+        </div>
+      </Form.Group>
+
+      {/* Porcentaje/Cantidad */}
+      <Form.Group className="mb-4">
+        <Form.Label className="vt-label">Porcentaje</Form.Label>
+        <div className="d-flex align-items-center gap-2">
+          <Form.Control
+            type="number"
+            name="cantidad"
+            value={articuloInput.cantidad}
+            onChange={handleArticuloChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Ingrese la cantidad"
+            className="vt-input"
+          />
+          <Button
+            variant="primary"
+            onClick={handleAddArticulo}
+            disabled={searching}
+            className="vt-btn"
+          >
+            Agregar
+          </Button>
+        </div>
+      </Form.Group>
+
+      {/* Tabla artículos */}
+      <div className="vt-tablewrap table-responsive mb-3">
+        <Table striped bordered hover className="mb-2">
           <thead>
             <tr>
               <th>Código</th>
               <th>Descripción</th>
-              <th>Cantidad</th>
-              <th>Eliminar</th>
+              <th className="text-end">Cantidad</th>
+              <th className="text-center">Eliminar</th>
             </tr>
           </thead>
           <tbody>
@@ -285,11 +293,13 @@ export default function FormulasForm() {
               <tr key={index}>
                 <td>{articulo.codigo}</td>
                 <td>{articulo.descripcion}</td>
-                <td>{articulo.cantidad}</td>
-                <td>
+                <td className="text-end">{articulo.cantidad}</td>
+                <td className="text-center">
                   <Button
                     variant="danger"
                     onClick={() => handleDeleteArticulo(index)}
+                    size="sm"
+                    className="vt-btn-danger"
                   >
                     Eliminar
                   </Button>
@@ -298,25 +308,19 @@ export default function FormulasForm() {
             ))}
           </tbody>
         </Table>
+      </div>
 
-        <Button
-          variant="primary"
-          type="submit"
-          disabled={loading}
-          style={{ position: "relative" }}
-        >
+      {/* Guardar */}
+      <div className="d-flex justify-content-end">
+        <Button variant="primary" type="submit" disabled={loading} className="vt-btn">
           {loading ? (
-            <Spinner
-              animation="border"
-              size="sm"
-              role="status"
-              aria-hidden="true"
-            />
+            <Spinner animation="border" size="sm" role="status" aria-hidden="true" />
           ) : (
             "Guardar"
           )}
         </Button>
-      </Form>
-    </Container>
-  );
+      </div>
+    </Form>
+  </Container>
+);
 }

@@ -1,7 +1,9 @@
+// CantidadTicketPorUsuario.jsx
 import React, { useState, useContext } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
+import "../../../components/css/CantidadTicketPorUsuario.css"; // ⬅️ NUEVO
 
 export default function CantidadTicketPorUsuario() {
   const [cantidadesTicketFiltrados, setCantidadesTicketFiltrados] = useState([]);
@@ -13,89 +15,83 @@ export default function CantidadTicketPorUsuario() {
   const [selectedUsuario, setSelectedUsuario] = useState("");
   const [filterBy, setFilterBy] = useState("sucursal");
 
-  const context = useContext(Contexts.DataContext);
+  // Orden
+  const [sortCol, setSortCol] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
 
+  const context = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const handleFilter = async () => {
     try {
+      setCurrentPage(1);
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         alert("Ingrese una fecha válida.");
         return;
       }
 
-      const body = {
-        fechaDesde: startDate,
-        fechaHasta: endDate,
-      };
+      const body = { fechaDesde: startDate, fechaHasta: endDate };
 
-    //   if (filterBy === "sucursal" && selectedSucursal) {
-    //     body.sucursalId = selectedSucursal;
-    //   } else if (filterBy === "usuario" && selectedUsuario) {
-    //     body.usuarioId = selectedUsuario;
-    //   }
+      const resp = await fetch(`${apiUrl}/ventas/cantidad_ticket_por_usuario`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
 
-      const response = await fetch(
-        `${apiUrl}/ventas/cantidad_ticket_por_usuario`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        console.log("data", data)
-        const agrupados = filterBy === "sucursal" ? agruparPorSucursal(data) : agruparPorUsuario(data);
-        setCantidadesTicketFiltrados(agrupados);
-      } else {
-        throw new Error("Error al obtener la cantidad de ticket por usuario filtradas");
-      }
-    } catch (error) {
-      console.error(error);
+      if (!resp.ok) throw new Error("Error al obtener la cantidad de tickets");
+
+      const data = await resp.json();
+      const agrupados =
+        filterBy === "sucursal" ? agruparPorSucursal(data) : agruparPorUsuario(data);
+      setCantidadesTicketFiltrados(agrupados);
+    } catch (e) {
+      console.error(e);
     }
   };
 
   const agruparPorSucursal = (data) => {
-    const agrupados = data.reduce((acc, venta) => {
-      const key = venta.sucursal_id;
-      if (!acc[key]) {
-        acc[key] = {
-          sucursal_id: venta.sucursal_id,
-          cantidad: 0,
-          total_monto: 0,
-        };
-      }
-      acc[key].cantidad += Number(venta.cantidad);
-      acc[key].total_monto += parseFloat(venta.total_monto);
-      return acc;
+    const acc = data.reduce((map, v) => {
+      const k = v.sucursal_id;
+      if (!map[k]) map[k] = { sucursal_id: v.sucursal_id, cantidad: 0, total_monto: 0 };
+      map[k].cantidad += Number(v.cantidad);
+      map[k].total_monto += Number(v.total_monto);
+      return map;
     }, {});
-    return Object.values(agrupados);
+    return Object.values(acc);
   };
 
   const agruparPorUsuario = (data) => {
-    const agrupados = data.reduce((acc, venta) => {
-      const key = venta.usuario_id;
-      if (!acc[key]) {
-        acc[key] = {
-          usuario_id: venta.usuario_id,
-          cantidad: 0,
-          total_monto: 0,
-        };
-      }
-      acc[key].cantidad += Number(venta.cantidad);
-      acc[key].total_monto += parseFloat(venta.total_monto);
-      return acc;
+    const acc = data.reduce((map, v) => {
+      const k = v.usuario_id;
+      if (!map[k]) map[k] = { usuario_id: v.usuario_id, cantidad: 0, total_monto: 0 };
+      map[k].cantidad += Number(v.cantidad);
+      map[k].total_monto += Number(v.total_monto);
+      return map;
     }, {});
-    return Object.values(agrupados);
+    return Object.values(acc);
   };
 
-  const isValidDate = (dateString) => {
-    const regEx = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateString.match(regEx)) return false;
-    const date = new Date(dateString);
-    return date.getTime() && date.toISOString().slice(0, 10) === dateString;
+  const isValidDate = (s) =>
+    /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(s).toISOString().slice(0, 10) === s;
+
+  const getNombreClave = (row) => {
+    if (filterBy === "sucursal") {
+      return (
+        context.sucursalesTabla.find((s) => s.id === parseInt(row.sucursal_id))?.nombre ||
+        ""
+      );
+    }
+    return (
+      context.usuariosTabla.find((u) => u.id === parseInt(row.usuario_id))?.nombre_completo ||
+      ""
+    );
+  };
+
+  const handleSort = (col) => {
+    setCurrentPage(1);
+    setSortDir((prev) => (sortCol === col && prev === "asc" ? "desc" : "asc"));
+    setSortCol(col);
   };
 
   const handleFilterByChange = (e) => {
@@ -103,109 +99,165 @@ export default function CantidadTicketPorUsuario() {
     setSelectedSucursal("");
     setSelectedUsuario("");
     setCantidadesTicketFiltrados([]);
+    setCurrentPage(1);
   };
+
+  const sortedSells = React.useMemo(() => {
+    const arr = [...cantidadesTicketFiltrados];
+    if (!sortCol) return arr;
+
+    return arr.sort((a, b) => {
+      let va, vb;
+      if (sortCol === "clave") {
+        va = getNombreClave(a).toLowerCase();
+        vb = getNombreClave(b).toLowerCase();
+      } else if (sortCol === "cantidad") {
+        va = Number(a.cantidad || 0);
+        vb = Number(b.cantidad || 0);
+      } else if (sortCol === "total_monto") {
+        va = Number(a.total_monto || 0);
+        vb = Number(b.total_monto || 0);
+      }
+      if (va < vb) return sortDir === "asc" ? -1 : 1;
+      if (va > vb) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [cantidadesTicketFiltrados, sortCol, sortDir, filterBy, context]);
 
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
-  const currentSells = cantidadesTicketFiltrados.slice(indexOfFirstSell, indexOfLastSell);
+  const currentSells = sortedSells.slice(indexOfFirstSell, indexOfLastSell);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(cantidadesTicketFiltrados.length / sellsPerPage)) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage((p) => p + 1);
     }
   };
-
   const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
   };
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Cantidad de Tickets </h1>
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
+    <Container className="ctu-page">
+      <h1 className="ctu-title">Cantidad de Tickets</h1>
+
+      {/* Filtros */}
+      <div className="ctu-toolbar d-flex flex-wrap align-items-end gap-3 mb-3">
+        <div className="mx-2 my-2">
+          <label className="d-block">DESDE</label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
+            className="form-control my-input text-center"
           />
         </div>
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">HASTA:</label>
+        <div className="mx-2 my-2">
+          <label className="d-block">HASTA</label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
+            className="form-control my-input text-center"
           />
+        </div>
+
+        <div className="mx-2 my-2">
+          <label className="d-block">Agrupar por</label>
+          <FormControl
+            as="select"
+            className="form-control my-input"
+            value={filterBy}
+            onChange={handleFilterByChange}
+            style={{ minWidth: 260 }}
+          >
+            <option value="sucursal">Sucursal</option>
+            <option value="usuario">Usuario</option>
+          </FormControl>
+        </div>
+
+        <div className="mx-2 my-2">
+          <Button onClick={handleFilter} className="ctu-btn">
+            Filtrar
+          </Button>
         </div>
       </div>
 
-      <div className="mb-3">
-        <FormControl
-          as="select"
-          className="mr-2"
-          value={filterBy}
-          onChange={handleFilterByChange}
-          style={{ width: "25%" }}
-        >
-          <option value="sucursal">Filtrar por Sucursal</option>
-          <option value="usuario">Filtrar por Usuario</option>
-        </FormControl>
-      </div>
-      <div className="mb-3">
-        <Button onClick={handleFilter}>Filtrar</Button>
-      </div>
+      <h2 className="ctu-subtitle">Resultados de la búsqueda</h2>
 
-      <h2 className="my-list-title dark-text">Resultados de la Búsqueda</h2>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            {filterBy === "sucursal" ? <th>Sucursal</th> : <th>Usuario</th>}
-            <th>Cantidad de Tickets</th>
-            <th>Monto Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentSells.map((venta, index) => (
-            <tr key={`${filterBy === "sucursal" ? venta.sucursal_id : venta.usuario_id}-${index}`}>
-              {filterBy === "sucursal" ? (
-                <td>
-                  {context.sucursalesTabla.find(
-                    (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
-                  )?.nombre || "Desconocido"}
-                </td>
-              ) : (
-                <td>
-                  {context.usuariosTabla.find(
-                    (usuario) => usuario.id === parseInt(venta.usuario_id)
-                  )?.nombre_completo || "Desconocido"}
-                </td>
-              )}
-              <td>{venta.cantidad}</td>
-              <td>{venta.total_monto.toFixed(2)}</td>
+      <div className="ctu-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th
+                className="ctu-th-sort"
+                onClick={() => handleSort("clave")}
+                title="Ordenar"
+              >
+                {filterBy === "sucursal" ? "Sucursal" : "Usuario"}
+                {sortCol === "clave" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+              </th>
+              <th
+                className="ctu-th-sort text-end"
+                onClick={() => handleSort("cantidad")}
+                title="Ordenar"
+              >
+                Cantidad de Tickets
+                {sortCol === "cantidad" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+              </th>
+              <th
+                className="ctu-th-sort text-end"
+                onClick={() => handleSort("total_monto")}
+                title="Ordenar"
+              >
+                Monto Total
+                {sortCol === "total_monto" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {currentSells.map((venta, idx) => (
+              <tr
+                key={`${filterBy === "sucursal" ? venta.sucursal_id : venta.usuario_id}-${idx}`}
+              >
+                <td>
+                  {filterBy === "sucursal"
+                    ? context.sucursalesTabla.find(
+                        (s) => s.id === parseInt(venta.sucursal_id)
+                      )?.nombre || "Desconocido"
+                    : context.usuariosTabla.find(
+                        (u) => u.id === parseInt(venta.usuario_id)
+                      )?.nombre_completo || "Desconocido"}
+                </td>
+                <td className="text-end">{Number(venta.cantidad || 0).toLocaleString("es-AR")}</td>
+                <td className="text-end">
+                  {Number(venta.total_monto || 0).toLocaleString("es-AR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
 
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={prevPage} disabled={currentPage === 1}>
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center ctu-pager">
+        <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
           <BsChevronLeft />
         </Button>
         <span className="mx-2">
           Página {currentPage} de{" "}
-          {Math.ceil(cantidadesTicketFiltrados.length / sellsPerPage)}
+          {Math.ceil(cantidadesTicketFiltrados.length / sellsPerPage) || 1}
         </span>
         <Button
           onClick={nextPage}
           disabled={
-            currentPage === Math.ceil(cantidadesTicketFiltrados.length / sellsPerPage)
+            currentPage === Math.ceil(cantidadesTicketFiltrados.length / sellsPerPage) ||
+            cantidadesTicketFiltrados.length === 0
           }
+          variant="light"
         >
           <BsChevronRight />
         </Button>

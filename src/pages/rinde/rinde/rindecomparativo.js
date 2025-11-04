@@ -100,61 +100,67 @@ export default function ListaRindes() {
     }
   };
 
-  const renderTabla = (titulo, metricas, mostrar, setMostrar) => (
-    <>
-      <div className="mb-3">
-        <Button
-          variant={mostrar ? "secondary" : "primary"}
-          onClick={() => setMostrar(!mostrar)}
-        >
-          {mostrar ? `Ocultar ${titulo}` : `Mostrar ${titulo}`}
-        </Button>
-      </div>
+const renderTabla = (titulo, metricas, mostrar, setMostrar) => (
+  <>
+    <div className="vt-toolbar mb-3 d-flex gap-2">
+      <Button
+        variant={mostrar ? "secondary" : "primary"}
+        onClick={() => setMostrar(!mostrar)}
+        className={mostrar ? "vt-btn-secondary" : "vt-btn"}
+      >
+        {mostrar ? `Ocultar ${titulo}` : `Mostrar ${titulo}`}
+      </Button>
+    </div>
 
-      <div className="fixed-table-container">
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th className="sticky-col">{titulo}</th> {/* Agregamos clase */}
-              {columnas.map((col, i) => (
-                <th key={i}>{col.titulo}</th>
-              ))}
-            </tr>
-          </thead>
-          {mostrar && (
-            <tbody>
-              {metricas.map((metrica, i) => (
-                <tr key={i}>
-                  <td className="sticky-col">{metrica.label}</td> {/* Agregamos clase */}
-                  {columnas.map((col, j) => (
-                    <td key={j}>
-                      {col[metrica.key] != null
-                        ? `${metrica.prefix || ""}${parseFloat(col[metrica.key]).toLocaleString("es-AR", {
+    <div className="vt-tablewrap table-responsive fixed-table-container">
+      <Table striped bordered hover responsive className="mb-2">
+        <thead>
+          <tr>
+            <th className="vt-sticky-col">{titulo}</th>
+            {columnas.map((col, i) => (
+              <th key={i} className="text-end">{col.titulo}</th>
+            ))}
+          </tr>
+        </thead>
+
+        {mostrar && (
+          <tbody>
+            {metricas.map((metrica, i) => (
+              <tr key={i}>
+                <td className="vt-sticky-col">{metrica.label}</td>
+                {columnas.map((col, j) => (
+                  <td key={j} className="text-end">
+                    {col[metrica.key] != null
+                      ? `${metrica.prefix || ""}${parseFloat(col[metrica.key]).toLocaleString("es-AR", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}${metrica.suffix || ""}`
-                        : "-"}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          )}
-        </Table>
-      </div>
-    </>
-  );
+                      : "-"}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        )}
+      </Table>
+    </div>
+  </>
+);
 
-  return (
-    <Container>
-      <h1 className="my-list-title dark-text">Comparativo de Rindes</h1>
-      <div className="mb-3">
+return (
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Comparativo de Rindes</h1>
+
+    {/* Filtro sucursal */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">Sucursal</label>
         <FormControl
           as="select"
           value={searchSucursal}
           onChange={(e) => handleSucursalChange(e.target.value)}
-          className="mr-2"
-          style={{ width: "25%" }}
+          className="vt-input"
+          style={{ minWidth: 260 }}
           disabled={loading}
         >
           <option value="">Seleccione una sucursal</option>
@@ -165,13 +171,15 @@ export default function ListaRindes() {
           ))}
         </FormControl>
       </div>
+    </div>
 
-      {columnas.length > 0 && (
-        <>
-          {renderTabla("Resultado", metricas, mostrarContenido, setMostrarContenido)}
-          {renderTabla("Rendimiento", tabla2Metricas, mostrarTabla2, setMostrarTabla2)}
-        </>
-      )}
-    </Container>
-  );
+    {columnas.length > 0 && (
+      <>
+        {renderTabla("Resultado", metricas, mostrarContenido, setMostrarContenido)}
+        {renderTabla("Rendimiento", tabla2Metricas, mostrarTabla2, setMostrarTabla2)}
+      </>
+    )}
+  </Container>
+);
+
 }

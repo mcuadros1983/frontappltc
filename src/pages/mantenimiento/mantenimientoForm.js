@@ -48,6 +48,8 @@ export default function MantenimientoForm() {
   const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
+    console.log("sucursales from context:", context.sucursalesTabla);
+    console.log("sucursales from context:", context.sucursales);
     const fetchMantenimiento = async () => {
       if (id) {
         try {
@@ -237,7 +239,7 @@ export default function MantenimientoForm() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ estado: true }), // Cambiar el estado a true
+            body: JSON.stringify({ estado: true }), credentials: 'include' // Cambiar el estado a true
           }
         );
         if (!updateOrdenResponse.ok) {
@@ -253,7 +255,7 @@ export default function MantenimientoForm() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ estado: true }), // Cambiar el estado a true
+            body: JSON.stringify({ estado: true }), credentials: 'include' // Cambiar el estado a true
           }
         );
         if (!updatePreventivoResponse.ok) {

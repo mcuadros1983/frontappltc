@@ -93,61 +93,71 @@ const CrearMovimientosOtros = () => {
     XLSX.writeFile(workbook, "MovimientosOtrosTemplate.xlsx");
   };
 
-  return (
-    <Container>
-      <h1 className="my-list-title dark-text">Cargar Movimientos Otros</h1>
+ return (
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Cargar Movimientos Otros</h1>
 
-      {uploadSuccess && <Alert variant="success">{uploadMessage}</Alert>}
-      {!uploadSuccess && uploadMessage && (
-        <Alert variant="danger">{uploadMessage}</Alert>
+    {uploadSuccess && <Alert variant="success" className="vt-alert">{uploadMessage}</Alert>}
+    {!uploadSuccess && uploadMessage && (
+      <Alert variant="danger" className="vt-alert">{uploadMessage}</Alert>
+    )}
+
+    <Form className="vt-form vt-form-narrow">
+      <Form.Group controlId="tipoMovimiento" className="mb-3">
+        <Form.Label className="vt-label">Seleccione el tipo de movimiento:</Form.Label>
+        <Form.Select
+          value={tipoMovimiento}
+          onChange={(e) => setTipoMovimiento(e.target.value)}
+          className="vt-input"
+        >
+          <option value="">-- Seleccione --</option>
+          <option value="Fabrica">Fábrica</option>
+          <option value="Achuras">Achuras</option>
+        </Form.Select>
+      </Form.Group>
+
+      {tipoMovimiento && (
+        <>
+          <Form.Group controlId="formFile" className="mb-3">
+            <Form.Label className="vt-label">Seleccione un archivo Excel:</Form.Label>
+            <Form.Control
+              type="file"
+              onChange={handleFileChange}
+              className="vt-input"
+            />
+          </Form.Group>
+
+          <Button
+            variant="primary"
+            onClick={handleUploadButtonClick}
+            disabled={!file || buttonDisabled}
+            className="vt-btn"
+          >
+            Subir Movimientos
+          </Button>
+        </>
       )}
 
-      <Form>
-        <Form.Group controlId="tipoMovimiento" className="mb-3">
-          <Form.Label>Seleccione el tipo de movimiento:</Form.Label>
-          <Form.Select
-            value={tipoMovimiento}
-            onChange={(e) => setTipoMovimiento(e.target.value)}
-          >
-            <option value="">-- Seleccione --</option>
-            <option value="Fabrica">Fábrica</option>
-            <option value="Achuras">Achuras</option>
-          </Form.Select>
-        </Form.Group>
+      <div className="mt-3">
+        <Button
+          variant="secondary"
+          onClick={downloadTemplate}
+          className="vt-btn-secondary"
+        >
+          Descargar Plantilla
+        </Button>
+      </div>
 
-        {tipoMovimiento && (
-          <>
-            <Form.Group controlId="formFile" className="mb-3">
-              <Form.Label>Seleccione un archivo Excel:</Form.Label>
-              <Form.Control type="file" onChange={handleFileChange} />
-            </Form.Group>
+      <Alert variant="info" className="mt-3 vt-alert">
+        <strong>Importante:</strong> El archivo debe contener las columnas{" "}
+        <code>fecha</code>, <code>articulocodigo</code>, <code>cantidad</code>,{" "}
+        <code>remito</code>, <code>sucursaldestino_codigo</code>. El tipo y la
+        sucursal de origen se seleccionan automáticamente según el tipo de movimiento.
+      </Alert>
+    </Form>
+  </Container>
+);
 
-            <Button
-              variant="primary"
-              onClick={handleUploadButtonClick}
-              disabled={!file || buttonDisabled}
-            >
-              Subir Movimientos
-            </Button>
-          </>
-        )}
-
-        <div className="mt-3">
-          <Button variant="secondary" onClick={downloadTemplate}>
-            Descargar Plantilla
-          </Button>
-        </div>
-
-        <Alert variant="info" className="mt-3">
-          <strong>Importante:</strong> El archivo debe contener las columnas{" "}
-          <code>fecha</code>, <code>articulocodigo</code>,{" "}
-          <code>cantidad</code>, <code>remito</code>,{" "}
-          <code>sucursaldestino_codigo</code>. El tipo y la sucursal de origen
-          se seleccionan automáticamente según el tipo de movimiento.
-        </Alert>
-      </Form>
-    </Container>
-  );
 };
 
 export default CrearMovimientosOtros;

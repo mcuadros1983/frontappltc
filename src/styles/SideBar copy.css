@@ -1,0 +1,29 @@
+/* SideBar.css */
+
+/* Estilo para pantallas grandes: no cambia */
+.sidebar-wrapper {
+  transition: all 0.3s ease;
+}
+
+/* Estilos para pantallas pequeñas (max-width: 768px) */
+@media (max-width: 993px) {
+  .sidebar-wrapper {
+    position: fixed;
+    top: 0;
+    left: -250px; /* Oculto fuera de la pantalla inicialmente */
+    width: 250px;
+    height: 100%;
+    z-index: 999; /* Asegura que se superpone al contenido */
+    transition: left 0.3s ease; /* Transición suave */
+  }
+
+  .sidebar-wrapper.visible {
+    left: 0; /* Cuando está visible, se muestra */
+  }
+
+  /* Ajustes para que el contenido no se desplace cuando el sidebar aparece */
+  .main-content {
+    margin-left: 0;
+    z-index: 1; /* Asegura que el sidebar esté por encima en pantallas pequeñas */
+  }
+}

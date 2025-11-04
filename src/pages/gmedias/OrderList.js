@@ -1,34 +1,30 @@
-import React, { useContext, useEffect, useState, useCallback } from "react";
+import React, { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { Table, Container, Button, FormControl } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Contexts from "../../context/Contexts";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
-// import { parse } from "  date-fns";
-// import Pagination from "../../utils/Pagination";
 
 export default function OrderList() {
+  const location = useLocation();
+  const initialState = location.state || {};
+
   const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [selectedBranchId, setSelectedBranchId] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
-  const [originalBranchId, setOriginalBranchId] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialState.searchTerm || "");
+  const [startDate, setStartDate] = useState(initialState.startDate || "");
+  const [endDate, setEndDate] = useState(initialState.endDate || "");
+  const [selectedBranchId, setSelectedBranchId] = useState(initialState.selectedBranchId || "");
   const [branches, setBranches] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [editingOrderId, setEditingOrderId] = useState(null); // Nuevo estado para el ID de la orden que se está editando
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState("asc");
-
-  // paginacion
-  const [currentPage, setCurrentPage] = useState(1);
+  const [editingOrderId, setEditingOrderId] = useState(null);
+  const [sortColumn, setSortColumn] = useState(initialState.sortColumn || null);
+  const [sortDirection, setSortDirection] = useState(initialState.sortDirection || "asc");
+  const [currentPage, setCurrentPage] = useState(initialState.currentPage || 1);
   const [ordersPerPage] = useState(20);
-
   const [editingBranchId, setEditingBranchId] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [originalBranchId, setOriginalBranchId] = useState("");
 
   const context = useContext(Contexts.UserContext);
-
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -36,14 +32,8 @@ export default function OrderList() {
     try {
       const res = await fetch(`${apiUrl}/ordenes/`, {
         credentials: "include",
-        include: {
-          model: "Sucursal",
-          attributes: ["nombre"],
-        },
       });
-
       const data = await res.json();
-
       const sortedOrders = data.sort((a, b) => a.id - b.id);
       setOrders(sortedOrders);
     } catch (error) {
@@ -67,6 +57,44 @@ export default function OrderList() {
     loadOrders();
     loadBranches();
   }, [loadOrders, loadBranches]);
+
+  const filteredOrders = useMemo(() => {
+    const searchTermLower = searchTerm.toLowerCase();
+    const startDateFilter = startDate ? startDate : null;
+    const endDateFilter = endDate ? endDate : null;
+
+    return orders.filter((order) => {
+      const matchesBranchName =
+        order.Sucursal &&
+        order.Sucursal.nombre.toLowerCase().includes(searchTermLower);
+      const matchesBranchId = selectedBranchId
+        ? order.sucursal_id === Number(selectedBranchId)
+        : true;
+      const orderDate = order.fecha;
+      const matchesDate =
+        (!startDateFilter || orderDate >= startDateFilter) &&
+        (!endDateFilter || orderDate <= endDateFilter);
+
+      return matchesBranchName && matchesDate && matchesBranchId;
+    });
+  }, [orders, searchTerm, startDate, endDate, selectedBranchId]);
+
+  const sortedOrders = useMemo(() => {
+    if (!sortColumn) return filteredOrders;
+
+    return [...filteredOrders].sort((a, b) => {
+      const valueA = a[sortColumn] ?? (sortColumn === "Sucursal.nombre" ? a.Sucursal?.nombre ?? "" : "");
+      const valueB = b[sortColumn] ?? (sortColumn === "Sucursal.nombre" ? b.Sucursal?.nombre ?? "" : "");
+
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return sortDirection === "asc" ? valueA - valueB : valueB - valueA;
+      }
+
+      return sortDirection === "asc"
+        ? String(valueA).localeCompare(String(valueB))
+        : String(valueB).localeCompare(String(valueA));
+    });
+  }, [filteredOrders, sortColumn, sortDirection]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -93,7 +121,7 @@ export default function OrderList() {
         credentials: "include",
         method: "PUT",
         body: JSON.stringify({
-          sucursal_id: editingBranchId, // ✅ nuevo estado
+          sucursal_id: editingBranchId,
           fecha: selectedDate,
         }),
         headers: {
@@ -107,92 +135,32 @@ export default function OrderList() {
     }
   };
 
-  const handleSearch = useCallback(() => {
-    const searchTermLower = searchTerm.toLowerCase();
-    const startDateFilter = startDate ? startDate : null;
-    const endDateFilter = endDate ? endDate : null;
-
-    const filtered = orders.filter((order) => {
-      const matchesBranchName =
-        order.Sucursal &&
-        order.Sucursal.nombre.toLowerCase().includes(searchTermLower);
-
-      const matchesBranchId = selectedBranchId
-        ? order.sucursal_id === Number(selectedBranchId)
-        : true;
-
-      const orderDate = order.fecha;
-      const matchesDate =
-        (!startDateFilter || orderDate >= startDateFilter) &&
-        (!endDateFilter || orderDate <= endDateFilter);
-
-      return matchesBranchName && matchesDate && matchesBranchId; // 🔄 NUEVO
-    });
-
-    setFilteredOrders(filtered);
-  }, [searchTerm, startDate, endDate, selectedBranchId, orders]); // 🔄 NUEVO
-
-  useEffect(() => {
-    handleSearch();
-  }, [searchTerm, orders, startDate, endDate, selectedBranchId, handleSearch]); // 🔄 NUEVO
-
-  useEffect(() => {
-    loadOrders();
-    loadBranches();
-  }, [loadOrders, loadBranches]);
-
-  useEffect(() => {
-    handleSearch();
-  }, [searchTerm, orders, startDate, endDate, handleSearch]);
-
   const handleEdit = (id, currentBranchId, currentDate) => {
     setIsEditing(true);
     setSelectedDate(currentDate);
-    setEditingBranchId(currentBranchId); // ✅ usar editingBranchId en lugar de selectedBranchId
+    setEditingBranchId(currentBranchId);
     setOriginalBranchId(currentBranchId);
     setEditingOrderId(id);
   };
 
-const handleCancel = () => {
-  setIsEditing(false);
-  setEditingBranchId("");
-  setEditingOrderId(null);
-};
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditingBranchId("");
+    setEditingOrderId(null);
+  };
 
   const handleSort = (columnName) => {
     const newSortDirection =
       columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
     setSortColumn(columnName);
     setSortDirection(newSortDirection);
-
-    const sortedOrders = [...filteredOrders].sort((a, b) => {
-      const valueA = a[columnName] ?? "";
-      const valueB = b[columnName] ?? "";
-
-      if (typeof valueA === "number" && typeof valueB === "number") {
-        return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
-      }
-
-      return newSortDirection === "asc"
-        ? String(valueA).localeCompare(String(valueB))
-        : String(valueB).localeCompare(String(valueA));
-    });
-
-    setFilteredOrders(sortedOrders);
   };
 
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentFilteredOrders = [...filteredOrders] // Crea una copia para evitar modificar el estado original
-    .reverse() // Invierte el orden de los elementos
-    .slice(indexOfFirstOrder, indexOfLastOrder); // Aplica la paginación
-
-  const pageNumbers = [];
-  for (let i = 1; i <= Math.ceil(filteredOrders.length / ordersPerPage); i++) {
-    pageNumbers.push(i);
-  }
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const currentOrders = [...sortedOrders]
+    .reverse() // Mantiene el reverse si es intencional (parece para orden descendente por defecto)
+    .slice(indexOfFirstOrder, indexOfLastOrder);
 
   return (
     <Container>
@@ -207,7 +175,6 @@ const handleCancel = () => {
             className="form-control rounded-0 border-transparent text-center"
           />
         </div>
-
         <div className="d-inline-block w-auto ml-2">
           <label className="ml-2 mr-2">HASTA:</label>
           <input
@@ -229,7 +196,7 @@ const handleCancel = () => {
         >
           <option value="">Todas las sucursales</option>
           {[...branches]
-            .sort((a, b) => a.nombre.localeCompare(b.nombre)) // ✅ Orden alfabético
+            .sort((a, b) => a.nombre.localeCompare(b.nombre))
             .map((branch) => (
               <option key={branch.id} value={branch.id}>
                 {branch.nombre}
@@ -249,17 +216,25 @@ const handleCancel = () => {
             {!(context.user && context.user.rol_id === 4) && <th>Operaciones</th>}
           </tr>
         </thead>
-
         <tbody>
-          {currentFilteredOrders.map((order) => (
+          {currentOrders.map((order) => (
             <tr
               key={order.id}
               style={{ cursor: "pointer" }}
-              onDoubleClick={() => navigate(`/orders/${order.id}/products`)}
+              onDoubleClick={() => navigate(`/orders/${order.id}/products`, {
+                state: {
+                  searchTerm,
+                  startDate,
+                  endDate,
+                  selectedBranchId,
+                  sortColumn,
+                  sortDirection,
+                  currentPage,
+                },
+              })}
             >
               <td>{order.id}</td>
               <td>
-                {" "}
                 {isEditing && order.id === editingOrderId ? (
                   <input
                     type="date"
@@ -342,14 +317,14 @@ const handleCancel = () => {
           <BsChevronLeft />
         </Button>
         <span className="mx-2">
-          Página {currentPage} de {Math.ceil(filteredOrders.length / ordersPerPage)}
+          Página {currentPage} de {Math.ceil(sortedOrders.length / ordersPerPage)}
         </span>
         <Button
           onClick={() =>
-            currentPage < Math.ceil(filteredOrders.length / ordersPerPage) &&
+            currentPage < Math.ceil(sortedOrders.length / ordersPerPage) &&
             setCurrentPage(currentPage + 1)
           }
-          disabled={currentPage === Math.ceil(filteredOrders.length / ordersPerPage)}
+          disabled={currentPage === Math.ceil(sortedOrders.length / ordersPerPage)}
         >
           <BsChevronRight />
         </Button>

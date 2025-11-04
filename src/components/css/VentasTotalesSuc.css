@@ -1,0 +1,91 @@
+/* ../../../components/css/VentasTotales.css */
+
+.vt-page{
+  background:
+    radial-gradient(900px 360px at -10% -10%, rgba(59,130,246,.06), transparent 55%),
+    radial-gradient(800px 300px at 110% -10%, rgba(16,185,129,.06), transparent 55%);
+  border-radius: 12px;
+  padding: 8px 12px 14px;
+}
+
+.vt-title{
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: #0f172a;
+}
+
+/* Toolbar */
+.vt-toolbar{
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(2,6,23,.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 18px rgba(2,6,23,.08);
+}
+
+.vt-input{
+  background: #fff;
+  border: 1px solid rgba(2,6,23,.12) !important;
+  box-shadow: none !important;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.vt-input:focus{
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15) !important;
+}
+
+/* Botón */
+.vt-btn{
+  box-shadow: 0 6px 14px rgba(15,23,42,.12);
+  transition: transform .06s ease, box-shadow .16s ease, filter .16s ease;
+}
+.vt-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15,23,42,.16);
+  filter: saturate(1.05);
+}
+
+/* Tabla */
+.vt-tablewrap{
+  background: #ffffff;
+  border: 1px solid rgba(2,6,23,.08);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(2,6,23,.10);
+  padding: 6px;
+}
+.vt-th-sort{
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.vt-th-sort:hover{
+  background: rgba(59,130,246,.06);
+}
+
+/* Total */
+.vt-total{
+  margin: 8px 0 14px;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  border: 1px solid rgba(2,6,23,.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 6px 16px rgba(2,6,23,.08);
+  display: inline-flex;
+  gap: 8px;
+}
+.vt-total strong{
+  color: #111827;
+}
+.vt-total span{
+  font-weight: 700;
+  color: #0f766e;
+}
+
+/* Paginador */
+.vt-pager button{
+  border: 1px solid rgba(2,6,23,.08);
+  box-shadow: 0 2px 8px rgba(2,6,23,.08);
+}
+.vt-pager span{
+  color: #374151;
+}

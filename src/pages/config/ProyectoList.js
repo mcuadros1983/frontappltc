@@ -1,0 +1,363 @@
+// src/pages/proyectos/ProyectoList.jsx
+import React, { useContext, useEffect, useMemo, useState } from "react";
+import {
+  Table,
+  Container,
+  Button,
+  Form,
+  Alert,
+  Modal,
+  Card,
+  Spinner,
+  Row,
+  Col,
+  Badge,
+  InputGroup,
+} from "react-bootstrap";
+import Contexts from "../../context/Contexts";
+
+const apiUrl = process.env.REACT_APP_API_URL;
+
+export default function ProyectoList() {
+  const { proyectosTabla = [], setProyectosTabla } =
+    useContext(Contexts.DataContext) || {};
+
+  const [busqueda, setBusqueda] = useState("");
+  const [error, setError] = useState("");
+  const [loadingTabla, setLoadingTabla] = useState(false);
+
+  // Modal (crear/editar)
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editId, setEditId] = useState(null);
+
+  // Form
+  const [descripcion, setDescripcion] = useState("");
+  const [formError, setFormError] = useState("");
+  const [formMsg, setFormMsg] = useState(null);
+
+  // ===== Fetch inicial si el contexto está vacío =====
+  const fetchProyectos = async () => {
+    try {
+      setLoadingTabla(true);
+      setError("");
+      const res = await fetch(`${apiUrl}/proyectos`, { credentials: "include" });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (typeof setProyectosTabla === "function") {
+        const ordenados = (Array.isArray(data) ? data : [])
+          .slice()
+          .sort((a, b) => a.id - b.id);
+        setProyectosTabla(ordenados);
+      }
+    } catch {
+      setError("Error al cargar proyectos");
+    } finally {
+      setLoadingTabla(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!proyectosTabla?.length) fetchProyectos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiUrl]);
+
+  // ===== Fuente + filtro =====
+  const source = Array.isArray(proyectosTabla) ? proyectosTabla : [];
+  const filtrados = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return source;
+    return source.filter((p) => (p.descripcion || "").toLowerCase().includes(q));
+  }, [source, busqueda]);
+
+  // ===== Modal helpers =====
+  const resetForm = () => {
+    setDescripcion("");
+    setFormError("");
+    setFormMsg(null);
+  };
+
+  const openModalNew = () => {
+    setEditing(false);
+    setEditId(null);
+    resetForm();
+    setShowModal(true);
+  };
+
+  const openModalEdit = (item) => {
+    setEditing(true);
+    setEditId(item.id);
+    setDescripcion(item.descripcion || "");
+    setFormError("");
+    setFormMsg(null);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    if (saving) return;
+    setShowModal(false);
+  };
+
+  // ===== Validación mínima =====
+  const validar = () => {
+    if (!descripcion.trim()) return "La descripción es obligatoria";
+    return null;
+  };
+
+  // ===== Guardar (POST/PUT) + update optimista + refetch =====
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setFormError("");
+    setFormMsg(null);
+
+    const err = validar();
+    if (err) return setFormError(err);
+
+    try {
+      setSaving(true);
+      const payload = { descripcion: descripcion.trim() };
+
+      const url = editing
+        ? `${apiUrl}/proyectos/${editId}`
+        : `${apiUrl}/proyectos`;
+      const method = editing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const raw = await res.text();
+      if (!res.ok) {
+        let msg = "No se pudo guardar";
+        try {
+          msg = JSON.parse(raw)?.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      let saved = null;
+      if (raw) {
+        try {
+          saved = JSON.parse(raw);
+        } catch {}
+      }
+
+      const finalItem = saved || { id: editing ? editId : undefined, ...payload };
+
+      // Update optimista en contexto
+      if (typeof setProyectosTabla === "function") {
+        setProyectosTabla((prev = []) => {
+          const arr = Array.isArray(prev) ? [...prev] : [];
+          if (editing) {
+            const i = arr.findIndex((x) => Number(x.id) === Number(editId));
+            if (i >= 0) arr[i] = { ...arr[i], ...finalItem };
+          } else {
+            const tempId = finalItem.id ?? Date.now();
+            arr.push({ ...finalItem, id: tempId });
+          }
+          arr.sort((a, b) =>
+            String(a?.descripcion || "").localeCompare(String(b?.descripcion || ""))
+          );
+          return arr;
+        });
+      }
+
+      setFormMsg({
+        type: "success",
+        text: editing ? "Proyecto actualizado" : "Proyecto creado",
+      });
+
+      // Refetch para normalizar IDs/estado real
+      await fetchProyectos();
+      closeModal();
+    } catch (err2) {
+      setFormError(err2.message || "Error al guardar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ===== Eliminar =====
+  const handleDelete = async (id) => {
+    if (!window.confirm("¿Deseás eliminar este proyecto?")) return;
+    try {
+      const res = await fetch(`${apiUrl}/proyectos/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error();
+      if (typeof setProyectosTabla === "function") {
+        setProyectosTabla((prev = []) =>
+          prev.filter((p) => Number(p.id) !== Number(id))
+        );
+      }
+    } catch {
+      setError("No se pudo eliminar");
+    }
+  };
+
+  return (
+    <Container className="mt-4">
+      {/* Header / acciones */}
+      <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div className="d-flex align-items-center gap-2">
+          <h3 className="m-0">Proyectos</h3>
+          <Badge bg="secondary" className="align-middle">
+            {source.length}
+          </Badge>
+        </div>
+
+        <div className="d-flex gap-2">
+          <InputGroup>
+            <InputGroup.Text className="d-none d-md-flex">Buscar</InputGroup.Text>
+            <Form.Control
+              placeholder="Descripción…"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </InputGroup>
+          <Button variant="primary" onClick={openModalNew} className="mx-2">
+            Nuevo
+          </Button>
+        </div>
+      </div>
+
+      {error && (
+        <Alert variant="danger" className="py-2">
+          {error}
+        </Alert>
+      )}
+
+      <Table striped bordered hover responsive="md">
+        <thead>
+          <tr>
+            <th style={{ width: 80 }}>#</th>
+            <th>Descripción</th>
+            <th style={{ width: 220 }}>Operaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loadingTabla ? (
+            <tr>
+              <td colSpan={3} className="text-center">
+                <Spinner animation="border" size="sm" className="me-2" /> Cargando…
+              </td>
+            </tr>
+          ) : (
+            <>
+              {filtrados.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.id}</td>
+                  <td>{p.descripcion}</td>
+                  <td className="text-nowrap">
+                    <div className="d-flex gap-2 justify-content-center">
+                      <Button
+                        size="sm"
+                        variant="outline-warning"
+                        onClick={() => openModalEdit(p)}
+                        className="mx-2"
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline-danger"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        Eliminar
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtrados.length === 0 && !loadingTabla && (
+                <tr>
+                  <td colSpan={3} className="text-center text-muted">
+                    Sin resultados
+                  </td>
+                </tr>
+              )}
+            </>
+          )}
+        </tbody>
+      </Table>
+
+      {/* Modal Crear/Editar */}
+      <Modal
+        show={showModal}
+        onHide={closeModal}
+        backdrop={saving ? "static" : true}
+        centered
+        size="md"
+      >
+        <Form onSubmit={handleSubmit}>
+          <Modal.Header closeButton={!saving}>
+            <Modal.Title className="fw-semibold">
+              {editing ? "Editar Proyecto" : "Nuevo Proyecto"}
+            </Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <Card className="border-0">
+              <Card.Body className="pt-2">
+                {formMsg && (
+                  <Alert variant={formMsg.type} className="py-2">
+                    {formMsg.text}
+                  </Alert>
+                )}
+                {formError && (
+                  <Alert variant="danger" className="py-2">
+                    {formError}
+                  </Alert>
+                )}
+
+                <Row className="g-3">
+                  <Col md={12}>
+                    <Form.Label>Descripción</Form.Label>
+                    <Form.Control
+                      value={descripcion}
+                      onChange={(e) => setDescripcion(e.target.value)}
+                      disabled={saving}
+                      required
+                      placeholder="Descripción del proyecto"
+                      className="my-input"
+                    />
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          </Modal.Body>
+
+          <Modal.Footer className="d-flex justify-content-between">
+            <div className="text-muted small">
+              {editing ? `Editando ID #${editId}` : "Creación de proyecto"}
+            </div>
+            <div className="d-flex gap-2">
+              <Button
+                variant="outline-secondary"
+                onClick={closeModal}
+                disabled={saving}
+                className="mx-2"
+              >
+                Cancelar
+              </Button>
+              <Button variant="primary" type="submit" disabled={saving}>
+                {saving ? (
+                  <>
+                    <Spinner size="sm" animation="border" className="me-2" /> Guardando…
+                  </>
+                ) : (
+                  "Guardar"
+                )}
+              </Button>
+            </div>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+    </Container>
+  );
+}

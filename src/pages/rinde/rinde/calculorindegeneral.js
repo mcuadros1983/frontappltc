@@ -192,155 +192,209 @@ export default function CalculoRindeGeneral() {
     };
 
     return (
-        <Container>
-            <h2 className="my-4 text-center">Cálculo Rinde Consolidado</h2>
-            <Row className="mb-3">
-                <Col md={3}>
-                    <Form.Label>Mes</Form.Label>
-                    <Form.Select className="form-control rounded-0 border-transparent text-center" value={mes} onChange={(e) => setMes(Number(e.target.value))}>
-                        {[...Array(12)].map((_, i) => <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('es-AR', { month: 'long' })}</option>)}
-                    </Form.Select>
-                </Col>
-                <Col md={3}>
-                    <Form.Label>Año</Form.Label>
-                    <Form.Control type="number" className="form-control rounded-0 border-transparent text-center" value={anio} onChange={(e) => setAnio(Number(e.target.value))} />
-                </Col>
-                {/* <Col md={3}>
-                    <Form.Label>Ingresos Esperados</Form.Label>
-                    <Button onClick={() => setShowIngresosModal(true)} className="w-100">Ingresos Esperados</Button>
-                </Col> */}
-                <Col md={3}>
-                    <Form.Label className="d-block mb-1 text-center">Acciones</Form.Label>
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title text-center">Cálculo Rinde Consolidado</h1>
 
-                    <div className="d-flex">
-                        <Button
-                            onClick={() => setShowIngresosModal(true)}
-                            className="flex-fill mb-2 text-truncate"
-                            style={{ whiteSpace: "nowrap" }}
-                        >
-                            Ingresos Esperados
-                        </Button>
-                    </div>
+    {/* Toolbar de filtros / acciones */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">Mes</label>
+        <Form.Select
+          className="my-input form-control"
+          value={mes}
+          onChange={(e) => setMes(Number(e.target.value))}
+          style={{ minWidth: 200 }}
+        >
+          {[...Array(12)].map((_, i) => (
+            <option key={i + 1} value={i + 1}>
+              {new Date(0, i).toLocaleString("es-AR", { month: "long" })}
+            </option>
+          ))}
+        </Form.Select>
+      </div>
 
-                    <div className="d-flex">
-                        <Button
-                            onClick={() => {
-                                obtenerRindesDisponibles();
-                                setShowOmitirModal(true);
-                            }}
-                            className="flex-fill text-truncate"
-                            variant="warning"
-                            style={{ whiteSpace: "nowrap" }}
-                        >
-                            Omitir
-                        </Button>
-                    </div>
-                </Col>
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">Año</label>
+        <Form.Control
+          type="number"
+          className="vt-input"
+          value={anio}
+          onChange={(e) => setAnio(Number(e.target.value))}
+          style={{ minWidth: 160 }}
+        />
+      </div>
 
-            </Row>
+      <div className="d-inline-block w-auto ms-auto d-flex gap-2">
+        <Button onClick={() => setShowIngresosModal(true)} className="vt-btn">
+          Ingresos Esperados
+        </Button>
+        <Button
+          onClick={() => {
+            obtenerRindesDisponibles();
+            setShowOmitirModal(true);
+          }}
+          className="vt-btn"
+          variant="warning"
+        >
+          Omitir
+        </Button>
+      </div>
+    </div>
 
-            <h5>Resumen Consolidado</h5>
-            <Table striped bordered hover size="sm" className="text-center">
-                <tbody>
-                    {[{ label: "Nº de 1/2 Res", val: cantidadMedias },
-                    { label: "Kg. De Carne", val: totalKg },
-                    { label: "M.B. estimado del Cerdo", val: formatCurrency(mbcerdo) },
-                    { label: "Costo prom. /Kg. De Carne", val: formatCurrency(costoprom) },
-                    { label: "Margen Total", val: formatCurrency(mgtotal) },
-                    { label: "Margen / Kg Vendido", val: formatCurrency(mgporkg) },
-                    { label: "Total de Venta", val: formatCurrency(totalventa) },
-                    { label: "Gastos Diarios", val: formatCurrency(gastos) },
-                    { label: "Gastos Caja Grande", val: formatCurrency(cajagrande) },
-                    { label: "Otros productos", val: formatCurrency(otros) },
-                    { label: "1/2 Res Ingresada", val: formatCurrency(costovacuno) },
-                    { label: "Achuras y Productos", val: formatCurrency(achuras) },
-                    { label: "Diferencia de Inventario", val: formatCurrency(difInventario) },
-                    { label: "Compra de Cerdo", val: formatCurrency(costoporcino) },
-                    { label: "KG. De Cerdo", val: totalKgCerdo }].map((row, i) => (
-                        <tr key={i}><td>{row.label}</td><td>{row.val}</td></tr>
-                    ))}
-                </tbody>
-            </Table>
+    {/* Resumen Consolidado */}
+    <h2 className="vt-subtitle">Resumen Consolidado</h2>
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover size="sm" className="mb-2">
+        <tbody>
+          {[
+            { label: "Nº de 1/2 Res", val: cantidadMedias },
+            { label: "Kg. De Carne", val: totalKg },
+            { label: "M.B. estimado del Cerdo", val: formatCurrency(mbcerdo) },
+            { label: "Costo prom. /Kg. De Carne", val: formatCurrency(costoprom) },
+            { label: "Margen Total", val: formatCurrency(mgtotal) },
+            { label: "Margen / Kg Vendido", val: formatCurrency(mgporkg) },
+            { label: "Total de Venta", val: formatCurrency(totalventa) },
+            { label: "Gastos Diarios", val: formatCurrency(gastos) },
+            { label: "Gastos Caja Grande", val: formatCurrency(cajagrande) },
+            { label: "Otros productos", val: formatCurrency(otros) },
+            { label: "1/2 Res Ingresada", val: formatCurrency(costovacuno) },
+            { label: "Achuras y Productos", val: formatCurrency(achuras) },
+            { label: "Diferencia de Inventario", val: formatCurrency(difInventario) },
+            { label: "Compra de Cerdo", val: formatCurrency(costoporcino) },
+            { label: "KG. De Cerdo", val: totalKgCerdo },
+          ].map((row, i) => (
+            <tr key={i}>
+              <td className="fw-semibold">{row.label}</td>
+              <td className="text-end">{row.val}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
 
-            <h5>Matriz Ingreso Esperado / Vendido</h5>
-            <Table striped bordered hover size="sm" className="text-center">
-                <tbody>
-                    {[{ label: "Kg Novillo", val: totalKgNovillo },
-                    { label: "Kg Exportación", val: totalKgVaca },
-                    { label: "Ingreso Esperado / Kg", val: formatCurrency(ingEsperado) },
-                    { label: "Ingreso Vendido / Kg", val: formatCurrency(ingVendido) },
-                    { label: "Diferencia Esperada", val: formatCurrency(difEsperado) },
-                    { label: "Diferencia Vendida", val: formatCurrency(difVendido) },
-                    { label: "% Pérdida", val: `${Number(rinde * 100).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%` },
-                    { label: "Valor de un 1% Rinde", val: formatCurrency(valorRinde) },
-                    { label: "Eficiencia en uso de carne", val: formatCurrency(eficiencia) }].map((row, i) => (
-                        <tr key={i}><td>{row.label}</td><td>{row.val}</td></tr>
-                    ))}
-                </tbody>
-            </Table>
+    {/* Matriz IE / Vendido */}
+    <h2 className="vt-subtitle mt-4">Matriz Ingreso Esperado / Vendido</h2>
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover size="sm" className="mb-2">
+        <tbody>
+          {[
+            { label: "Kg Novillo", val: totalKgNovillo },
+            { label: "Kg Exportación", val: totalKgVaca },
+            { label: "Ingreso Esperado / Kg", val: formatCurrency(ingEsperado) },
+            { label: "Ingreso Vendido / Kg", val: formatCurrency(ingVendido) },
+            { label: "Diferencia Esperada", val: formatCurrency(difEsperado) },
+            { label: "Diferencia Vendida", val: formatCurrency(difVendido) },
+            {
+              label: "% Pérdida",
+              val: `${Number(rinde * 100).toLocaleString("es-AR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}%`,
+            },
+            { label: "Valor de un 1% Rinde", val: formatCurrency(valorRinde) },
+            { label: "Eficiencia en uso de carne", val: formatCurrency(eficiencia) },
+          ].map((row, i) => (
+            <tr key={i}>
+              <td className="fw-semibold">{row.label}</td>
+              <td className="text-end">{row.val}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
 
-            <div className="d-flex justify-content-center my-4">
-                <Button variant="primary" size="lg" className="mx-2" onClick={handleObtenerRindesGenerales}>Calcular</Button>
-                <Button variant="success" size="lg" className="mx-2" onClick={handleGuardarRindeGeneral}>
-                    Guardar
-                </Button>
-            </div>
+    {/* Acciones */}
+    <div className="d-flex justify-content-center my-4 gap-3">
+      <Button variant="primary" size="lg" className="vt-btn" onClick={handleObtenerRindesGenerales}>
+        Calcular
+      </Button>
+      <Button variant="success" size="lg" className="vt-btn" onClick={handleGuardarRindeGeneral}>
+        Guardar
+      </Button>
+    </div>
 
-            <Modal show={showIngresosModal} onHide={() => setShowIngresosModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Ingresos Esperados</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Novillos</Form.Label>
-                        <Form.Control type="number" value={novillosIngresos} onChange={(e) => setNovillosIngresos(Number(e.target.value))} />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Exportación</Form.Label>
-                        <Form.Control type="number" value={exportacionIngresos} onChange={(e) => setExportacionIngresos(Number(e.target.value))} />
-                    </Form.Group>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Cerdos</Form.Label>
-                        <Form.Control type="number" value={cerdosIngresos} onChange={(e) => setCerdosIngresos(Number(e.target.value))} />
-                    </Form.Group>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowIngresosModal(false)}>Cerrar</Button>
-                    <Button variant="primary" onClick={() => setShowIngresosModal(false)}>Guardar</Button>
-                </Modal.Footer>
-            </Modal>
-            <Modal show={showOmitirModal} onHide={() => setShowOmitirModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Omitir Rindes por Sucursal</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form.Group>
-                        <Form.Label>Seleccione los rindes que desea omitir</Form.Label>
-                        <Form.Control
-                            as="select"
-                            multiple
-                            value={rindesOmitidosIds}
-                            onChange={(e) =>
-                                setRindesOmitidosIds(
-                                    Array.from(e.target.selectedOptions, (opt) => parseInt(opt.value))
-                                )
-                            }
-                        >
-                            {rindesDisponibles.map((r) => (
-                                <option key={r.id} value={r.id}>
-                                    {context.sucursalesTabla.find(s => s.id === Number(r.sucursal_id))?.nombre || "Sucursal desconocida"} — Rinde: {parseFloat(r.rinde).toFixed(2)}%
-                                </option>
-                            ))}
-                        </Form.Control>
-                        <small className="text-muted">Use Ctrl para selección múltiple</small>
-                    </Form.Group>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowOmitirModal(false)}>Cerrar</Button>
-                    <Button variant="primary" onClick={() => setShowOmitirModal(false)}>Aplicar</Button>
-                </Modal.Footer>
-            </Modal>
+    {/* Modal Ingresos Esperados */}
+    <Modal show={showIngresosModal} onHide={() => setShowIngresosModal(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>Ingresos Esperados</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form.Group className="mb-3">
+          <Form.Label className="vt-label">Novillos</Form.Label>
+          <Form.Control
+            type="number"
+            className="vt-input"
+            value={novillosIngresos}
+            onChange={(e) => setNovillosIngresos(Number(e.target.value))}
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label className="vt-label">Exportación</Form.Label>
+          <Form.Control
+            type="number"
+            className="vt-input"
+            value={exportacionIngresos}
+            onChange={(e) => setExportacionIngresos(Number(e.target.value))}
+          />
+        </Form.Group>
+        <Form.Group className="mb-0">
+          <Form.Label className="vt-label">Cerdos</Form.Label>
+          <Form.Control
+            type="number"
+            className="vt-input"
+            value={cerdosIngresos}
+            onChange={(e) => setCerdosIngresos(Number(e.target.value))}
+          />
+        </Form.Group>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" className="vt-btn-secondary" onClick={() => setShowIngresosModal(false)}>
+          Cerrar
+        </Button>
+        <Button variant="primary" className="vt-btn" onClick={() => setShowIngresosModal(false)}>
+          Guardar
+        </Button>
+      </Modal.Footer>
+    </Modal>
 
-        </Container>
-    );
+    {/* Modal Omitir Rindes */}
+    <Modal show={showOmitirModal} onHide={() => setShowOmitirModal(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>Omitir Rindes por Sucursal</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form.Group>
+          <Form.Label className="vt-label">Seleccione los rindes que desea omitir</Form.Label>
+          <Form.Control
+            as="select"
+            multiple
+            className="vt-input"
+            value={rindesOmitidosIds}
+            onChange={(e) =>
+              setRindesOmitidosIds(Array.from(e.target.selectedOptions, (opt) => parseInt(opt.value)))
+            }
+          >
+            {rindesDisponibles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {context.sucursalesTabla.find((s) => s.id === Number(r.sucursal_id))?.nombre ||
+                  "Sucursal desconocida"}{" "}
+                — Rinde: {parseFloat(r.rinde).toFixed(2)}%
+              </option>
+            ))}
+          </Form.Control>
+          <small className="text-muted">Use Ctrl para selección múltiple</small>
+        </Form.Group>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" className="vt-btn-secondary" onClick={() => setShowOmitirModal(false)}>
+          Cerrar
+        </Button>
+        <Button variant="primary" className="vt-btn" onClick={() => setShowOmitirModal(false)}>
+          Aplicar
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  </Container>
+);
+
 }

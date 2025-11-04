@@ -16,7 +16,7 @@ export default function ArticulosPrecios() {
 
   const obtenerArticulosPrecios = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/obtenerarticulosprecios`);
+      const response = await fetch(`${apiUrl}/obtenerarticulosprecios`,{ credentials: "include" });
       if (!response.ok) {
         throw new Error("Error al obtener los artículos con precios");
       }
@@ -108,45 +108,48 @@ export default function ArticulosPrecios() {
   );
 
   return (
-    <Container>
-      <h1>Artículos con Precios</h1>
-      <div className="mb-3 d-flex">
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Artículos con Precios</h1>
+
+    {/* Filtros */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto mx-2">
+        <label className="vt-label d-block">Código de barras</label>
         <FormControl
           type="text"
           placeholder="Filtrar por código de barras"
           value={codigoBarrasFilter}
           onChange={handleCodigoBarrasFilterChange}
-          className="mr-2"
-          style={{ width: "25%" }} // Ajusta el ancho según tu preferencia
+          className="vt-input"
+          style={{ minWidth: 250 }}
         />
+      </div>
+
+      <div className="d-inline-block w-auto mx-2">
+        <label className="vt-label d-block">Descripción</label>
         <FormControl
           type="text"
           placeholder="Filtrar por descripción"
           value={descripcionFilter}
           onChange={handleDescripcionFilterChange}
-          className="mr-2"
-          style={{ width: "25%" }} // Ajusta el ancho según tu preferencia
+          className="vt-input"
+          style={{ minWidth: 250 }}
         />
       </div>
-      <Table striped bordered hover>
+    </div>
+
+    {/* Tabla */}
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover className="mb-2">
         <thead>
           <tr>
-            <th
-              onClick={() => handleSort("codigobarra")}
-              style={{ cursor: "pointer" }}
-            >
+            <th onClick={() => handleSort("codigobarra")} className="vt-th-sort">
               Código de Barras
             </th>
-            <th
-              onClick={() => handleSort("descripcion")}
-              style={{ cursor: "pointer" }}
-            >
+            <th onClick={() => handleSort("descripcion")} className="vt-th-sort">
               Descripción del Artículo
             </th>
-            <th
-              onClick={() => handleSort("precio")}
-              style={{ cursor: "pointer" }}
-            >
+            <th onClick={() => handleSort("precio")} className="vt-th-sort text-end">
               Precio
             </th>
           </tr>
@@ -156,32 +159,37 @@ export default function ArticulosPrecios() {
             <tr key={articulo.id}>
               <td>{articulo.Articulotabla.codigobarra}</td>
               <td>{articulo.Articulotabla.descripcion}</td>
-              <td>{articulo.precio}</td>
+              <td className="text-end">{articulo.precio}</td>
             </tr>
           ))}
         </tbody>
       </Table>
-      <div className="d-flex justify-content-center align-items-center">
-        <Button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(filteredArticulos.length / articulosPerPage)}
-        </span>
-        <Button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={
-            currentPage ===
-            Math.ceil(filteredArticulos.length / articulosPerPage)
-          }
-        >
-          <BsChevronRight />
-        </Button>
-      </div>
-    </Container>
-  );
+    </div>
+
+    {/* Paginación */}
+    <div className="d-flex justify-content-center align-items-center vt-pager">
+      <Button
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        variant="light"
+      >
+        <BsChevronLeft />
+      </Button>
+      <span className="mx-2">
+        Página {currentPage} de{" "}
+        {Math.ceil(filteredArticulos.length / articulosPerPage)}
+      </span>
+      <Button
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={
+          currentPage === Math.ceil(filteredArticulos.length / articulosPerPage)
+        }
+        variant="light"
+      >
+        <BsChevronRight />
+      </Button>
+    </div>
+  </Container>
+);
+
 }

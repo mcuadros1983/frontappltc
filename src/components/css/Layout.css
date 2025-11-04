@@ -84,3 +84,36 @@
 button.sidebar-toggle:hover {
   background-color: #495057;
 }
+
+.layout-topbar {
+  background: #eef2f7;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+:root{
+  --navbar-h: 70px;     /* la misma que usás en marginTop del contenido */
+}
+
+/* Columna del sidebar (escritorio) */
+.sidebar-col{
+  background: #343a40;
+  color: #fff;
+  min-width: 200px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Hace que el sidebar no “desborde” y scrollee dentro */
+.sidebar-col .sidebar-scroll{
+  height: calc(100vh - var(--navbar-h));
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* (Opcional) ocultar barra horizontal global si algo empuja */
+html, body{
+  overflow-x: hidden;
+}

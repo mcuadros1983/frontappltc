@@ -1,0 +1,97 @@
+/* src/components/shortcuts/ShortcutsBar.css */
+
+.sc-wrapper {
+  position: relative;
+  padding: 12px;
+}
+
+/* Cabecera arriba, con z-index alto y un fondo para garantizar stacking */
+.sc-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  /* 🔻 forzamos transparencia */
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.sc-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Grilla de tarjetas */
+.sc-grid {
+  position: relative;
+  z-index: 1; /* por debajo de la cabecera */
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.sc-card {
+  position: relative;
+  isolation: isolate;
+  border-radius: 16px;
+  padding: 18px 14px 16px;
+  background: linear-gradient(180deg, #f3f4f6 0%, #e5e7eb 100%);
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  cursor: pointer;
+  min-height: 120px;
+}
+
+.sc-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(15,23,42,.08);
+  background: linear-gradient(180deg, #eef0f3 0%, #e5e7eb 100%);
+}
+
+/* Botonera de acciones (X, mover) */
+.sc-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 5; /* menor que header (50) */
+}
+
+.sc-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #eef2ff;
+  margin-bottom: 10px;
+}
+
+.sc-label {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.sc-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 18px;
+  color: #6b7280;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+}

@@ -1,42 +1,34 @@
+// VentasConDescuento.jsx
 import React, { useState, useContext, useEffect } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
+import "../../../components/css/VentasConDescuentos.css"; // ⬅️ NUEVO
 
 export default function VentasTotales() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
-  // const [searchSucursal, setSearchSucursal] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sellsPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
-  const [selectedSucursal, setSelectedSucursal] = useState(""); // Estado para la sucursal seleccionada
+  const [selectedSucursal, setSelectedSucursal] = useState("");
 
   const context = useContext(Contexts.DataContext);
-
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    // Aquí puedes realizar alguna acción cuando cambie la sucursal seleccionada,
-    // como cargar datos relacionados con esa sucursal.
-    // console.log("Sucursal seleccionada:", selectedSucursal);
-  }, [selectedSucursal]);
+  useEffect(() => {}, [selectedSucursal]);
 
   const handleFilter = async () => {
     try {
-      // Validación de fechas
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         alert("Ingrese una fecha válida.");
         return;
       }
-
       const response = await fetch(`${apiUrl}/ventas/con_descuento_filtradas`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           fechaDesde: startDate,
@@ -51,16 +43,15 @@ export default function VentasTotales() {
           setVentasFiltradas([]);
           return;
         }
-        // console.log("descuento---", data);
         const ventasMapped = data.map((venta) => ({
           ...venta,
           sucursalNombre:
             context.sucursalesTabla.find(
-              (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
+              (s) => s.id === parseInt(venta.sucursal_id)
             )?.nombre || "Desconocido",
         }));
         setVentasFiltradas(ventasMapped);
-        setCurrentPage(1); // Reiniciar a la primera página después de cada búsqueda
+        setCurrentPage(1);
       } else {
         throw new Error("Error al obtener las ventas con descuento filtradas");
       }
@@ -70,179 +61,169 @@ export default function VentasTotales() {
   };
 
   const handleSort = (columnName) => {
-    setSortDirection(
-      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
-    );
+    const nextDir =
+      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    setSortDirection(nextDir);
     setSortColumn(columnName);
 
-    const sortedSells = [...ventasFiltradas].sort((a, b) => {
-      let valueA = a[columnName];
-      let valueB = b[columnName];
+    const sorted = [...ventasFiltradas].sort((a, b) => {
+      let A = a[columnName];
+      let B = b[columnName];
 
-      // Convertir a número si el nombre de la columna es "numeroticket"
       if (columnName === "numeroticket") {
-        valueA = parseInt(valueA, 10);
-        valueB = parseInt(valueB, 10);
+        A = parseInt(A, 10);
+        B = parseInt(B, 10);
       } else if (columnName === "monto" || columnName === "descuento") {
-        // Convertir a número si el nombre de la columna es "monto" o "descuento"
-        valueA = parseFloat(valueA);
-        valueB = parseFloat(valueB);
+        A = parseFloat(A);
+        B = parseFloat(B);
       }
-
-      if (valueA < valueB) {
-        return sortDirection === "asc" ? -1 : 1;
-      } else if (valueA > valueB) {
-        return sortDirection === "asc" ? 1 : -1;
-      } else {
-        return 0;
-      }
+      if (A < B) return nextDir === "asc" ? -1 : 1;
+      if (A > B) return nextDir === "asc" ? 1 : -1;
+      return 0;
     });
 
-    setVentasFiltradas(sortedSells);
+    setVentasFiltradas(sorted);
   };
 
   const isValidDate = (dateString) => {
     const regEx = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateString.match(regEx)) return false; // Formato incorrecto
+    if (!dateString.match(regEx)) return false;
     const date = new Date(dateString);
-    if (!date.getTime()) return false; // Fecha inválida (por ejemplo, 31/04/2024)
+    if (!date.getTime()) return false;
     return date.toISOString().slice(0, 10) === dateString;
   };
 
-  const handleSearchClick = () => {
-    handleFilter();
-  };
+  const handleSearchClick = () => handleFilter();
 
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = ventasFiltradas.slice(indexOfFirstSell, indexOfLastSell);
-
-  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(ventasFiltradas.length / sellsPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
-
   const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Ventas con Descuento</h1>
+    <Container className="vcd-page">
+      <h1 className="vcd-title">Ventas con Descuento</h1>
 
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
+      {/* Filtros */}
+      <div className="vcd-toolbar d-flex flex-wrap align-items-end gap-3 mb-3">
+        <div className="mx-2 my-2">
+          <label className="d-block">DESDE</label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
+            className="form-control my-input text-center"
           />
         </div>
 
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">HASTA:</label>
+        <div className="mx-2 my-2">
+          <label className="d-block">HASTA</label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
+            className="form-control my-input text-center"
           />
+        </div>
+
+        <div className="mx-2 my-2">
+          <label className="d-block">Sucursal</label>
+          <FormControl
+            as="select"
+            className="form-control my-input"
+            value={selectedSucursal}
+            onChange={(e) => setSelectedSucursal(e.target.value)}
+            style={{ minWidth: 260 }}
+          >
+            <option value="">Seleccionar sucursal</option>
+            {context.sucursalesTabla.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="mx-2 my-2">
+          <Button onClick={handleSearchClick} className="vcd-btn">
+            Filtrar
+          </Button>
         </div>
       </div>
 
-      <div className="mb-3">
-        <FormControl
-          as="select"
-          className="mr-2"
-          value={selectedSucursal}
-          onChange={(e) => setSelectedSucursal(e.target.value)}
-          style={{ width: "25%" }}
-        >
-          <option value="">Seleccionar sucursal</option>
-          {context.sucursalesTabla.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-
-      <div className="mb-3">
-        <Button onClick={handleSearchClick}>Filtrar</Button>
-      </div>
-
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th
-              onClick={() => handleSort("fecha")}
-              style={{ cursor: "pointer" }}
-            >
-              Fecha
-            </th>
-            <th
-              onClick={() => handleSort("monto")}
-              style={{ cursor: "pointer" }}
-            >
-              Monto
-            </th>
-            <th
-              onClick={() => handleSort("descuento")}
-              style={{ cursor: "pointer" }}
-            >
-              Descuento
-            </th>
-            <th
-              onClick={() => handleSort("numeroticket")}
-              style={{ cursor: "pointer" }}
-            >
-              Número de Ticket
-            </th>
-            <th>Sucursal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentSells.map((venta) => (
-            <tr key={venta.id}>
-              <td>{venta.fecha}</td>
-              <td>
-                {" "}
-                {parseFloat(venta.monto).toLocaleString("es-ES", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </td>
-              <td>{venta.descuento}</td>
-              <td>{venta.numeroticket}</td>
-              <td>
-                {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
-                )?.nombre || "Desconocido"}
-              </td>
+      {/* Tabla */}
+      <div className="vcd-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th onClick={() => handleSort("fecha")} className="vcd-th-sort">
+                Fecha {sortColumn === "fecha" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
+              </th>
+              <th
+                onClick={() => handleSort("monto")}
+                className="vcd-th-sort text-end"
+              >
+                Monto {sortColumn === "monto" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
+              </th>
+              <th
+                onClick={() => handleSort("descuento")}
+                className="vcd-th-sort text-end"
+              >
+                Descuento {sortColumn === "descuento" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
+              </th>
+              <th onClick={() => handleSort("numeroticket")} className="vcd-th-sort">
+                Número de Ticket {sortColumn === "numeroticket" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
+              </th>
+              <th>Sucursal</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={prevPage} disabled={currentPage === 1}>
+          </thead>
+          <tbody>
+            {currentSells.map((venta) => (
+              <tr key={venta.id}>
+                <td>{venta.fecha}</td>
+                <td className="text-end">
+                  {parseFloat(venta.monto).toLocaleString("es-ES", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
+                <td className="text-end">
+                  {Number(venta.descuento).toLocaleString("es-ES", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
+                <td>{venta.numeroticket}</td>
+                <td>{venta.sucursalNombre}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vcd-pager">
+        <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
           <BsChevronLeft />
         </Button>
         <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(ventasFiltradas.length / sellsPerPage)}
+          Página {currentPage} de {Math.ceil(ventasFiltradas.length / sellsPerPage) || 1}
         </span>
         <Button
           onClick={nextPage}
           disabled={
-            currentPage === Math.ceil(ventasFiltradas.length / sellsPerPage)
+            currentPage === Math.ceil(ventasFiltradas.length / sellsPerPage) ||
+            ventasFiltradas.length === 0
           }
+          variant="light"
         >
           <BsChevronRight />
         </Button>

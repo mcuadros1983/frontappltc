@@ -14,7 +14,7 @@ const ArticulosPreciosActualizar = () => {
   
   const obtenerArticulos = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/obtenerarticulosprecios`);
+      const response = await fetch(`${apiUrl}/obtenerarticulosprecios`, { credentials: "include" });
       if (!response.ok) {
         throw new Error("Error al obtener los artículos con precios");
       }
@@ -117,38 +117,69 @@ const ArticulosPreciosActualizar = () => {
   };
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">
-        Actualizar Precios desde Excel
-      </h1>
-      {uploadSuccess && <Alert variant="success">{uploadMessage}</Alert>}
-      {!uploadSuccess && uploadMessage && (
-        <Alert variant="danger">{uploadMessage}</Alert>
-      )}
-      <Form>
-        <Form.Group controlId="formFile" className="mb-3">
-          <Form.Label>Seleccione un archivo Excel:</Form.Label>
-          <Form.Control type="file" onChange={handleFileChange} disabled={loading} />
-        </Form.Group>
-        <Button
-          variant="primary"
-          onClick={handleUploadButtonClick}
-          disabled={buttonDisabled || loading}
-        >
-          {loading ? (
-            <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-          ) : (
-            "Actualizar Precios"
-          )}
-        </Button>
-      </Form>
-      <div style={{ marginTop: "10px" }}>
-        <Button variant="secondary" onClick={downloadTemplate} disabled={loading}>
-          Descargar Plantilla
-        </Button>
-      </div>
-    </Container>
-  );
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">
+      Actualizar Precios desde Excel
+    </h1>
+
+    {/* Alertas */}
+    {uploadSuccess && (
+      <Alert variant="success" className="vt-alert">
+        {uploadMessage}
+      </Alert>
+    )}
+    {!uploadSuccess && uploadMessage && (
+      <Alert variant="danger" className="vt-alert">
+        {uploadMessage}
+      </Alert>
+    )}
+
+    {/* Formulario principal */}
+    <Form className="vt-form vt-form-narrow">
+      <Form.Group controlId="formFile" className="mb-3">
+        <Form.Label className="vt-label">Seleccione un archivo Excel:</Form.Label>
+        <Form.Control
+          type="file"
+          onChange={handleFileChange}
+          disabled={loading}
+          className="vt-input"
+        />
+      </Form.Group>
+
+      <Button
+        variant="primary"
+        onClick={handleUploadButtonClick}
+        disabled={buttonDisabled || loading}
+        className="vt-btn"
+      >
+        {loading ? (
+          <Spinner
+            as="span"
+            animation="border"
+            size="sm"
+            role="status"
+            aria-hidden="true"
+          />
+        ) : (
+          "Actualizar Precios"
+        )}
+      </Button>
+    </Form>
+
+    {/* Botón plantilla */}
+    <div className="mt-2">
+      <Button
+        variant="secondary"
+        onClick={downloadTemplate}
+        disabled={loading}
+        className="vt-btn-secondary"
+      >
+        Descargar Plantilla
+      </Button>
+    </div>
+  </Container>
+);
+
 };
 
 export default ArticulosPreciosActualizar;

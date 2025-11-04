@@ -46,7 +46,7 @@ export default function AccountForm() {
 
       // setLoaded(true);
     } catch (error) {
-      console.error("Error al obtener clientes", error);
+      console.error("Error al obtener clientes", error); 
     }
   }, [apiUrl]);
 
@@ -60,7 +60,9 @@ export default function AccountForm() {
       const response = await fetch(`${apiUrl}/clientes/${clienteId}/`, {
         credentials: "include",
       });
+      
       const cliente = await response.json();
+      console.log("cliente", cliente)
       return cliente;
     } catch (error) {
       console.error("Error al obtener datos del cliente", error);

@@ -1,5 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
-import { Table, Container, Button } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Table,
+  Button,
+  Badge,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 export default function BranchList() {
@@ -44,43 +52,87 @@ export default function BranchList() {
   }, [loadUsers]);
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Lista de Usuarios</h1>
-      {/* <Table striped bordered hover variant="dark"> */}
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Nombre Usuario</th>
-            <th>Roles</th>
-            <th>Operaciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id}>
-              <td>{user.id}</td>
-              <td>{user.usuario}</td>
-              <td>{user.roles.map((rol) => rol.nombre).join(", ")}</td>
-              <td className="text-center">
-                <Button
-                  variant="danger"
-                  onClick={() => handleDelete(user.id)}
-                  className="mx-2"
-                >
-                  Eliminar
-                </Button>
-                <Button
-                  color="inherit"
-                  onClick={() => navigate(`/users/${user.id}/edit`)}
-                >
-                  Editar
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </Container>
-  );
+  <Container fluid className="mt-3 rpm-page px-3">
+    <Row>
+      <Col>
+        <Card className="rpm-card">
+          <Card.Header className="d-flex justify-content-between align-items-center rpm-header">
+            <strong>Lista de Usuarios</strong>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => navigate("/users/new")}
+              className="rpm-btn"
+            >
+              Nuevo Usuario
+            </Button>
+          </Card.Header>
+
+          <Card.Body className="rpm-body">
+            <div className="table-responsive rpm-tablewrap">
+              <Table bordered hover size="sm" className="rpm-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: 60 }}># ID</th>
+                    <th>Nombre Usuario</th>
+                    <th>Roles</th>
+                    <th>Operaciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="text-center text-muted py-4">
+                        Sin usuarios registrados
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((user) => (
+                      <tr key={user.id}>
+                        <td>{user.id}</td>
+                        <td className="fw-medium">{user.usuario}</td>
+                        <td>
+                          {user.roles && user.roles.length > 0
+                            ? user.roles.map((rol) => (
+                                <Badge key={rol.id} bg="secondary" className="me-1 rpm-badge">
+                                  {rol.nombre}
+                                </Badge>
+                              ))
+                            : "—"}
+                        </td>
+                        <td className="text-center text-nowrap">
+                          <Button
+                            size="sm"
+                            variant="outline-secondary"
+                            className="me-2 rpm-btn-outline"
+                            onClick={() => navigate(`/users/${user.id}/edit`)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            className="rpm-btn-outline"
+                            onClick={() => handleDelete(user.id)}
+                          >
+                            Eliminar
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </Table>
+            </div>
+
+            {/* Paginación opcional (si la tenés) */}
+            {/* <div className="d-flex justify-content-between align-items-center rpm-pager mt-3">
+              <div className="text-muted">Total: {users.length} usuarios</div>
+            </div> */}
+          </Card.Body>
+        </Card>
+      </Col>
+    </Row>
+  </Container>
+);
 }

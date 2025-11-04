@@ -14,7 +14,7 @@ const Layout = ({ children }) => {
       if (window.innerWidth <= 993) {
         setIsMobile(true);
         setIsSidebarVisible(false);
-        setIsSidebarCollapsed(false); // Asegura que no quede oculto si vuelve a móvil
+        setIsSidebarCollapsed(false);
       } else {
         setIsMobile(false);
         setIsSidebarVisible(true);
@@ -24,13 +24,8 @@ const Layout = ({ children }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const toggleSidebar = () => {
-    setIsSidebarVisible(!isSidebarVisible);
-  };
-
-  const toggleCollapseSidebar = () => {
-    setIsSidebarCollapsed(prev => !prev);
-  };
+  const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
+  const toggleCollapseSidebar = () => setIsSidebarCollapsed(prev => !prev);
 
   return (
     <>
@@ -55,11 +50,7 @@ const Layout = ({ children }) => {
       {!isMobile && (
         <OverlayTrigger
           placement="right"
-          overlay={
-            <Tooltip>
-              {isSidebarCollapsed ? 'Mostrar menú' : 'Ocultar menú'}
-            </Tooltip>
-          }
+          overlay={<Tooltip>{isSidebarCollapsed ? 'Mostrar menú' : 'Ocultar menú'}</Tooltip>}
         >
           <Button
             onClick={toggleCollapseSidebar}

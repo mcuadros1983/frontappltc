@@ -1,50 +1,42 @@
+// LoginForm.jsx (cambios marcados)
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Form, Button } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
-// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
+import { useSecurity } from "../../security/SecurityContext"; // 👈 NUEVO
 
 const LoginForm = () => {
   const [credentials, setCredentials] = useState({ usuario: "", password: "" });
-  // const { login } = useUser();
   const navigate = useNavigate();
-
-  // const apiUrl = process.env.REACT_APP_API_URL;
-
   const context = useContext(Contexts.UserContext);
+  const { setUser: setSecUser } = useSecurity();            // 👈 NUEVO
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setCredentials((prevCredentials) => ({
-      ...prevCredentials,
-      [name]: value,
-    }));
+    setCredentials((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
+      // 1) hace login vía UserContext (devuelve el user)
+      const loggedUser = await context.login(credentials);
 
-      await context.login(credentials); // Llamada a la función de inicio de sesión del contexto
+      // 2) sincroniza SecurityContext (el que mira ProtectedRoute)
+      setSecUser(loggedUser);
 
+      // 3) navega a dashboard (replace para que no quede /login en el historial)
+      navigate("/dashboard", { replace: true });
 
-      // Redirige a la página de inicio o dashboard después de iniciar sesión
-      navigate("/dashboard");
-
+      // (opcional) refresco duro si algo raro queda cacheado:
+      // window.location.replace('/dashboard');
     } catch (error) {
-      alert(
-        error.message ||
-          "Error al iniciar sesión. Verifica tu usuario y contraseña."
-      );
+      alert(error.message || "Error al iniciar sesión. Verifica tus datos.");
     }
   };
 
   return (
-    <Container
-      className="d-flex align-items-center justify-content-center"
-      style={{ minHeight: "100vh" }}
-    >
+    <Container className="d-flex align-items-center justify-content-center" style={{ minHeight: "100vh" }}>
       <div className="w-100" style={{ maxWidth: "400px" }}>
         <h1 className="text-center mb-4">Sistema de Gestión</h1>
         <h2 className="text-center mb-4">Iniciar Sesión</h2>

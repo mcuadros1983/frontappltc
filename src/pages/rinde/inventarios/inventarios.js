@@ -37,7 +37,7 @@ export default function Inventario() {
             fechaDesde: startDate,
             fechaHasta: endDate,
             sucursalId: searchSucursal,
-          }),
+          }), credentials: "include"
         }
       );
       if (response.ok) {
@@ -102,7 +102,7 @@ export default function Inventario() {
       const response = await fetch(
         `${apiUrl}/inventario/${inventarioId}`,
         {
-          method: "DELETE",
+          method: "DELETE", credentials: "include"
         }
       );
       if (response.ok) {
@@ -139,37 +139,39 @@ export default function Inventario() {
   };
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Inventario</h1>
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Inventario</h1>
 
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
-        </div>
-
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">HASTA:</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
-        </div>
+    {/* Filtros */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">DESDE</label>
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="form-control vt-input text-center"
+        />
       </div>
-      <div className="mb-3">
+
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">HASTA</label>
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="form-control vt-input text-center"
+        />
+      </div>
+
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">Sucursal</label>
         <FormControl
           as="select"
           value={searchSucursal}
           onChange={(e) => setSearchSucursal(e.target.value)}
-          className="mr-2"
-          style={{ width: "25%" }}
+          className="vt-input"
+          style={{ minWidth: 240 }}
         >
           <option value="">Seleccione una sucursal</option>
           {context.sucursalesTabla.map((sucursal) => (
@@ -180,74 +182,49 @@ export default function Inventario() {
         </FormControl>
       </div>
 
-      <div className="mb-3">
-        <Button onClick={handleSearchClick}>Filtrar</Button>
+      <div className="d-inline-block">
+        <Button onClick={handleSearchClick} className="vt-btn">
+          Filtrar
+        </Button>
       </div>
+    </div>
 
-      <Table striped bordered hover>
+    {/* Tabla */}
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover className="mb-2">
         <thead>
           <tr>
-            <th
-              onClick={() => handleSort("fecha")}
-              style={{ cursor: "pointer" }}
-            >
-              Fecha
-            </th>
-            <th
-              onClick={() => handleSort("mes")}
-              style={{ cursor: "pointer" }}
-            >
-              Mes
-            </th>
-            <th
-              onClick={() => handleSort("anio")}
-              style={{ cursor: "pointer" }}
-            >
-              Año
-            </th>
-            <th
-              onClick={() => handleSort("total")}
-              style={{ cursor: "pointer" }}
-            >
-              Total
-            </th>
-            <th
-              onClick={() => handleSort("sucursal_id")}
-              style={{ cursor: "pointer" }}
-            >
-              Sucursal
-            </th>
-            <th
-              onClick={() => handleSort("usuario_id")}
-              style={{ cursor: "pointer" }}
-            >
-              Usuario ID
-            </th>
-            <th>Operaciones</th>
+            <th onClick={() => handleSort("fecha")} className="vt-th-sort">Fecha</th>
+            <th onClick={() => handleSort("mes")} className="vt-th-sort">Mes</th>
+            <th onClick={() => handleSort("anio")} className="vt-th-sort">Año</th>
+            <th onClick={() => handleSort("total")} className="vt-th-sort text-end">Total</th>
+            <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">Sucursal</th>
+            <th onClick={() => handleSort("usuario_id")} className="vt-th-sort">Usuario ID</th>
+            <th className="text-center">Operaciones</th>
           </tr>
         </thead>
         <tbody>
           {currentInventarios.map((inventario) => (
             <tr
               key={inventario.id}
-              onDoubleClick={() =>
-                navigate(`/inventory/${inventario.id}/articles`)
-              }
+              onDoubleClick={() => navigate(`/inventory/${inventario.id}/articles`)}
             >
               <td>{inventario.fecha}</td>
               <td>{inventario.mes}</td>
               <td>{inventario.anio}</td>
-              <td>{inventario.total}</td>
+              <td className="text-end">{inventario.total}</td>
               <td>
                 {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === parseInt(inventario.sucursal_id)
+                  (s) => s.id === parseInt(inventario.sucursal_id)
                 )?.nombre || "Desconocido"}
               </td>
               <td>{inventario.usuario_id}</td>
-              <td>
+              <td className="text-center">
                 <Button
                   variant="danger"
                   onClick={() => handleEliminarInventario(inventario.id)}
+                  size="sm"
+                  className="vt-btn-danger"
                 >
                   Eliminar
                 </Button>
@@ -256,23 +233,25 @@ export default function Inventario() {
           ))}
         </tbody>
       </Table>
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={prevPage} disabled={currentPage === 1}>
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(inventarios.length / inventariosPerPage)}
-        </span>
-        <Button
-          onClick={nextPage}
-          disabled={
-            currentPage === Math.ceil(inventarios.length / inventariosPerPage)
-          }
-        >
-          <BsChevronRight />
-        </Button>
-      </div>
-    </Container>
-  );
+    </div>
+
+    {/* Paginación */}
+    <div className="d-flex justify-content-center align-items-center vt-pager">
+      <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
+        <BsChevronLeft />
+      </Button>
+      <span className="mx-2">
+        Página {currentPage} de {Math.ceil(inventarios.length / inventariosPerPage)}
+      </span>
+      <Button
+        onClick={nextPage}
+        disabled={currentPage === Math.ceil(inventarios.length / inventariosPerPage)}
+        variant="light"
+      >
+        <BsChevronRight />
+      </Button>
+    </div>
+  </Container>
+);
+
 }

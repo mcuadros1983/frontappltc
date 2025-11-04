@@ -24,12 +24,13 @@ export default function OrdenMantenimientoForm() {
 
   // Fetch equipos cuando sucursalId cambia
   useEffect(() => {
+    console.log("sucursales", context.sucursales);
     if (sucursalId) {
       const fetchEquipos = async () => {
         try {
           // Cambia la URL para obtener equipos según la sucursal seleccionada
           const response = await fetch(
-            `${apiUrl}/equipos/sucursal/${sucursalId}`
+            `${apiUrl}/equipos/sucursal/${sucursalId}`, {credentials:"include"}
           );
           const data = await response.json();
           setEquipos(Array.isArray(data) ? data : []);

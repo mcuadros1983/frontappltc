@@ -1,0 +1,240 @@
+/* ===========================
+   VT Design System – Shared CSS
+   Reutilizable en toda la app
+   =========================== */
+
+/* --------- Variables --------- */
+:root {
+  --vt-bg: #f7f8fa;
+  --vt-card-bg: #ffffff;
+  --vt-text: #1f2937;
+  --vt-muted: #6b7280;
+  --vt-primary: #0d6efd;         /* armoniza con Bootstrap primary */
+  --vt-primary-600: #0b5ed7;
+  --vt-danger: #dc3545;
+  --vt-danger-600: #bb2d3b;
+  --vt-border: #e5e7eb;
+  --vt-radius: 14px;
+  --vt-radius-sm: 10px;
+  --vt-shadow: 0 8px 24px rgba(2, 6, 23, 0.08);
+  --vt-shadow-sm: 0 4px 14px rgba(2, 6, 23, 0.06);
+}
+
+/* Modo oscuro opcional (activar con <html data-theme="dark">) */
+html[data-theme="dark"] {
+  --vt-bg: #0b1220;
+  --vt-card-bg: #0f172a;
+  --vt-text: #e5e7eb;
+  --vt-muted: #94a3b8;
+  --vt-primary: #60a5fa;
+  --vt-primary-600: #3b82f6;
+  --vt-danger: #f87171;
+  --vt-danger-600: #ef4444;
+  --vt-border: #1f2937;
+}
+
+/* --------- Layout base --------- */
+.vt-page {
+  max-width: 1200px;
+  margin: 24px auto;
+  padding: 0 16px;
+  color: var(--vt-text);
+}
+
+.my-list-title,
+.vt-title {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--vt-text);
+  margin: 8px 0 16px;
+}
+
+.dark-text { color: var(--vt-text); }
+
+/* --------- Tarjetas / Formularios --------- */
+.vt-form {
+  background: var(--vt-card-bg);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  padding: 18px;
+  box-shadow: var(--vt-shadow-sm);
+}
+
+.vt-form-narrow {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.vt-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 8px 0 14px;
+  color: var(--vt-text);
+}
+
+.vt-sep {
+  border: 0;
+  border-top: 1px solid var(--vt-border);
+  margin: 20px 0;
+}
+
+/* --------- Inputs / Labels --------- */
+.vt-label {
+  font-weight: 600;
+  color: var(--vt-text);
+  margin-bottom: 6px;
+}
+
+.vt-input,
+.vt-input.form-control,
+.vt-input.form-select {
+  border: 1px solid var(--vt-border) !important;
+  background: var(--vt-card-bg) !important;
+  color: var(--vt-text) !important;
+  border-radius: var(--vt-radius-sm) !important;
+  padding: 10px 12px !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vt-input:focus,
+.vt-input.form-control:focus,
+.vt-input.form-select:focus {
+  border-color: var(--vt-primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vt-primary) 18%, transparent) !important;
+  outline: none !important;
+}
+
+/* Utilitarias frecuentes usadas en el código legado */
+.border-transparent { border-color: transparent !important; }
+.rounded-0 { border-radius: 0 !important; }
+
+/* --------- Botones --------- */
+.vt-btn.btn,
+.vt-btn {
+  background: var(--vt-primary);
+  border-color: var(--vt-primary);
+  color: #fff;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-weight: 600;
+  box-shadow: var(--vt-shadow-sm);
+}
+
+.vt-btn:hover,
+.vt-btn:focus {
+  background: var(--vt-primary-600);
+  border-color: var(--vt-primary-600);
+  color: #fff;
+}
+
+.vt-btn-danger.btn,
+.vt-btn-danger {
+  background: var(--vt-danger);
+  border-color: var(--vt-danger);
+  color: #fff;
+}
+
+.vt-btn-danger:hover,
+.vt-btn-danger:focus {
+  background: var(--vt-danger-600);
+  border-color: var(--vt-danger-600);
+}
+
+.vt-btn-sm { padding: 6px 10px; border-radius: 10px; font-size: 0.9rem; }
+
+.vt-link {
+  color: var(--vt-primary);
+  text-decoration: none;
+}
+.vt-link:hover { text-decoration: underline; }
+
+/* --------- Tablas --------- */
+.vt-tablewrap {
+  overflow-x: auto;
+  background: var(--vt-card-bg);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  box-shadow: var(--vt-shadow-sm);
+}
+
+/* Encabezados “clickeables” para ordenar */
+.vt-th-sort {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  white-space: nowrap;
+}
+
+.vt-th-sort::after {
+  content: "↕";
+  font-size: 0.8rem;
+  color: var(--vt-muted);
+  margin-left: 6px;
+}
+
+/* Tablas tipo “comparativas” con primera columna fija */
+.fixed-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius);
+  background: var(--vt-card-bg);
+  box-shadow: var(--vt-shadow-sm);
+}
+
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: var(--vt-card-bg);
+  z-index: 2;
+  box-shadow: 4px 0 0 0 var(--vt-card-bg);
+  font-weight: 600;
+}
+
+/* --------- Toolbars / Paginadores --------- */
+.vt-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.vt-pager {
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.vt-pager .btn {
+  border-radius: 10px;
+  box-shadow: var(--vt-shadow-sm);
+}
+
+/* --------- Helpers visuales --------- */
+.vt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: color-mix(in srgb, var(--vt-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vt-primary) 35%, transparent);
+  color: var(--vt-primary-600);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.vt-muted { color: var(--vt-muted); }
+
+/* --------- Responsivo --------- */
+@media (max-width: 992px) {
+  .vt-form { padding: 14px; }
+  .vt-form-narrow { max-width: 100%; }
+}
+
+@media (max-width: 576px) {
+  .vt-title,
+  .my-list-title { font-size: 1.25rem; }
+  .vt-input { padding: 9px 10px !important; }
+  .vt-btn,
+  .vt-btn.btn { padding: 8px 12px; border-radius: 10px; }
+  .sticky-col { min-width: 160px; } /* Mejor lectura en móviles */
+}

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback, useMemo } from "react";
 import { Container, Table, Button, FormControl, Spinner, Row, Col, Card } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
-import * as XLSX from "xlsx";
 import Contexts from "../../context/Contexts";
 
 export default function Cupones() {
@@ -40,14 +39,6 @@ export default function Cupones() {
     manejadorFiltroClienteSeleccionado();
   }, [clienteSeleccionado, manejadorFiltroClienteSeleccionado]);
 
-  const esFechaValida = (cadenaFecha) => {
-    const regEx = /^\d{4}-\d{2}-\d{2}$/;
-    if (!cadenaFecha.match(regEx)) return false;
-    const fecha = new Date(cadenaFecha);
-    if (!fecha.getTime()) return false;
-    return fecha.toISOString().slice(0, 10) === cadenaFecha;
-  };
-
   const manejarFiltro = async () => {
     try {
       setCargando(true);
@@ -65,6 +56,7 @@ export default function Cupones() {
           fechaHasta,
           sucursalId: buscarSucursal,
         }),
+        credentials: "include",
       });
 
       if (respuesta.ok) {
@@ -77,7 +69,7 @@ export default function Cupones() {
           setClienteSeleccionado("");
           const clientes = datos.map((cupon) => parseInt(cupon.cliente_id));
           const clientesUnicos = [...new Set(clientes)];
-          const _clientesFiltrados = (contexto?.clientesTabla || []).filter((cliente) =>
+          const _clientesFiltrados = contexto.clientesTabla.filter((cliente) =>
             clientesUnicos.includes(cliente.id)
           );
           setClientesFiltrados(_clientesFiltrados);
@@ -93,9 +85,9 @@ export default function Cupones() {
   };
 
   const manejarOrden = (nombreColumna) => {
-    const nuevaDireccion =
-      nombreColumna === columnaOrden && direccionOrden === "asc" ? "desc" : "asc";
-    setDireccionOrden(nuevaDireccion);
+    setDireccionOrden(
+      nombreColumna === columnaOrden && direccionOrden === "asc" ? "desc" : "asc"
+    );
     setColumnaOrden(nombreColumna);
 
     const cuponesOrdenados = [...cupones].sort((a, b) => {
@@ -107,12 +99,20 @@ export default function Cupones() {
         valorB = parseFloat(valorB);
       }
 
-      if (valorA < valorB) return nuevaDireccion === "asc" ? -1 : 1;
-      if (valorA > valorB) return nuevaDireccion === "asc" ? 1 : -1;
+      if (valorA < valorB) return direccionOrden === "asc" ? -1 : 1;
+      if (valorA > valorB) return direccionOrden === "asc" ? 1 : -1;
       return 0;
     });
 
     setCupones(cuponesOrdenados);
+  };
+
+  const esFechaValida = (cadenaFecha) => {
+    const regEx = /^\d{4}-\d{2}-\d{2}$/;
+    if (!cadenaFecha.match(regEx)) return false;
+    const fecha = new Date(cadenaFecha);
+    if (!fecha.getTime()) return false;
+    return fecha.toISOString().slice(0, 10) === cadenaFecha;
   };
 
   const manejarBusqueda = () => {
@@ -126,7 +126,9 @@ export default function Cupones() {
 
     for (const c of cupones) {
       const importe = Number(c?.importecupon) || 0;
-      const conRecargo = Number(c?.importecuponconrecargo) || importe;
+      const conRecargo =
+        Number(c?.importecuponconrecargo) ||
+        importe; // si no viene, tomamos el importe base
       _totalImporte += importe;
       _totalConRecargo += conRecargo;
     }
@@ -161,137 +163,43 @@ export default function Cupones() {
     }
   };
 
-  // ====== Exportar a Excel (xlsx) ======
-  const exportarExcel = () => {
-    if (!cupones || cupones.length === 0) {
-      alert("No hay datos para exportar.");
-      return;
-    }
-
-    const headers = [
-      "Fecha",
-      "Importe",
-      "Sucursal",
-      "Cliente",
-      "Caja",
-      "Recargo",
-      "Lote",
-      "Cupon",
-      "Plan",
-    ];
-
-    const rows = cupones.map((cupon) => {
-      const sucursalNombre =
-        (contexto?.sucursalesTabla || []).find(
-          (s) => s.id === parseInt(cupon.sucursal_id)
-        )?.nombre || "Desconocido";
-
-      const clienteObj = (contexto?.clientesTabla || []).find(
-        (c) => c.id === parseInt(cupon.cliente_id)
-      );
-      const clienteNombre = `${clienteObj?.nombre || ""} ${clienteObj?.apellido || "Desconocido"}`.trim();
-
-      const recargo =
-        (Number(cupon.importecuponconrecargo) || Number(cupon.importecupon) || 0) -
-        (Number(cupon.importecupon) || 0);
-
-      const planDesc =
-        (contexto?.planTarjetaTabla || []).find(
-          (p) => p.id === parseInt(cupon.plantarjeta_id)
-        )?.descripcion || "Desconocido";
-
-      return [
-        cupon.fecha,
-        Number(cupon.importecupon) || 0,
-        sucursalNombre,
-        clienteNombre,
-        cupon.caja_id ?? "",
-        Number(recargo) || 0,
-        cupon.lote ?? "",
-        cupon.nrocupon ?? "",
-        planDesc,
-      ];
-    });
-
-    const data = [headers, ...rows];
-    const ws = XLSX.utils.aoa_to_sheet(data);
-
-    // Auto-filtro y anchos
-    const lastRow = data.length;
-    const lastCol = headers.length - 1;
-    const colLetter = (n) => {
-      let s = "";
-      while (n >= 0) {
-        s = String.fromCharCode((n % 26) + 65) + s;
-        n = Math.floor(n / 26) - 1;
-      }
-      return s;
-    };
-    ws["!autofilter"] = { ref: `A1:${colLetter(lastCol)}${lastRow}` };
-    ws["!cols"] = [
-      { wch: 12 }, // Fecha
-      { wch: 12 }, // Importe
-      { wch: 18 }, // Sucursal
-      { wch: 24 }, // Cliente
-      { wch: 8 },  // Caja
-      { wch: 12 }, // Recargo
-      { wch: 12 }, // Lote
-      { wch: 14 }, // Cupon
-      { wch: 20 }, // Plan
-    ];
-
-    // Tipos numéricos (para que Excel los trate como números)
-    for (let r = 2; r <= lastRow; r++) {
-      if (ws[`B${r}`]) ws[`B${r}`].t = "n"; // Importe
-      if (ws[`F${r}`]) ws[`F${r}`].t = "n"; // Recargo
-    }
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Cupones");
-
-    const rango =
-      fechaDesde && fechaHasta
-        ? `_${fechaDesde}_a_${fechaHasta}`
-        : `_${new Date().toISOString().slice(0, 10)}`;
-    XLSX.writeFile(wb, `cupones_filtrados${rango}.xlsx`);
-  };
-
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Cupones</h1>
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Cupones</h1>
 
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
-          <input
-            type="date"
-            value={fechaDesde}
-            onChange={(e) => setFechaDesde(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
-        </div>
-
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">HASTA:</label>
-          <input
-            type="date"
-            value={fechaHasta}
-            onChange={(e) => setFechaHasta(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
-        </div>
+    {/* Filtros */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto mx-2">
+        <label className="mr-2">DESDE:</label>
+        <input
+          type="date"
+          value={fechaDesde}
+          onChange={(e) => setFechaDesde(e.target.value)}
+          className="form-control rounded-0 text-center vt-input"
+        />
       </div>
 
-      <div className="mb-3">
+      <div className="d-inline-block w-auto mx-2">
+        <label className="ml-2 mr-2">HASTA:</label>
+        <input
+          type="date"
+          value={fechaHasta}
+          onChange={(e) => setFechaHasta(e.target.value)}
+          className="form-control rounded-0 text-center vt-input"
+        />
+      </div>
+
+      <div className="d-inline-block">
+        <label className="d-block">Sucursal</label>
         <FormControl
           as="select"
           value={buscarSucursal}
           onChange={(e) => setBuscarSucursal(e.target.value)}
-          className="mr-2"
-          style={{ width: "25%" }}
+          className="vt-input"
+          style={{ minWidth: 240 }}
         >
           <option value="">Seleccione una sucursal</option>
-          {(contexto?.sucursalesTabla || []).map((sucursal) => (
+          {contexto.sucursalesTabla.map((sucursal) => (
             <option key={sucursal.id} value={sucursal.id}>
               {sucursal.nombre}
             </option>
@@ -299,13 +207,14 @@ export default function Cupones() {
         </FormControl>
       </div>
 
-      <div className="mb-3">
+      <div className="d-inline-block">
+        <label className="d-block">Cliente</label>
         <FormControl
           as="select"
           value={clienteSeleccionado}
           onChange={(e) => setClienteSeleccionado(e.target.value)}
-          className="mr-2 mb-3"
-          style={{ width: "25%" }}
+          className="vt-input"
+          style={{ minWidth: 280 }}
         >
           <option value="">Seleccione un cliente</option>
           {clientesFiltrados.map((cliente) => (
@@ -316,98 +225,71 @@ export default function Cupones() {
         </FormControl>
       </div>
 
-      <div className="mb-3 d-flex align-items-center gap-2">
-        <Button onClick={manejarBusqueda} disabled={cargando} className="me-2">
+      <div className="d-inline-block mx-2">
+        <Button onClick={manejarBusqueda} disabled={cargando} className="vt-btn">
           {cargando ? (
             <span>
-              Cargando... <Spinner as="span" animation="border" size="sm" />
+              Cargando… <Spinner as="span" animation="border" size="sm" />
             </span>
           ) : (
             "Filtrar"
           )}
         </Button>
-
-        <Button
-          variant="success"
-          onClick={exportarExcel}
-          disabled={cargando || cupones.length === 0}
-        >
-          Exportar a Excel
-        </Button>
       </div>
+    </div>
 
-      {/* ====== BLOQUE DE TOTALES (Arriba de la tabla) ====== */}
-      <Card className="mb-3">
-        <Card.Body>
-          <Row>
-            <Col md={3} sm={6} xs={12}>
-              <strong>Cantidad:</strong> {cantidad}
-            </Col>
-            <Col md={3} sm={6} xs={12}>
-              <strong>Total Importe:</strong> ${formatMoney(totalImporte)}
-            </Col>
-            <Col md={3} sm={6} xs={12}>
-              <strong>Total Recargo:</strong> ${formatMoney(totalRecargo)}
-            </Col>
-            <Col md={3} sm={6} xs={12}>
-              <strong>Total c/ Recargo:</strong> ${formatMoney(totalConRecargo)}
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+    {/* Totales */}
+    <Card className="mb-3 vt-card">
+      <Card.Body>
+        <Row className="gy-2">
+          <Col md={3} sm={6} xs={12}>
+            <strong>Cantidad:</strong> {cantidad}
+          </Col>
+          <Col md={3} sm={6} xs={12}>
+            <strong>Total Importe:</strong> ${formatMoney(totalImporte)}
+          </Col>
+          <Col md={3} sm={6} xs={12}>
+            <strong>Total Recargo:</strong> ${formatMoney(totalRecargo)}
+          </Col>
+          <Col md={3} sm={6} xs={12}>
+            <strong>Total c/ Recargo:</strong> ${formatMoney(totalConRecargo)}
+          </Col>
+        </Row>
+      </Card.Body>
+    </Card>
 
-      <Table striped bordered hover>
+    {/* Tabla */}
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover className="mb-2">
         <thead>
           <tr>
-            <th onClick={() => manejarOrden("fecha")} style={{ cursor: "pointer" }}>
-              Fecha
-            </th>
-            <th onClick={() => manejarOrden("importecupon")} style={{ cursor: "pointer" }}>
-              Importe
-            </th>
-            <th onClick={() => manejarOrden("sucursal_id")} style={{ cursor: "pointer" }}>
-              Sucursal
-            </th>
-            <th onClick={() => manejarOrden("cliente_id")} style={{ cursor: "pointer" }}>
-              Cliente
-            </th>
-            <th onClick={() => manejarOrden("caja_id")} style={{ cursor: "pointer" }}>
-              Caja
-            </th>
-            <th onClick={() => manejarOrden("recargo")} style={{ cursor: "pointer" }}>
-              Recargo
-            </th>
-            <th onClick={() => manejarOrden("lote")} style={{ cursor: "pointer" }}>
-              Lote
-            </th>
-            <th onClick={() => manejarOrden("cupon")} style={{ cursor: "pointer" }}>
-              Cupon
-            </th>
-            <th onClick={() => manejarOrden("plan")} style={{ cursor: "pointer" }}>
-              Plan
-            </th>
+            <th onClick={() => manejarOrden("fecha")} className="vt-th-sort">Fecha</th>
+            <th onClick={() => manejarOrden("importecupon")} className="vt-th-sort text-end">Importe</th>
+            <th onClick={() => manejarOrden("sucursal_id")} className="vt-th-sort">Sucursal</th>
+            <th onClick={() => manejarOrden("cliente_id")} className="vt-th-sort">Cliente</th>
+            <th onClick={() => manejarOrden("caja_id")} className="vt-th-sort">Caja</th>
+            <th onClick={() => manejarOrden("recargo")} className="vt-th-sort text-end">Recargo</th>
+            <th onClick={() => manejarOrden("lote")} className="vt-th-sort">Lote</th>
+            <th onClick={() => manejarOrden("cupon")} className="vt-th-sort">Cupon</th>
+            <th onClick={() => manejarOrden("plan")} className="vt-th-sort">Plan</th>
           </tr>
         </thead>
         <tbody>
           {cuponesActuales.map((cupon) => (
             <tr key={cupon.id}>
               <td>{cupon.fecha}</td>
-              <td>{(Number(cupon.importecupon) || 0).toFixed(2)}</td>
+              <td className="text-end">{(Number(cupon.importecupon) || 0).toFixed(2)}</td>
               <td>
-                {(contexto?.sucursalesTabla || []).find(
-                  (sucursal) => sucursal.id === parseInt(cupon.sucursal_id)
-                )?.nombre || "Desconocido"}
+                {contexto.sucursalesTabla.find((s) => s.id === parseInt(cupon.sucursal_id))?.nombre ||
+                  "Desconocido"}
               </td>
               <td>
-                {(contexto?.clientesTabla || []).find(
-                  (cliente) => cliente.id === parseInt(cupon.cliente_id)
-                )?.nombre || ""}{" "}
-                {(contexto?.clientesTabla || []).find(
-                  (cliente) => cliente.id === parseInt(cupon.cliente_id)
-                )?.apellido || "Desconocido"}
+                {contexto.clientesTabla.find((c) => c.id === parseInt(cupon.cliente_id))?.nombre || ""}{" "}
+                {contexto.clientesTabla.find((c) => c.id === parseInt(cupon.cliente_id))?.apellido ||
+                  "Desconocido"}
               </td>
               <td>{cupon.caja_id}</td>
-              <td>
+              <td className="text-end">
                 {(
                   (Number(cupon.importecuponconrecargo) || Number(cupon.importecupon) || 0) -
                   (Number(cupon.importecupon) || 0)
@@ -416,29 +298,32 @@ export default function Cupones() {
               <td>{cupon.lote}</td>
               <td>{cupon.nrocupon}</td>
               <td>
-                {(contexto?.planTarjetaTabla || []).find(
-                  (plan) => plan.id === parseInt(cupon.plantarjeta_id)
-                )?.descripcion || "Desconocido"}
+                {contexto.planTarjetaTabla.find((plan) => plan.id === parseInt(cupon.plantarjeta_id))
+                  ?.descripcion || "Desconocido"}
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
+    </div>
 
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={paginaAnterior} disabled={paginaActual === 1}>
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {paginaActual} de {Math.ceil(cupones.length / cuponesPorPagina)}
-        </span>
-        <Button
-          onClick={paginaSiguiente}
-          disabled={paginaActual === Math.ceil(cupones.length / cuponesPorPagina)}
-        >
-          <BsChevronRight />
-        </Button>
-      </div>
-    </Container>
-  );
+    {/* Paginación */}
+    <div className="d-flex justify-content-center align-items-center vt-pager">
+      <Button onClick={paginaAnterior} disabled={paginaActual === 1} variant="light">
+        <BsChevronLeft />
+      </Button>
+      <span className="mx-2">
+        Página {paginaActual} de {Math.ceil(cupones.length / cuponesPorPagina)}
+      </span>
+      <Button
+        onClick={paginaSiguiente}
+        disabled={paginaActual === Math.ceil(cupones.length / cuponesPorPagina)}
+        variant="light"
+      >
+        <BsChevronRight />
+      </Button>
+    </div>
+  </Container>
+);
+
 }

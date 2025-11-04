@@ -27,7 +27,7 @@ export default function EquipoForm() {
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const response = await fetch(`${apiUrl}/categorias-equipos`);
+        const response = await fetch(`${apiUrl}/categorias-equipos`, {credentials: 'include'} );
         const data = await response.json();
         setCategorias(data);
       } catch (error) {
@@ -44,7 +44,7 @@ export default function EquipoForm() {
       const fetchEquipo = async () => {
         setLoading(true);
         try {
-          const response = await fetch(`${apiUrl}/equipos/${id}`);
+          const response = await fetch(`${apiUrl}/equipos/${id}`, {credentials: 'include'}  );
           const data = await response.json();
 
           if (!response.ok) {
@@ -107,7 +107,7 @@ export default function EquipoForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(equipoData),
+        body: JSON.stringify(equipoData), credentials: 'include'
       });
 
       if (response.ok) {
@@ -136,7 +136,7 @@ export default function EquipoForm() {
     const item = items[index];
     try {
       // Verificar si el ítem tiene revisiones antes de eliminarlo
-      const revisionesResponse = await fetch(`${apiUrl}/revisiones/item/${item.id}`);
+      const revisionesResponse = await fetch(`${apiUrl}/revisiones/item/${item.id}`, {credentials: 'include'}   );
       const revisionesData = await revisionesResponse.json();
 
       // Si el ítem tiene revisiones, no permitir eliminar y mostrar mensaje de error
@@ -156,167 +156,197 @@ export default function EquipoForm() {
   };
 
   return (
-    <Container>
-      <h2>{id ? 'Editar Equipo' : 'Crear Equipo'}</h2>
-      <Form onSubmit={handleSubmit}>
-        <Row>
-          <Col xs={12} md={6}>
-            <Form.Group controlId="nombre">
-              <Form.Label>Nombre</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Ingrese el nombre del equipo"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col xs={12} md={6}>
-            <Form.Group controlId="marca">
-              <Form.Label>Marca</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Ingrese la marca del equipo"
-                value={marca}
-                onChange={(e) => setMarca(e.target.value)}
-                required
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} md={6}>
-            <Form.Group controlId="numeroSerie">
-              <Form.Label>Número de Serie</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Ingrese el número de serie del equipo"
-                value={numeroSerie}
-                onChange={(e) => setNumeroSerie(e.target.value)}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col xs={12} md={6}>
-            <Form.Group controlId="fechaCompra">
-              <Form.Label>Fecha de Compra</Form.Label>
-              <Form.Control
-                type="date"
-                value={fechaCompra}
-                onChange={(e) => setFechaCompra(e.target.value)}
-                required
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12} md={6}>
-            <Form.Group controlId="categoria">
-              <Form.Label>Categoría</Form.Label>
-              <Form.Control
-                as="select"
-                value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value)}
-                required
-              >
-                <option value="">Seleccione una categoría</option>
-                {categorias.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.nombre}
-                  </option>
-                ))}
-              </Form.Control>
-              <Button
-                as={Link}
-                to="/categorias-equipos/new"
-                variant="link"
-                className="p-0 mt-2"
-              >
-                Crear nueva categoría
-              </Button>
-            </Form.Group>
-          </Col>
-          <Col xs={12} md={6}>
-            <Form.Group controlId="sucursal">
-              <Form.Label>Sucursal</Form.Label>
-              <Form.Control
-                as="select"
-                value={sucursalId}
-                onChange={(e) => setSucursalId(e.target.value)}
-                required
-              >
-                <option value="">Seleccione una sucursal</option>
-                {context.sucursalesTabla.map((sucursal) => (
-                  <option key={sucursal.id} value={sucursal.id}>
-                    {sucursal.nombre}
-                  </option>
-                ))}
-              </Form.Control>
-            </Form.Group>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={12}>
-            <Form.Group controlId="ultimoMantenimiento">
-              <Form.Label>Último Mantenimiento</Form.Label>
-              <Form.Control
-                type="date"
-                value={ultimoMantenimiento}
-                onChange={(e) => setUltimoMantenimiento(e.target.value)}
-              />
-            </Form.Group>
-          </Col>
-        </Row>
+  <Container className="vt-page">
+    <h2 className="my-form-title text-center vt-title">
+      {id ? "Editar Equipo" : "Crear Equipo"}
+    </h2>
 
-        {/* Sección para agregar items */}
-        <Row className="mt-4">
-          <Col xs={12} md={4}>
-            <InputGroup>
-              <Form.Control
-                type="text"
-                placeholder="Ingrese el nombre del item"
-                value={itemName}
-                onChange={(e) => setItemName(e.target.value)}
-              />
-            </InputGroup>
-          </Col>
-          <Col xs={12} md={4}>
+    <Form onSubmit={handleSubmit} className="vt-form vt-form-narrow">
+      <Row>
+        <Col xs={12} md={6}>
+          <Form.Group controlId="nombre" className="mb-3">
+            <Form.Label className="vt-label">Nombre</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Ingrese el nombre del equipo"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              required
+              className="vt-input"
+            />
+          </Form.Group>
+        </Col>
+        <Col xs={12} md={6}>
+          <Form.Group controlId="marca" className="mb-3">
+            <Form.Label className="vt-label">Marca</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Ingrese la marca del equipo"
+              value={marca}
+              onChange={(e) => setMarca(e.target.value)}
+              required
+              className="vt-input"
+            />
+          </Form.Group>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col xs={12} md={6}>
+          <Form.Group controlId="numeroSerie" className="mb-3">
+            <Form.Label className="vt-label">Número de Serie</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Ingrese el número de serie del equipo"
+              value={numeroSerie}
+              onChange={(e) => setNumeroSerie(e.target.value)}
+              required
+              className="vt-input"
+            />
+          </Form.Group>
+        </Col>
+        <Col xs={12} md={6}>
+          <Form.Group controlId="fechaCompra" className="mb-3">
+            <Form.Label className="vt-label">Fecha de Compra</Form.Label>
+            <Form.Control
+              type="date"
+              value={fechaCompra}
+              onChange={(e) => setFechaCompra(e.target.value)}
+              required
+              className="vt-input"
+            />
+          </Form.Group>
+        </Col>
+      </Row>
+
+      <Row>
+        <Col xs={12} md={6}>
+          <Form.Group controlId="categoria" className="mb-3">
+            <Form.Label className="vt-label">Categoría</Form.Label>
             <Form.Control
               as="select"
-              value={itemEstado}
-              onChange={(e) => setItemEstado(e.target.value)}
+              value={categoriaId}
+              onChange={(e) => setCategoriaId(e.target.value)}
+              required
+              className="vt-input"
             >
-              <option value="">Seleccione el estado</option>
-              <option value="Bueno">Bueno</option>
-              <option value="Regular">Regular</option>
-              <option value="Malo">Malo</option>
+              <option value="">Seleccione una categoría</option>
+              {categorias.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>
+                  {categoria.nombre}
+                </option>
+              ))}
             </Form.Control>
-          </Col>
-          <Col xs={12} md={4}>
-            <Button variant="secondary" onClick={handleAddItem}>
-              Agregar Item
+            <Button
+              as={Link}
+              to="/categorias-equipos/new"
+              variant="link"
+              className="p-0 mt-2 vt-link"
+            >
+              Crear nueva categoría
             </Button>
-          </Col>
-        </Row>
+          </Form.Group>
+        </Col>
+        <Col xs={12} md={6}>
+          <Form.Group controlId="sucursal" className="mb-3">
+            <Form.Label className="vt-label">Sucursal</Form.Label>
+            <Form.Control
+              as="select"
+              value={sucursalId}
+              onChange={(e) => setSucursalId(e.target.value)}
+              required
+              className="vt-input"
+            >
+              <option value="">Seleccione una sucursal</option>
+              {context.sucursalesTabla.map((sucursal) => (
+                <option key={sucursal.id} value={sucursal.id}>
+                  {sucursal.nombre}
+                </option>
+              ))}
+            </Form.Control>
+          </Form.Group>
+        </Col>
+      </Row>
 
-        {/* Lista de items agregados */}
-        <ListGroup className="mt-3">
-          {items.map((item, index) => (
-            <ListGroup.Item key={index} className="d-flex justify-content-between align-items-center">
-              {item.nombre} - {item.estado || 'Sin estado'}
-              <Button variant="danger" size="sm" onClick={() => handleRemoveItem(index)}>
-                Eliminar
-              </Button>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
+      <Row>
+        <Col xs={12}>
+          <Form.Group controlId="ultimoMantenimiento" className="mb-3">
+            <Form.Label className="vt-label">Último Mantenimiento</Form.Label>
+            <Form.Control
+              type="date"
+              value={ultimoMantenimiento}
+              onChange={(e) => setUltimoMantenimiento(e.target.value)}
+              className="vt-input"
+            />
+          </Form.Group>
+        </Col>
+      </Row>
 
-        {error && <Alert variant="danger">{error}</Alert>}
-        <Button variant="primary" type="submit" disabled={loading} className="mt-3">
-          {loading ? 'Guardando...' : 'Guardar'}
+      <hr className="vt-sep" />
+      <h3 className="vt-subtitle">Items del Equipo</h3>
+
+      {/* Sección para agregar items */}
+      <Row className="mt-2">
+        <Col xs={12} md={4} className="mb-2">
+          <InputGroup>
+            <Form.Control
+              type="text"
+              placeholder="Ingrese el nombre del item"
+              value={itemName}
+              onChange={(e) => setItemName(e.target.value)}
+              className="vt-input"
+            />
+          </InputGroup>
+        </Col>
+        <Col xs={12} md={4} className="mb-2">
+          <Form.Control
+            as="select"
+            value={itemEstado}
+            onChange={(e) => setItemEstado(e.target.value)}
+            className="vt-input"
+          >
+            <option value="">Seleccione el estado</option>
+            <option value="Bueno">Bueno</option>
+            <option value="Regular">Regular</option>
+            <option value="Malo">Malo</option>
+          </Form.Control>
+        </Col>
+        <Col xs={12} md={4} className="mb-2 d-flex">
+          <Button variant="secondary" onClick={handleAddItem} className="vt-btn flex-fill">
+            Agregar Item
+          </Button>
+        </Col>
+      </Row>
+
+      {/* Lista de items agregados */}
+      <ListGroup className="mt-3">
+        {items.map((item, index) => (
+          <ListGroup.Item
+            key={index}
+            className="d-flex justify-content-between align-items-center"
+          >
+            {item.nombre} - {item.estado || "Sin estado"}
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => handleRemoveItem(index)}
+              className="vt-btn-danger vt-btn-sm"
+            >
+              Eliminar
+            </Button>
+          </ListGroup.Item>
+        ))}
+      </ListGroup>
+
+      {error && <Alert variant="danger" className="mt-3">{error}</Alert>}
+
+      <div className="d-flex justify-content-end">
+        <Button variant="primary" type="submit" disabled={loading} className="vt-btn mt-3">
+          {loading ? "Guardando..." : "Guardar"}
         </Button>
-      </Form>
-    </Container>
-  );
+      </div>
+    </Form>
+  </Container>
+);
+
 }

@@ -55,6 +55,7 @@ export default function Vales() {
             fechaHasta,
             sucursalId: buscarSucursal,
           }),
+          credentials: "include",
         }
       );
       if (respuesta.ok) {
@@ -168,38 +169,40 @@ export default function Vales() {
     XLSX.writeFile(wb, "vales.xlsx");
   };
 
-  return (
-    <Container>
-      <h1 className="my-list-title dark-text">Vales</h1>
+ return (
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Vales</h1>
 
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
-          <input
-            type="date"
-            value={fechaDesde}
-            onChange={(e) => setFechaDesde(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
-        </div>
-
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">HASTA:</label>
-          <input
-            type="date"
-            value={fechaHasta}
-            onChange={(e) => setFechaHasta(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
-        </div>
+    {/* Filtros */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto mx-2">
+        <label className="mr-2">DESDE:</label>
+        <input
+          type="date"
+          value={fechaDesde}
+          onChange={(e) => setFechaDesde(e.target.value)}
+          className="form-control rounded-0 text-center vt-input"
+        />
       </div>
-      <div className="mb-3">
+
+      <div className="d-inline-block w-auto mx-2">
+        <label className="ml-2 mr-2">HASTA:</label>
+        <input
+          type="date"
+          value={fechaHasta}
+          onChange={(e) => setFechaHasta(e.target.value)}
+          className="form-control rounded-0 text-center vt-input"
+        />
+      </div>
+
+      <div className="d-inline-block">
+        <label className="d-block">Sucursal</label>
         <FormControl
           as="select"
           value={buscarSucursal}
           onChange={(e) => setBuscarSucursal(e.target.value)}
-          className="mr-2"
-          style={{ width: "25%" }}
+          className="vt-input"
+          style={{ minWidth: 240 }}
         >
           <option value="">Seleccione una sucursal</option>
           {contexto.sucursalesTabla.map((sucursal) => (
@@ -210,13 +213,14 @@ export default function Vales() {
         </FormControl>
       </div>
 
-      <div className="mb-3">
+      <div className="d-inline-block">
+        <label className="d-block">Cliente</label>
         <FormControl
           as="select"
           value={clienteSeleccionado}
           onChange={(e) => setClienteSeleccionado(e.target.value)}
-          className="mr-2 mb-3"
-          style={{ width: "25%" }}
+          className="vt-input"
+          style={{ minWidth: 280 }}
         >
           <option value="">Seleccione un cliente</option>
           {clientesFiltrados.map((cliente) => (
@@ -227,62 +231,60 @@ export default function Vales() {
         </FormControl>
       </div>
 
-      <div className="mb-3">
-        <Button onClick={manejarBusqueda} className="mr-2">Filtrar</Button>
-        <Button onClick={exportarExcel} disabled={vales.length === 0}>Exportar a Excel</Button>
+      <div className="d-inline-block mx-2">
+        <Button onClick={manejarBusqueda} className="vt-btn">Filtrar</Button>
       </div>
 
-      <div className="mb-3">
-        <FormControl
-          as="select"
-          value={valesPorPagina}
-          onChange={(e) => setValesPorPagina(parseInt(e.target.value))}
-          className="mr-2"
-          style={{ width: "10%" }}
-        >
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={50}>50</option>
-        </FormControl>
+      <div className="d-inline-block">
+        <Button onClick={exportarExcel} disabled={vales.length === 0} className="vt-btn-out">
+          Exportar a Excel
+        </Button>
       </div>
+    </div>
 
-      <Table striped bordered hover>
+    {/* Selector de tamaño de página */}
+    <div className="mb-2">
+      <label className="me-2">Por página</label>
+      <FormControl
+        as="select"
+        value={valesPorPagina}
+        onChange={(e) => setValesPorPagina(parseInt(e.target.value))}
+        className="vt-input d-inline-block"
+        style={{ width: 120 }}
+      >
+        <option value={10}>10</option>
+        <option value={20}>20</option>
+        <option value={50}>50</option>
+      </FormControl>
+    </div>
+
+    {/* Tabla */}
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover className="mb-2">
         <thead>
           <tr>
-            <th
-              onClick={() => manejarOrden("fecha")}
-              style={{ cursor: "pointer" }}
-            >
+            <th onClick={() => manejarOrden("fecha")} className="vt-th-sort">
               Fecha
             </th>
-            <th
-              onClick={() => manejarOrden("importecupon")}
-              style={{ cursor: "pointer" }}
-            >
+            <th onClick={() => manejarOrden("importecupon")} className="vt-th-sort text-end">
               Importe
             </th>
-            <th
-              onClick={() => manejarOrden("sucursal_id")}
-              style={{ cursor: "pointer" }}
-            >
+            <th onClick={() => manejarOrden("sucursal_id")} className="vt-th-sort">
               Sucursal
             </th>
-            <th
-              onClick={() => manejarOrden("cliente_id")}
-              style={{ cursor: "pointer" }}
-            >
+            <th onClick={() => manejarOrden("cliente_id")} className="vt-th-sort">
               Cliente
             </th>
           </tr>
         </thead>
         <tbody>
           {valesActuales.map((vale) => {
-            const sucursalNombre = contexto.sucursalesTabla.find(
-              (sucursal) => sucursal.id === parseInt(vale.sucursal_id)
-            )?.nombre || "Desconocido";
+            const sucursalNombre =
+              contexto.sucursalesTabla.find((s) => s.id === parseInt(vale.sucursal_id))?.nombre ||
+              "Desconocido";
 
             const clienteNombre = contexto.clientesTabla.find(
-              (cliente) => cliente.id === parseInt(vale.cliente_id)
+              (c) => c.id === parseInt(vale.cliente_id)
             );
             const clienteCompleto = clienteNombre
               ? `${clienteNombre.nombre} ${clienteNombre.apellido}`
@@ -291,7 +293,7 @@ export default function Vales() {
             return (
               <tr key={vale.id}>
                 <td>{vale.fecha}</td>
-                <td>{vale.importecupon}</td>
+                <td className="text-end">{vale.importecupon}</td>
                 <td>{sucursalNombre}</td>
                 <td>{clienteCompleto}</td>
               </tr>
@@ -299,21 +301,26 @@ export default function Vales() {
           })}
         </tbody>
       </Table>
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={paginaAnterior} disabled={paginaActual === 1}>
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {paginaActual} de {Math.ceil(vales.length / valesPorPagina)}
-        </span>
-        <Button
-          onClick={paginaSiguiente}
-          disabled={paginaActual === Math.ceil(vales.length / valesPorPagina)}
-        >
-          <BsChevronRight />
-        </Button>
-      </div>
-    </Container>
-  );
+    </div>
+
+    {/* Paginación */}
+    <div className="d-flex justify-content-center align-items-center vt-pager">
+      <Button onClick={paginaAnterior} disabled={paginaActual === 1} variant="light">
+        <BsChevronLeft />
+      </Button>
+      <span className="mx-2">
+        Página {paginaActual} de {Math.ceil(vales.length / valesPorPagina)}
+      </span>
+      <Button
+        onClick={paginaSiguiente}
+        disabled={paginaActual === Math.ceil(vales.length / valesPorPagina)}
+        variant="light"
+      >
+        <BsChevronRight />
+      </Button>
+    </div>
+  </Container>
+);
+
 }
 

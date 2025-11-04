@@ -1,0 +1,102 @@
+/* Barra superior alineada al look del sidebar */
+.app-navbar {
+  background: #2c353d !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+
+/* Brand clickable */
+.nb-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e3e8ee;
+  cursor: pointer;
+  user-select: none;
+}
+
+.nb-brand:active {
+  transform: translateY(1px);
+}
+
+.nb-ico {
+  font-size: 18px;
+  opacity: .95;
+}
+
+.nb-title {
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Chip de empresa */
+.nb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: .35px;
+  font-size: 11.5px;
+  transition: background .15s ease;
+}
+.nb-brand:hover .nb-chip {
+  background: rgba(255,255,255,0.14);
+}
+
+.nb-caret {
+  opacity: .85;
+  font-size: 14px;
+}
+
+/* Usuario (derecha) */
+.nb-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e9edf2;
+}
+
+.nb-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  letter-spacing: .4px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.nb-usertext {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.nb-welcome {
+  font-size: 10.5px;
+  opacity: .8;
+  text-transform: uppercase;
+  letter-spacing: .35px;
+}
+
+.nb-username {
+  font-size: 12.5px;
+  letter-spacing: .4px;
+}
+
+/* Responsivo: en móviles compactamos el texto del usuario */
+@media (max-width: 576px) {
+  .nb-usertext .nb-welcome {
+    display: none;
+  }
+}

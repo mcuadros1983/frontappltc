@@ -23,7 +23,7 @@ const SaldosCtaCteSucursal = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ sucursalId: sucursalSeleccionada }),
-      });
+      }, {credentials: "include"} );
 
       const data = await response.json();
       if (data.length === 0) {
@@ -99,74 +99,96 @@ const SaldosCtaCteSucursal = () => {
   const totalSaldoFiltrado = saldosFiltrados.reduce((acc, saldo) => acc + parseFloat(saldo.saldo), 0);
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Saldos de Cuenta Corriente</h1>
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Saldos de Cuenta Corriente</h1>
 
-      <div className="d-flex justify-content-between mb-3">
-        <div className="d-flex">
-          <FormControl
-            as="select"
-            value={sucursalSeleccionada}
-            onChange={(e) => setSucursalSeleccionada(e.target.value)}
-            className="mr-2"
-            style={{ width: "250px" }}
-          >
-            <option value="">Seleccione una sucursal</option>
-            {contexto.sucursales.map((sucursal) => (
-              <option key={sucursal.id} value={sucursal.id}>
-                {sucursal.nombre}
-              </option>
-            ))}
-          </FormControl>
-          <Button onClick={handleExport} className="ml-2">Exportar</Button>
-        </div>
-        <div className="ml-auto">
-          <strong>Saldo Total: </strong>{totalSaldoFiltrado.toFixed(2)}
-        </div>
+    {/* Filtros + acciones + total */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto mx-2">
+        <label className="d-block">Sucursal</label>
+        <FormControl
+          as="select"
+          value={sucursalSeleccionada}
+          onChange={(e) => setSucursalSeleccionada(e.target.value)}
+          className="vt-input"
+          style={{ minWidth: 250 }}
+        >
+          <option value="">Seleccione una sucursal</option>
+          {contexto.sucursales.map((sucursal) => (
+            <option key={sucursal.id} value={sucursal.id}>
+              {sucursal.nombre}
+            </option>
+          ))}
+        </FormControl>
       </div>
 
-      <Table striped bordered hover>
+      <div className="d-inline-block mx-2">
+        <Button onClick={handleExport} className="vt-btn">Exportar</Button>
+      </div>
+
+      <div className="ms-auto d-inline-block mx-2">
+        <div className="vt-total">
+          <strong>Saldo Total:</strong>{" "}
+          <span>{Number(totalSaldoFiltrado).toFixed(2)}</span>
+        </div>
+      </div>
+    </div>
+
+    {/* Tabla */}
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover className="mb-2">
         <thead>
           <tr>
-            <th onClick={() => manejarOrden("nombre")} style={{ cursor: "pointer" }}>Cliente</th>
-            <th onClick={() => manejarOrden("ventas")} style={{ cursor: "pointer" }}>Total Ventas</th>
-            <th onClick={() => manejarOrden("cobranzas")} style={{ cursor: "pointer" }}>Total Cobranzas</th>
-            <th onClick={() => manejarOrden("saldo")} style={{ cursor: "pointer" }}>Saldo Cuenta Corriente</th>
+            <th className="vt-th-sort" onClick={() => manejarOrden("nombre")}>
+              Cliente
+            </th>
+            <th className="vt-th-sort text-end" onClick={() => manejarOrden("ventas")}>
+              Total Ventas
+            </th>
+            <th className="vt-th-sort text-end" onClick={() => manejarOrden("cobranzas")}>
+              Total Cobranzas
+            </th>
+            <th className="vt-th-sort text-end" onClick={() => manejarOrden("saldo")}>
+              Saldo Cuenta Corriente
+            </th>
           </tr>
         </thead>
         <tbody>
           {saldosActuales.map((saldo) => (
             <tr key={saldo.cliente_id}>
-              <td>
-                {saldo.nombre} {saldo.apellido}
-              </td>
-              <td>{saldo.ventas}</td>
-              <td>{saldo.cobranzas}</td>
-              <td>{saldo.saldo}</td>
+              <td>{saldo.nombre} {saldo.apellido}</td>
+              <td className="text-end">{saldo.ventas}</td>
+              <td className="text-end">{saldo.cobranzas}</td>
+              <td className="text-end">{saldo.saldo}</td>
             </tr>
           ))}
         </tbody>
       </Table>
+    </div>
 
-      <div className="d-flex justify-content-center align-items-center">
-        <Button
-          onClick={() => cambiarPagina(paginaActual - 1)}
-          disabled={paginaActual === 1}
-        >
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {paginaActual} de {Math.ceil(saldosFiltrados.length / saldosPorPagina)}
-        </span>
-        <Button
-          onClick={() => cambiarPagina(paginaActual + 1)}
-          disabled={paginaActual === Math.ceil(saldosFiltrados.length / saldosPorPagina)}
-        >
-          <BsChevronRight />
-        </Button>
-      </div>
-    </Container>
-  );
+    {/* Paginación */}
+    <div className="d-flex justify-content-center align-items-center vt-pager">
+      <Button
+        onClick={() => cambiarPagina(paginaActual - 1)}
+        disabled={paginaActual === 1}
+        variant="light"
+      >
+        <BsChevronLeft />
+      </Button>
+      <span className="mx-2">
+        Página {paginaActual} de {Math.ceil(saldosFiltrados.length / saldosPorPagina) || 1}
+      </span>
+      <Button
+        onClick={() => cambiarPagina(paginaActual + 1)}
+        disabled={paginaActual === Math.ceil(saldosFiltrados.length / saldosPorPagina)}
+        variant="light"
+      >
+        <BsChevronRight />
+      </Button>
+    </div>
+  </Container>
+);
+
 };
 
 export default SaldosCtaCteSucursal;

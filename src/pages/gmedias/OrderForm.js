@@ -3,15 +3,86 @@ import { Container, Form, Button, Table, FormControl } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "../../styles/styles.css";
 import { Modal, ModalHeader, ModalBody, ModalFooter } from "reactstrap";
-import { GenerateReceiptOrderHTML } from "./GenerateReceiptOrderHTML"; // Importa la función de receiptGenerator
-import CategorySummaryTable from "../../utils/CategorySummaryTable"; // Importa el componente CategorySummaryTable
+import { GenerateReceiptOrderHTML } from "./GenerateReceiptOrderHTML";
+import CategorySummaryTable from "../../utils/CategorySummaryTable";
 import Contexts from "../../context/Contexts";
 
 export default function OrderForm() {
   const context = useContext(Contexts.UserContext);
+
+  // "vacuno" = comportamiento original
+  // "cerdo"  = nueva lógica de carga manual porcino
+  const [orderMode, setOrderMode] = useState("vacuno");
+
+  const codigoDeBarraRef = useRef(null);
+
+  const initialProductState = {
+    codigo_de_barra: "",
+    num_media: "",
+    kg: "",
+    tropa: "",
+    garron: "",
+    categoria_producto: "",
+    subcategoria: "",
+  };
+
+  const [product, setProduct] = useState(initialProductState);
+  const [products, setProducts] = useState([]);
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const [availableProducts, setAvailableProducts] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [modal, setModal] = useState(false);
+
+  // paginación (modal de selección de producto existente)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(20);
+
+  // paginación (tabla de productos ya agregados a la orden)
+  const [currentPageOrder, setCurrentPageOrder] = useState(1);
+  const [productsPerPageOrder] = useState(10);
+
+  // ordenamiento (modal)
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState("asc");
+
+  // filtros en modal
+  const [searchMedia, setSearchMedia] = useState("");
+  const [searchPeso, setSearchPeso] = useState("");
+  const [searchTropa, setSearchTropa] = useState("");
+  const [searchGarron, setSearchGarron] = useState("");
+
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // YYYY-MM-DD
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadAllProducts, setLoadAllProducts] = useState(true);
+
+  const navigate = useNavigate();
+  const apiUrl = process.env.REACT_APP_API_URL;
+
+  // Helper: reinicia todo cada vez que cambiás de modo (vacuno <-> cerdo)
+  const resetForMode = (mode) => {
+    // limpia lista que se va a enviar al backend
+    setProducts([]);
+    // resetea la paginación visual de la tabla
+    setCurrentPageOrder(1);
+
+    // resetea el form de carga rápida
+    if (mode === "cerdo") {
+      setProduct({
+        ...initialProductState,
+        categoria_producto: "porcino",
+        subcategoria: "cerdo",
+      });
+    } else {
+      setProduct(initialProductState);
+    }
+  };
+
   const toggleModal = () => {
     setModal(!modal);
     if (modal) {
+      // al cerrar el modal se restauran las listas
       setFilteredProducts(availableProducts);
       setLoadAllProducts(true);
     }
@@ -22,46 +93,9 @@ export default function OrderForm() {
     setCurrentPage(1); // Reiniciar a la primera página
   };
 
-  const codigoDeBarraRef = useRef(null);
-
-  const initialProductState = {
-    codigo_de_barra: "",
-    num_media: "",
-    precio: "",
-    kg: "",
-    tropa: "",
-  };
-
-  const [product, setProduct] = useState(initialProductState);
-  const [products, setProducts] = useState([]);
-  const [selectedBranchId, setSelectedBranchId] = useState(""); // Inicializa con un valor adecuado según tus necesidades
-  const [availableProducts, setAvailableProducts] = useState([]);
-  const [branches, setBranches] = useState([]);
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [modal, setModal] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(20);
-  const [currentPageOrder, setCurrentPageOrder] = useState(1);
-  const [productsPerPageOrder] = useState(10);
-  // ordenamiento
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState("asc");
-  // filtros especificos
-  const [searchMedia, setSearchMedia] = useState("");
-  const [searchPeso, setSearchPeso] = useState("");
-  const [searchTropa, setSearchTropa] = useState("");
-  const [searchGarron, setSearchGarron] = useState("");
-  // Dentro de la función OrderForm
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  // const [currentFilteredProducts, setCurrentFilteredProducts] = useState([]);
-  const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // Fecha actual en formato YYYY-MM-DD
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadAllProducts, setLoadAllProducts] = useState(true);
-
-  const navigate = useNavigate();
-  const apiUrl = process.env.REACT_APP_API_URL;
-
-  // Llamada a las sucursales al montar la página
+  // ==========================
+  // FETCH SUCURSALES
+  // ==========================
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -77,15 +111,21 @@ export default function OrderForm() {
 
     fetchBranches();
   }, [apiUrl]);
+  
 
+  // ==========================
+  // FETCH PRODUCTOS (solo modo vacuno)
+  // ==========================
   useEffect(() => {
+    if (orderMode === "cerdo") return; // en cerdo no traemos catálogo de stock existente
+
     const fetchProducts = async () => {
       try {
         const response = await fetch(`${apiUrl}/productos`, {
           credentials: "include",
         });
         const data = await response.json();
-        // Filtrar los productos que tengan sucursal_id igual a 18
+        // Sólo productos con sucursal_id === 18 (stock disponible)
         const filteredProducts = data.filter(
           (producto) => producto.sucursal_id === 18
         );
@@ -99,19 +139,17 @@ export default function OrderForm() {
     if (modal && loadAllProducts) {
       fetchProducts();
     }
-  }, [modal, apiUrl, loadAllProducts]);
+  }, [modal, apiUrl, loadAllProducts, orderMode]);
 
-  // Actualizar los productos filtrados cada vez que se aplique un filtro
+  // ==========================
+  // FILTROS DEL MODAL
+  // ==========================
   useEffect(() => {
-    const filtered = availableProducts.filter((product) => {
-      // Verifica si num_media es null o undefined, y asigna una cadena vacía en ese caso
-      const numMedia = product.num_media ?? "";
-      // Verifica si kg es null o undefined, y asigna una cadena vacía en ese caso
-      const kg = product.kg ?? "";
-      // Verifica si tropa es null o undefined, y asigna una cadena vacía en ese caso
-      const tropa = product.tropa ?? "";
-      // Verifica si garron es null o undefined, y asigna una cadena vacía en ese caso
-      const garron = product.garron ?? "";
+    const filtered = availableProducts.filter((p) => {
+      const numMedia = p.num_media ?? "";
+      const kg = p.kg ?? "";
+      const tropa = p.tropa ?? "";
+      const garron = p.garron ?? "";
 
       const mediaMatch = numMedia.toString().includes(searchMedia);
       const pesoMatch = kg.toString().includes(searchPeso);
@@ -124,9 +162,11 @@ export default function OrderForm() {
     setFilteredProducts(filtered);
   }, [searchMedia, searchPeso, searchTropa, searchGarron, availableProducts]);
 
-  const handleOrderExitosa = async (orden, productos) => {
+  // ==========================
+  // IMPRESIÓN / COMPROBANTE
+  // ==========================
+  const handleOrderExitosa = async (orden, productosRespuesta) => {
     try {
-      // Obtener el nombre de la sucursal
       const sucursal = branches.find(
         (branch) => branch.id === orden.sucursal_id
       );
@@ -134,22 +174,18 @@ export default function OrderForm() {
         ? sucursal.nombre
         : "Sucursal Desconocida";
 
-      // Generar el contenido HTML del comprobante
       const receiptHTML = GenerateReceiptOrderHTML(
         orden,
-        productos,
+        productosRespuesta,
         nombreSucursal
       );
 
-      // Crear un nuevo elemento HTML para el contenido del comprobante
       const printWindow = window.open("", "_blank");
       printWindow.document.open();
       printWindow.document.write(receiptHTML);
       printWindow.document.close();
 
-      // Imprimir el contenido del comprobante
       printWindow.print();
-      // Cerrar la ventana emergente después de imprimir
       printWindow.close();
     } catch (error) {
       console.error("Error al imprimir el recibo:", error);
@@ -159,6 +195,9 @@ export default function OrderForm() {
     }
   };
 
+  // ==========================
+  // SUBMIT ORDEN
+  // ==========================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -172,7 +211,11 @@ export default function OrderForm() {
       return;
     }
 
-    if (products.some((product) => product.kg <= 0)) {
+    // validación de kg > 0 sólo aplica para vacuno
+    if (
+      orderMode === "vacuno" &&
+      products.some((p) => Number(p.kg) <= 0)
+    ) {
       alert("Debe ingresar el peso para todos los productos.");
       return;
     }
@@ -180,20 +223,23 @@ export default function OrderForm() {
     const confirmDelete = window.confirm(
       "¿Estás seguro de que deseas grabar esta orden?"
     );
-    if (!confirmDelete) {
-      return;
-    }
+    if (!confirmDelete) return;
 
     const cantidad_total = products.length;
     const peso_total = products.reduce(
-      (acum, product) => acum + Number(product.kg),
+      (acum, p) => acum + Number(p.kg || 0),
       0
     );
 
-    setIsSubmitting(true); // Inhabilita el botón
+    setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${apiUrl}/ordenes`, {
+      const endpoint =
+        orderMode === "cerdo"
+          ? `${apiUrl}/ordenes/cerdo`
+          : `${apiUrl}/ordenes`;
+
+      const res = await fetch(endpoint, {
         credentials: "include",
         method: "POST",
         body: JSON.stringify({
@@ -210,51 +256,123 @@ export default function OrderForm() {
 
       const data = await res.json();
 
-      handleOrderExitosa(data.nuevaOrden, data.productosActualizados);
+      // backend vacuno devuelve { nuevaOrden, productosActualizados }
+      // backend cerdo devuelve   { nuevaOrden, productosCreados }
+      const productosRespuesta =
+        data.productosActualizados || data.productosCreados || [];
+
+      handleOrderExitosa(data.nuevaOrden, productosRespuesta);
 
       navigate("/orders");
     } catch (error) {
       console.error("Error al guardar la orden:", error);
       alert("No se pudo guardar la orden");
     } finally {
-      setIsSubmitting(false); // Habilita el botón nuevamente
+      setIsSubmitting(false);
     }
   };
 
+  // ==========================
+  // CAMBIOS EN INPUTS
+  // ==========================
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Aquí aseguramos que el valor es numérico antes de establecerlo
     if (name === "sucursal_destino") {
       const numericValue = Number(value);
       setSelectedBranchId(numericValue);
 
-      // Suponiendo que quieres enfocar el campo de entrada del código de barras después de seleccionar una sucursal
       if (codigoDeBarraRef.current) {
         codigoDeBarraRef.current.focus();
       }
-    } else {
-      setProduct({
-        ...product,
-        [name]: value,
-      });
+      return;
     }
+
+    // modo cerdo: sincronizamos num_media y codigo_de_barra
+    if (orderMode === "cerdo") {
+      if (name === "num_media") {
+        setProduct((prev) => ({
+          ...prev,
+          num_media: value,
+          codigo_de_barra: value,
+          categoria_producto: "porcino",
+          subcategoria: "cerdo",
+        }));
+        return;
+      }
+
+      if (name === "codigo_de_barra") {
+        setProduct((prev) => ({
+          ...prev,
+          num_media: value,
+          codigo_de_barra: value,
+          categoria_producto: "porcino",
+          subcategoria: "cerdo",
+        }));
+        return;
+      }
+    }
+
+    // default
+    setProduct({
+      ...product,
+      [name]: value,
+    });
   };
 
+  // ==========================
+  // AGREGAR PRODUCTO A LA LISTA (ENTER / botón agregar)
+  // ==========================
   const handleSave = async () => {
+    // ----- MODO CERDO: creación manual directa -----
+    if (orderMode === "cerdo") {
+      const porcinoItem = {
+        codigo_de_barra:
+          product.codigo_de_barra || product.num_media || "",
+        num_media: product.num_media || product.codigo_de_barra || "",
+        kg: product.kg || 0,
+        tropa: product.tropa || "",
+        garron: product.garron || "",
+        categoria_producto: "porcino",
+        subcategoria: "cerdo",
+        precio: 0, // siempre 0
+        costo: 0, // siempre 0
+        sucursal_id: selectedBranchId
+          ? Number(selectedBranchId)
+          : undefined,
+        fecha,
+      };
+
+      // agregamos el producto a la lista local que va a enviarse
+      setProducts((prev) => [...prev, porcinoItem]);
+
+      // reseteamos el form con defaults porcino
+      setProduct({
+        ...initialProductState,
+        categoria_producto: "porcino",
+        subcategoria: "cerdo",
+      });
+
+      return;
+    }
+
+    // ----- MODO VACUNO: flujo original -----
     if (!product.codigo_de_barra) {
       alert("El campo código de barra es requerido");
       return;
     }
 
+    // evitar duplicados sólo en vacuno
     if (
-      products.some((prod) => prod.codigo_de_barra === product.codigo_de_barra)
+      products.some(
+        (prod) => prod.codigo_de_barra === product.codigo_de_barra
+      )
     ) {
       alert("El código de barras ya existe en la lista");
       return;
     }
 
-    // Buscar el producto en la base de datos
+    // buscar producto en backend
     const productResponse = await fetch(
       `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
       {
@@ -262,13 +380,13 @@ export default function OrderForm() {
       }
     );
     const productData = await productResponse.json();
-    console.log("productData", productData);
 
     if (!productData) {
-      setModal(true); // Abre el modal si el producto no se encuentra
+      setModal(true); // no existe -> mostrar modal de búsqueda
       return;
     }
 
+    // validar formato numérico del código de barras
     const barcodePattern = /^\d+$/;
     if (!barcodePattern.test(product.codigo_de_barra)) {
       alert("El código de barras debe contener solo números");
@@ -276,7 +394,7 @@ export default function OrderForm() {
     }
 
     if (productData.categoria_producto === "bovino") {
-      // Lógica para bovino
+      // flujo bovino
       const productResponse2 = await fetch(
         `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
         {
@@ -286,26 +404,22 @@ export default function OrderForm() {
       const productData2 = await productResponse2.json();
 
       if (!productData2) {
-        setModal(true); // Abre el modal si el producto no se encuentra
+        setModal(true);
         return;
       }
 
-      // if (productData2.sucursal_id !== 18) {
-      //   alert("El producto ya no se encuentra en stock");
-      //   return;
-      // }.
-
+      // validar stock sucursal (solo permitido si está en 18 o 32)
       const excludedSucursales = [18, 32];
       if (!excludedSucursales.includes(productData2.sucursal_id)) {
         alert("El producto ya no se encuentra en stock");
         return;
       }
 
-      // Agregar producto y limpiar formulario
-      setProducts([...products, productData2]);
+      setProducts((prev) => [...prev, productData2]);
       setProduct(initialProductState);
     } else if (productData.categoria_producto === "porcino") {
-      // Lógica para porcino
+      // flujo porcino *existente* en stock (modo vacuno original)
+      // carga múltiple / modal si hay varias coincidencias
       const productsResponse = await fetch(
         `${apiUrl}/productos/${product.codigo_de_barra}/productosbarra`,
         {
@@ -315,48 +429,53 @@ export default function OrderForm() {
       const productsData = await productsResponse.json();
 
       if (!productsData || productsData.length === 0) {
-        setModal(true); // Abre el modal si no se encuentran productos
+        setModal(true);
         return;
       }
 
+      // filtrar solo sucursal 18
       const validProducts = productsData.filter(
         (prod) => prod.sucursal_id === 18
       );
 
       if (validProducts.length > 1) {
-        // Mostrar solo los productos coincidentes en el modal
+        // mostrar modal con sólo esos productos
         setFilteredProducts(validProducts);
-        setLoadAllProducts(false); // No cargar todos los productos
+        setLoadAllProducts(false);
         setModal(true);
         return;
       }
 
       if (!productData) {
-        setLoadAllProducts(true); // Cargar todos los productos al abrir el modal
+        setLoadAllProducts(true);
         setModal(true);
         return;
       }
 
-      // Agregar el único producto encontrado
-      setProducts([...products, validProducts[0]]);
+      setProducts((prev) => [...prev, validProducts[0]]);
       setProduct(initialProductState);
     }
   };
 
-  const handleDelete = (id) => {
-    // Mostrar una alerta de confirmación
+  // ==========================
+  // ELIMINAR PRODUCTO DE LA LISTA
+  // ==========================
+  const handleDelete = (idOrIndex) => {
     const confirmDelete = window.confirm(
       "¿Seguro que desea eliminar este producto?"
     );
+    if (!confirmDelete) return;
 
-    // Si el usuario confirma la eliminación, proceder con la eliminación
-    if (confirmDelete) {
-      // Filtrar los productos para obtener una nueva lista sin el producto a eliminar
-      const updatedProducts = products.filter((prod) => prod.id !== id);
-
-      // Actualizar el estado de products con la nueva lista de productos
-      setProducts(updatedProducts);
-    }
+    // En vacuno usamos prod.id.
+    // En cerdo (producto recién creado localmente) quizá no hay id → usamos índice.
+    setProducts((prev) =>
+      prev.filter((prod, idx) => {
+        if (prod.id !== undefined) {
+          return prod.id !== idOrIndex;
+        }
+        return idx !== idOrIndex;
+      })
+    );
   };
 
   const handleEdit = (index) => {
@@ -364,7 +483,7 @@ export default function OrderForm() {
   };
 
   const handleCancelEdit = () => {
-    setEditingIndex(null); // Al cancelar la edición, simplemente establece el índice de edición en null
+    setEditingIndex(null);
   };
 
   const handleWeightChange = (e, index) => {
@@ -386,79 +505,70 @@ export default function OrderForm() {
   };
 
   const handleSaveChanges = (index) => {
-    // Aquí puedes hacer cualquier cosa necesaria antes de guardar los cambios
-    // Después de que se hayan guardado los cambios, establece el índice de edición en null
     setEditingIndex(null);
   };
 
-  const handleProductDoubleClick = async (product) => {
+  // ==========================
+  // DOUBLE CLICK EN MODAL (solo vacuno)
+  // ==========================
+  const handleProductDoubleClick = async (rowProduct) => {
     const productResponse = await fetch(
-      `${apiUrl}/productos/${product.id}`,
-      // `${apiUrl}/productos/${product.codigo_de_barra}/barra`,
+      `${apiUrl}/productos/${rowProduct.id}`,
       {
         credentials: "include",
       }
     );
     const productData = await productResponse.json();
 
-    // Verificar si el producto existe en la base de datos
     if (!productData) {
       setModal(true);
       return;
     }
 
-    // Validar los datos del formulario antes de guardar
+    // validaciones mínimas
     const formFields = ["codigo_de_barra"];
-    if (formFields.some((field) => !product[field])) {
+    if (formFields.some((field) => !rowProduct[field])) {
       alert("Todos los campos son obligatorios");
       return;
     }
 
-    // Verificar si el producto existe en la base de datos
-    // if (productData.sucursal_id !== 18) {
-    //   alert("El producto ya no se encuentra en stock");
-    //   return;
-    // }
-
+    // validar stock sucursal (18 o 32)
     const excludedSucursales = [18, 32];
     if (!excludedSucursales.includes(productData.sucursal_id)) {
       alert("El producto ya no se encuentra en stock");
       return;
     }
 
+    // evitar duplicado en la lista vacuno
     const existingProductIndex = products.findIndex(
       (prod) => prod.id === productData.id
     );
-
-    // Verificar si el código de barras ya existe en la lista
     if (existingProductIndex !== -1) {
       alert("El producto ya existe en la lista");
       return;
     }
 
-    // Verificar si el código de barras solo contiene números
     const barcodePattern = /^\d+$/;
-    if (!barcodePattern.test(product.codigo_de_barra)) {
+    if (!barcodePattern.test(rowProduct.codigo_de_barra)) {
       alert("El código de barras debe contener solo números");
       return;
     }
 
-    // Agregar el producto a la lista de productos y limpiar el formulario
-    setProducts([...products, productData]);
+    // agregar producto desde el modal
+    setProducts((prev) => [...prev, productData]);
     setProduct(initialProductState);
-    toggleModal(); // Cierra el modal después de agregar el producto
+    toggleModal();
   };
 
+  // ==========================
+  // ORDENAMIENTO (modal)
+  // ==========================
   const handleSort = (columnName) => {
-    // Cambiar la dirección de orden si la columna es la misma que la columna actualmente ordenada
     setSortDirection(
       columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
     );
-
-    // Actualizar la columna actualmente ordenada
     setSortColumn(columnName);
 
-    // Ordenar los productos
     const sortedProducts = [...availableProducts].sort((a, b) => {
       const valueA = a[columnName];
       const valueB = b[columnName];
@@ -475,26 +585,24 @@ export default function OrderForm() {
     setAvailableProducts(sortedProducts);
   };
 
-  // Cálculo de la paginación para modal
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  // Reiniciar la página al aplicar un filtro
+  // ==========================
+  // PAGINACIÓN MODAL
+  // ==========================
   useEffect(() => {
     if (searchMedia || searchPeso || searchTropa || searchGarron) {
       setCurrentPage(1);
     }
   }, [searchMedia, searchPeso, searchTropa, searchGarron]);
 
-  // Cálculo de la paginación para modal después de filtrar
   const currentProducts = filteredProducts.slice(
     (currentPage - 1) * productsPerPage,
     currentPage * productsPerPage
   );
+
   const pageNumbers = [];
   for (
     let i = 1;
     i <= Math.ceil(filteredProducts.length / productsPerPage);
-    // i <= Math.ceil(currentFilteredProducts.length / productsPerPage);
     i++
   ) {
     pageNumbers.push(i);
@@ -502,7 +610,9 @@ export default function OrderForm() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Cálculo de la paginación para Ordenes
+  // ==========================
+  // PAGINACIÓN LISTA ORDEN (productos cargados)
+  // ==========================
   const indexOfLastProductOrder = currentPageOrder * productsPerPageOrder;
   const indexOfFirstProductOrder =
     indexOfLastProductOrder - productsPerPageOrder;
@@ -511,15 +621,23 @@ export default function OrderForm() {
     .slice(indexOfFirstProductOrder, indexOfLastProductOrder);
 
   const pageNumbersOrder = [];
-  for (let i = 1; i <= Math.ceil(products.length / productsPerPageOrder); i++) {
+  for (
+    let i = 1;
+    i <= Math.ceil(products.length / productsPerPageOrder);
+    i++
+  ) {
     pageNumbersOrder.push(i);
   }
 
   const paginateOrder = (pageNumberOrder) =>
     setCurrentPageOrder(pageNumberOrder);
 
+  // ==========================
+  // RENDER
+  // ==========================
   return (
     <Container className="d-flex flex-column align-items-center">
+      {/* MODAL BUSCAR PRODUCTO (solo tiene sentido en modo vacuno) */}
       <Modal isOpen={modal} toggle={toggleModal}>
         <ModalHeader toggle={toggleModal}>Buscar Producto</ModalHeader>
         <ModalBody>
@@ -561,7 +679,6 @@ export default function OrderForm() {
               <tr>
                 <th>Categoria</th>
                 <th>Subcategoria</th>
-
                 <th
                   onClick={() => handleSort("num_media")}
                   style={{ cursor: "pointer" }}
@@ -589,17 +706,17 @@ export default function OrderForm() {
               </tr>
             </thead>
             <tbody>
-              {currentProducts.map((product) => (
+              {currentProducts.map((p) => (
                 <tr
-                  key={product.id}
-                  onDoubleClick={() => handleProductDoubleClick(product)}
+                  key={p.id}
+                  onDoubleClick={() => handleProductDoubleClick(p)}
                 >
-                  <td>{product.categoria_producto}</td>
-                  <td>{product.subcategoria}</td>
-                  <td>{product.num_media}</td>
-                  <td>{product.kg}</td>
-                  <td>{product.tropa}</td>
-                  <td>{product.garron}</td>
+                  <td>{p.categoria_producto}</td>
+                  <td>{p.subcategoria}</td>
+                  <td>{p.num_media}</td>
+                  <td>{p.kg}</td>
+                  <td>{p.tropa}</td>
+                  <td>{p.garron}</td>
                 </tr>
               ))}
             </tbody>
@@ -611,7 +728,7 @@ export default function OrderForm() {
               <Button
                 key={number}
                 onClick={() => paginate(number)}
-                className="mx-1 btn btn-primary" // Agrega las clases btn y btn-primary
+                className="mx-1 btn btn-primary"
               >
                 {number}
               </Button>
@@ -622,16 +739,38 @@ export default function OrderForm() {
           </Button>
         </ModalFooter>
       </Modal>
-      <h1 className="my-form-title text-center">
-        {/* {editing ? "Editar Orden" : "Agregar Orden"} */}
-        Agregar Orden
-      </h1>
+
+      <h1 className="my-form-title text-center">Agregar Orden</h1>
+
+      {/* Selector de modo de carga */}
+      <div className="mb-3 d-flex gap-2">
+        <Button
+          variant={orderMode === "vacuno" ? "primary" : "outline-primary"}
+          onClick={() => {
+            setOrderMode("vacuno");
+            resetForMode("vacuno");
+          }}
+        >
+          Enviar Vacuno
+        </Button>
+
+        <Button
+          variant={orderMode === "cerdo" ? "primary" : "outline-primary"}
+          onClick={() => {
+            setOrderMode("cerdo");
+            resetForMode("cerdo");
+          }}
+        >
+          Enviar Cerdo
+        </Button>
+      </div>
+
       <Form
         className="w-50"
         onKeyPress={(e) => {
           if (e.key === "Enter") {
-            e.preventDefault(); // Previene el comportamiento predeterminado del Enter
-            handleSave(); // Ejecuta la función handleSave cuando se presiona Enter
+            e.preventDefault(); // evita submit del form
+            handleSave(); // agrega producto
           }
         }}
       >
@@ -641,9 +780,9 @@ export default function OrderForm() {
         >
           <Form.Select
             name="sucursal_destino"
-            value={selectedBranchId} // Usa el estado seleccionado
+            value={selectedBranchId}
             onChange={handleChange}
-            className="my-input custom-style-select"
+            className="my-input form-control"
             size="lg"
           >
             <option value="">Seleccione una sucursal</option>
@@ -662,30 +801,92 @@ export default function OrderForm() {
             name="fecha"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
-            className="my-input-date" // Clase personalizada
+            className="my-input form-control"
           />
         </Form.Group>
 
-        <Form.Group className="mb-3">
-          <Form.Label>Codigo de barra</Form.Label>
-          <Form.Control
-            type="text"
-            name="codigo_de_barra"
-            value={product.codigo_de_barra}
-            onChange={handleChange}
-            placeholder="Ingresa el codigo de barra y presione ENTER"
-            className="my-input"
-            ref={codigoDeBarraRef}
-            // onBlur={handleSave} // Procesa el guardado al salir del campo
-            onKeyPress={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault(); // Previene el comportamiento predeterminado de recargar la página
-                handleSave(); // Procesa el guardado al presionar Enter
-              }
-            }}
-          />
-        </Form.Group>
+        {/* Formulario de carga rápida según el modo */}
+        {orderMode === "cerdo" ? (
+          <>
+            <Form.Group className="mb-3">
+              <Form.Label>Número de Media / Código</Form.Label>
+              <Form.Control
+                type="text"
+                name="num_media"
+                value={product.num_media}
+                onChange={handleChange}
+                placeholder="num_media (también será el código de barra)"
+                className="my-input"
+                ref={codigoDeBarraRef}
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Peso (kg)</Form.Label>
+              <Form.Control
+                type="number"
+                name="kg"
+                value={product.kg}
+                onChange={handleChange}
+                className="my-input"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Tropa</Form.Label>
+              <Form.Control
+                type="text"
+                name="tropa"
+                value={product.tropa}
+                onChange={handleChange}
+                className="my-input"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Garrón</Form.Label>
+              <Form.Control
+                type="text"
+                name="garron"
+                value={product.garron}
+                onChange={handleChange}
+                className="my-input"
+              />
+            </Form.Group>
+
+            <div className="text-muted small mb-3">
+              categoria_producto: porcino / subcategoria: cerdo (automático).
+              precio: 0 · costo: 0
+            </div>
+
+            <div className="mb-3">
+              <Button variant="success" onClick={handleSave}>
+                Agregar a la Orden (Cerdo)
+              </Button>
+            </div>
+          </>
+        ) : (
+          <Form.Group className="mb-3">
+            <Form.Label>Codigo de barra</Form.Label>
+            <Form.Control
+              type="text"
+              name="codigo_de_barra"
+              value={product.codigo_de_barra}
+              onChange={handleChange}
+              placeholder="Ingresa el codigo de barra y presione ENTER"
+              className="my-input"
+              ref={codigoDeBarraRef}
+              onKeyPress={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSave();
+                }
+              }}
+            />
+          </Form.Group>
+        )}
       </Form>
+
       <h1 className="my-list-title dark-text">Productos a agregar</h1>
 
       <Table striped bordered hover>
@@ -693,50 +894,51 @@ export default function OrderForm() {
           <tr>
             <th>Codigo de Barra</th>
             <th>Numero de Media</th>
-            <th>Precio</th>
+
+            {orderMode === "vacuno" && <th>Precio</th>}
+
             <th>Peso</th>
             <th>Numero de Tropa</th>
             <th>Operaciones</th>
           </tr>
         </thead>
         <tbody>
-          {currentProductsOrder.map((product, index) => (
-            <tr key={product.codigo_de_barra}>
-              <td>{product.codigo_de_barra}</td>
-              <td>{product.num_media}</td>
-              <td>{product.precio}</td>
+          {currentProductsOrder.map((p, index) => (
+            <tr key={p.codigo_de_barra || p.num_media || index}>
+              <td>{p.codigo_de_barra}</td>
+              <td>{p.num_media}</td>
+
+              {orderMode === "vacuno" && <td>{p.precio}</td>}
+
               <td>
                 {editingIndex === index ? (
                   <Form.Control
                     type="number"
-                    value={product.kg}
+                    value={p.kg}
                     onChange={(e) => handleWeightChange(e, index)}
-                    min="0" // Establecer el valor mínimo como 0
+                    min="0"
                   />
                 ) : (
-                  product.kg
+                  p.kg
                 )}
               </td>
               <td>
                 {editingIndex === index ? (
                   <Form.Control
-                    type="number"
-                    value={product.tropa}
+                    type="text"
+                    value={p.tropa}
                     onChange={(e) => handleTropaChange(e, index)}
-                    min="0" // Establecer el valor mínimo como 0
                   />
                 ) : (
-                  product.tropa
+                  p.tropa
                 )}
               </td>
               <td className="text-center">
-                {/* Renderizado condicional para mostrar botones de editar o guardar/cancelar */}
                 {editingIndex === index ? (
                   <div className="d-flex justify-content-center align-items-center">
                     <Button
                       variant="primary"
-                      // onClick={() => handleEdit(index)}
-                      onClick={() => handleSaveChanges(index)} // Modifica la función de guardar cambios para pasar el índice
+                      onClick={() => handleSaveChanges(index)}
                       className="mx-2"
                     >
                       Guardar
@@ -753,20 +955,25 @@ export default function OrderForm() {
                   <div className="d-flex justify-content-center align-items-center">
                     <Button
                       variant="danger"
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() =>
+                        handleDelete(
+                          p.id !== undefined ? p.id : index
+                        )
+                      }
                       className="mx-2"
                     >
                       Eliminar
                     </Button>
-                    {context.user && context.user.usuario === "admin" && (
-                      <Button
-                        variant="primary"
-                        onClick={() => handleEdit(index)}
-                        className="mx-2"
-                      >
-                        Editar
-                      </Button>
-                    )}
+                    {context.user &&
+                      context.user.usuario === "admin" && (
+                        <Button
+                          variant="primary"
+                          onClick={() => handleEdit(index)}
+                          className="mx-2"
+                        >
+                          Editar
+                        </Button>
+                      )}
                   </div>
                 )}
               </td>
@@ -774,26 +981,33 @@ export default function OrderForm() {
           ))}
         </tbody>
       </Table>
+
       <div className="py-2">
         <Button
           color="inherit"
           onClick={handleSubmit}
           disabled={products.length === 0 || isSubmitting}
         >
-          {isSubmitting ? "Grabando..." : "Grabar"}
+          {isSubmitting
+            ? "Grabando..."
+            : orderMode === "cerdo"
+            ? "Grabar (Cerdo)"
+            : "Grabar"}
         </Button>
       </div>
+
       <div>
         {pageNumbersOrder.map((numberOrder) => (
           <Button
             key={numberOrder}
             onClick={() => paginateOrder(numberOrder)}
-            className="mx-1" // Agrega una pequeña separación horizontal entre los botones
+            className="mx-1"
           >
             {numberOrder}
           </Button>
         ))}
       </div>
+
       <CategorySummaryTable filteredProducts={products} />
     </Container>
   );

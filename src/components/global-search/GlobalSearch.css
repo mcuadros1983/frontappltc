@@ -1,0 +1,20 @@
+.gs-wrapper {
+  position: relative;
+  max-width: 840px;
+  margin: 12px 16px;
+}
+
+/* Dropdown del buscador */
+.gs-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.15);
+  z-index: 2000;            /* ⬆ para que flote sobre todo */
+  max-height: 360px;
+  overflow: auto;
+}

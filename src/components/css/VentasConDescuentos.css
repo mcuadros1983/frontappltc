@@ -1,0 +1,74 @@
+/* ../../../components/css/VentasConDescuento.css */
+
+.vcd-page{
+  background:
+    radial-gradient(900px 360px at -10% -10%, rgba(59,130,246,.06), transparent 55%),
+    radial-gradient(800px 300px at 110% -10%, rgba(16,185,129,.06), transparent 55%);
+  border-radius: 12px;
+  padding: 8px 12px 14px;
+}
+
+.vcd-title{
+  font-weight: 700;
+  letter-spacing: .2px;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+/* Barra de filtros */
+.vcd-toolbar{
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid rgba(2,6,23,.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 18px rgba(2,6,23,.08);
+}
+
+.my-input{
+  background: #fff;
+  border: 1px solid rgba(2,6,23,.12) !important;
+  box-shadow: none !important;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.my-input:focus{
+  border-color: #06b6d4 !important; /* acento cian suave */
+  box-shadow: 0 0 0 3px rgba(6,182,212,.15) !important;
+}
+
+/* Botón */
+.vcd-btn{
+  box-shadow: 0 6px 14px rgba(15,23,42,.12);
+  transition: transform .06s ease, box-shadow .16s ease, filter .16s ease;
+}
+.vcd-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15,23,42,.16);
+  filter: saturate(1.05);
+}
+
+/* Tabla */
+.vcd-tablewrap{
+  background: #ffffff;
+  border: 1px solid rgba(2,6,23,.08);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(2,6,23,.10);
+  padding: 6px;
+}
+
+.vcd-th-sort{
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.vcd-th-sort:hover{
+  background: rgba(6,182,212,.06);
+}
+
+/* Paginación */
+.vcd-pager button{
+  border: 1px solid rgba(2,6,23,.08);
+  box-shadow: 0 2px 8px rgba(2,6,23,.08);
+}
+.vcd-pager span{
+  color: #374151;
+}

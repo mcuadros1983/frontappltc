@@ -14,7 +14,7 @@ const ArticulosPorcentajeActualizar = () => {
 
   const obtenerArticulos = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/obtenerarticulosporcentaje`);
+      const response = await fetch(`${apiUrl}/obtenerarticulosporcentaje`, { credentials: "include" });
       if (!response.ok) {
         throw new Error("Error al obtener los artículos con porcentaje");
       }
@@ -130,27 +130,38 @@ const ArticulosPorcentajeActualizar = () => {
   };
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">
+    <Container className="vt-page">
+      <h1 className="my-list-title dark-text vt-title">
         Actualizar Porcentajes desde Excel
       </h1>
-      {uploadSuccess && <Alert variant="success">{uploadMessage}</Alert>}
-      {!uploadSuccess && uploadMessage && (
-        <Alert variant="danger">{uploadMessage}</Alert>
+
+      {uploadSuccess && (
+        <Alert variant="success" className="vt-alert">
+          {uploadMessage}
+        </Alert>
       )}
-      <Form>
+      {!uploadSuccess && uploadMessage && (
+        <Alert variant="danger" className="vt-alert">
+          {uploadMessage}
+        </Alert>
+      )}
+
+      <Form className="vt-form vt-form-narrow">
         <Form.Group controlId="formFile" className="mb-3">
-          <Form.Label>Seleccione un archivo Excel:</Form.Label>
+          <Form.Label className="vt-label">Seleccione un archivo Excel:</Form.Label>
           <Form.Control
             type="file"
             onChange={handleFileChange}
             disabled={loading}
+            className="vt-input"
           />
         </Form.Group>
+
         <Button
           variant="primary"
           onClick={handleUploadButtonClick}
           disabled={buttonDisabled || loading}
+          className="vt-btn"
         >
           {loading ? (
             <Spinner
@@ -165,17 +176,20 @@ const ArticulosPorcentajeActualizar = () => {
           )}
         </Button>
       </Form>
-      <div style={{ marginTop: "10px" }}>
+
+      <div className="mt-2">
         <Button
           variant="secondary"
           onClick={downloadTemplate}
           disabled={loading}
+          className="vt-btn-secondary"
         >
           Descargar Plantilla
         </Button>
       </div>
     </Container>
   );
+
 };
 
 export default ArticulosPorcentajeActualizar;

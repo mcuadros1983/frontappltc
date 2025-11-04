@@ -1,18 +1,20 @@
-// import React, { useContext } from "react";
-// import Contexts from "../context/Contexts";
+import React from "react";
+import ShortcutsBar from "../components/shortcuts/ShortcutsBar";
+import HeroSearch from "../components/shortcuts/HeroSearch";
+import "./Main.css"; // <- estilos del fondo
 
 export default function Main() {
-  // const context = useContext(Contexts.UserContext);
-  //console.log("rol", typeof(context.user.rol_id))
   return (
-    <div className="d-flex align-items-center justify-content-center">
-      {/* Agregar imagen centrada */}
-      <img
-        src="/ltc.png" // Ruta relativa al directorio "public"
-        alt="LTC Logo"
-        className="img-fluid"
-        style={{ maxWidth: "50%", height: "auto" }}
-      />
+    <div className="home-hero">
+      {/* Logo de fondo, no interactivo */}
+      <img src="/ltc.png" alt="" className="home-hero__bg img-fluid"
+        style={{ maxWidth: "50%", height: "auto" }} />
+
+      {/* Hero + buscador */}
+      <HeroSearch />
+
+      {/* Accesos directos en grilla */}
+      <ShortcutsBar />
     </div>
   );
 }

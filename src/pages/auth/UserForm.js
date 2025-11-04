@@ -1,7 +1,15 @@
 
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Container, Form, Button, Spinner } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Form,
+  Button,
+  Spinner,
+} from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 // import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 
@@ -128,86 +136,112 @@ const UserForm = () => {
   };
 
   return (
-    <Container className="d-flex flex-column align-items-center">
-      <h1 className="my-form-title text-center">
-        {editing ? "Editar Usuario" : "Agregar Usuario"}
-      </h1>
-      <Form onSubmit={handleSubmit} className="w-50">
-        <Form.Group className="mb-3">
-          <Form.Label>Nombre de Usuario</Form.Label>
-          <Form.Control
-            type="text"
-            name="usuario"
-            value={user.usuario}
-            onChange={handleChange}
-            placeholder="Ingresa el nombre de usuario"
-            className="my-input"
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Contraseña</Form.Label>
-          {!editing || (editing && changePassword) ? (
-            <Form.Control
-              type="password"
-              name="password"
-              value={user.password}
-              onChange={handlePasswordChange}
-              placeholder="Ingresa la contraseña"
-              className="my-input"
-            />
-          ) : (
-            <div className="d-flex align-items-center">
-              <span>*********</span>
-              <Button variant="link" onClick={handlePasswordToggle}>
-                Cambiar Contraseña
-              </Button>
-            </div>
-          )}
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Rol</Form.Label>
-          <select
-            value={user.nombreRol}
-            onChange={handleRolesChange}
-            name="nombreRol"
-            className="form-control my-input"
-          >
-            <option value="">Selecciona un rol</option>
-            {rolesList.map((role) => (
-              <option key={role.id} value={role.nombre}>
-                {role.nombre}
-              </option>
-            ))}
-          </select>
-        </Form.Group>
-        <Button
-          variant="primary"
-          type="submit"
-          disabled={loading}
-          style={{ position: "relative", marginRight: "5px" }}
-        >
-          {editing ? (
-            "Editar"
-          ) : loading ? (
-            <Spinner
-              animation="border"
-              size="sm"
-              role="status"
-              aria-hidden="true"
-            />
-          ) : (
-            "Guardar"
-          )}
-        </Button>
-        {/* Nuevo botón de Cancelar */}
-        {editing && (
-          <Button variant="secondary" onClick={handleCancel}>
-            Cancelar
-          </Button>
-        )}
-      </Form>
-    </Container>
-  );
+  <Container fluid className="mt-3 rpm-page px-3">
+    <Row className="justify-content-center">
+      <Col lg={6} md={8}>
+        <Card className="rpm-card">
+          <Card.Header className="rpm-header text-center">
+            <strong>
+              {editing ? "Editar Usuario" : "Agregar Usuario"}
+            </strong>
+          </Card.Header>
+
+          <Card.Body className="rpm-body">
+            <Form onSubmit={handleSubmit}>
+              <Row className="g-3">
+                <Col xs={12}>
+                  <Form.Label>Nombre de Usuario</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="usuario"
+                    value={user.usuario}
+                    onChange={handleChange}
+                    placeholder="Ingresa el nombre de usuario"
+                    className="form-control my-input rpm-input"
+                    required
+                  />
+                </Col>
+
+                <Col xs={12}>
+                  <Form.Label>Contraseña</Form.Label>
+                  {!editing || (editing && changePassword) ? (
+                    <Form.Control
+                      type="password"
+                      name="password"
+                      value={user.password}
+                      onChange={handlePasswordChange}
+                      placeholder="Ingresa la contraseña"
+                      className="form-control my-input rpm-input"
+                    />
+                  ) : (
+                    <div className="d-flex align-items-center justify-content-between p-2 border rounded bg-light">
+                      <span className="text-muted">*********</span>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={handlePasswordToggle}
+                        className="text-decoration-none"
+                      >
+                        Cambiar contraseña
+                      </Button>
+                    </div>
+                  )}
+                </Col>
+
+                <Col xs={12}>
+                  <Form.Label>Rol</Form.Label>
+                  <Form.Select
+                    value={user.nombreRol}
+                    onChange={handleRolesChange}
+                    name="nombreRol"
+                    className="form-control my-input rpm-input"
+                    required
+                  >
+                    <option value="">Selecciona un rol</option>
+                    {rolesList.map((role) => (
+                      <option key={role.id} value={role.nombre}>
+                        {role.nombre}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Col>
+
+                <Col xs={12} className="d-flex gap-2 justify-content-end">
+                  {editing && (
+                    <Button
+                      variant="outline-secondary"
+                      onClick={handleCancel}
+                      className="rpm-btn-outline"
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                  <Button
+                    variant="primary"
+                    type="submit"
+                    disabled={loading}
+                    className="rpm-btn"
+                  >
+                    {loading ? (
+                      <>
+                        <Spinner animation="border" size="sm" className="me-1" />
+                        Guardando...
+                      </>
+                    ) : editing ? (
+                      "Guardar Cambios"
+                    ) : (
+                      "Crear Usuario"
+                    )}
+                  </Button>
+                </Col>
+              </Row>
+            </Form>
+          </Card.Body>
+        </Card>
+      </Col>
+    </Row>
+  </Container>
+);
 };
 
 export default UserForm;

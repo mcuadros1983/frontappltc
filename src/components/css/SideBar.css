@@ -1,9 +1,12 @@
 .sidebar-container {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centra horizontalmente el contenido */
-  justify-content: center; /* Centra verticalmente el contenido */
-  height: 100%; /* Asegura que el sidebar ocupe toda la altura disponible */
+  align-items: center;
+  /* Centra horizontalmente el contenido */
+  justify-content: center;
+  /* Centra verticalmente el contenido */
+  height: 100%;
+  /* Asegura que el sidebar ocupe toda la altura disponible */
 }
 
 .sidebar {
@@ -13,4 +16,71 @@
 
 .sidebar.hidden {
   display: none;
+}
+
+/* El contenedor raíz del sidebar dentro del <Col> */
+.sb-root {
+  /* el <Col> ya tiene min-height:100vh; tomamos ese alto */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cuerpo que scrollea */
+.sb-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Footer pegado abajo (no scrollea) */
+.sb-footer {
+  margin-top: auto;
+  /* empuja hacia abajo */
+  position: sticky;
+  bottom: 0;
+  padding: 10px 12px;
+  background: linear-gradient(180deg,
+      rgba(52, 58, 64, 0) 0%,
+      rgba(52, 58, 64, .85) 40%,
+      #343a40 100%);
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  z-index: 1;
+}
+
+/* Link "Cerrar Sesión" */
+.sb-logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #e5e7eb;
+  transition: background .12s ease, color .12s ease;
+}
+
+.sb-logout:hover,
+.sb-logout:focus {
+  background: rgba(255, 255, 255, .10);
+  color: #fff;
+  text-decoration: none;
+}
+
+/* (Opcional) evite desbordes horizontales en submenús */
+.sb-sub .nav-link {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* (Opcional) scrollbar más discreto en Windows */
+.sb-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sb-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .18);
+  border-radius: 6px;
 }

@@ -1,3 +1,4 @@
+// VentasTotales.jsx
 import React, { useState, useEffect, useContext } from "react";
 import {
   Container,
@@ -8,11 +9,11 @@ import {
 } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
+import "../../../components/css/VentasTotalesSuc.css"; // ⬅️ NUEVO
 
 export default function VentasTotales() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
-  // const [searchSucursal, setSearchSucursal] = useState("");
-  const [selectedSucursal, setSelectedSucursal] = useState(""); // Estado para la sucursal seleccionada
+  const [selectedSucursal, setSelectedSucursal] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,18 +26,13 @@ export default function VentasTotales() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {
-    // Aquí puedes realizar alguna acción cuando cambie la sucursal seleccionada,
-    // como cargar datos relacionados con esa sucursal.
-    // console.log("Sucursal seleccionada:", selectedSucursal);
-  }, [selectedSucursal]);
+  useEffect(() => {}, [selectedSucursal]);
 
   const handleFilter = async () => {
     try {
       setLoading(true);
       setError("");
 
-      // Validación de fechas
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         alert("Ingrese una fecha válida.");
         setLoading(false);
@@ -45,14 +41,12 @@ export default function VentasTotales() {
 
       const response = await fetch(`${apiUrl}/ventas/filtradas`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           fechaDesde: startDate,
           fechaHasta: endDate,
-          sucursalId: selectedSucursal, // Usar el ID de la sucursal seleccionada
+          sucursalId: selectedSucursal,
         }),
       });
 
@@ -73,7 +67,7 @@ export default function VentasTotales() {
             )?.nombre || "Desconocido",
         }));
         setVentasFiltradas(ventasMapped);
-        setCurrentPage(1); // Reiniciar a la primera página después de cada búsqueda
+        setCurrentPage(1);
       } else {
         throw new Error("Error al obtener las ventas filtradas");
       }
@@ -95,19 +89,14 @@ export default function VentasTotales() {
       let valueA = a[columnName];
       let valueB = b[columnName];
 
-      // Si la columna es "monto", convierte las cadenas de texto en números antes de compararlas
       if (columnName === "monto") {
-        valueA = parseFloat(valueA.replace(/[^0-9.-]+/g, ""));
-        valueB = parseFloat(valueB.replace(/[^0-9.-]+/g, ""));
+        valueA = parseFloat(String(valueA).replace(/[^0-9.-]+/g, ""));
+        valueB = parseFloat(String(valueB).replace(/[^0-9.-]+/g, ""));
       }
 
-      if (valueA < valueB) {
-        return sortDirection === "asc" ? -1 : 1;
-      } else if (valueA > valueB) {
-        return sortDirection === "asc" ? 1 : -1;
-      } else {
-        return 0;
-      }
+      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
     });
 
     setVentasFiltradas(sortedSells);
@@ -115,21 +104,17 @@ export default function VentasTotales() {
 
   const isValidDate = (dateString) => {
     const regEx = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateString.match(regEx)) return false; // Formato incorrecto
+    if (!dateString.match(regEx)) return false;
     const date = new Date(dateString);
-    if (!date.getTime()) return false; // Fecha inválida (por ejemplo, 31/04/2024)
+    if (!date.getTime()) return false;
     return date.toISOString().slice(0, 10) === dateString;
   };
 
-  const handleSearchClick = () => {
-    handleFilter();
-  };
+  const handleSearchClick = () => handleFilter();
 
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = ventasFiltradas.slice(indexOfFirstSell, indexOfLastSell);
-
-  // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(ventasFiltradas.length / sellsPerPage)) {
@@ -149,118 +134,122 @@ export default function VentasTotales() {
   );
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Ventas Totales</h1>
+    <Container className="vt-page">
+      <h1 className="my-list-title dark-text vt-title">Ventas Totales</h1>
 
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
+      {/* Filtros */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto mx-2">
+          <label className="mr-2">DESDE:</label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
+            className="form-control rounded-0 text-center vt-input"
           />
         </div>
 
-        <div className="d-inline-block w-auto ml-2">
+        <div className="d-inline-block w-auto mx-2">
           <label className="ml-2 mr-2">HASTA:</label>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
+            className="form-control rounded-0 text-center vt-input"
           />
+        </div>
+
+        <div className="d-inline-block">
+          <label className="d-block">Sucursal</label>
+          <FormControl
+            as="select"
+            className="vt-input"
+            value={selectedSucursal}
+            onChange={(e) => setSelectedSucursal(e.target.value)}
+            style={{ minWidth: 240 }}
+          >
+            <option value="">Seleccionar sucursal</option>
+            {context.sucursalesTabla.map((sucursal) => (
+              <option key={sucursal.id} value={sucursal.id}>
+                {sucursal.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block mx-2">
+          <Button onClick={handleSearchClick} className="vt-btn">
+            Filtrar
+          </Button>
         </div>
       </div>
 
-      <div className="mb-3">
-        <FormControl
-          as="select"
-          className="mr-2"
-          value={selectedSucursal}
-          onChange={(e) => setSelectedSucursal(e.target.value)}
-          style={{ width: "25%" }}
-        >
-          <option value="">Seleccionar sucursal</option>
-          {context.sucursalesTabla.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-
-      <div className="mb-3">
-        <Button onClick={handleSearchClick}>Filtrar</Button>
-      </div>
-
       {loading && <Spinner animation="border" />}
-      {error && <div>{error}</div>}
+      {error && <div className="alert alert-danger my-2">{error}</div>}
       {ventasFiltradas.length === 0 && !loading && (
-        <div>No se encontraron ventas para la fecha indicada.</div>
+        <div className="text-muted">No se encontraron ventas para la fecha indicada.</div>
       )}
 
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th
-              onClick={() => handleSort("fecha")}
-              style={{ cursor: "pointer" }}
-            >
-              Fecha
-            </th>
-            <th
-              onClick={() => handleSort("monto")}
-              style={{ cursor: "pointer" }}
-            >
-              Monto
-            </th>
-            <th
-              onClick={() => handleSort("sucursal_id")}
-              style={{ cursor: "pointer" }}
-            >
-              Sucursal
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentSells.map((venta) => (
-            <tr key={venta.id}>
-              <td>{venta.fecha}</td>
-              {/* <td>{venta.monto}</td> */}
-              {parseFloat(venta.monto).toLocaleString("es-ES", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-              <td>
-                {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
-                )?.nombre || "Desconocido"}
-              </td>
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th onClick={() => handleSort("fecha")} className="vt-th-sort">
+                Fecha {sortColumn === "fecha" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
+              </th>
+              <th onClick={() => handleSort("monto")} className="vt-th-sort text-end">
+                Monto {sortColumn === "monto" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
+              </th>
+              <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">
+                Sucursal {sortColumn === "sucursal_id" ? (sortDirection === "asc" ? "▲" : "▼") : ""}
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
-
-      {/* Total sales amount display */}
-      <div className="total-sales-display">
-        <strong>Total:</strong> ${totalMonto.toFixed(2)}
+          </thead>
+          <tbody>
+            {currentSells.map((venta) => (
+              <tr key={venta.id}>
+                <td>{venta.fecha}</td>
+                <td className="text-end">
+                  {parseFloat(venta.monto).toLocaleString("es-ES", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </td>
+                <td>
+                  {context.sucursalesTabla.find(
+                    (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
+                  )?.nombre || "Desconocido"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       </div>
 
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={prevPage} disabled={currentPage === 1}>
+      {/* Total */}
+      <div className="total-sales-display vt-total">
+        <strong>Total:</strong>{" "}
+        <span>
+          $
+          {totalMonto.toLocaleString("es-ES", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </span>
+      </div>
+
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vt-pager">
+        <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
           <BsChevronLeft />
         </Button>
         <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(ventasFiltradas.length / sellsPerPage)}
+          Página {currentPage} de {Math.ceil(ventasFiltradas.length / sellsPerPage) || 1}
         </span>
         <Button
           onClick={nextPage}
-          disabled={
-            currentPage === Math.ceil(ventasFiltradas.length / sellsPerPage)
-          }
+          disabled={currentPage === Math.ceil(ventasFiltradas.length / sellsPerPage) || ventasFiltradas.length === 0}
+          variant="light"
         >
           <BsChevronRight />
         </Button>

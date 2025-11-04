@@ -2,11 +2,16 @@ import React, { useState, useEffect } from "react";
 import Contexts from "./Contexts";
 
 export default function DataContextProvider({ children }) {
-  const [data, setData] = useState([]);
+  // Objetos/piezas únicas
+  const [data, setData] = useState(null);
+  const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null); // null = todas
+  const [cajaAbierta, setCajaAbierta] = useState(null);                 // null si no hay
+
+  // Listas (siempre arrays para evitar .map de null/objeto)
   const [sucursales, setSucursales] = useState([]);
   const [clientes, setClientes] = useState([]);
-  const [formasPago, setFormasPago] =useState([]);
-  const [sucursalesTabla, setSucursalesTabla] =useState([]);
+  const [formasPago, setFormasPago] = useState([]);
+  const [sucursalesTabla, setSucursalesTabla] = useState([]);
   const [subcategoriasTabla, setSubcategoriasTabla] = useState([]);
   const [articulosTabla, setArticulosTabla] = useState([]);
   const [tipoDeIngresoTabla, setTipoDeIngresoTabla] = useState([]);
@@ -14,110 +19,203 @@ export default function DataContextProvider({ children }) {
   const [planTarjetaTabla, setPlanTarjetaTabla] = useState([]);
   const [clientesTabla, setClientesTabla] = useState([]);
   const [empleados, setEmpleados] = useState([]);
-  const [usuariosTabla, setUsuariosTabla] =useState([]);
+  const [usuariosTabla, setUsuariosTabla] = useState([]);
+  const [tiposTarjetaTabla, setTiposTarjetaTabla] = useState([]);
+  const [marcasTarjetaTabla, setMarcasTarjetaTabla] = useState([]);
+  const [planTarjetaTesoreriaTabla, setPlanTarjetaTesoreriaTabla] = useState([]);
+  const [tarjetasTesoreriaTabla, setTarjetasTesoreriaTabla] = useState([]);
+  const [empresasTabla, setEmpresasTabla] = useState([]);
+  const [bancosTabla, setBancosTabla] = useState([]);
+  const [rubrosTabla, setRubrosTabla] = useState([]);
+  const [categoriaAnimalTabla, setCategoriaAnimalTabla] = useState([]);
+  const [formasPagoTesoreria, setFormasPagoTesoreria] = useState([]);
+  const [frigorificoTabla, setFrigorificoTabla] = useState([]);
+  const [imputacionContableTabla, setImputacionContableTabla] = useState([]);
+  const [proveedoresTabla, setProveedoresTabla] = useState([]);
+  const [proyectosTabla, setProyectosTabla] = useState([]);
+  const [ptosVentaTabla, setPtosVentaTabla] = useState([]);
+  const [tiposComprobanteTabla, setTiposComprobanteTabla] = useState([]);
+  const [librosIvaTabla, setLibrosIvaTabla] = useState([]);
+  const [categoriasEgreso, setCategoriasEgreso] = useState([]);
+  const [categoriasIngreso, setCategoriasIngreso] = useState([]);
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // Helper: fetch seguro que nunca devuelve algo que rompa el UI
+  const fetchJsonSafe = async (url, opts = {}) => {
+    try {
+      const res = await fetch(url, { credentials: "include", ...opts });
+      if (!res.ok) {
+        console.warn(`⚠️ ${url} → HTTP ${res.status}`);
+        return null; // devolvemos null; el caller normaliza a []
+      }
+      return await res.json();
+    } catch (e) {
+      console.warn(`❌ Error fetch ${url}:`, e?.message || e);
+      return null;
+    }
+  };
+
+  // Normaliza a array (acepta payloads tipo {rows: []} o [] directo)
+  const toArray = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.rows)) return payload.rows;
+    return [];
+  };
+
   useEffect(() => {
-    // console.log("apliUrl", apiUrl)
+    let cancelled = false;
     const fetchData = async () => {
-      // Consulta para obtener sucursales
-      const resSucursales = await fetch(`${apiUrl}/obtenersucursales`);
-      const dataSucursales = await resSucursales.json();
-      // console.log("sucursales", dataSucursales);
-      if (dataSucursales.length > 0) {
-        const sortedBranches = dataSucursales.sort((a, b) => a.id - b.id);
-        setSucursales(sortedBranches);
-      } else {
-        setSucursales(dataSucursales);
+      // Sucursales
+      const dataSucursales = await fetchJsonSafe(`${apiUrl}/sucursales`);
+      if (!cancelled) {
+        const arr = toArray(dataSucursales);
+        arr.sort((a, b) => Number(a.id) - Number(b.id));
+        setSucursales(arr);
       }
 
-      // Consulta para obtener clientes
-      const resClientes = await fetch(`${apiUrl}/obtenerclientestabla/`, {
-        credentials: "include",
-      });
-      const dataClientes = await resClientes.json();
-      setClientes(dataClientes);
-      // console.log("Clientes", dataClientes);
+      // Clientes
+      const dataClientes = await fetchJsonSafe(`${apiUrl}/clientes`);
+      if (!cancelled) {
+        console.log("datosclientes", dataClientes);
+        setClientes(toArray(dataClientes));
+      }
 
-      // Consulta para obtener formas de pago
-      const resFormasPago = await fetch(`${apiUrl}/formas-pago`, {
-        credentials: "include",
-      });
-      const dataFormasPago = await resFormasPago.json();
-      setFormasPago(dataFormasPago);
+      // Formas de pago
+      const dataFormasPago = await fetchJsonSafe(`${apiUrl}/formas-pago`);
+      if (!cancelled) setFormasPago(toArray(dataFormasPago));
 
-      // Consultas para obtener las tablas adicionales
-      const resClientesTabla = await fetch(`${apiUrl}/obtenerclientestabla`);
-      const dataClientesTabla = await resClientesTabla.json();
-      setClientesTabla(dataClientesTabla);
+      // Tablas varias
+      const dataClientesTabla = await fetchJsonSafe(`${apiUrl}/obtenerclientestabla`);
+      if (!cancelled) setClientesTabla(toArray(dataClientesTabla));
 
-      // Consultas para obtener las tablas adicionales
-      const resSucursalesTabla = await fetch(`${apiUrl}/obtenersucursales`);
-      const dataSucursalesTabla = await resSucursalesTabla.json();
-      setSucursalesTabla(dataSucursalesTabla);
+      const dataSucursalesTabla = await fetchJsonSafe(`${apiUrl}/obtenersucursales`);
+      if (!cancelled) setSucursalesTabla(toArray(dataSucursalesTabla));
 
-      const resArticulosTabla = await fetch(`${apiUrl}/obtenerarticulos`);
-      const dataArticulosTabla = await resArticulosTabla.json();
-      setArticulosTabla(dataArticulosTabla);
-      // console.log(`dataArticulosTabla`, dataArticulosTabla);
+      const dataArticulosTabla = await fetchJsonSafe(`${apiUrl}/obtenerarticulos`);
+      if (!cancelled) setArticulosTabla(toArray(dataArticulosTabla));
 
-      const resTipoDeIngresoTabla = await fetch(`${apiUrl}/obtenertipoingreso`);
-      const dataTipoDeIngresoTabla = await resTipoDeIngresoTabla.json();
-      setTipoDeIngresoTabla(dataTipoDeIngresoTabla);
+      const dataTipoDeIngresoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipoingreso`);
+      if (!cancelled) setTipoDeIngresoTabla(toArray(dataTipoDeIngresoTabla));
 
-      // console.log(`datatipodeingresotabla`, dataTipoDeIngresoTabla);
+      const dataTipoDeGastoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipogasto`);
+      if (!cancelled) {
+        const arr = toArray(dataTipoDeGastoTabla);
+        arr.sort((a, b) => String(a.descripcion || "").localeCompare(String(b.descripcion || "")));
+        setTipoDeGastoTabla(arr);
+      }
 
-      const resTipoDeGastoTabla = await fetch(`${apiUrl}/obtenertipogasto`);
-      const dataTipoDeGastoTabla = await resTipoDeGastoTabla.json();
-      const sortedTipoDeGastoTabla = dataTipoDeGastoTabla.sort((a, b) => {
-        return a.descripcion.localeCompare(b.descripcion);
-      });
-      setTipoDeGastoTabla(sortedTipoDeGastoTabla);
+      const dataPlanTarjetaTabla = await fetchJsonSafe(`${apiUrl}/obtenerplantarjeta`);
+      if (!cancelled) setPlanTarjetaTabla(toArray(dataPlanTarjetaTabla));
 
-      const resPlanTarjetaTabla = await fetch(`${apiUrl}/obtenerplantarjeta`);
-      const dataPlanTarjetaTabla = await resPlanTarjetaTabla.json();
-      setPlanTarjetaTabla(dataPlanTarjetaTabla);
+      const dataTarjetaTesoreriaTabla = await fetchJsonSafe(`${apiUrl}/tarjetas-comunes`);
+      if (!cancelled) setTarjetasTesoreriaTabla(toArray(dataTarjetaTesoreriaTabla));
 
-      const resEmpleadosTabla = await fetch(`${apiUrl}/obtenerempleados`);
-      const dataEmpleadosTabla = await resEmpleadosTabla.json();
-      setEmpleados(dataEmpleadosTabla);
+      const dataEmpleadosTabla = await fetchJsonSafe(`${apiUrl}/obtenerempleados`);
+      if (!cancelled) setEmpleados(toArray(dataEmpleadosTabla));
 
-      const resUsuariosTabla = await fetch(`${apiUrl}/obtenerusuario`);
-      const dataUsuariosTabla = await resUsuariosTabla.json();
-      setUsuariosTabla(dataUsuariosTabla);
+      const dataUsuariosTabla = await fetchJsonSafe(`${apiUrl}/obtenerusuario`);
+      if (!cancelled) setUsuariosTabla(toArray(dataUsuariosTabla));
 
-      const resSubcategoriasTabla = await fetch(
-        `${apiUrl}/obtenersubcategorias`
-      );
-      const dataSubcategoriasTabla = await resSubcategoriasTabla.json();
-      setSubcategoriasTabla(dataSubcategoriasTabla);
+      const dataSubcategoriasTabla = await fetchJsonSafe(`${apiUrl}/obtenersubcategorias`);
+      if (!cancelled) setSubcategoriasTabla(toArray(dataSubcategoriasTabla));
 
-      // console.log("datacategoriastabla", dataCategoriasTabla);
+      const dataTiposTarjeta = await fetchJsonSafe(`${apiUrl}/tipos-tarjeta`);
+      if (!cancelled) setTiposTarjetaTabla(toArray(dataTiposTarjeta));
+
+      const dataMarcasTarjeta = await fetchJsonSafe(`${apiUrl}/marcas-tarjeta`);
+      if (!cancelled) setMarcasTarjetaTabla(toArray(dataMarcasTarjeta));
+
+      const dataEmpresas = await fetchJsonSafe(`${apiUrl}/empresas`);
+      if (!cancelled) setEmpresasTabla(toArray(dataEmpresas));
+
+      const dataBancos = await fetchJsonSafe(`${apiUrl}/bancos`);
+      if (!cancelled) setBancosTabla(toArray(dataBancos));
+
+      const dataRubros = await fetchJsonSafe(`${apiUrl}/conciliacion-rubros`);
+      if (!cancelled) setRubrosTabla(toArray(dataRubros));
+
+      const dataFormasPagoTes = await fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`);
+      if (!cancelled) setFormasPagoTesoreria(toArray(dataFormasPagoTes));
+
+      const dataFrigorifico = await fetchJsonSafe(`${apiUrl}/frigorificos`);
+      if (!cancelled) setFrigorificoTabla(toArray(dataFrigorifico));
+
+      const dataImputacionContable = await fetchJsonSafe(`${apiUrl}/imputaciones-contables`);
+      if (!cancelled) setImputacionContableTabla(toArray(dataImputacionContable));
+
+      const dataProyectos = await fetchJsonSafe(`${apiUrl}/proyectos`);
+      if (!cancelled) setProyectosTabla(toArray(dataProyectos));
+
+      const dataPlanTarjetasTes = await fetchJsonSafe(`${apiUrl}/tarjeta-planes`);
+      if (!cancelled) setPlanTarjetaTesoreriaTabla(toArray(dataPlanTarjetasTes));
+
+      const dataTiposComprobantes = await fetchJsonSafe(`${apiUrl}/tipos-comprobantes`);
+      if (!cancelled) setTiposComprobanteTabla(toArray(dataTiposComprobantes));
+
+      const dataProveedores = await fetchJsonSafe(`${apiUrl}/proveedores`);
+      if (!cancelled) setProveedoresTabla(toArray(dataProveedores));
+
+      const dataPtosVenta = await fetchJsonSafe(`${apiUrl}/ptos-venta`);
+      if (!cancelled) setPtosVentaTabla(toArray(dataPtosVenta));
+
+      const dataLibrosIva = await fetchJsonSafe(`${apiUrl}/librosiva`);
+      if (!cancelled) setLibrosIvaTabla(toArray(dataLibrosIva));
+
+      const dataCategoriaAnimal = await fetchJsonSafe(`${apiUrl}/categorias-animales`);
+      if (!cancelled) setCategoriaAnimalTabla(toArray(dataCategoriaAnimal));
+
+      const dataCategoriasEgreso = await fetchJsonSafe(`${apiUrl}/categorias-egreso`);
+      if (!cancelled) setCategoriasEgreso(toArray(dataCategoriasEgreso));
+
+      const dataCategoriasIngreso = await fetchJsonSafe(`${apiUrl}/categorias-ingreso`);
+      if (!cancelled) setCategoriasIngreso(toArray(dataCategoriasIngreso));
+
+      // Caja abierta (puede no existir; no lo fuerzo a objeto)
+      const dataCajaAbierta = await fetchJsonSafe(`${apiUrl}/caja-tesoreria/actual`);
+      if (!cancelled) setCajaAbierta(dataCajaAbierta || null);
     };
+
     fetchData();
+    return () => { cancelled = true; };
   }, [apiUrl]);
 
   return (
     <Contexts.DataContext.Provider
       value={{
-        data,
-        setData,
-        sucursales,
-        setSucursales,
-        clientes,
-        setClientes,
+        data, setData,
+        sucursales, setSucursales,
+        clientes, setClientes,
         clientesTabla,
         subcategoriasTabla,
-        formasPago,
-        setFormasPago,
-        empleados,
+        formasPago, setFormasPago,
+        empleados, setEmpleados,
         usuariosTabla,
         sucursalesTabla,
         articulosTabla,
         tipoDeIngresoTabla,
         tipoDeGastoTabla,
         planTarjetaTabla,
+        tiposTarjetaTabla, setTiposTarjetaTabla,
+        marcasTarjetaTabla, setMarcasTarjetaTabla,
+        empresasTabla, setEmpresasTabla,
+        bancosTabla, setBancosTabla,
+        rubrosTabla, setRubrosTabla,
+        categoriaAnimalTabla, setCategoriaAnimalTabla,
+        formasPagoTesoreria, setFormasPagoTesoreria,
+        frigorificoTabla, setFrigorificoTabla,
+        imputacionContableTabla, setImputacionContableTabla,
+        proveedoresTabla, setProveedoresTabla,
+        proyectosTabla, setProyectosTabla,
+        tiposComprobanteTabla, setTiposComprobanteTabla,
+        ptosVentaTabla, setPtosVentaTabla,
+        librosIvaTabla, setLibrosIvaTabla,
+        empresaSeleccionada, setEmpresaSeleccionada,
+        planTarjetaTesoreriaTabla, setPlanTarjetaTesoreriaTabla,
+        tarjetasTesoreriaTabla, setTarjetasTesoreriaTabla,
+        categoriasEgreso, setCategoriasEgreso,
+        categoriasIngreso, setCategoriasIngreso,
+        cajaAbierta, setCajaAbierta
       }}
     >
       {children}

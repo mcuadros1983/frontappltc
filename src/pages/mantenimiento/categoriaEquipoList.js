@@ -14,7 +14,7 @@ export default function CategoriaEquipoList() {
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/categorias-equipos`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/categorias-equipos`, {credentials: 'include'});
         const data = await response.json();
         setCategorias(data);
       } catch (error) {
@@ -94,7 +94,7 @@ export default function CategoriaEquipoList() {
                     if (window.confirm('¿Está seguro de que desea eliminar esta categoría?')) {
                       try {
                         const response = await fetch(`${process.env.REACT_APP_API_URL}/categorias-equipos/${categoria.id}`, {
-                          method: 'DELETE',
+                          method: 'DELETE', credentials: 'include'
                         });
                         if (response.ok) {
                           setCategorias(categorias.filter((cat) => cat.id !== categoria.id));

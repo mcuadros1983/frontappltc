@@ -87,61 +87,65 @@ export default function ListaRindesConsolidados() {
   ];
 
   const renderTabla = (titulo, metricas, mostrar, setMostrar) => (
-    <>
-      <div className="mb-3">
-        <Button
-          variant={mostrar ? "secondary" : "primary"}
-          onClick={() => setMostrar(!mostrar)}
-        >
-          {mostrar ? `Ocultar ${titulo}` : `Mostrar ${titulo}`}
-        </Button>
-      </div>
+  <>
+    <div className="vt-toolbar mb-3 d-flex gap-2">
+      <Button
+        variant={mostrar ? "secondary" : "primary"}
+        onClick={() => setMostrar(!mostrar)}
+        className={mostrar ? "vt-btn-secondary" : "vt-btn"}
+      >
+        {mostrar ? `Ocultar ${titulo}` : `Mostrar ${titulo}`}
+      </Button>
+    </div>
 
-      <div className="fixed-table-container">
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>{titulo}</th>
-              {columnas.map((col, i) => (
-                <th key={i}>{col.titulo}</th>
-              ))}
-            </tr>
-          </thead>
-          {mostrar && (
-            <tbody>
-              {metricas.map((metrica, i) => (
-                <tr key={i}>
-                  <td>{metrica.label}</td>
-                  {columnas.map((col, j) => (
-                    <td key={j}>
-                      {col[metrica.key] != null
-                        ? `${metrica.prefix || ""}${parseFloat(
+    <div className="vt-tablewrap table-responsive fixed-table-container">
+      <Table striped bordered hover responsive className="mb-2">
+        <thead>
+          <tr>
+            <th className="vt-sticky-col">{titulo}</th>
+            {columnas.map((col, i) => (
+              <th key={i} className="text-end">{col.titulo}</th>
+            ))}
+          </tr>
+        </thead>
+
+        {mostrar && (
+          <tbody>
+            {metricas.map((metrica, i) => (
+              <tr key={i}>
+                <td className="vt-sticky-col">{metrica.label}</td>
+                {columnas.map((col, j) => (
+                  <td key={j} className="text-end">
+                    {col[metrica.key] != null
+                      ? `${metrica.prefix || ""}${parseFloat(
                           metrica.key === "rinde" ? col[metrica.key] * 100 : col[metrica.key]
                         ).toLocaleString("es-AR", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}${metrica.suffix || ""}`
-                        : "-"}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          )}
-        </Table>
-      </div>
-    </>
-  );
+                      : "-"}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        )}
+      </Table>
+    </div>
+  </>
+);
 
-  return (
-    <Container>
-      <h1 className="my-list-title dark-text">Comparativo de Rindes Consolidados</h1>
-      {columnas.length > 0 && (
-        <>
-          {renderTabla("Resultado Consolidado", metricas, mostrarContenido, setMostrarContenido)}
-          {renderTabla("Rendimiento Consolidado", tabla2Metricas, mostrarTabla2, setMostrarTabla2)}
-        </>
-      )}
-    </Container>
-  );
+return (
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Comparativo de Rindes Consolidados</h1>
+
+    {columnas.length > 0 && (
+      <>
+        {renderTabla("Resultado Consolidado", metricas, mostrarContenido, setMostrarContenido)}
+        {renderTabla("Rendimiento Consolidado", tabla2Metricas, mostrarTabla2, setMostrarTabla2)}
+      </>
+    )}
+  </Container>
+);
+
 }

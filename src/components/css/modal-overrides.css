@@ -1,0 +1,19 @@
+/* src/styles/modal-overrides.css */
+.modal-xxl-fluid {
+  max-width: 80vw !important; /* casi pantalla completa */
+  margin-left: auto;
+  margin-right: auto;
+}
+.modal-xxl-fluid .modal-content {
+  height: 92vh;               /* más alto para ver más filas */
+}
+.modal-xxl-fluid .modal-body {
+  overflow: auto;             /* scroll interno si se pasa */
+}
+
+.modal-xxl-fluid .modal-content {
+  height: 70vh;              /* ⇦ ajustá este valor */
+}
+.modal-xxl-fluid .modal-body {
+  overflow: auto;
+}

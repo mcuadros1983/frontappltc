@@ -14,154 +14,145 @@ import Contexts from "../../context/Contexts";
 
 export default function OrdenMantenimientoList() {
   const [ordenes, setOrdenes] = useState([]);
-  const [filteredOrdenes, setFilteredOrdenes] = useState([]); // Órdenes filtradas por sucursal
+  const [filteredOrdenes, setFilteredOrdenes] = useState([]);
   const [sucursalId, setSucursalId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [ordenesPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
   const [error, setError] = useState("");
-  const context = useContext(Contexts.DataContext); // Context para datos globales
-  const userContext = useContext(Contexts.UserContext); // Context para obtener el usuario actual
-  const navigate = useNavigate();
 
+  // NUEVO: sucursales por fetch
+  const [branches, setBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+
+  const userContext = useContext(Contexts.UserContext); // puede ser null al inicio
+  const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // Fetch órdenes (con filtro por rol 4: solo propias)
   useEffect(() => {
     const fetchOrdenes = async () => {
       try {
-        const response = await fetch(`${apiUrl}/ordenes_mantenimiento`);
+        const response = await fetch(`${apiUrl}/ordenes_mantenimiento`, { credentials: "include" });
         const data = await response.json();
 
-        // Si el usuario tiene rol_id 4, filtrar las órdenes por usuario_id
-        const filteredData =
-          userContext.user.rol_id === 4
-            ? data.filter((orden) => orden.usuario_id === userContext.user.id)
-            : data;
+        const isRol4 = userContext?.user?.rol_id === 4;
+        const userId = userContext?.user?.id;
+        const filteredData = isRol4 ? data.filter((o) => o.usuario_id === userId) : data;
 
         setOrdenes(Array.isArray(filteredData) ? filteredData : []);
-        setFilteredOrdenes(Array.isArray(filteredData) ? filteredData : []); // Inicialmente, todas las órdenes
-      } catch (error) {
-        console.error("Error al obtener las órdenes de mantenimiento:", error);
+        setFilteredOrdenes(Array.isArray(filteredData) ? filteredData : []);
+      } catch (err) {
+        console.error("Error al obtener las órdenes de mantenimiento:", err);
+        setOrdenes([]);
+        setFilteredOrdenes([]);
       }
     };
-
     fetchOrdenes();
-  }, [apiUrl, userContext.user.rol_id, userContext.user.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiUrl, userContext?.user?.rol_id, userContext?.user?.id]);
 
-  // Filtrar las órdenes cuando se selecciona una sucursal
+  // Fetch sucursales
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        setLoadingBranches(true);
+        const res = await fetch(`${apiUrl}/sucursales`, { credentials: "include" });
+        const data = await res.json();
+        setBranches(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error al obtener sucursales:", err);
+        setBranches([]);
+      } finally {
+        setLoadingBranches(false);
+      }
+    };
+    fetchBranches();
+  }, [apiUrl]);
+
+  const sucursalNombreById = (id) => {
+    const s = branches.find((b) => Number(b.id) === Number(id));
+    return s?.nombre || "Desconocido";
+  };
+
+  // Filtrar por sucursal
   useEffect(() => {
     if (sucursalId) {
-      setFilteredOrdenes(
-        ordenes.filter((orden) => orden.sucursal_id === parseInt(sucursalId))
-      );
+      setFilteredOrdenes(ordenes.filter((o) => Number(o.sucursal_id) === Number(sucursalId)));
     } else {
-      setFilteredOrdenes(ordenes); // Mostrar todas si no se selecciona ninguna sucursal
+      setFilteredOrdenes(ordenes);
     }
+    setCurrentPage(1);
   }, [sucursalId, ordenes]);
 
   const handleSort = (columnName) => {
-    setSortDirection(
-      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
-    );
+    setSortDirection(columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc");
     setSortColumn(columnName);
 
-    const sortedOrdenes = [...filteredOrdenes].sort((a, b) => {
+    const sorted = [...filteredOrdenes].sort((a, b) => {
       let valueA = a[columnName];
       let valueB = b[columnName];
 
       if (typeof valueA === "string") {
-        valueA = valueA.toUpperCase();
-        valueB = valueB.toUpperCase();
+        valueA = (valueA ?? "").toString().toUpperCase();
+        valueB = (valueB ?? "").toString().toUpperCase();
       }
 
-      if (valueA < valueB) {
-        return sortDirection === "asc" ? -1 : 1;
-      } else if (valueA > valueB) {
-        return sortDirection === "asc" ? 1 : -1;
-      } else {
-        return 0;
-      }
+      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
     });
 
-    setFilteredOrdenes(sortedOrdenes);
+    setFilteredOrdenes(sorted);
   };
 
   const handleDelete = async (id) => {
     try {
-      // Verificar si existe un mantenimiento asociado a la orden
-      const response = await fetch(`${apiUrl}/mantenimientos/orden/${id}`);
+      // Verificar mantenimiento asociado
+      const response = await fetch(`${apiUrl}/mantenimientos/orden/${id}`, { credentials: "include" });
       const mantenimiento = await response.json();
-
       if (mantenimiento && mantenimiento.id) {
-        alert(
-          "No se puede eliminar esta orden de mantenimiento porque tiene un mantenimiento asociado."
-        );
+        alert("No se puede eliminar esta orden porque tiene un mantenimiento asociado.");
         return;
       }
 
-      const confirmDelete = window.confirm(
-        "¿Está seguro que desea eliminar esta orden de mantenimiento?"
-      );
+      const confirmDelete = window.confirm("¿Está seguro que desea eliminar esta orden de mantenimiento?");
       if (!confirmDelete) return;
 
-      try {
-        const deleteResponse = await fetch(
-          `${apiUrl}/ordenes_mantenimiento/${id}`,
-          {
-            method: "DELETE",
-            credentials: "include",
-          }
-        );
+      const deleteResponse = await fetch(`${apiUrl}/ordenes_mantenimiento/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-        if (deleteResponse.ok) {
-          setOrdenes((prevOrdenes) =>
-            prevOrdenes.filter((orden) => orden.id !== id)
-          );
-        } else {
-          throw new Error("Error al eliminar la orden de mantenimiento");
-        }
-      } catch (error) {
-        console.error("Error al eliminar la orden de mantenimiento:", error);
-        setError(
-          "Hubo un problema al eliminar la orden de mantenimiento. Por favor, intente nuevamente."
-        );
+      if (deleteResponse.ok) {
+        setOrdenes((prev) => prev.filter((o) => o.id !== id));
+        setFilteredOrdenes((prev) => prev.filter((o) => o.id !== id));
+      } else {
+        throw new Error("Error al eliminar la orden de mantenimiento");
       }
-    } catch (error) {
-      console.error("Error al verificar el mantenimiento asociado:", error);
-      setError(
-        "Hubo un problema al verificar el mantenimiento asociado. Por favor, intente nuevamente."
-      );
+    } catch (err) {
+      console.error("Error al eliminar/verificar:", err);
+      setError("Hubo un problema al eliminar/verificar la orden. Intente nuevamente.");
     }
   };
 
   const indexOfLastOrden = currentPage * ordenesPerPage;
   const indexOfFirstOrden = indexOfLastOrden - ordenesPerPage;
-  const currentOrdenes = filteredOrdenes.slice(
-    indexOfFirstOrden,
-    indexOfLastOrden
-  );
+  const currentOrdenes = filteredOrdenes.slice(indexOfFirstOrden, indexOfLastOrden);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(filteredOrdenes.length / ordenesPerPage)) {
       setCurrentPage(currentPage + 1);
     }
   };
-
   const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
   const handleExecute = async (orden) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/mantenimientos/orden/${orden.id}`,
-        {
-          credentials: "include",
-        }
-      );
+      const response = await fetch(`${apiUrl}/mantenimientos/orden/${orden.id}`, { credentials: "include" });
       const mantenimiento = await response.json();
 
       if (mantenimiento && mantenimiento.id) {
@@ -181,151 +172,154 @@ export default function OrdenMantenimientoList() {
     }
   };
 
+  const canCreate = userContext?.user?.rol_id !== 5;
+  const canEditDelete = userContext?.user?.rol_id !== 5;
+  const canExecute = (orden) => userContext?.user?.rol_id !== 4 || orden.estado;
+
   return (
-    <Container fluid>
-      <h1 className="my-list-title dark-text text-center">
+    <Container fluid className="vt-page">
+      <h1 className="my-list-title dark-text vt-title text-center">
         Órdenes de Mantenimiento
       </h1>
 
       {error && <Alert variant="danger">{error}</Alert>}
 
-      <Row className="mb-3 d-flex align-items-center justify-content-start">
-        {/* {userContext.user.rol_id !== 4 && ( */}
-          <Col xs={12} md={8} className="d-flex align-items-center">
-            <FormControl
-              as="select"
-              value={sucursalId}
-              onChange={(e) => setSucursalId(e.target.value)}
-              className="mr-2"
-              style={{ fontSize: "14px", maxWidth: "200px" }}
-              disabled={ordenes.length === 0}
-            >
-              <option value="">Seleccione una sucursal</option>
-              {context.sucursalesTabla.map((sucursal) => (
-                <option key={sucursal.id} value={sucursal.id}>
-                  {sucursal.nombre}
-                </option>
-              ))}
-            </FormControl>
+      {/* Toolbar superior - EXACTO como Inventario */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">Sucursal</label>
+          <FormControl
+            as="select"
+            value={sucursalId}
+            onChange={(e) => setSucursalId(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 240 }}
+            disabled={loadingBranches || ordenes.length === 0}
+          >
+            <option value="">
+              {loadingBranches ? "Cargando sucursales..." : "Seleccione una sucursal"}
+            </option>
+            {branches.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
 
-            {userContext.user.rol_id !== 5 && (
-              <Link
-                to="/ordenes-mantenimiento/new"
-                className="btn btn-primary"
-                style={{
-                  fontSize: "14px",
-                  maxWidth: "200px",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                Crear Orden
-              </Link>
-            )}
-          </Col>
-        {/* )} */}
-      </Row>
+        {canCreate && (
+          <div className="d-inline-block">
+            <Link
+              to="/ordenes-mantenimiento/new"
+              className="btn btn-primary shadow-sm d-inline-flex align-items-center justify-content-center"
+              style={{
+                padding: '8px 18px',
+                borderRadius: '8px',
+                fontWeight: 500,
+                textDecoration: 'none',
+                transition: 'all 0.2s ease-in-out',
+                height: '40px', // altura consistente
+                whiteSpace: 'nowrap',
+                marginLeft: "12px", // 👈 fuerza el espacio
+              }}
+            >
+              <i className="bi bi-plus-lg me-2"></i>
+              Crear Orden
+            </Link>
+          </div>
+        )}
+      </div>
 
-      <Table striped bordered hover responsive="sm" className="table-sm">
-        <thead>
-          <tr>
-            <th
-              onClick={() => handleSort("nombre_solicitante")}
-              style={{ cursor: "pointer", fontSize: "12px" }}
-            >
-              Solicitante
-            </th>
-            <th
-              onClick={() => handleSort("prioridad")}
-              style={{ cursor: "pointer", fontSize: "12px" }}
-            >
-              Prioridad
-            </th>
-            <th
-              onClick={() => handleSort("fecha_estimacion")}
-              style={{ cursor: "pointer", fontSize: "12px" }}
-            >
-              Fecha Estimada
-            </th>
-            <th
-              onClick={() => handleSort("sucursal_id")}
-              style={{ cursor: "pointer", fontSize: "12px" }}
-            >
-              Sucursal
-            </th>
-            <th style={{ fontSize: "12px" }}>Estado</th>
-            <th style={{ fontSize: "12px" }}>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentOrdenes.map((orden) => (
-            <tr key={orden.id}>
-              <td >{orden.nombre_solicitante}</td>
-              <td >{orden.prioridad}</td>
-              <td >{orden.fecha_estimacion}</td>
-              <td >
-                {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === orden.sucursal_id
-                )?.nombre || "Desconocido"}
-              </td>
-              <td >
-                {orden.estado ? "Procesado" : "Pendiente"}
-              </td>
-              <td
-                // className="d-flex justify-content-around"
-                
-              >
-                {userContext.user.rol_id !== 5 && (
-                  <>
-                    <Link
-                      to={`/ordenes-mantenimiento/${orden.id}/edit`}
-                className="btn btn-warning mb-2 mb-md-0 mr-md-2 btn-sm"
-                    >
-                      Editar
-                    </Link>
-                    <Button
-                      variant="danger"
-                className="btn btn-warning mb-2 mb-md-0 mr-md-2 btn-sm"
-                      onClick={() => handleDelete(orden.id)}
-                    >
-                      Eliminar
-                    </Button>
-                  </>
-                )}
-                {(userContext.user.rol_id !== 4 || orden.estado) && (
-                  <Button
-                    variant="success"
-                  className="btn mb-2 mb-md-0 mr-md-2 btn-sm"
-                    onClick={() => handleExecute(orden)}
-                  >
-                    Ejecutar
-                  </Button>
-                )}
-              </td>
+      {/* Tabla */}
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover responsive="sm" className="mb-2 table-sm">
+          <thead>
+            <tr>
+              <th onClick={() => handleSort("nombre_solicitante")} className="vt-th-sort">
+                Solicitante
+              </th>
+              <th onClick={() => handleSort("prioridad")} className="vt-th-sort">
+                Prioridad
+              </th>
+              <th onClick={() => handleSort("fecha_estimacion")} className="vt-th-sort">
+                Fecha Estimada
+              </th>
+              <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">
+                Sucursal
+              </th>
+              <th className="vt-th-sort">Estado</th>
+              <th className="text-center">Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+          <tbody>
+            {currentOrdenes.map((orden) => (
+              <tr key={orden.id}>
+                <td>{orden.nombre_solicitante}</td>
+                <td>{orden.prioridad}</td>
+                <td>{orden.fecha_estimacion}</td>
+                <td>{sucursalNombreById(orden.sucursal_id)}</td>
+                <td>{orden.estado ? "Procesado" : "Pendiente"}</td>
+                <td className="text-center">
+                  <div className="d-inline-flex gap-2">
+                    {canEditDelete && (
+                      <>
+                        <Link
+                          to={`/ordenes-mantenimiento/${orden.id}/edit`}
+                          className="btn btn-warning vt-btn-sm"
+                        >
+                          <i className="bi bi-pencil-square me-1"></i>
+                          Editar
+                        </Link>
 
-      <div className="d-flex justify-content-center align-items-center mt-3">
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="vt-btn-danger"
+                          onClick={() => handleDelete(orden.id)}
+                        >
+                          <i className="bi bi-trash me-1"></i>
+                          Eliminar
+                        </Button>
+                      </>
+                    )}
+
+                    {canExecute(orden) && (
+                      <Button
+                        variant="success"
+                        size="sm"
+                        className="vt-btn-success"
+                        onClick={() => handleExecute(orden)}
+                      >
+                        <i className="bi bi-play me-1"></i>
+                        Ejecutar
+                      </Button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vt-pager">
         <Button
           onClick={prevPage}
           disabled={currentPage === 1}
-          className="btn-sm"
+          variant="light"
+          className="vt-btn-sm"
         >
           <BsChevronLeft />
         </Button>
         <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(filteredOrdenes.length / ordenesPerPage)}
+          Página {currentPage} de {Math.ceil(filteredOrdenes.length / ordenesPerPage)}
         </span>
         <Button
           onClick={nextPage}
-          disabled={
-            currentPage === Math.ceil(filteredOrdenes.length / ordenesPerPage)
-          }
-          className="btn-sm"
+          disabled={currentPage === Math.ceil(filteredOrdenes.length / ordenesPerPage)}
+          variant="light"
+          className="vt-btn-sm"
         >
           <BsChevronRight />
         </Button>

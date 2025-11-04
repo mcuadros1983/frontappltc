@@ -22,27 +22,27 @@ const ListadoCierresZ = () => {
       return;
     }
 
-const dataFormateada = cierres.map((c) => ({
-  ID: c.id,
-  Fecha: c.fechaJornada,
-  CUIT: c.cuit,
-  "Punto Venta": c.puntoVenta,
-  "Nro Z": c.numeroZeta,
-  "Primer Comp.": c.primerComprobante,
-  "Último Comp.": c.ultimoComprobante,
-  "Emitidos": c.cantidadEmitidos,
-  "Cancelados": c.cantidadCancelados,
-  "Neto": parseFloat(c.neto),
-  "IVA 10.5%": parseFloat(c.iva105),
-  "IVA 21%": parseFloat(c.iva21),
-  "IVA Total": parseFloat(c.ivaTotal),
-  "Total": parseFloat(c.total),
-}));
+    const dataFormateada = cierres.map((c) => ({
+      ID: c.id,
+      Fecha: c.fechaJornada,
+      CUIT: c.cuit,
+      "Punto Venta": c.puntoVenta,
+      "Nro Z": c.numeroZeta,
+      "Primer Comp.": c.primerComprobante,
+      "Último Comp.": c.ultimoComprobante,
+      "Emitidos": c.cantidadEmitidos,
+      "Cancelados": c.cantidadCancelados,
+      "Neto": parseFloat(c.neto),
+      "IVA 10.5%": parseFloat(c.iva105),
+      "IVA 21%": parseFloat(c.iva21),
+      "IVA Total": parseFloat(c.ivaTotal),
+      "Total": parseFloat(c.total),
+    }));
 
-const worksheet = XLSX.utils.json_to_sheet(dataFormateada);
-const workbook = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(workbook, worksheet, "CierresZ");
-XLSX.writeFile(workbook, `cierresZ_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    const worksheet = XLSX.utils.json_to_sheet(dataFormateada);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "CierresZ");
+    XLSX.writeFile(workbook, `cierresZ_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const handleFilter = async () => {
@@ -53,7 +53,7 @@ XLSX.writeFile(workbook, `cierresZ_${new Date().toISOString().slice(0, 10)}.xlsx
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ fechaDesde, fechaHasta, cuit }),
-      });
+      }, { credentials: "include" });
 
       if (!res.ok) throw new Error("Error al obtener los cierres Z");
       const data = await res.json();
@@ -76,7 +76,7 @@ XLSX.writeFile(workbook, `cierresZ_${new Date().toISOString().slice(0, 10)}.xlsx
     try {
       const res = await fetch(`${apiUrl}/caja/cierrez/${id}`, {
         method: "DELETE",
-      });
+      }, { credentials: "include" });
       if (!res.ok) throw new Error("Error al eliminar");
       setCierres(cierres.filter((c) => c.id !== id));
     } catch (err) {
@@ -127,74 +127,79 @@ XLSX.writeFile(workbook, `cierresZ_${new Date().toISOString().slice(0, 10)}.xlsx
       maximumFractionDigits: 2,
     }).format(valor);
 
-  return (
-    <Container>
-      <h1 className="my-list-title dark-text">Cierres Z</h1>
+ return (
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Cierres Z</h1>
 
-      <div className="mb-3 d-flex justify-content-end">
-        <Button variant="success" onClick={exportToExcel}>
-          Exportar a Excel
+    {/* Barra superior: acción principal */}
+    <div className="d-flex justify-content-end mb-3">
+      <Button variant="success" onClick={exportToExcel} className="vt-btn">
+        Exportar a Excel
+      </Button>
+    </div>
+
+    {/* Filtros */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto mx-2">
+        <label className="mr-2">Desde:</label>
+        <input
+          type="date"
+          value={fechaDesde}
+          onChange={(e) => setFechaDesde(e.target.value)}
+          className="form-control rounded-0 text-center vt-input"
+        />
+      </div>
+
+      <div className="d-inline-block w-auto mx-2">
+        <label className="ml-2 mr-2">Hasta:</label>
+        <input
+          type="date"
+          value={fechaHasta}
+          onChange={(e) => setFechaHasta(e.target.value)}
+          className="form-control rounded-0 text-center vt-input"
+        />
+      </div>
+
+      <div className="d-inline-block w-auto mx-2">
+        <label className="d-block">CUIT</label>
+        <select
+          value={cuit}
+          onChange={(e) => setCuit(e.target.value)}
+          className="form-control vt-input"
+          style={{ minWidth: 240 }}
+        >
+          <option value="">Seleccione CUIT</option>
+          <option value="30708490004">30708490004</option>
+          <option value="20246050822">20246050822</option>
+        </select>
+      </div>
+
+      <div className="d-inline-block mx-2">
+        <Button variant="primary" onClick={handleFilter} className="vt-btn">
+          Filtrar
         </Button>
       </div>
+    </div>
 
-      <div className="mb-3 d-flex flex-wrap align-items-end">
-        <div style={{ marginRight: '20px', marginBottom: '10px' }}>
-          <label className="form-label">Desde:</label>
-          <input
-            type="date"
-            value={fechaDesde}
-            onChange={(e) => setFechaDesde(e.target.value)}
-            className="form-control"
-          />
-        </div>
-
-        <div style={{ marginRight: '20px', marginBottom: '10px' }}>
-          <label className="form-label">Hasta:</label>
-          <input
-            type="date"
-            value={fechaHasta}
-            onChange={(e) => setFechaHasta(e.target.value)}
-            className="form-control"
-          />
-        </div>
-
-        <div style={{ marginRight: '20px', marginBottom: '10px' }}>
-          <label className="form-label">CUIT:</label>
-          <select
-            value={cuit}
-            onChange={(e) => setCuit(e.target.value)}
-            className="form-control"
-          >
-            <option value="">Seleccione CUIT</option>
-            <option value="30708490004">30708490004</option>
-            <option value="20246050822">20246050822</option>
-          </select>
-        </div>
-
-        <div style={{ marginBottom: '10px' }}>
-          <Button variant="primary" onClick={handleFilter}>
-            Filtrar
-          </Button>
-        </div>
-      </div>
-
-      <Table striped bordered hover responsive>
+    {/* Tabla */}
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover className="mb-2">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Fecha Jornada</th>
-            <th>CUIT</th>
-            <th>Punto Venta</th>
-            <th>Nro Z</th>
-            <th>Primer Comp.</th>
-            <th>Último Comp.</th>
-            <th>Emitidos</th>
-            <th>Cancelados</th>
-            <th>Neto</th>
-            <th>IVA 10.5%</th>
-            <th>IVA 21%</th>
-            <th>IVA Total</th>
-            <th>Total</th>
+            <th className="vt-th-sort">ID</th>
+            <th className="vt-th-sort">Fecha Jornada</th>
+            <th className="vt-th-sort">CUIT</th>
+            <th className="vt-th-sort">Punto Venta</th>
+            <th className="vt-th-sort">Nro Z</th>
+            <th className="vt-th-sort">Primer Comp.</th>
+            <th className="vt-th-sort">Último Comp.</th>
+            <th className="vt-th-sort text-end">Emitidos</th>
+            <th className="vt-th-sort text-end">Cancelados</th>
+            <th className="vt-th-sort text-end">Neto</th>
+            <th className="vt-th-sort text-end">IVA 10.5%</th>
+            <th className="vt-th-sort text-end">IVA 21%</th>
+            <th className="vt-th-sort text-end">IVA Total</th>
+            <th className="vt-th-sort text-end">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -207,13 +212,13 @@ XLSX.writeFile(workbook, `cierresZ_${new Date().toISOString().slice(0, 10)}.xlsx
               <td>{cierre.numeroZeta}</td>
               <td>{cierre.primerComprobante}</td>
               <td>{cierre.ultimoComprobante}</td>
-              <td>{cierre.cantidadEmitidos}</td>
-              <td>{cierre.cantidadCancelados}</td>
-              <td>{formatearNumero(cierre.neto)}</td>
-              <td>{formatearNumero(cierre.iva105)}</td>
-              <td>{formatearNumero(cierre.iva21)}</td>
-              <td>{formatearNumero(cierre.ivaTotal)}</td>
-              <td>{formatearNumero(cierre.total)}</td>
+              <td className="text-end">{cierre.cantidadEmitidos}</td>
+              <td className="text-end">{cierre.cantidadCancelados}</td>
+              <td className="text-end">{formatearNumero(cierre.neto)}</td>
+              <td className="text-end">{formatearNumero(cierre.iva105)}</td>
+              <td className="text-end">{formatearNumero(cierre.iva21)}</td>
+              <td className="text-end">{formatearNumero(cierre.ivaTotal)}</td>
+              <td className="text-end">{formatearNumero(cierre.total)}</td>
             </tr>
           ))}
 
@@ -227,36 +232,41 @@ XLSX.writeFile(workbook, `cierresZ_${new Date().toISOString().slice(0, 10)}.xlsx
             } = calcularTotales();
 
             return (
-              <tr style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
-                <td colSpan={9} className="text-end">Totales:</td>
-                <td>{formatearNumero(totalNeto)}</td>
-                <td>{formatearNumero(totalIva105)}</td>
-                <td>{formatearNumero(totalIva21)}</td>
-                <td>{formatearNumero(totalIvaTotal)}</td>
-                <td>{formatearNumero(totalTotal)}</td>
+              <tr className="vt-total-row">
+                <td colSpan={9} className="text-end">
+                  <strong>Totales:</strong>
+                </td>
+                <td className="text-end"><strong>{formatearNumero(totalNeto)}</strong></td>
+                <td className="text-end"><strong>{formatearNumero(totalIva105)}</strong></td>
+                <td className="text-end"><strong>{formatearNumero(totalIva21)}</strong></td>
+                <td className="text-end"><strong>{formatearNumero(totalIvaTotal)}</strong></td>
+                <td className="text-end"><strong>{formatearNumero(totalTotal)}</strong></td>
               </tr>
             );
           })()}
         </tbody>
       </Table>
+    </div>
 
+    {/* Paginación */}
+    <div className="d-flex justify-content-center align-items-center vt-pager">
+      <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
+        <BsChevronLeft />
+      </Button>
+      <span className="mx-2">
+        Página {currentPage} de {Math.ceil(cierres.length / cierresPerPage)}
+      </span>
+      <Button
+        onClick={nextPage}
+        disabled={currentPage === Math.ceil(cierres.length / cierresPerPage)}
+        variant="light"
+      >
+        <BsChevronRight />
+      </Button>
+    </div>
+  </Container>
+);
 
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={prevPage} disabled={currentPage === 1}>
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {currentPage} de {Math.ceil(cierres.length / cierresPerPage)}
-        </span>
-        <Button
-          onClick={nextPage}
-          disabled={currentPage === Math.ceil(cierres.length / cierresPerPage)}
-        >
-          <BsChevronRight />
-        </Button>
-      </div>
-    </Container>
-  );
 };
 
 export default ListadoCierresZ;

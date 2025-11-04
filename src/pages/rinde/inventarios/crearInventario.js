@@ -114,112 +114,119 @@ const CrearInventarioDesdeExcel = () => {
   };
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Cargar Inventario desde Excel</h1>
-      {uploadSuccess && <Alert variant="success">{uploadMessage}</Alert>}
-      {!uploadSuccess && uploadMessage && (
-        <Alert variant="danger">{uploadMessage}</Alert>
-      )}
-      <Form>
-        <Form.Group controlId="sucursalSelect" className="mb-3">
-          <Form.Label>Sucursal:</Form.Label>
-          <Form.Select
-            value={sucursalId}
-            onChange={(e) => setSucursalId(e.target.value)}
-            className="my-input custom-style-select"
-            size="lg"
-            style={selectStyle}
-          >
-            <option value="">Seleccione una sucursal</option>
-            {sucursales.map((sucursal) => (
-              <option key={sucursal.id} value={sucursal.id}>
-                {sucursal.nombre}
-              </option>
-            ))}
-          </Form.Select>
-        </Form.Group>
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Cargar Inventario desde Excel</h1>
 
-        {sucursalId && (
-          <>
-            <Form.Group controlId="anioInput" className="mb-3">
-              <Form.Label>Año:</Form.Label>
-              <Form.Control
-                type="number"
-                value={anio}
-                onChange={(e) => setAnio(e.target.value)}
-                className="my-input custom-style-select"
-                size="lg"
-                style={selectStyle}
-              />
-            </Form.Group>
+    {uploadSuccess && <Alert variant="success" className="vt-alert">{uploadMessage}</Alert>}
+    {!uploadSuccess && uploadMessage && (
+      <Alert variant="danger" className="vt-alert">{uploadMessage}</Alert>
+    )}
 
-            <Form.Group controlId="mesInput" className="mb-3">
-              <Form.Label>Mes (en número):</Form.Label>
-              <Form.Control
-                type="number"
-                value={mes}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  if (value >= 1 && value <= 12) {
-                    setMes(value);
-                  } else {
-                    setMes("");
-                  }
-                }}
-                className="my-input custom-style-select"
-                size="lg"
-                style={selectStyle}
-              />
-            </Form.Group>
-          </>
-        )}
+    <Form className="vt-form vt-form-narrow">
+      <Form.Group controlId="sucursalSelect" className="mb-3">
+        <Form.Label className="vt-label">Sucursal:</Form.Label>
+        <Form.Select
+          value={sucursalId}
+          onChange={(e) => setSucursalId(e.target.value)}
+          className="vt-input"
+          size="lg"
+          style={selectStyle}
+        >
+          <option value="">Seleccione una sucursal</option>
+          {sucursales.map((sucursal) => (
+            <option key={sucursal.id} value={sucursal.id}>
+              {sucursal.nombre}
+            </option>
+          ))}
+        </Form.Select>
+      </Form.Group>
 
-        {mes && (
-          <Form.Group controlId="fechaInput" className="mb-3">
-            <Form.Label>Fecha:</Form.Label>
+      {sucursalId && (
+        <>
+          <Form.Group controlId="anioInput" className="mb-3">
+            <Form.Label className="vt-label">Año:</Form.Label>
             <Form.Control
-              type="date"
-              value={fecha}
-              onChange={(e) => setFecha(e.target.value)}
-              className="my-input custom-style-select"
+              type="number"
+              value={anio}
+              onChange={(e) => setAnio(e.target.value)}
+              className="vt-input"
               size="lg"
               style={selectStyle}
             />
           </Form.Group>
-        )}
 
-        {fecha && (
-          <Form.Group controlId="formFile" className="mb-3">
-            <Form.Label>Seleccione un archivo Excel:</Form.Label>
+          <Form.Group controlId="mesInput" className="mb-3">
+            <Form.Label className="vt-label">Mes (en número):</Form.Label>
             <Form.Control
-              type="file"
-              onChange={handleFileChange}
+              type="number"
+              value={mes}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                if (value >= 1 && value <= 12) {
+                  setMes(value);
+                } else {
+                  setMes("");
+                }
+              }}
+              className="vt-input"
+              size="lg"
               style={selectStyle}
             />
           </Form.Group>
-        )}
+        </>
+      )}
 
-        {fecha && (
-          <Button
-            variant="primary"
-            onClick={handleUploadButtonClick}
-            disabled={!file || buttonDisabled}
-          >
-            Subir Inventario
-          </Button>
-        )}
-        <div className="mt-3">
-          <Button
-            variant="secondary"
-            onClick={downloadTemplate}
+      {mes && (
+        <Form.Group controlId="fechaInput" className="mb-3">
+          <Form.Label className="vt-label">Fecha:</Form.Label>
+          <Form.Control
+            type="date"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            className="vt-input"
+            size="lg"
             style={selectStyle}
-          >
-            Descargar Plantilla
-          </Button>
-        </div>
-      </Form>
-    </Container>
-  );
+          />
+        </Form.Group>
+      )}
+
+      {fecha && (
+        <Form.Group controlId="formFile" className="mb-3">
+          <Form.Label className="vt-label">Seleccione un archivo Excel:</Form.Label>
+          <Form.Control
+            type="file"
+            onChange={handleFileChange}
+            className="vt-input"
+            style={selectStyle}
+          />
+        </Form.Group>
+      )}
+
+      {fecha && (
+        <Button
+          variant="primary"
+          onClick={handleUploadButtonClick}
+          disabled={!file || buttonDisabled}
+          className="vt-btn"
+        >
+          Subir Inventario
+        </Button>
+      )}
+
+      <div className="mt-3">
+        <Button
+          variant="secondary"
+          onClick={downloadTemplate}
+          className="vt-btn-secondary"
+          style={selectStyle}
+        >
+          Descargar Plantilla
+        </Button>
+      </div>
+    </Form>
+  </Container>
+);
+
 };
 
 export default CrearInventarioDesdeExcel;

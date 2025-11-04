@@ -19,6 +19,8 @@ export default function SellItem() {
   const [editedWeight, setEditedWeight] = useState(""); // Estado para el peso editado
   const [editedTropa, setEditedTropa] = useState(""); // Estado para la tropa editada
   const [venta, setVenta] = useState(null); // Nuevo estado para almacenar la información de la venta
+  // Precio único para aplicar a todos los productos de categoría "porcino"
+  const [pigPriceInput, setPigPriceInput] = useState("");
 
   const context = useContext(Contexts.UserContext);
 
@@ -241,14 +243,283 @@ export default function SellItem() {
     }, 1000);
   };
 
+  // Recalcular precios de lo que "se está mostrando":
+  // - Bovino: aplica margen cliente * costo (como en SellForm)
+  // - Porcino: usa un único precio ingresado en pigPriceInput
+  // Luego persiste cada producto (PUT existente) y fuerza refresco de venta + lista
+  const handleRecalcAll = async () => {
+    try {
+      if (!venta) {
+        alert("No hay datos de la venta cargados.");
+        return;
+      }
+
+      // 1) Traer datos del cliente para margen (para bovino)
+      const resCli = await fetch(`${apiUrl}/clientes/${venta.cliente_id}`, { credentials: "include" });
+      if (!resCli.ok) {
+        alert("No se pudo cargar el cliente para recalcular.");
+        return;
+      }
+      const cliente = await resCli.json();
+      const margenNum =
+        cliente?.margen !== undefined && cliente?.margen !== null && !isNaN(Number(cliente.margen))
+          ? Number(cliente.margen)
+          : 0;
+
+      // 2) Validar precio porcino si hay porcinos en lo filtrado
+      const hayPorcinos = filteredProducts.some(
+        (p) => (p.categoria_producto || "").toLowerCase() === "porcino"
+      );
+      let pigPriceNum = null;
+      if (hayPorcinos) {
+        pigPriceNum = Number(pigPriceInput);
+        if (!Number.isFinite(pigPriceNum) || pigPriceNum <= 0) {
+          alert("Ingrese un precio válido para porcino (mayor que 0).");
+          return;
+        }
+      }
+
+      // 3) Determinar el conjunto a actualizar: TODOS los QUE SE ESTÁN MOSTRANDO (filteredProducts)
+      const productosObjetivo = [...filteredProducts];
+
+      // 4) Optimistic UI: clonar arrays locales para mostrar el nuevo precio de inmediato
+      const updatedFiltered = [...filteredProducts];
+      const updatedAll = [...productsSell];
+
+      // 5) Procesar uno a uno (usando tu endpoint existente de PUT por producto)
+      for (const prod of productosObjetivo) {
+        const categoria = (prod.categoria_producto || "").toLowerCase();
+
+        // calcular nuevo precio sin tocar kg
+        let nuevoPrecio = Number(prod.precio || 0);
+
+        if (categoria === "bovino") {
+          const costo = Number(prod?.costo ?? 0);
+          if (Number.isFinite(costo) && Number.isFinite(margenNum)) {
+            nuevoPrecio = parseFloat(((1 + margenNum / 100) * costo).toFixed(2));
+          } else {
+            // si no hay costo o margen, dejamos precio tal cual
+            nuevoPrecio = Number(prod.precio || 0);
+          }
+        } else if (categoria === "porcino") {
+          // usar un único precio para todos los porcinos mostrados
+          nuevoPrecio = pigPriceNum;
+        } else {
+          // otras categorías: no tocar
+          continue;
+        }
+
+        // si el precio no cambió y es bovino, IGUAL lo forzamos (según tu requerimiento "si o si recalcula bovino")
+        // solo aseguramos no tocar kg
+        const payload = {
+          precio: nuevoPrecio,
+          kg: prod.kg,        // no modificar
+          tropa: prod.tropa,  // no modificar
+        };
+
+        // persistimos
+        const putRes = await fetch(`${apiUrl}/ventas/${params.id}/productos/${prod.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            productoId: prod.id,
+            nuevoProducto: payload,
+          }),
+        });
+
+        if (!putRes.ok) {
+          console.error(`Error actualizando producto ${prod.id}`);
+          continue;
+        }
+
+        // actualizar en memoria (filteredProducts)
+        const idxF = updatedFiltered.findIndex((p) => p.id === prod.id);
+        if (idxF !== -1) updatedFiltered[idxF] = { ...updatedFiltered[idxF], precio: nuevoPrecio };
+
+        // actualizar en memoria (productsSell completo)
+        const idxAll = updatedAll.findIndex((p) => p.id === prod.id);
+        if (idxAll !== -1) updatedAll[idxAll] = { ...updatedAll[idxAll], precio: nuevoPrecio };
+      }
+
+      // 6) Refrescar estados inmediatamente para ver el nuevo precio sin recargar
+      setFilteredProducts(updatedFiltered);
+      setProductsSell(updatedAll);
+
+      // 7) Disparar la actualización de la venta (para que recalcule monto_total y cta cte si corresponde)
+      //    Enviamos al menos un campo (clienteId igual) para que el backend ejecute recalculo/ajuste.
+      await fetch(`${apiUrl}/ventas/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          clienteId: venta.cliente_id,   // mismo cliente → el backend recalcula totals (ver patch backend)
+        }),
+      });
+
+      // 8) Volver a cargar venta y productos desde el servidor (fuente de verdad)
+      await Promise.all([loadVenta(params.id), loadProductsSell(params.id)]);
+    } catch (err) {
+      console.error("Error en handleRecalcAll:", err);
+      alert("Ocurrió un error al recalcular.");
+    }
+  };
+
+
+  const handleRecalculate = async () => {
+    try {
+      if (!venta) {
+        // si por alguna razón no está cargada, la traemos
+        await loadVenta(params.id);
+      }
+      const ventaActual = venta || (await (await fetch(`${apiUrl}/ventas/${params.id}`, { credentials: "include" })).json());
+
+      // Traemos el cliente para obtener el margen (igual que en SellForm)
+      const clienteRes = await fetch(`${apiUrl}/clientes/${ventaActual.cliente_id}/`, {
+        credentials: "include",
+      });
+      if (!clienteRes.ok) {
+        alert("No se pudo cargar el cliente para calcular el margen.");
+        return;
+      }
+      const cliente = await clienteRes.json();
+      const margen = Number(cliente?.margen);
+
+      // Validaciones mínimas
+      const margenValido =
+        margen !== undefined &&
+        margen !== null &&
+        !isNaN(margen);
+
+      // Preparamos actualizaciones SOLO para bovino (porcino -> console.log)
+      const updates = [];
+      const localPriceMap = new Map(); // idProducto -> nuevoPrecio para reflejar en UI
+
+      for (const p of productsSell) {
+        if (p?.categoria_producto === "porcino") {
+          // En porcino solo log (la lógica se definirá después)
+          console.log(`Recalcular (porcino) pendiente de implementar. Producto ID ${p.id}`);
+          continue;
+        }
+
+        if (p?.categoria_producto === "bovino") {
+          const costo = Number(p?.costo);
+          const costoValido = !isNaN(costo) && costo > 0;
+
+          // ✔ Siempre recalculamos si es bovino (aunque ya tenga precio)
+          let nuevoPrecio = Number(p?.precio) || 0;
+
+          if (margenValido && costoValido) {
+            nuevoPrecio = Number((((1 + margen / 100) * costo)).toFixed(2));
+          } else {
+            // si no tenemos datos suficientes, mantenemos el precio actual
+            // podrías poner 0 si preferís forzar la corrección
+            nuevoPrecio = Number(p?.precio) || 0;
+          }
+
+          // Enviamos precio + kg + tropa para evitar NaN en backend
+          updates.push({
+            id: p.id,
+            req: fetch(
+              `${apiUrl}/ventas/${params.id}/productos/${p.id}`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                  productoId: p.id,
+                  nuevoProducto: {
+                    precio: nuevoPrecio,
+                    kg: p.kg,
+                    tropa: p.tropa,
+                    // si tu backend necesita estos para el update, podés “congelarlos” también:
+                    // codigo_de_barra: p.codigo_de_barra,
+                    // num_media: p.num_media,
+                    // categoria_producto: p.categoria_producto,
+                  },
+                }),
+              }
+            ),
+          });
+
+          localPriceMap.set(p.id, nuevoPrecio); // guardamos para refresco instantáneo en UI
+        }
+      }
+
+      if (updates.length === 0) {
+        alert("No hay productos bovinos para recalcular.");
+        return;
+      }
+
+      // Ejecutamos todas las actualizaciones
+      const results = await Promise.allSettled(updates.map(u => u.req));
+      const errores = results.filter(r => r.status === "rejected" || (r.value && !r.value.ok));
+      if (errores.length > 0) {
+        console.warn("Algunas actualizaciones fallaron:", errores.length);
+      }
+
+      // ✅ Refrescamos la UI SIN recargar la página:
+      // 1) Actualizamos productsSell en memoria
+      setProductsSell(prev =>
+        prev.map(p =>
+          localPriceMap.has(p.id)
+            ? { ...p, precio: localPriceMap.get(p.id) }
+            : p
+        )
+      );
+
+      // 2) Actualizamos filteredProducts (si hay filtro activo, mantenemos la selección actual)
+      setFilteredProducts(prev =>
+        prev.map(p =>
+          localPriceMap.has(p.id)
+            ? { ...p, precio: localPriceMap.get(p.id) }
+            : p
+        )
+      );
+
+      // 3) (Opcional) Volver a cargar desde backend por consistencia absoluta.
+      //    Si tu backend recalcula montos totales de venta, esto asegura sincronización:
+      // await loadProductsSell(params.id);
+      // await loadVenta(params.id);
+
+      alert("Recalculo aplicado a productos bovinos.");
+    } catch (err) {
+      console.error("Error en handleRecalculate:", err);
+      alert("Ocurrió un error al recalcular los precios.");
+    }
+  };
+
 
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Productos Vendidos</h1>
-      <div className="d-flex justify-content-end mb-3">
-        <Button variant="primary" onClick={handleReprint}>
-          Reimprimir Venta
-        </Button>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        {/* IZQUIERDA: controles de recálculo */}
+        <div className="d-flex align-items-center gap-2">
+          {/* Input para precio porcino solo si hay algún porcino en lo filtrado */}
+          {filteredProducts.some(p => (p.categoria_producto || "").toLowerCase() === "porcino") && (
+            <>
+              <FormControl
+                type="number"
+                step="0.01"
+                value={pigPriceInput}
+                onChange={(e) => setPigPriceInput(e.target.value)}
+                placeholder="Precio único porcino"
+                style={{ width: 180 }}
+              />
+            </>
+          )}
+          <Button variant="warning" onClick={handleRecalcAll}>
+            Recalcular
+          </Button>
+        </div>
+
+        {/* DERECHA: reimprimir */}
+        <div>
+          <Button variant="primary" onClick={handleReprint}>
+            Reimprimir Venta
+          </Button>
+        </div>
       </div>
 
 

@@ -247,7 +247,7 @@ export default function CalculoRinde() {
           body: JSON.stringify({
             sucursalId: searchSucursal,
             excludedCategories: selectedCategorias, //modificacion para exceptuar articulos segun categorias en ventas
-          }),
+          }), credentials: "include"
         }
       );
 
@@ -271,13 +271,12 @@ export default function CalculoRinde() {
   };
 
   const handleAddAjuste = () => {
-  if (nuevoAjuste.descripcion.trim() && nuevoAjuste.importe.trim()) {
-    setAjustes([...ajustes, { ...nuevoAjuste }]);
-    setNuevoAjuste({ descripcion: "", importe: "" });
-    setIngVendido(0); // ⬅️ opcional
-  }
-};
-
+    if (nuevoAjuste.descripcion.trim() && nuevoAjuste.importe.trim()) {
+      setAjustes([...ajustes, { ...nuevoAjuste }]);
+      setNuevoAjuste({ descripcion: "", importe: "" });
+      setIngVendido(0); // ⬅️ opcional
+    }
+  };
   const handleGuardarAjustes = () => {
     setShowAjustesModal(false);
   };
@@ -327,12 +326,12 @@ export default function CalculoRinde() {
         bodyData.excludedCategories = excludedCategoriesId;
       }
 
-      const response = await fetch(url, { 
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(bodyData),
+        body: JSON.stringify(bodyData), credentials: "include"
       });
 
       if (response.ok) {
@@ -492,12 +491,12 @@ const handleCalculoRinde = () => {
   setRinde(Number(rindeCalculado.toFixed(2)));
 };
 
- const handleEliminarAjuste = (index) => {
-  const nuevosAjustes = [...ajustes];
-  nuevosAjustes.splice(index, 1);
-  setAjustes(nuevosAjustes);
-  setIngVendido(0); // ⬅️ opcional
-};
+  const handleEliminarAjuste = (index) => {
+    const nuevosAjustes = [...ajustes];
+    nuevosAjustes.splice(index, 1);
+    setAjustes(nuevosAjustes);
+    setIngVendido(0); // ⬅️ opcional
+  };
 
   const handleObtenerCantidadMedias = async () => {
     try {
@@ -679,7 +678,7 @@ const handleCalculoRinde = () => {
         body: JSON.stringify({
           fechaDesde: startDate,
           fechaHasta: endDate,
-          sucursalId: searchSucursal,
+          sucursalId: searchSucursal, credentials: "include"
         }),
       });
 
@@ -842,7 +841,7 @@ const handleCalculoRinde = () => {
         body: JSON.stringify({
           fechaDesde: startDate,
           fechaHasta: endDate,
-          sucursalId: searchSucursal,
+          sucursalId: searchSucursal, credentials: "include"
         }),
       });
 
@@ -907,50 +906,49 @@ const handleCalculoRinde = () => {
 
 
   // Reemplazá COMPLETO este handler (ahora SÍ aplica ajustes acá)
-const handleObtenerIngVendido = () => {
-  try {
-    const ventas = parseFloat(montoVentas) || 0;
-    const movimientos = parseFloat(montoMovimientos) || 0;
-    const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
-    const cerdoMb = parseFloat(mbcerdo) || 0;
-    const invFinal = parseFloat(montoInventarioFinal) || 0;
-    const invInicial = parseFloat(montoInventarioInicial) || 0;
-    const ach = parseFloat(achuras) || 0;
+  const handleObtenerIngVendido = () => {
+    try {
+      const ventas = parseFloat(montoVentas) || 0;
+      const movimientos = parseFloat(montoMovimientos) || 0;
+      const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
+      const cerdoMb = parseFloat(mbcerdo) || 0;
+      const invFinal = parseFloat(montoInventarioFinal) || 0;
+      const invInicial = parseFloat(montoInventarioInicial) || 0;
+      const ach = parseFloat(achuras) || 0;
 
-    // 🔹 Nuevo: sumar (o restar si viene negativo) los ajustes al ingreso vendido
-    const montoAjuste = (ajustes || []).reduce(
-      (total, a) => total + (parseFloat(a.importe) || 0),
-      0
-    );
+      // 🔹 Nuevo: sumar (o restar si viene negativo) los ajustes al ingreso vendido
+      const montoAjuste = (ajustes || []).reduce(
+        (total, a) => total + (parseFloat(a.importe) || 0),
+        0
+      );
 
-    if (!totalKg || totalKg === 0) {
-      setIngVendido(0);
-      alert("No hay kilos suficientes para calcular ingreso vendido.");
-      return;
+      if (!totalKg || totalKg === 0) {
+        setIngVendido(0);
+        alert("No hay kilos suficientes para calcular ingreso vendido.");
+        return;
+      }
+
+      let ingresoVendido =
+        (ventas +
+          movimientos -
+          movimientosOtros -
+          cerdoMb -
+          ach +
+          (invFinal - invInicial) +
+          montoAjuste // ⬅️ Ajustes se incorporan acá
+        ) / totalKg;
+
+      if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
+        ingresoVendido = 0;
+      }
+
+      setIngVendido(ingresoVendido.toFixed(2));
+      console.log("Ingreso vendido (con ajustes):", ingresoVendido, "Ajustes:", montoAjuste);
+    } catch (error) {
+      console.error("Error al calcular ingreso vendido:", error);
+      alert("Error al calcular ingreso vendido.");
     }
-
-    let ingresoVendido =
-      (ventas +
-        movimientos -
-        movimientosOtros -
-        cerdoMb -
-        ach +
-        (invFinal - invInicial) +
-        montoAjuste // ⬅️ Ajustes se incorporan acá
-      ) / totalKg;
-
-    if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
-      ingresoVendido = 0;
-    }
-
-    setIngVendido(ingresoVendido.toFixed(2));
-    console.log("Ingreso vendido (con ajustes):", ingresoVendido, "Ajustes:", montoAjuste);
-  } catch (error) {
-    console.error("Error al calcular ingreso vendido:", error);
-    alert("Error al calcular ingreso vendido.");
-  }
-};
-
+  };
 
   const handleObtenerDifEsperado = () => {
     try {
@@ -1202,84 +1200,87 @@ const handleObtenerIngVendido = () => {
 
   // setTotalKg(total.toFixed(2));
 
-  return (
-    <Container>
-      <h1 className="my-list-title dark-text">Cálculo de Rendimiento</h1>
+return (
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Cálculo de Rendimiento</h1>
 
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">MES: </label>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-            disabled={loading}
-          >
-            <option value="">Seleccione el mes</option>
-            <option value="01">Enero</option>
-            <option value="02">Febrero</option>
-            <option value="03">Marzo</option>
-            <option value="04">Abril</option>
-            <option value="05">Mayo</option>
-            <option value="06">Junio</option>
-            <option value="07">Julio</option>
-            <option value="08">Agosto</option>
-            <option value="09">Septiembre</option>
-            <option value="10">Octubre</option>
-            <option value="11">Noviembre</option>
-            <option value="12">Diciembre</option>
-          </select>
-        </div>
-
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">AÑO:</label>
-          <input
-            type="number"
-            placeholder="Año"
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-            min="2000"
-            max="2050"
-            maxLength="4"
-            disabled={loading}
-          />
-        </div>
+    {/* Filtros MES/AÑO */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">MES</label>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          className="form-control vt-input text-center"
+          disabled={loading}
+        >
+          <option value="">Seleccione el mes</option>
+          <option value="01">Enero</option>
+          <option value="02">Febrero</option>
+          <option value="03">Marzo</option>
+          <option value="04">Abril</option>
+          <option value="05">Mayo</option>
+          <option value="06">Junio</option>
+          <option value="07">Julio</option>
+          <option value="08">Agosto</option>
+          <option value="09">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
       </div>
 
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
-          <input
-            type="date"
-            placeholder="Seleccione fecha de inicio"
-            value={startDate}
-            onChange={(e) => handleStartDateChange(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-            disabled={loading}
-          />
-        </div>
-
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">HASTA:</label>
-          <input
-            type="date"
-            placeholder="Seleccione fecha de fin"
-            value={endDate}
-            onChange={(e) => handleEndDateChange(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-            disabled={loading}
-          />
-        </div>
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">AÑO</label>
+        <input
+          type="number"
+          placeholder="Año"
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+          className="form-control vt-input text-center"
+          min="2000"
+          max="2050"
+          maxLength="4"
+          disabled={loading}
+        />
       </div>
-      <div className="mb-3">
+    </div>
+
+    {/* Filtros fechas + sucursal */}
+    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">DESDE</label>
+        <input
+          type="date"
+          placeholder="Seleccione fecha de inicio"
+          value={startDate}
+          onChange={(e) => handleStartDateChange(e.target.value)}
+          className="form-control vt-input text-center"
+          disabled={loading}
+        />
+      </div>
+
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">HASTA</label>
+        <input
+          type="date"
+          placeholder="Seleccione fecha de fin"
+          value={endDate}
+          onChange={(e) => handleEndDateChange(e.target.value)}
+          className="form-control vt-input text-center"
+          disabled={loading}
+        />
+      </div>
+
+      <div className="d-inline-block w-auto">
+        <label className="vt-label d-block">Sucursal</label>
         <FormControl
           as="select"
           placeholder="Seleccione una sucursal"
           value={searchSucursal}
           onChange={(e) => setSearchSucursal(e.target.value)}
-          className="mr-2"
-          style={{ width: "25%" }}
+          className="vt-input"
+          style={{ minWidth: 260 }}
           disabled={loading}
         >
           <option value="">Seleccione una sucursal</option>
@@ -1290,8 +1291,11 @@ const handleObtenerIngVendido = () => {
           ))}
         </FormControl>
       </div>
+    </div>
 
-      <Table striped bordered hover>
+    {/* Tabla de acciones/valores */}
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover className="mb-2">
         <thead>
           <tr>
             <th>Operaciones</th>
@@ -1301,110 +1305,78 @@ const handleObtenerIngVendido = () => {
         <tbody>
           <tr>
             <td>
-              <Button
-                onClick={() =>
-                  handleSelectCategories()
-                }
-                disabled={loading}
-              >
+              <Button onClick={() => handleSelectCategories()} disabled={loading} className="vt-btn">
                 Obtener Ventas
               </Button>
             </td>
-            <td>
-              {montoVentas !== null
-                ? `$${parseInt(montoVentas).toFixed(2)}`
-                : "-"}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <Button
-                onClick={() =>
-                  handleObtenerDatos(
-                    `${apiUrl}/obtenermontomovimientosfiltrados`,
-                    "movimientos"
-                  )
-                }
-                disabled={loading}
-              >
-                Obtener Movimientos
-              </Button>
-            </td>
-            <td>
-              {montoMovimientos !== null
-                ? `$${parseInt(montoMovimientos).toFixed(2)}`
-                : "-"}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <Button
-                onClick={() =>
-                  handleObtenerDatos(
-                    `${apiUrl}/movimientos-otro/monto`,
-                    "movimientosotros"
-                  )
-                }
-                disabled={loading}
-              >
-                Obtener Movimientos Otros
-              </Button>
-            </td>
-            <td>
-              {montoMovimientosOtros !== null
-                ? `$${parseInt(montoMovimientosOtros).toFixed(2)}`
-                : "-"}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <Button
-                onClick={() => handleObtenerInventario(false)}
-                disabled={loading}
-              >
-                Obtener Inventario Inicial
-              </Button>
-            </td>
-            <td>
-              {montoInventarioInicial !== null
-                ? `$${parseInt(montoInventarioInicial).toFixed(2)}`
-                : "-"}
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <Button
-                onClick={() => handleObtenerInventario(true)}
-                disabled={loading}
-              >
-                Obtener Inventario Final
-              </Button>
-            </td>
-            <td>
-              {montoInventarioFinal !== null
-                ? `$${parseInt(montoInventarioFinal).toFixed(2)}`
-                : "-"}
+            <td className="text-end">
+              {montoVentas !== null ? `$${parseInt(montoVentas).toFixed(2)}` : "-"}
             </td>
           </tr>
 
           <tr>
             <td>
               <Button
-                onClick={() => setShowIngresosModal(true)}
+                onClick={() => handleObtenerDatos(`${apiUrl}/obtenermontomovimientosfiltrados`, "movimientos")}
                 disabled={loading}
+                className="vt-btn"
               >
+                Obtener Movimientos
+              </Button>
+            </td>
+            <td className="text-end">
+              {montoMovimientos !== null ? `$${parseInt(montoMovimientos).toFixed(2)}` : "-"}
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button
+                onClick={() => handleObtenerDatos(`${apiUrl}/movimientos-otro/monto`, "movimientosotros")}
+                disabled={loading}
+                className="vt-btn"
+              >
+                Obtener Movimientos Otros
+              </Button>
+            </td>
+            <td className="text-end">
+              {montoMovimientosOtros !== null ? `$${parseInt(montoMovimientosOtros).toFixed(2)}` : "-"}
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={() => handleObtenerInventario(false)} disabled={loading} className="vt-btn">
+                Obtener Inventario Inicial
+              </Button>
+            </td>
+            <td className="text-end">
+              {montoInventarioInicial !== null ? `$${parseInt(montoInventarioInicial).toFixed(2)}` : "-"}
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={() => handleObtenerInventario(true)} disabled={loading} className="vt-btn">
+                Obtener Inventario Final
+              </Button>
+            </td>
+            <td className="text-end">
+              {montoInventarioFinal !== null ? `$${parseInt(montoInventarioFinal).toFixed(2)}` : "-"}
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <Button onClick={() => setShowIngresosModal(true)} disabled={loading} className="vt-btn">
                 Ingresos Esperados
               </Button>
             </td>
             <td>
               <Button
                 onClick={handleVerIngresos}
-                disabled={
-                  loading ||
-                  (novillosIngresos === 0 &&
-                    exportacionIngresos === 0 &&
-                    cerdosIngresos === 0)
-                }
+                disabled={loading || (novillosIngresos === 0 && exportacionIngresos === 0 && cerdosIngresos === 0)}
+                className="vt-btn-secondary"
               >
                 Ver
               </Button>
@@ -1413,79 +1385,57 @@ const handleObtenerIngVendido = () => {
 
           <tr>
             <td>
-              <Button
-                onClick={() =>
-                  handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "nt")
-                }
-                disabled={loading}
-              >
+              <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "nt")} disabled={loading} className="vt-btn">
                 Kgs Novillo
               </Button>
             </td>
-            <td>{kgNovillo !== null ? `${kgNovillo} Kg` : "-"}</td>
+            <td className="text-end">{kgNovillo !== null ? `${kgNovillo} Kg` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button
-                onClick={() =>
-                  handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "va")
-                }
-                disabled={loading}
-              >
+              <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "va")} disabled={loading} className="vt-btn">
                 Kgs Exportacion
               </Button>
             </td>
-            <td>{kgVaca !== null ? `${kgVaca} Kg` : "-"}</td>
+            <td className="text-end">{kgVaca !== null ? `${kgVaca} Kg` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerCostovacuno} disabled={loading}>
+              <Button onClick={handleObtenerCostovacuno} disabled={loading} className="vt-btn">
                 Obtener Costo Vacuno
               </Button>
             </td>
-            <td>{costovacuno !== null ? `$${costovacuno}` : "-"}</td>
+            <td className="text-end">{costovacuno !== null ? `$${costovacuno}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button
-                onClick={() =>
-                  handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "cerdo")
-                }
-                disabled={loading}
-              >
+              <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "cerdo")} disabled={loading} className="vt-btn">
                 Kgs Cerdo
               </Button>
             </td>
-            <td>{kgCerdo !== null ? `${kgCerdo} Kg` : "-"}</td>
+            <td className="text-end">{kgCerdo !== null ? `${kgCerdo} Kg` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerCostoporcino} disabled={loading}>
+              <Button onClick={handleObtenerCostoporcino} disabled={loading} className="vt-btn">
                 Obtener Costo Porcino
               </Button>
             </td>
-            <td>{costoporcino !== null ? `$${costoporcino}` : "-"}</td>
+            <td className="text-end">{costoporcino !== null ? `$${costoporcino}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button
-                onClick={() => setShowAjustesModal(true)}
-                disabled={loading}
-              // variant="success"
-              >
+              <Button onClick={() => setShowAjustesModal(true)} disabled={loading} className="vt-btn">
                 Agregar Ajuste
               </Button>
             </td>
             <td>
-              <Button
-                onClick={() => setShowAjustesModal(true)}
-                disabled={loading || ajustes.length === 0}
-              >
+              <Button onClick={() => setShowAjustesModal(true)} disabled={loading || ajustes.length === 0} className="vt-btn-secondary">
                 Ver
               </Button>
             </td>
@@ -1493,422 +1443,388 @@ const handleObtenerIngVendido = () => {
 
           <tr>
             <td>
-              <Button onClick={handleObtenerTotalKg} disabled={loading}>
+              <Button onClick={handleObtenerTotalKg} disabled={loading} className="vt-btn">
                 Obtener Total Kg
               </Button>
             </td>
-            {/* <td>{totalKg !== "" ? totalKg : "-"}</td> */}
-            <td>{totalKg !== null ? `${totalKg} Kg` : "-"}</td>
+            <td className="text-end">{totalKg !== null ? `${totalKg} Kg` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerCantidadMedias} disabled={loading}>
+              <Button onClick={handleObtenerCantidadMedias} disabled={loading} className="vt-btn">
                 Obtener Cantidad Medias
               </Button>
             </td>
-            <td>{cantidadMedias !== "" ? cantidadMedias : "-"}</td>
+            <td className="text-end">{cantidadMedias !== "" ? cantidadMedias : "-"}</td>
           </tr>
-
-
 
           <tr>
             <td>
-              <Button onClick={handleObtenerCostoProm} disabled={loading}>
+              <Button onClick={handleObtenerCostoProm} disabled={loading} className="vt-btn">
                 Obtener Costo Promedio
               </Button>
             </td>
-            <td>{costoprom !== null ? `$${costoprom}` : "-"}</td>
-
+            <td className="text-end">{costoprom !== null ? `$${costoprom}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerMgtotal} disabled={loading}>
+              <Button onClick={handleObtenerMgtotal} disabled={loading} className="vt-btn">
                 Obtener Margen Total
               </Button>
             </td>
-            <td>{mgtotal !== null ? `$${mgtotal}` : "-"}</td>
+            <td className="text-end">{mgtotal !== null ? `$${mgtotal}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerMgporkg} disabled={loading}>
+              <Button onClick={handleObtenerMgporkg} disabled={loading} className="vt-btn">
                 Obtener Margen por Kg
               </Button>
             </td>
-            <td>{mgporkg !== null ? `$${mgporkg}` : "-"}</td>
+            <td className="text-end">{mgporkg !== null ? `$${mgporkg}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerTotalventa} disabled={loading}>
+              <Button onClick={handleObtenerTotalventa} disabled={loading} className="vt-btn">
                 Obtener Total Venta
               </Button>
             </td>
-            <td>{totalventa !== null ? `$${totalventa}` : "-"}</td>
+            <td className="text-end">{totalventa !== null ? `$${totalventa}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerPromdiario} disabled={loading}>
+              <Button onClick={handleObtenerPromdiario} disabled={loading} className="vt-btn">
                 Obtener Promedio Diario
               </Button>
             </td>
-            <td>{promdiario !== null ? `$${promdiario}` : "-"}</td>
+            <td className="text-end">{promdiario !== null ? `$${promdiario}` : "-"}</td>
           </tr>
-
-
 
           <tr>
             <td>
-              <Button onClick={handleObtenerGastos} disabled={loading}>
+              <Button onClick={handleObtenerGastos} disabled={loading} className="vt-btn">
                 Obtener Gastos
               </Button>
             </td>
-            <td>{gastos !== null ? `$${gastos}` : "-"}</td>
+            <td className="text-end">{gastos !== null ? `$${gastos}` : "-"}</td>
           </tr>
-
-
 
           <tr>
             <td>
-              <Button onClick={handleObtenerAchuras} disabled={loading}>
+              <Button onClick={handleObtenerAchuras} disabled={loading} className="vt-btn">
                 Obtener Achuras
               </Button>
             </td>
-            <td>{achuras !== null ? `$${achuras}` : "-"}</td>
+            <td className="text-end">{achuras !== null ? `$${achuras}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerDifInventario} disabled={loading}>
+              <Button onClick={handleObtenerDifInventario} disabled={loading} className="vt-btn">
                 Obtener Diferencia Inventario
               </Button>
             </td>
-            <td>{difInventario !== null ? `$${difInventario}` : "-"}</td>
+            <td className="text-end">{difInventario !== null ? `$${difInventario}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerMbCerdo} disabled={loading}>
+              <Button onClick={handleObtenerMbCerdo} disabled={loading} className="vt-btn">
                 MB Cerdo
               </Button>
             </td>
-            <td>{mbcerdo !== null ? `$${mbcerdo}` : "-"}</td>
+            <td className="text-end">{mbcerdo !== null ? `$${mbcerdo}` : "-"}</td>
           </tr>
 
           <tr>
-            <td>
-              Caja Grande
-            </td>
+            <td>Caja Grande</td>
             <td>
               <input
                 type="number"
                 value={cajagrande}
                 onChange={(e) => setCajagrande(e.target.value)}
-                className="form-control"
+                className="form-control vt-input"
               />
             </td>
           </tr>
 
           <tr>
-            <td>
-              Otros
-            </td>
+            <td>Otros</td>
             <td>
               <input
                 type="number"
                 value={otros}
                 onChange={(e) => setOtros(e.target.value)}
-                className="form-control"
+                className="form-control vt-input"
               />
             </td>
           </tr>
 
-
-
           <tr>
             <td>
-              <Button onClick={handleObtenerIngEsperado} disabled={loading}>
+              <Button onClick={handleObtenerIngEsperado} disabled={loading} className="vt-btn">
                 Obtener Ingreso Esperado
               </Button>
             </td>
-            <td>{ingEsperado !== null ? `$${ingEsperado}` : "-"}</td>
+            <td className="text-end">{ingEsperado !== null ? `$${ingEsperado}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerIngVendido} disabled={loading}>
+              <Button onClick={handleObtenerIngVendido} disabled={loading} className="vt-btn">
                 Obtener Ingreso Vendido
               </Button>
             </td>
-            <td>{ingVendido !== null ? `$${ingVendido}` : "-"}</td>
+            <td className="text-end">{ingVendido !== null ? `$${ingVendido}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerDifEsperado} disabled={loading}>
+              <Button onClick={handleObtenerDifEsperado} disabled={loading} className="vt-btn">
                 Obtener Diferencia Esperado
               </Button>
             </td>
-            <td>{difEsperado !== null ? `$${difEsperado}` : "-"}</td>
+            <td className="text-end">{difEsperado !== null ? `$${difEsperado}` : "-"}</td>
           </tr>
 
           <tr>
             <td>
-              <Button onClick={handleObtenerDifVendido} disabled={loading}>
+              <Button onClick={handleObtenerDifVendido} disabled={loading} className="vt-btn">
                 Obtener Diferencia Vendido
               </Button>
             </td>
-            <td>{difVendido !== null ? `$${difVendido}` : "-"}</td>
+            <td className="text-end">{difVendido !== null ? `$${difVendido}` : "-"}</td>
           </tr>
-
 
           <tr>
             <td>
-              <Button onClick={handleObtenerValorRinde} disabled={loading}>
+              <Button onClick={handleObtenerValorRinde} disabled={loading} className="vt-btn">
                 Obtener Valor Rinde
               </Button>
             </td>
-            <td>{valorRinde !== null ? `${valorRinde}` : "-"}</td>
+            <td className="text-end">{valorRinde !== null ? `${valorRinde}` : "-"}</td>
           </tr>
 
-
-
-
-
-
-          {/* Botón para calcular el rinde */}
+          {/* Calcular rinde */}
           <tr>
             <td>
-              <Button onClick={handleCalculoRinde} disabled={loading}>
+              <Button onClick={handleCalculoRinde} disabled={loading} className="vt-btn">
                 Calcular Rinde
               </Button>
             </td>
-            {/* <td>
-              {rinde !== null ? `${parseFloat(rinde).toFixed(2)} %` : "-"}
-            </td> */}
-            <td>
+            <td className="text-end">
               {typeof rinde === "number" ? `${rinde.toFixed(2)} %` : "-"}
             </td>
           </tr>
 
-
           <tr>
             <td>
-              <Button onClick={handleObtenerEficiencia} disabled={loading}>
+              <Button onClick={handleObtenerEficiencia} disabled={loading} className="vt-btn">
                 Obtener Eficiencia
               </Button>
             </td>
-            <td>{eficiencia !== null ? `${eficiencia}` : "-"}</td>
+            <td className="text-end">{eficiencia !== null ? `${eficiencia}` : "-"}</td>
           </tr>
         </tbody>
       </Table>
+    </div>
 
-      <Button
-        onClick={handleGuardarRinde}
-        disabled={loading}
-        variant="success"
-        className="rounded-0 mx-auto mt-3 d-block"
-        style={{ width: "150px" }}
-      >
-        Guardar Rinde
-      </Button>
+    {/* Guardar rinde */}
+    <Button
+      onClick={handleGuardarRinde}
+      disabled={loading}
+      variant="success"
+      className="vt-btn mx-auto mt-3 d-block"
+      style={{ width: "150px" }}
+    >
+      Guardar Rinde
+    </Button>
 
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            Inventarios Sucursal{" "}
-            {
-              context.sucursalesTabla.find(
-                (sucursal) => parseInt(sucursal.id) === parseInt(searchSucursal)
-              )?.nombre
-            }
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <ListGroup>
-            {inventarios.map((inventario) => (
-              <ListGroup.Item
-                key={inventario.id}
-                onClick={() => handleSelectInventario(inventario)}
-                action
-              >
-                Mes: {inventario.mes}, Año: {inventario.anio}
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
-        </Modal.Body>
-      </Modal>
-
-      {/* Modal para ingresar los valores de ingresos esperados */}
-      <Modal
-        show={showIngresosModal}
-        onHide={() => setShowIngresosModal(false)}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Ingresos Esperados</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="mb-3">
-            <label>Novillos:</label>
-            <input
-              type="number"
-              value={novillosIngresos}
-              onChange={(e) => handleNovillosChange(e.target.value)}
-              className="form-control"
-            />
-          </div>
-          <div className="mb-3">
-            <label>Exportación:</label>
-            <input
-              type="number"
-              value={exportacionIngresos}
-              onChange={(e) => handleExportacionChange(e.target.value)}
-              className="form-control"
-            />
-          </div>
-          <div className="mb-3">
-            <label>Cerdos:</label>
-            <input
-              type="number"
-              value={cerdosIngresos}
-              onChange={(e) => handleCerdosChange(e.target.value)}
-              className="form-control"
-            />
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowIngresosModal(false)}
-          >
-            Cerrar
-          </Button>
-          <Button variant="primary" onClick={handleGuardarIngresos}>
-            Guardar
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal para ver los valores de ingresos esperados */}
-      <Modal show={showVerModal} onHide={handleCloseVerModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Ingresos Esperados</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div>Novillos: {novillosIngresos}</div>
-          <div>Exportación: {exportacionIngresos}</div>
-          <div>Cerdos: {cerdosIngresos}</div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseVerModal}>
-            Cerrar
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Modal
-        show={showModalCategories}
-        onHide={() => setShowModalCategories(false)}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Seleccionar Categorías a excluir</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Presione Ctrl para una selección múltiple</p>
-          <ListGroup>
-            <FormControl
-              as="select"
-              multiple // Permitir selección múltiple
-              value={selectedCategorias}
-              onChange={(e) =>
-                setSelectedCategorias(
-                  Array.from(e.target.selectedOptions, (option) => option.value)
-                )
-              }
+    {/* Modal Inventarios */}
+    <Modal show={showModal} onHide={handleCloseModal} className="vt-modal">
+      <Modal.Header closeButton>
+        <Modal.Title>
+          Inventarios Sucursal{" "}
+          {
+            context.sucursalesTabla.find(
+              (sucursal) => parseInt(sucursal.id) === parseInt(searchSucursal)
+            )?.nombre
+          }
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <ListGroup>
+          {inventarios.map((inventario) => (
+            <ListGroup.Item
+              key={inventario.id}
+              onClick={() => handleSelectInventario(inventario)}
+              action
             >
-              {context.subcategoriasTabla.map((categoria) => (
-                <option key={categoria.id} value={categoria.id}>
-                  {categoria.descripcion}
-                </option>
-              ))}
-            </FormControl>
-          </ListGroup>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowModalCategories(false)}
-          >
-            Cerrar
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() =>
-              handleObtenerDatos(
-                `${apiUrl}/ventas/monto_con_articulo_filtradas`,
-                "ventas",
-                selectedCategorias
-              )
-            }
-          >
-            Continuar
-          </Button>
-        </Modal.Footer>
-      </Modal>
+              Mes: {inventario.mes}, Año: {inventario.anio}
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      </Modal.Body>
+    </Modal>
 
-      <Modal show={showAjustesModal} onHide={() => setShowAjustesModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Ajustes de Rinde</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <InputGroup>
-            <FormControl
-              placeholder="Descripción"
-              value={nuevoAjuste.descripcion}
-              onChange={(e) =>
-                setNuevoAjuste({ ...nuevoAjuste, descripcion: e.target.value })
-              }
-            />
-            <FormControl
-              placeholder="Importe"
-              value={nuevoAjuste.importe}
-              onChange={(e) =>
-                setNuevoAjuste({ ...nuevoAjuste, importe: e.target.value })
-              }
-            />
-            <Button variant="primary" onClick={handleAddAjuste}>
-              Agregar
-            </Button>
-          </InputGroup>
-          <ListGroup>
-            {ajustes.map((ajuste, index) => (
-              <ListGroup.Item
-                key={index}
-                className="d-flex justify-content-between align-items-center"
-              >
-                {`${ajuste.descripcion}: $${ajuste.importe}`}
-                <Button
-                  variant="danger"
-                  onClick={() => handleEliminarAjuste(index)}
-                >
-                  Eliminar
-                </Button>
-              </ListGroup.Item>
+    {/* Modal Ingresos Esperados */}
+    <Modal show={showIngresosModal} onHide={() => setShowIngresosModal(false)} className="vt-modal">
+      <Modal.Header closeButton>
+        <Modal.Title>Ingresos Esperados</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div className="mb-3">
+          <label className="vt-label">Novillos:</label>
+          <input
+            type="number"
+            value={novillosIngresos}
+            onChange={(e) => handleNovillosChange(e.target.value)}
+            className="form-control vt-input"
+          />
+        </div>
+        <div className="mb-3">
+          <label className="vt-label">Exportación:</label>
+          <input
+            type="number"
+            value={exportacionIngresos}
+            onChange={(e) => handleExportacionChange(e.target.value)}
+            className="form-control vt-input"
+          />
+        </div>
+        <div className="mb-3">
+          <label className="vt-label">Cerdos:</label>
+          <input
+            type="number"
+            value={cerdosIngresos}
+            onChange={(e) => handleCerdosChange(e.target.value)}
+            className="form-control vt-input"
+          />
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowIngresosModal(false)} className="vt-btn-secondary">
+          Cerrar
+        </Button>
+        <Button variant="primary" onClick={handleGuardarIngresos} className="vt-btn">
+          Guardar
+        </Button>
+      </Modal.Footer>
+    </Modal>
+
+    {/* Modal Ver Ingresos */}
+    <Modal show={showVerModal} onHide={handleCloseVerModal} className="vt-modal">
+      <Modal.Header closeButton>
+        <Modal.Title>Ingresos Esperados</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <div>Novillos: {novillosIngresos}</div>
+        <div>Exportación: {exportacionIngresos}</div>
+        <div>Cerdos: {cerdosIngresos}</div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={handleCloseVerModal} className="vt-btn-secondary">
+          Cerrar
+        </Button>
+      </Modal.Footer>
+    </Modal>
+
+    {/* Modal Categorías (excluir) */}
+    <Modal show={showModalCategories} onHide={() => setShowModalCategories(false)} className="vt-modal">
+      <Modal.Header closeButton>
+        <Modal.Title>Seleccionar Categorías a excluir</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p className="vt-muted">Presione Ctrl para una selección múltiple</p>
+        <ListGroup>
+          <FormControl
+            as="select"
+            multiple
+            value={selectedCategorias}
+            onChange={(e) =>
+              setSelectedCategorias(Array.from(e.target.selectedOptions, (option) => option.value))
+            }
+            className="vt-input"
+            style={{ minHeight: 220 }}
+          >
+            {context.subcategoriasTabla.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.descripcion}
+              </option>
             ))}
-          </ListGroup>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCancelarAjustes}>
-            Cancelar
+          </FormControl>
+        </ListGroup>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowModalCategories(false)} className="vt-btn-secondary">
+          Cerrar
+        </Button>
+        <Button
+          variant="primary"
+          onClick={() =>
+            handleObtenerDatos(
+              `${apiUrl}/ventas/monto_con_articulo_filtradas`,
+              "ventas",
+              selectedCategorias
+            )
+          }
+          className="vt-btn"
+        >
+          Continuar
+        </Button>
+      </Modal.Footer>
+    </Modal>
+
+    {/* Modal Ajustes */}
+    <Modal show={showAjustesModal} onHide={() => setShowAjustesModal(false)} className="vt-modal">
+      <Modal.Header closeButton>
+        <Modal.Title>Ajustes de Rinde</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <InputGroup>
+          <FormControl
+            placeholder="Descripción"
+            value={nuevoAjuste.descripcion}
+            onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, descripcion: e.target.value })}
+            className="vt-input"
+          />
+          <FormControl
+            placeholder="Importe"
+            value={nuevoAjuste.importe}
+            onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, importe: e.target.value })}
+            className="vt-input"
+          />
+          <Button variant="primary" onClick={handleAddAjuste} className="vt-btn">
+            Agregar
           </Button>
-          <Button variant="primary" onClick={handleGuardarAjustes}>
-            Guardar Ajustes
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
-  );
+        </InputGroup>
+        <ListGroup className="mt-3">
+          {ajustes.map((ajuste, index) => (
+            <ListGroup.Item
+              key={index}
+              className="d-flex justify-content-between align-items-center"
+            >
+              {`${ajuste.descripcion}: $${ajuste.importe}`}
+              <Button variant="danger" onClick={() => handleEliminarAjuste(index)} className="vt-btn-danger">
+                Eliminar
+              </Button>
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={handleCancelarAjustes} className="vt-btn-secondary">
+          Cancelar
+        </Button>
+        <Button variant="primary" onClick={handleGuardarAjustes} className="vt-btn">
+          Guardar Ajustes
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  </Container>
+);
+
 }

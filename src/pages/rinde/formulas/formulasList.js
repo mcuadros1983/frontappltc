@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useCallback} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 // import { useParams } from "react-router-dom";
 import { Container, Table, Button } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
@@ -16,11 +16,11 @@ export default function Formulas() {
 
   const navigate = useNavigate();
 
- 
+
 
   const obtenerFormulas = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/obtenerformulas`);
+      const response = await fetch(`${apiUrl}/obtenerformulas`, { credentials: "include" });
       if (response.ok) {
         const data = await response.json();
         setFormulas(data);
@@ -30,7 +30,7 @@ export default function Formulas() {
     } catch (error) {
       console.error(error);
     }
-  },[apiUrl]);
+  }, [apiUrl]);
 
   useEffect(() => {
     obtenerFormulas();
@@ -79,12 +79,13 @@ export default function Formulas() {
   const handleEliminarFormula = async (formulaId) => {
     try {
 
-      
-    const confirmacion = window.confirm("¿Estás seguro de que deseas eliminar esta fórmula?");
-    if (!confirmacion) return; // Si el usuario cancela, no procedemos con la eliminación
-    
+
+      const confirmacion = window.confirm("¿Estás seguro de que deseas eliminar esta fórmula?");
+      if (!confirmacion) return; // Si el usuario cancela, no procedemos con la eliminación
+
       const response = await fetch(`${apiUrl}/eliminarformula/${formulaId}`, {
         method: "DELETE",
+        credentials: "include",
       });
       if (response.ok) {
         // Eliminar la fórmula de la lista
@@ -103,39 +104,41 @@ export default function Formulas() {
     navigate(`/formulas/${formulaId}`);
   };
 
-  return (
-    <Container>
-      <h1 className="my-list-title dark-text">Fórmulas</h1>
+ return (
+  <Container className="vt-page">
+    <h1 className="my-list-title dark-text vt-title">Fórmulas</h1>
 
-      <Table striped bordered hover>
+    <div className="vt-tablewrap table-responsive">
+      <Table striped bordered hover className="mb-2">
         <thead>
           <tr>
-            <th onClick={() => handleSort("id")} style={{ cursor: "pointer" }}>
-              ID
+            <th onClick={() => handleSort("id")} className="vt-th-sort">ID</th>
+            <th onClick={() => handleSort("codigobarraformula")} className="vt-th-sort">
+              Código Artículo
             </th>
-            <th
-              onClick={() => handleSort("codigobarraformula")}
-              style={{ cursor: "pointer" }}
-            >
-              Codigo Articulo
-            </th>
-            <th
-              onClick={() => handleSort("descripcionformula")}
-              style={{ cursor: "pointer" }}
-            >
+            <th onClick={() => handleSort("descripcionformula")} className="vt-th-sort">
               Descripción
             </th>
-            <th>Operaciones</th> {/* Nueva columna para las operaciones */}
+            <th className="text-center">Operaciones</th>
           </tr>
         </thead>
         <tbody>
           {formulas.map((formula) => (
-            <tr key={formula.id} onDoubleClick={() => handleRowDoubleClick(formula.id)}>
+            <tr
+              key={formula.id}
+              onDoubleClick={() => handleRowDoubleClick(formula.id)}
+              className="vt-row"
+            >
               <td>{formula.id}</td>
               <td>{formula.codigobarraformula}</td>
               <td>{formula.descripcionformula}</td>
-              <td>
-                <Button variant="danger" onClick={() => handleEliminarFormula(formula.id)}>
+              <td className="text-center">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="vt-btn-danger"
+                  onClick={() => handleEliminarFormula(formula.id)}
+                >
                   Eliminar
                 </Button>
               </td>
@@ -143,23 +146,23 @@ export default function Formulas() {
           ))}
         </tbody>
       </Table>
+    </div>
 
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={prevPage} disabled={currentPage === 1}>
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {currentPage} de {Math.ceil(formulas.length / formulasPerPage)}
-        </span>
-        <Button
-          onClick={nextPage}
-          disabled={
-            currentPage === Math.ceil(formulas.length / formulasPerPage)
-          }
-        >
-          <BsChevronRight />
-        </Button>
-      </div>
-    </Container>
-  );
+    <div className="d-flex justify-content-center align-items-center vt-pager">
+      <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
+        <BsChevronLeft />
+      </Button>
+      <span className="mx-2">
+        Página {currentPage} de {Math.ceil(formulas.length / formulasPerPage) || 1}
+      </span>
+      <Button
+        onClick={nextPage}
+        disabled={currentPage === Math.ceil(formulas.length / formulasPerPage)}
+        variant="light"
+      >
+        <BsChevronRight />
+      </Button>
+    </div>
+  </Container>
+);
 }
