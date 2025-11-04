@@ -46,7 +46,7 @@ export default function DataContextProvider({ children }) {
     try {
       const res = await fetch(url, { credentials: "include", ...opts });
       if (!res.ok) {
-        console.warn(`⚠️ ${url} → HTTP ${res.status}`);
+        // console.warn(`⚠️ ${url} → HTTP ${res.status}`);
         return null; // devolvemos null; el caller normaliza a []
       }
       return await res.json();
@@ -67,7 +67,7 @@ export default function DataContextProvider({ children }) {
     let cancelled = false;
     const fetchData = async () => {
       // Sucursales
-      const dataSucursales = await fetchJsonSafe(`${apiUrl}/sucursales`);
+      const dataSucursales = await fetchJsonSafe(`${apiUrl}/sucursales`, {credentials: "include"});
       if (!cancelled) {
         const arr = toArray(dataSucursales);
         arr.sort((a, b) => Number(a.id) - Number(b.id));
@@ -75,104 +75,104 @@ export default function DataContextProvider({ children }) {
       }
 
       // Clientes
-      const dataClientes = await fetchJsonSafe(`${apiUrl}/clientes`);
+      const dataClientes = await fetchJsonSafe(`${apiUrl}/clientes`, {credentials: "include"});
       if (!cancelled) {
         console.log("datosclientes", dataClientes);
         setClientes(toArray(dataClientes));
       }
 
       // Formas de pago
-      const dataFormasPago = await fetchJsonSafe(`${apiUrl}/formas-pago`);
+      const dataFormasPago = await fetchJsonSafe(`${apiUrl}/formas-pago`, {credentials: "include"});
       if (!cancelled) setFormasPago(toArray(dataFormasPago));
 
       // Tablas varias
-      const dataClientesTabla = await fetchJsonSafe(`${apiUrl}/obtenerclientestabla`);
+      const dataClientesTabla = await fetchJsonSafe(`${apiUrl}/obtenerclientestabla`, {credentials: "include"});
       if (!cancelled) setClientesTabla(toArray(dataClientesTabla));
 
-      const dataSucursalesTabla = await fetchJsonSafe(`${apiUrl}/obtenersucursales`);
+      const dataSucursalesTabla = await fetchJsonSafe(`${apiUrl}/obtenersucursales`, {credentials: "include"} );
       if (!cancelled) setSucursalesTabla(toArray(dataSucursalesTabla));
 
-      const dataArticulosTabla = await fetchJsonSafe(`${apiUrl}/obtenerarticulos`);
+      const dataArticulosTabla = await fetchJsonSafe(`${apiUrl}/obtenerarticulos`, {credentials: "include"});
       if (!cancelled) setArticulosTabla(toArray(dataArticulosTabla));
 
-      const dataTipoDeIngresoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipoingreso`);
+      const dataTipoDeIngresoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipoingreso`, {credentials: "include"});
       if (!cancelled) setTipoDeIngresoTabla(toArray(dataTipoDeIngresoTabla));
 
-      const dataTipoDeGastoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipogasto`);
+      const dataTipoDeGastoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipogasto`, {credentials: "include"});
       if (!cancelled) {
         const arr = toArray(dataTipoDeGastoTabla);
         arr.sort((a, b) => String(a.descripcion || "").localeCompare(String(b.descripcion || "")));
         setTipoDeGastoTabla(arr);
       }
 
-      const dataPlanTarjetaTabla = await fetchJsonSafe(`${apiUrl}/obtenerplantarjeta`);
+      const dataPlanTarjetaTabla = await fetchJsonSafe(`${apiUrl}/obtenerplantarjeta`, {credentials: "include"});
       if (!cancelled) setPlanTarjetaTabla(toArray(dataPlanTarjetaTabla));
 
-      const dataTarjetaTesoreriaTabla = await fetchJsonSafe(`${apiUrl}/tarjetas-comunes`);
+      const dataTarjetaTesoreriaTabla = await fetchJsonSafe(`${apiUrl}/tarjetas-comunes`, {credentials: "include"});
       if (!cancelled) setTarjetasTesoreriaTabla(toArray(dataTarjetaTesoreriaTabla));
 
-      const dataEmpleadosTabla = await fetchJsonSafe(`${apiUrl}/obtenerempleados`);
+      const dataEmpleadosTabla = await fetchJsonSafe(`${apiUrl}/obtenerempleados`, {credentials: "include"});
       if (!cancelled) setEmpleados(toArray(dataEmpleadosTabla));
 
-      const dataUsuariosTabla = await fetchJsonSafe(`${apiUrl}/obtenerusuario`);
+      const dataUsuariosTabla = await fetchJsonSafe(`${apiUrl}/obtenerusuario`, {credentials: "include"});
       if (!cancelled) setUsuariosTabla(toArray(dataUsuariosTabla));
 
-      const dataSubcategoriasTabla = await fetchJsonSafe(`${apiUrl}/obtenersubcategorias`);
+      const dataSubcategoriasTabla = await fetchJsonSafe(`${apiUrl}/obtenersubcategorias`, {credentials: "include"});
       if (!cancelled) setSubcategoriasTabla(toArray(dataSubcategoriasTabla));
 
-      const dataTiposTarjeta = await fetchJsonSafe(`${apiUrl}/tipos-tarjeta`);
+      const dataTiposTarjeta = await fetchJsonSafe(`${apiUrl}/tipos-tarjeta`, {credentials: "include"});
       if (!cancelled) setTiposTarjetaTabla(toArray(dataTiposTarjeta));
 
-      const dataMarcasTarjeta = await fetchJsonSafe(`${apiUrl}/marcas-tarjeta`);
+      const dataMarcasTarjeta = await fetchJsonSafe(`${apiUrl}/marcas-tarjeta`, {credentials: "include"});
       if (!cancelled) setMarcasTarjetaTabla(toArray(dataMarcasTarjeta));
 
-      const dataEmpresas = await fetchJsonSafe(`${apiUrl}/empresas`);
+      const dataEmpresas = await fetchJsonSafe(`${apiUrl}/empresas`, {credentials: "include"});
       if (!cancelled) setEmpresasTabla(toArray(dataEmpresas));
 
-      const dataBancos = await fetchJsonSafe(`${apiUrl}/bancos`);
+      const dataBancos = await fetchJsonSafe(`${apiUrl}/bancos`, {credentials: "include"});
       if (!cancelled) setBancosTabla(toArray(dataBancos));
 
-      const dataRubros = await fetchJsonSafe(`${apiUrl}/conciliacion-rubros`);
+      const dataRubros = await fetchJsonSafe(`${apiUrl}/conciliacion-rubros`, {credentials: "include"});
       if (!cancelled) setRubrosTabla(toArray(dataRubros));
 
-      const dataFormasPagoTes = await fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`);
+      const dataFormasPagoTes = await fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`, {credentials: "include"});
       if (!cancelled) setFormasPagoTesoreria(toArray(dataFormasPagoTes));
 
-      const dataFrigorifico = await fetchJsonSafe(`${apiUrl}/frigorificos`);
+      const dataFrigorifico = await fetchJsonSafe(`${apiUrl}/frigorificos`, {credentials: "include"});
       if (!cancelled) setFrigorificoTabla(toArray(dataFrigorifico));
 
-      const dataImputacionContable = await fetchJsonSafe(`${apiUrl}/imputaciones-contables`);
+      const dataImputacionContable = await fetchJsonSafe(`${apiUrl}/imputaciones-contables`, {credentials: "include"});
       if (!cancelled) setImputacionContableTabla(toArray(dataImputacionContable));
 
-      const dataProyectos = await fetchJsonSafe(`${apiUrl}/proyectos`);
+      const dataProyectos = await fetchJsonSafe(`${apiUrl}/proyectos`, {credentials: "include"});
       if (!cancelled) setProyectosTabla(toArray(dataProyectos));
 
-      const dataPlanTarjetasTes = await fetchJsonSafe(`${apiUrl}/tarjeta-planes`);
+      const dataPlanTarjetasTes = await fetchJsonSafe(`${apiUrl}/tarjeta-planes`, {credentials: "include"});
       if (!cancelled) setPlanTarjetaTesoreriaTabla(toArray(dataPlanTarjetasTes));
 
-      const dataTiposComprobantes = await fetchJsonSafe(`${apiUrl}/tipos-comprobantes`);
+      const dataTiposComprobantes = await fetchJsonSafe(`${apiUrl}/tipos-comprobantes`, {credentials: "include"});
       if (!cancelled) setTiposComprobanteTabla(toArray(dataTiposComprobantes));
 
-      const dataProveedores = await fetchJsonSafe(`${apiUrl}/proveedores`);
+      const dataProveedores = await fetchJsonSafe(`${apiUrl}/proveedores`, {credentials: "include"});
       if (!cancelled) setProveedoresTabla(toArray(dataProveedores));
 
-      const dataPtosVenta = await fetchJsonSafe(`${apiUrl}/ptos-venta`);
+      const dataPtosVenta = await fetchJsonSafe(`${apiUrl}/ptos-venta`, {credentials: "include"});
       if (!cancelled) setPtosVentaTabla(toArray(dataPtosVenta));
 
-      const dataLibrosIva = await fetchJsonSafe(`${apiUrl}/librosiva`);
+      const dataLibrosIva = await fetchJsonSafe(`${apiUrl}/librosiva`, {credentials: "include"});
       if (!cancelled) setLibrosIvaTabla(toArray(dataLibrosIva));
 
-      const dataCategoriaAnimal = await fetchJsonSafe(`${apiUrl}/categorias-animales`);
+      const dataCategoriaAnimal = await fetchJsonSafe(`${apiUrl}/categorias-animales`, {credentials: "include"});
       if (!cancelled) setCategoriaAnimalTabla(toArray(dataCategoriaAnimal));
 
-      const dataCategoriasEgreso = await fetchJsonSafe(`${apiUrl}/categorias-egreso`);
+      const dataCategoriasEgreso = await fetchJsonSafe(`${apiUrl}/categorias-egreso`, {credentials: "include"});
       if (!cancelled) setCategoriasEgreso(toArray(dataCategoriasEgreso));
 
-      const dataCategoriasIngreso = await fetchJsonSafe(`${apiUrl}/categorias-ingreso`);
+      const dataCategoriasIngreso = await fetchJsonSafe(`${apiUrl}/categorias-ingreso`, {credentials: "include"});
       if (!cancelled) setCategoriasIngreso(toArray(dataCategoriasIngreso));
 
       // Caja abierta (puede no existir; no lo fuerzo a objeto)
-      const dataCajaAbierta = await fetchJsonSafe(`${apiUrl}/caja-tesoreria/actual`);
+      const dataCajaAbierta = await fetchJsonSafe(`${apiUrl}/caja-tesoreria/actual`, {credentials: "include"});
       if (!cancelled) setCajaAbierta(dataCajaAbierta || null);
     };
 
