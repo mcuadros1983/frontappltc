@@ -36,6 +36,10 @@
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
+  "engines": {
+    "node": "20.x", 
+    "npm": "10.x"  
+  },
   "scripts": {
     "start": "serve -s build",
     "startlocal": "react-scripts start",
