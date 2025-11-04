@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import { useEffect } from 'react';
 import ProductList from "./pages/gmedias/ProductList";
 import ProductUpdate from "./pages/gmedias/ProductUpdate";
 import ProductUpdateTropa from "./pages/gmedias/ProductUpdateTropa.js";
@@ -217,7 +216,7 @@ import ProyeccionCalculoPage from "./pages/proyeccion/ProyeccionCalculoPage.js";
 import ProyeccionConfigPage from "./pages/proyeccion/ProyeccionConfigPage.js";
 import ProyeccionHistoricoPage from "./pages/proyeccion/ProyeccionHistoricoPage";
 // Auth / Security
-import { useSecurity, SecurityProvider } from "./security/SecurityContext"; // si prefieres, hacelo en index.jsx
+import { SecurityProvider } from "./security/SecurityContext"; // si prefieres, hacelo en index.jsx
 import ProtectedRoute from "./security/ProtectedRoute";
 import PublicOnlyRoute from "./security/PublicOnlyRoute";
 
@@ -226,27 +225,12 @@ function Forbidden403() {
   return <div style={{ padding: 24 }}><h2>403 - No autorizado</h2></div>;
 }
 
-// App.js (arriba del export)
-function SyncUserBridge() {
-  const { user } = useSecurity();                 // 👈 SecurityContext
-  const userCtx = useContext(Contexts.UserContext);
-
-  useEffect(() => {
-    // si tu UserContext expone setUser, sincronizamos
-    if (userCtx?.setUser) userCtx.setUser(user || null);
-  }, [user, userCtx]);
-
-  return null;
-}
-
-
 export default function App() {
   const context = useContext(Contexts.UserContext);
 
   return (
     <>
       <SecurityProvider>
-        <SyncUserBridge />   {/* 👈 agrega ESTA línea */}
         <Routes>
 
           {/* Público (redirige si ya hay user) */}
@@ -260,13 +244,10 @@ export default function App() {
           />
 
           {/* Público */}
-          {/* <Route index element={<LoginForm />} />
-          <Route path="/403" element={<Forbidden403 />} /> */}
+          <Route index element={<LoginForm />} />
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/403" element={<Forbidden403 />} />
 
-          <Route path="/login" element={<PublicOnlyRoute>
-            <LoginForm />
-          </PublicOnlyRoute>
-          } />
 
           {/* <Route element={<ProtectedRoute isAllowed={!!context.user} />}> */}
 
