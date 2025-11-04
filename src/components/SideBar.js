@@ -106,16 +106,28 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
   const { setUser: setSecUser } = useSecurity();
   const navigate = useNavigate();
 
+  // const handleLogout = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     await context.logout(); // hace fetch POST /logout
+  //     setSecUser(null);       // limpia SecurityContext para ProtectedRoute
+  //     navigate("/login", { replace: true });
+  //   } catch (err) {
+  //     alert(err?.message || "No se pudo cerrar sesión");
+  //   }
+  // };
+
   const handleLogout = async (e) => {
-    e.preventDefault();
-    try {
-      await context.logout(); // hace fetch POST /logout
-      setSecUser(null);       // limpia SecurityContext para ProtectedRoute
-      navigate("/login", { replace: true });
-    } catch (err) {
-      alert(err?.message || "No se pudo cerrar sesión");
-    }
-  };
+  e.preventDefault();
+  try {
+    await context.logout(); // hace fetch POST /logout
+    setSecUser(null);       // limpia SecurityContext para ProtectedRoute
+    // context.setUser(null);  // 🔥 aseguramos que también se borra el user global
+    navigate("/login", { replace: true });
+  } catch (err) {
+    alert(err?.message || "No se pudo cerrar sesión");
+  }
+};
 
 
   if (loading) return null; // o un spinner/skeleton
