@@ -34,7 +34,7 @@
 
 // src/services/documentosApi.js
 
-const API_BASE = process.env.REACT_APP_API || "http://localhost:5000";
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 export const documentosApi = {
   async list(params = {}) {
