@@ -1,15 +1,17 @@
 // src/utils/navApi.js
-const base = (process.env.REACT_APP_API_URL || "").replace(/\/$/, "");
+const RAW_BASE = process.env.REACT_APP_API_URL || "";
+// quita trailing slash y espacios
+const base = RAW_BASE.trim().replace(/\/+$/, "");
 
 export async function getNavLinks({ roleId, userId, signal } = {}) {
   console.log("datos", roleId, userId, signal);
-  // 🔎 logs
   console.log("[navApi.getNavLinks] params IN:", { roleId, userId, hasSignal: !!signal });
 
   const params = new URLSearchParams();
   if (roleId != null) params.set("roleId", String(roleId));
   if (userId != null) params.set("userId", String(userId));
 
+  // ⛏️ FIX: sin coma al final
   const url = `${base}/nav/links${params.toString() ? `?${params.toString()}` : ""}`;
   console.log("[navApi.getNavLinks] GET", url);
 
