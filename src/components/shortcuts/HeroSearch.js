@@ -6,14 +6,16 @@ import Contexts from "../../context/Contexts";
 import { getNavLinks } from "../../utils/navApi";
 import { getIconByName } from "../../utils/uiIcons";
 import "./HeroSearch.css";
+import { useSecurity } from "../../security/SecurityContext"; // 👈 NUEVO
 
 const norm = (s = "") =>
   s.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 export default function HeroSearch() {
-  const userCtx = useContext(Contexts.UserContext);
-  const roleId = userCtx?.user?.rol_id;
-  const userId = userCtx?.user?.id; // ✅ faltaba
+
+  const { user } = useSecurity();
+  const roleId = user?.rol_id;
+  const userId = user?.id; // ✅ faltaba
 
   const [q, setQ] = useState("");
   const [catalog, setCatalog] = useState([]);

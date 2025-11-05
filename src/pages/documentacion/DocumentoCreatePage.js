@@ -4,13 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { documentosApi } from "../../services/documentosApi";
 import { categoriasApi } from "../../services/categoriasApi";
 import Contexts from "../../context/Contexts";
+import { useSecurity } from "../../security/SecurityContext"; // 👈 usa SecurityContext
 
 export default function DocumentoCreatePage() {
+  const { user, ready } = useSecurity();
   const navigate = useNavigate();
 
   // rol del contexto global
-  const UserContext = useContext(Contexts.UserContext);
-  const userRolId = UserContext?.user?.rol_id;
+  // const UserContext = useContext(Contexts.UserContext);
+  const userRolId = user?.rol_id;
   const esAdmin = String(userRolId) === "1";
 
   // --- campos documento ---

@@ -7,9 +7,9 @@ import { addShortcut, getShortcuts } from "../../utils/shortcutsApi";
 import { getNavLinks } from "../../utils/navApi";
 
 const AddShortcutModal = ({ show, onHide, onSaved }) => {
-  const userCtx = useContext(Contexts.UserContext);
+  // const userCtx = useContext(Contexts.UserContext);
   const { user, ready } = useSecurity();
-  const roleId = user?.rol_id;
+  const roleId = user?.rol_id; 
   const userId = user?.id;
 
   const [loading, setLoading] = useState(false);

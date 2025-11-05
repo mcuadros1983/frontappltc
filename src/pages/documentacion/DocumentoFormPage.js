@@ -16,15 +16,17 @@ import {
   Spinner,
   Alert,
 } from "react-bootstrap";
+import { useSecurity } from "../../security/SecurityContext"; // 👈 usa SecurityContext
 
 export default function DocumentoFormPage() {
+  const { user, ready } = useSecurity();
   const navigate = useNavigate();
   const { id: editingId } = useParams(); // si existe => modo edición
   const isEdit = Boolean(editingId);
 
   // rol del contexto global
-  const UserContext = useContext(Contexts.UserContext); 
-  const userRolId = UserContext?.user?.rol_id;
+  // const UserContext = useContext(Contexts.UserContext);
+  const userRolId = user?.rol_id;
   const esAdmin = String(userRolId) === "1";
 
   // --- campos documento ---
@@ -309,7 +311,7 @@ export default function DocumentoFormPage() {
       console.error("Error eliminando archivo existente:", err);
       alert(
         err.message ||
-          "No se pudo borrar el archivo en Drive. Intenta de nuevo."
+        "No se pudo borrar el archivo en Drive. Intenta de nuevo."
       );
     } finally {
       setRemovingDriveFileId(null);
@@ -345,7 +347,7 @@ export default function DocumentoFormPage() {
           mime_type: meta.mime_type,
           url_storage: meta.url_storage,
           drive_file_id: meta.fileId,
-          
+
         });
       }
 
@@ -413,421 +415,421 @@ export default function DocumentoFormPage() {
   }
 
   return (
-  <Container fluid className="mt-3">
-    <Row>
-      <Col>
-        <Card>
-          <Card.Header className="d-flex justify-content-between align-items-start flex-wrap">
-            <div>
-              <strong className="d-block">
-                {isEdit ? "Editar Documento" : "Nuevo Documento"}
-              </strong>
-              <small className="text-muted">
-                {isEdit
-                  ? "Modificación de procedimiento / manual / comunicación"
-                  : "Alta de procedimiento / manual / comunicación"}
-              </small>
-            </div>
+    <Container fluid className="mt-3">
+      <Row>
+        <Col>
+          <Card>
+            <Card.Header className="d-flex justify-content-between align-items-start flex-wrap">
+              <div>
+                <strong className="d-block">
+                  {isEdit ? "Editar Documento" : "Nuevo Documento"}
+                </strong>
+                <small className="text-muted">
+                  {isEdit
+                    ? "Modificación de procedimiento / manual / comunicación"
+                    : "Alta de procedimiento / manual / comunicación"}
+                </small>
+              </div>
 
-            <div className="d-flex gap-2 mt-2 mt-md-0">
-              <Button
-                variant="outline-secondary"
-                onClick={handleCancel}
-                disabled={saving}
-              >
-                Cancelar
-              </Button>
-
-              {esAdmin && (
+              <div className="d-flex gap-2 mt-2 mt-md-0">
                 <Button
-                  variant="primary"
-                  onClick={handleSave}
+                  variant="outline-secondary"
+                  onClick={handleCancel}
                   disabled={saving}
                 >
-                  {saving ? (
-                    <>
-                      <Spinner animation="border" size="sm" className="me-1" />
-                      Guardando...
-                    </>
-                  ) : isEdit ? (
-                    "Guardar Cambios"
-                  ) : (
-                    "Guardar"
-                  )}
+                  Cancelar
                 </Button>
-              )}
-            </div>
-          </Card.Header>
 
-          <Card.Body>
-            {errMsg && <Alert variant="danger">{errMsg}</Alert>}
+                {esAdmin && (
+                  <Button
+                    variant="primary"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <Spinner animation="border" size="sm" className="me-1" />
+                        Guardando...
+                      </>
+                    ) : isEdit ? (
+                      "Guardar Cambios"
+                    ) : (
+                      "Guardar"
+                    )}
+                  </Button>
+                )}
+              </div>
+            </Card.Header>
 
-            {/* DATOS PRINCIPALES */}
-            <Card className="mb-3">
-              <Card.Header className="fw-bold">Datos generales</Card.Header>
-              <Card.Body>
-                <Row className="g-3">
-                  <Col md={6}>
-                    <Form.Label>Título</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={titulo}
-                      onChange={(e) => setTitulo(e.target.value)}
-                      required
-                      disabled={saving}
-                      className="my-input"
-                    />
-                  </Col>
+            <Card.Body>
+              {errMsg && <Alert variant="danger">{errMsg}</Alert>}
 
-                  <Col md={3}>
-                    <Form.Label>Tipo</Form.Label>
-                    <Form.Select
-                      value={tipo}
-                      onChange={(e) => setTipo(e.target.value)}
-                      required
-                      disabled={saving}
-                      className="form-control my-input"
-                    >
-                      <option value="PROCESO">Proceso / Procedimiento</option>
-                      <option value="MANUAL">Manual / Instructivo</option>
-                      <option value="COMUNICACION">Comunicación Interna</option>
-                      <option value="CAPACITACION">Capacitación</option>
-                    </Form.Select>
-                  </Col>
+              {/* DATOS PRINCIPALES */}
+              <Card className="mb-3">
+                <Card.Header className="fw-bold">Datos generales</Card.Header>
+                <Card.Body>
+                  <Row className="g-3">
+                    <Col md={6}>
+                      <Form.Label>Título</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={titulo}
+                        onChange={(e) => setTitulo(e.target.value)}
+                        required
+                        disabled={saving}
+                        className="my-input"
+                      />
+                    </Col>
 
-                  <Col md={3}>
-                    <Form.Label>Versión</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={version}
-                      onChange={(e) => setVersion(e.target.value)}
-                      disabled={saving}
-                      className="my-input"
-                    />
-                  </Col>
+                    <Col md={3}>
+                      <Form.Label>Tipo</Form.Label>
+                      <Form.Select
+                        value={tipo}
+                        onChange={(e) => setTipo(e.target.value)}
+                        required
+                        disabled={saving}
+                        className="form-control my-input"
+                      >
+                        <option value="PROCESO">Proceso / Procedimiento</option>
+                        <option value="MANUAL">Manual / Instructivo</option>
+                        <option value="COMUNICACION">Comunicación Interna</option>
+                        <option value="CAPACITACION">Capacitación</option>
+                      </Form.Select>
+                    </Col>
 
-                  <Col md={3}>
-                    <Form.Label>Publicado en (fecha)</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={publicadoEn}
-                      onChange={(e) => setPublicadoEn(e.target.value)}
-                      disabled={saving}
-                    />
-                  </Col>
+                    <Col md={3}>
+                      <Form.Label>Versión</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={version}
+                        onChange={(e) => setVersion(e.target.value)}
+                        disabled={saving}
+                        className="my-input"
+                      />
+                    </Col>
 
-                  <Col md={3}>
-                    <Form.Label>Vigente desde</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={vigenteDesde}
-                      onChange={(e) => setVigenteDesde(e.target.value)}
-                      disabled={saving}
-                    />
-                  </Col>
+                    <Col md={3}>
+                      <Form.Label>Publicado en (fecha)</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={publicadoEn}
+                        onChange={(e) => setPublicadoEn(e.target.value)}
+                        disabled={saving}
+                      />
+                    </Col>
 
-                  <Col md={3}>
-                    <Form.Label>Vigente hasta</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={vigenteHasta}
-                      onChange={(e) => setVigenteHasta(e.target.value)}
-                      disabled={saving}
-                    />
-                  </Col>
+                    <Col md={3}>
+                      <Form.Label>Vigente desde</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={vigenteDesde}
+                        onChange={(e) => setVigenteDesde(e.target.value)}
+                        disabled={saving}
+                      />
+                    </Col>
 
-                  <Col md={3}>
-                    <Form.Label>Categoría</Form.Label>
-                    <Form.Select
-                      value={categoriaId}
-                      onChange={(e) => setCategoriaId(e.target.value)}
-                      required
-                      disabled={saving}
-                     className="form-control my-input"
-                    >
-                      <option value="">Seleccionar...</option>
-                      {categorias.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nombre}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Col>
+                    <Col md={3}>
+                      <Form.Label>Vigente hasta</Form.Label>
+                      <Form.Control
+                        type="date"
+                        value={vigenteHasta}
+                        onChange={(e) => setVigenteHasta(e.target.value)}
+                        disabled={saving}
+                      />
+                    </Col>
 
-                  <Col md={3}>
-                    <Form.Label>Subcategoría / Área</Form.Label>
-                    <Form.Select
-                      value={subcategoriaId}
-                      onChange={(e) => setSubcategoriaId(e.target.value)}
-                      required
-                      disabled={!categoriaId || saving}
-                      className="form-control my-input"
-                    >
-                      <option value="">Seleccionar...</option>
-                      {subcategorias.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.nombre}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Col>
+                    <Col md={3}>
+                      <Form.Label>Categoría</Form.Label>
+                      <Form.Select
+                        value={categoriaId}
+                        onChange={(e) => setCategoriaId(e.target.value)}
+                        required
+                        disabled={saving}
+                        className="form-control my-input"
+                      >
+                        <option value="">Seleccionar...</option>
+                        {categorias.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nombre}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Col>
 
-                  <Col xs={12}>
-                    <Form.Label>Descripción breve / resumen</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={2}
-                      value={descripcionResumen}
-                      onChange={(e) => setDescripcionResumen(e.target.value)}
-                      disabled={saving}
-                      className="my-input"
-                    />
-                  </Col>
+                    <Col md={3}>
+                      <Form.Label>Subcategoría / Área</Form.Label>
+                      <Form.Select
+                        value={subcategoriaId}
+                        onChange={(e) => setSubcategoriaId(e.target.value)}
+                        required
+                        disabled={!categoriaId || saving}
+                        className="form-control my-input"
+                      >
+                        <option value="">Seleccionar...</option>
+                        {subcategorias.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.nombre}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Col>
 
-                  <Col xs={12}>
-                    <Form.Label>Contenido detallado</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={4}
-                      value={contenido}
-                      onChange={(e) => setContenido(e.target.value)}
-                      disabled={saving}
-                      className="my-input"
-                    />
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
+                    <Col xs={12}>
+                      <Form.Label>Descripción breve / resumen</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        value={descripcionResumen}
+                        onChange={(e) => setDescripcionResumen(e.target.value)}
+                        disabled={saving}
+                        className="my-input"
+                      />
+                    </Col>
 
-            {/* PASOS */}
-            <Card className="mb-3">
-              <Card.Header className="d-flex justify-content-between align-items-center">
-                <span className="fw-bold">Pasos / Procedimiento</span>
-                <Button
-                  size="sm"
-                  variant="outline-primary"
-                  onClick={addPaso}
-                  disabled={saving}
-                >
-                  + Agregar paso
-                </Button>
-              </Card.Header>
+                    <Col xs={12}>
+                      <Form.Label>Contenido detallado</Form.Label>
+                      <Form.Control
+                        as="textarea"
+                        rows={4}
+                        value={contenido}
+                        onChange={(e) => setContenido(e.target.value)}
+                        disabled={saving}
+                        className="my-input"
+                      />
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
 
-              <Card.Body>
-                {pasos.map((p, idx) => (
-                  <div key={idx} className="border rounded p-3 mb-3 bg-light">
-                    <Row className="g-2">
-                      <Col md={2}>
-                        <Form.Label># Orden</Form.Label>
-                        <Form.Control
-                          type="number"
-                          value={p.orden}
-                          onChange={(e) =>
-                            updatePaso(idx, "orden", Number(e.target.value))
-                          }
-                          disabled={saving}
-                          className="my-input"
-                        />
-                      </Col>
+              {/* PASOS */}
+              <Card className="mb-3">
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                  <span className="fw-bold">Pasos / Procedimiento</span>
+                  <Button
+                    size="sm"
+                    variant="outline-primary"
+                    onClick={addPaso}
+                    disabled={saving}
+                  >
+                    + Agregar paso
+                  </Button>
+                </Card.Header>
 
-                      <Col md={4}>
-                        <Form.Label>Título Paso</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={p.titulo_paso}
-                          onChange={(e) =>
-                            updatePaso(idx, "titulo_paso", e.target.value)
-                          }
-                          disabled={saving}
-                          className="my-input"
-                        />
-                      </Col>
+                <Card.Body>
+                  {pasos.map((p, idx) => (
+                    <div key={idx} className="border rounded p-3 mb-3 bg-light">
+                      <Row className="g-2">
+                        <Col md={2}>
+                          <Form.Label># Orden</Form.Label>
+                          <Form.Control
+                            type="number"
+                            value={p.orden}
+                            onChange={(e) =>
+                              updatePaso(idx, "orden", Number(e.target.value))
+                            }
+                            disabled={saving}
+                            className="my-input"
+                          />
+                        </Col>
 
-                      <Col md={4}>
-                        <Form.Label>Responsable</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={p.responsable}
-                          onChange={(e) =>
-                            updatePaso(idx, "responsable", e.target.value)
-                          }
-                          disabled={saving}
-                          className="my-input"
-                        />
-                      </Col>
+                        <Col md={4}>
+                          <Form.Label>Título Paso</Form.Label>
+                          <Form.Control
+                            type="text"
+                            value={p.titulo_paso}
+                            onChange={(e) =>
+                              updatePaso(idx, "titulo_paso", e.target.value)
+                            }
+                            disabled={saving}
+                            className="my-input"
+                          />
+                        </Col>
 
-                      <Col xs={12}>
-                        <Form.Label>Detalle / Instrucciones</Form.Label>
-                        <Form.Control
-                          as="textarea"
-                          rows={2}
-                          value={p.detalle_paso}
-                          onChange={(e) =>
-                            updatePaso(idx, "detalle_paso", e.target.value)
-                          }
-                          disabled={saving}
-                          className="my-input"
-                        />
-                      </Col>
-                    </Row>
+                        <Col md={4}>
+                          <Form.Label>Responsable</Form.Label>
+                          <Form.Control
+                            type="text"
+                            value={p.responsable}
+                            onChange={(e) =>
+                              updatePaso(idx, "responsable", e.target.value)
+                            }
+                            disabled={saving}
+                            className="my-input"
+                          />
+                        </Col>
 
-                    {pasos.length > 1 && (
-                      <div className="text-end mt-2">
-                        <Button
-                          size="sm"
-                          variant="outline-danger"
-                          onClick={() => removePaso(idx)}
-                          disabled={saving}
-                        >
-                          Quitar paso
-                        </Button>
+                        <Col xs={12}>
+                          <Form.Label>Detalle / Instrucciones</Form.Label>
+                          <Form.Control
+                            as="textarea"
+                            rows={2}
+                            value={p.detalle_paso}
+                            onChange={(e) =>
+                              updatePaso(idx, "detalle_paso", e.target.value)
+                            }
+                            disabled={saving}
+                            className="my-input"
+                          />
+                        </Col>
+                      </Row>
+
+                      {pasos.length > 1 && (
+                        <div className="text-end mt-2">
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            onClick={() => removePaso(idx)}
+                            disabled={saving}
+                          >
+                            Quitar paso
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </Card.Body>
+              </Card>
+
+              {/* ARCHIVOS EXISTENTES */}
+              {isEdit && (
+                <Card className="mb-3">
+                  <Card.Header className="fw-bold">
+                    Archivos ya cargados en el documento
+                  </Card.Header>
+                  <Card.Body>
+                    {archivosExistentes.length === 0 && (
+                      <div className="text-muted">
+                        No hay archivos actualmente en este documento.
                       </div>
                     )}
-                  </div>
-                ))}
-              </Card.Body>
-            </Card>
 
-            {/* ARCHIVOS EXISTENTES */}
-            {isEdit && (
-              <Card className="mb-3">
-                <Card.Header className="fw-bold">
-                  Archivos ya cargados en el documento
-                </Card.Header>
+                    <ul className="list-group">
+                      {archivosExistentes.map((a, idx) => (
+                        <li
+                          key={a.drive_file_id || a.id || idx}
+                          className="list-group-item d-flex justify-content-between align-items-start"
+                        >
+                          <div>
+                            <div className="fw-bold">{a.filename_original}</div>
+                            <div className="small text-muted">
+                              {a.mime_type || "mime?"}
+                            </div>
+                            {a.url_storage && (
+                              <a
+                                href={a.url_storage}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="small"
+                              >
+                                Ver archivo
+                              </a>
+                            )}
+                          </div>
+
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            disabled={saving || removingDriveFileId === a.drive_file_id}
+                            onClick={() => handleRemoveArchivoExistente(idx)}
+                          >
+                            {removingDriveFileId === a.drive_file_id ? (
+                              <>
+                                <Spinner animation="border" size="sm" className="me-1" />
+                                Quitando...
+                              </>
+                            ) : (
+                              "Quitar"
+                            )}
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card.Body>
+                </Card>
+              )}
+
+              {/* ARCHIVOS NUEVOS */}
+              <Card className="mb-4">
+                <Card.Header className="fw-bold">Agregar archivos nuevos</Card.Header>
                 <Card.Body>
-                  {archivosExistentes.length === 0 && (
-                    <div className="text-muted">
-                      No hay archivos actualmente en este documento.
-                    </div>
-                  )}
+                  <Row className="g-2 align-items-end">
+                    <Col md={6}>
+                      <Form.Label>Seleccionar archivo</Form.Label>
+                      <Form.Control
+                        type="file"
+                        onChange={handleSelectArchivoNuevo}
+                        disabled={saving}
+                      />
+                    </Col>
+                  </Row>
 
-                  <ul className="list-group">
-                    {archivosExistentes.map((a, idx) => (
+                  <ul className="list-group mt-3">
+                    {archivosPendientes.map((item, idx) => (
                       <li
-                        key={a.drive_file_id || a.id || idx}
+                        key={idx}
                         className="list-group-item d-flex justify-content-between align-items-start"
                       >
                         <div>
-                          <div className="fw-bold">{a.filename_original}</div>
+                          <div className="fw-bold">{item.file.name}</div>
                           <div className="small text-muted">
-                            {a.mime_type || "mime?"}
+                            {item.file.type || "mime?"} —{" "}
+                            {(item.file.size / 1024).toFixed(1)} KB
                           </div>
-                          {a.url_storage && (
-                            <a
-                              href={a.url_storage}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="small"
-                            >
-                              Ver archivo
-                            </a>
-                          )}
                         </div>
 
                         <Button
                           size="sm"
                           variant="outline-danger"
-                          disabled={saving || removingDriveFileId === a.drive_file_id}
-                          onClick={() => handleRemoveArchivoExistente(idx)}
+                          onClick={() => handleRemoveArchivoPendiente(idx)}
+                          disabled={saving}
                         >
-                          {removingDriveFileId === a.drive_file_id ? (
-                            <>
-                              <Spinner animation="border" size="sm" className="me-1" />
-                              Quitando...
-                            </>
-                          ) : (
-                            "Quitar"
-                          )}
+                          Quitar
                         </Button>
                       </li>
                     ))}
+
+                    {archivosPendientes.length === 0 && (
+                      <li className="list-group-item text-muted">
+                        No hay archivos nuevos seleccionados
+                      </li>
+                    )}
                   </ul>
                 </Card.Body>
               </Card>
-            )}
 
-            {/* ARCHIVOS NUEVOS */}
-            <Card className="mb-4">
-              <Card.Header className="fw-bold">Agregar archivos nuevos</Card.Header>
-              <Card.Body>
-                <Row className="g-2 align-items-end">
-                  <Col md={6}>
-                    <Form.Label>Seleccionar archivo</Form.Label>
-                    <Form.Control
-                      type="file"
-                      onChange={handleSelectArchivoNuevo}
-                      disabled={saving}
-                    />
-                  </Col>
-                </Row>
-
-                <ul className="list-group mt-3">
-                  {archivosPendientes.map((item, idx) => (
-                    <li
-                      key={idx}
-                      className="list-group-item d-flex justify-content-between align-items-start"
-                    >
-                      <div>
-                        <div className="fw-bold">{item.file.name}</div>
-                        <div className="small text-muted">
-                          {item.file.type || "mime?"} —{" "}
-                          {(item.file.size / 1024).toFixed(1)} KB
-                        </div>
-                      </div>
-
-                      <Button
-                        size="sm"
-                        variant="outline-danger"
-                        onClick={() => handleRemoveArchivoPendiente(idx)}
-                        disabled={saving}
-                      >
-                        Quitar
-                      </Button>
-                    </li>
-                  ))}
-
-                  {archivosPendientes.length === 0 && (
-                    <li className="list-group-item text-muted">
-                      No hay archivos nuevos seleccionados
-                    </li>
-                  )}
-                </ul>
-              </Card.Body>
-            </Card>
-
-            {/* BOTONES FINALES */}
-            <div className="d-flex justify-content-end gap-2">
-              <Button
-                variant="outline-secondary"
-                onClick={handleCancel}
-                disabled={saving}
-              >
-                Cancelar
-              </Button>
-
-              {esAdmin && (
+              {/* BOTONES FINALES */}
+              <div className="d-flex justify-content-end gap-2">
                 <Button
-                  variant="primary"
-                  onClick={handleSave}
+                  variant="outline-secondary"
+                  onClick={handleCancel}
                   disabled={saving}
                 >
-                  {saving ? (
-                    <>
-                      <Spinner animation="border" size="sm" className="me-1" />
-                      Guardando...
-                    </>
-                  ) : isEdit ? (
-                    "Guardar Cambios"
-                  ) : (
-                    "Guardar"
-                  )}
+                  Cancelar
                 </Button>
-              )}
-            </div>
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
-  </Container>
-);
+
+                {esAdmin && (
+                  <Button
+                    variant="primary"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <>
+                        <Spinner animation="border" size="sm" className="me-1" />
+                        Guardando...
+                      </>
+                    ) : isEdit ? (
+                      "Guardar Cambios"
+                    ) : (
+                      "Guardar"
+                    )}
+                  </Button>
+                )}
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
+  );
 }

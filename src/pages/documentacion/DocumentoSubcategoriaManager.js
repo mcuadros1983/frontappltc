@@ -15,10 +15,12 @@ import {
   Spinner,
   Alert,
 } from "react-bootstrap";
+import { useSecurity } from "../../security/SecurityContext"; // 👈 usa SecurityContext
 
 export default function DocumentoSubcategoriaManager() {
-  const dataContext = useContext(Contexts.UserContext);
-  const userRolId = dataContext?.user?.rol_id;
+  const { user, ready } = useSecurity();
+  // const dataContext = useContext(Contexts.UserContext);
+  const userRolId = user?.rol_id;
   const esAdmin = String(userRolId) === "1";
 
   const [categorias, setCategorias] = useState([]);
@@ -109,145 +111,146 @@ export default function DocumentoSubcategoriaManager() {
   }
 
   return (
-  <Container fluid className="mt-3">
-    <Row>
-      <Col>
-        <Card>
-          <Card.Header className="d-flex justify-content-between align-items-start flex-wrap">
-            <div>
-              <strong className="d-block">Subcategorías / Áreas</strong>
-              <small className="text-muted">
-                Definí áreas internas (ej: RRHH, CAJAS, Seguridad) y qué roles pueden ver documentos de esa área.
-              </small>
-            </div>
-
-            <div className="text-end">
-              <div className="mb-2">
-                <Form.Label className="me-2 d-inline ">Categoría</Form.Label>
-                <Form.Select
-                  value={categoriaId}
-                  onChange={(e) => setCategoriaId(e.target.value)}
-                  className="form-control my-input  w-auto"
-                >
-                  <option value="">Seleccionar...</option>
-                  {categorias.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </Form.Select>
+    <Container fluid className="mt-3">
+      <Row>
+        <Col>
+          <Card>
+            <Card.Header className="d-flex justify-content-between align-items-start flex-wrap">
+              <div>
+                <strong className="d-block">Subcategorías / Áreas</strong>
+                <small className="text-muted">
+                  Definí áreas internas (ej: RRHH, CAJAS, Seguridad) y qué roles pueden ver documentos de esa área.
+                </small>
               </div>
 
-              {esAdmin && (
-                <Button
-                  variant="success"
-                  size="sm"
-                  onClick={abrirNueva}
-                  disabled={!categoriaId}
-                >
-                  Nueva Subcategoría
-                </Button>
+              <div className="text-end">
+                <div className="mb-2">
+                  <Form.Label className="me-2 d-inline ">Categoría</Form.Label>
+                  <Form.Select
+                    value={categoriaId}
+                    onChange={(e) => setCategoriaId(e.target.value)}
+                    className="form-control my-input  w-auto"
+                  >
+                    <option value="">Seleccionar...</option>
+                    {categorias.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </div>
+
+                {esAdmin && (
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={abrirNueva}
+                    disabled={!categoriaId}
+                  >
+                    Nueva Subcategoría
+                  </Button>
+                )}
+              </div>
+            </Card.Header>
+
+            <Card.Body>
+              {err && <Alert variant="danger">{err}</Alert>}
+
+              {!categoriaId && (
+                <Alert variant="info">
+                  Elegí una categoría para ver sus subcategorías.
+                </Alert>
               )}
-            </div>
-          </Card.Header>
 
-          <Card.Body>
-            {err && <Alert variant="danger">{err}</Alert>}
-
-            {!categoriaId && (
-              <Alert variant="info">
-                Elegí una categoría para ver sus subcategorías.
-              </Alert>
-            )}
-
-            {categoriaId && (
-              <div className="table-responsive">
-                <Table bordered hover size="sm" className="mb-2">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nombre subcategoría</th>
-                      <th>Roles permitidos</th>
-                      <th>Creado</th>
-                      <th>Actualizado</th>
-                      {esAdmin && <th>Acciones</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loadingSubs ? (
+              {categoriaId && (
+                <div className="table-responsive">
+                  <Table bordered hover size="sm" className="mb-2">
+                    <thead>
                       <tr>
-                        <td colSpan={esAdmin ? 6 : 5} className="text-center py-4">
-                          Cargando subcategorías…
-                        </td>
+                        <th>ID</th>
+                        <th>Nombre subcategoría</th>
+                        <th>Roles permitidos</th>
+                        <th>Creado</th>
+                        <th>Actualizado</th>
+                        {esAdmin && <th>Acciones</th>}
                       </tr>
-                    ) : subcategorias.length === 0 ? (
-                      <tr>
-                        <td colSpan={esAdmin ? 6 : 5} className="text-center text-muted py-4">
-                          Sin subcategorías
-                        </td>
-                      </tr>
-                    ) : (
-                      subcategorias.map((sc) => (
-                        <tr key={sc.id}>
-                          <td>{sc.id}</td>
-                          <td>{sc.nombre}</td>
-                          <td>
-                            {Array.isArray(sc.roles_permitidos)
-                              ? sc.roles_permitidos.join(", ")
-                              : "—"}
+                    </thead>
+                    <tbody>
+                      {loadingSubs ? (
+                        <tr>
+                          <td colSpan={esAdmin ? 6 : 5} className="text-center py-4">
+                            Cargando subcategorías…
                           </td>
-                          <td>
-                            {sc.createdAt
-                              ? new Date(sc.createdAt).toLocaleString("es-AR")
-                              : "—"}
-                          </td>
-                          <td>
-                            {sc.updatedAt
-                              ? new Date(sc.updatedAt).toLocaleString("es-AR")
-                              : "—"}
-                          </td>
-
-                          {esAdmin && (
-                            <td className="text-nowrap">
-                              <Button
-                                size="sm"
-                                variant="outline-secondary"
-                                className="me-2"
-                                onClick={() => abrirEditar(sc)}
-                              >
-                                Editar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline-danger"
-                                onClick={() => eliminar(sc)}
-                              >
-                                Eliminar
-                              </Button>
-                            </td>
-                          )}
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </Table>
-              </div>
-            )}
+                      ) : subcategorias.length === 0 ? (
+                        <tr>
+                          <td colSpan={esAdmin ? 6 : 5} className="text-center text-muted py-4">
+                            Sin subcategorías
+                          </td>
+                        </tr>
+                      ) : (
+                        subcategorias.map((sc) => (
+                          <tr key={sc.id}>
+                            <td>{sc.id}</td>
+                            <td>{sc.nombre}</td>
+                            <td>
+                              {Array.isArray(sc.roles_permitidos)
+                                ? sc.roles_permitidos.join(", ")
+                                : "—"}
+                            </td>
+                            <td>
+                              {sc.createdAt
+                                ? new Date(sc.createdAt).toLocaleString("es-AR")
+                                : "—"}
+                            </td>
+                            <td>
+                              {sc.updatedAt
+                                ? new Date(sc.updatedAt).toLocaleString("es-AR")
+                                : "—"}
+                            </td>
 
-            {showModal && (
-              <DocumentoSubcategoriaModal
-                show={showModal}
-                onHide={() => setShowModal(false)}
-                modo={modoModal}
-                initialData={editSubcat}
-                categoriaId={categoriaId}
-                onSaved={handleSaved}
-                esAdmin={esAdmin}
-              />
-            )}
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
-  </Container>
-);}
+                            {esAdmin && (
+                              <td className="text-nowrap">
+                                <Button
+                                  size="sm"
+                                  variant="outline-secondary"
+                                  className="me-2"
+                                  onClick={() => abrirEditar(sc)}
+                                >
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline-danger"
+                                  onClick={() => eliminar(sc)}
+                                >
+                                  Eliminar
+                                </Button>
+                              </td>
+                            )}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+
+              {showModal && (
+                <DocumentoSubcategoriaModal
+                  show={showModal}
+                  onHide={() => setShowModal(false)}
+                  modo={modoModal}
+                  initialData={editSubcat}
+                  categoriaId={categoriaId}
+                  onSaved={handleSaved}
+                  esAdmin={esAdmin}
+                />
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
+  );
+}

@@ -11,8 +11,10 @@ import {
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
 import Contexts from "../../context/Contexts";
+import { useSecurity } from "../../security/SecurityContext"; // 👈 usa SecurityContext
 
 export default function MantenimientoPreventivoList() {
+  const { user, ready } = useSecurity();
   const [mantenimientos, setMantenimientos] = useState([]);
   const [filteredMantenimientos, setFilteredMantenimientos] = useState([]);
   const [sucursalId, setSucursalId] = useState("");
@@ -27,7 +29,9 @@ export default function MantenimientoPreventivoList() {
   const [branches, setBranches] = useState([]);
   const [loadingBranches, setLoadingBranches] = useState(false);
 
+
   const userContext = useContext(Contexts.UserContext);
+  
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -193,8 +197,8 @@ export default function MantenimientoPreventivoList() {
     }
   };
 
-  const canCreate = userContext?.user?.rol_id !== 4;
-  const canEditDelete = userContext?.user?.rol_id !== 4;
+  const canCreate = user?.rol_id !== 4;
+  const canEditDelete = user?.rol_id !== 4;
 
   return (
     <Container fluid className="vt-page">
