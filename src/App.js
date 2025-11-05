@@ -221,7 +221,7 @@ import ProtectedRoute from "./security/ProtectedRoute";
 import PublicOnlyRoute from "./security/PublicOnlyRoute";
 import UserContextProvider from "./context/UserContext";
 
-// Simple 403 page
+// Simple 403 page 
 function Forbidden403() {
   return <div style={{ padding: 24 }}><h2>403 - No autorizado</h2></div>;
 }

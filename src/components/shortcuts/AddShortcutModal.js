@@ -2,13 +2,15 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Modal, Button, Form, Spinner, Badge } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
+import { useSecurity } from "../../security/SecurityContext"; // 👈 usa SecurityContext
 import { addShortcut, getShortcuts } from "../../utils/shortcutsApi";
 import { getNavLinks } from "../../utils/navApi";
 
 const AddShortcutModal = ({ show, onHide, onSaved }) => {
   const userCtx = useContext(Contexts.UserContext);
-  const userId = userCtx?.user?.id;
-  const roleId = userCtx?.user?.rol_id;
+  const { user, ready } = useSecurity();
+  const roleId = user?.rol_id;
+  const userId = user?.id;
 
   const [loading, setLoading] = useState(false);
   const [catalog, setCatalog] = useState([]);
