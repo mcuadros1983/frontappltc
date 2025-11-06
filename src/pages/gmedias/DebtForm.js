@@ -11,6 +11,7 @@ export default function DebtForm() {
     monto_total: "",
     forma_cobro: "",
     descripcion_cobro: "",
+    cliente_id: null,            // 👈 NUEVO
   });
 
   const [loading, setLoading] = useState(false);
@@ -35,9 +36,12 @@ export default function DebtForm() {
       credentials: "include",
     });
     const data = await res.json();
-    setDebt(data);
+    setDebt({
+      ...data,
+      cliente_id: data?.cliente_id ?? data?.clienteId ?? null, // 👈 normaliza
+    });
     setEditing(true);
-  },[apiUrl]);
+  }, [apiUrl]);
 
   useEffect(() => {
     if (params.id) {
@@ -48,58 +52,73 @@ export default function DebtForm() {
         monto_total: "",
         forma_cobro: "",
         descripcion_cobro: "",
+        cliente_id: null,
       });
     }
-  }, [params.id,loadDebt]);
+  }, [params.id, loadDebt]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    let result = null; // 👈 acá guardamos el JSON de respuesta
+    try {
 
-    if (editing) {
-      await fetch(`${apiUrl}/cobranzas/${params.id}`, {
-        credentials: "include",
-        method: "PUT",
-        body: JSON.stringify(debt),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      setEditing(false);
-    } else {
-      await fetch(`${apiUrl}/cobranzas/`, {
-        credentials: "include",
-        method: "POST",
-        body: JSON.stringify(debt),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      if (editing) {
+        const r = await fetch(`${apiUrl}/cobranzas/${params.id}`, {
+          credentials: "include",
+          method: "PUT",
+          body: JSON.stringify(debt),
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+        });
+        result = await r.json().catch(() => ({}));
+        // setEditing(false);
+      } else {
+        const r = await fetch(`${apiUrl}/cobranzas/`, {
+          credentials: "include",
+          method: "POST",
+          body: JSON.stringify(debt),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        result = await r.json().catch(() => ({}));
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    navigate("/accounts/new"); // Redirige a la lista de cobranzas después de guardar o editar
+    const targetClientId =
+      debt?.cliente_id ?? debt?.clienteId ??
+      result?.cliente_id ??
+      result?.clienteId ??
+      null; navigate(`/accounts/new?clienteId=${targetClientId}`, {
+        state: { preselectedClientId: targetClientId, lockClient: true },
+      });
   };
 
   const handleDelete = async () => {
-    const confirmDelete = window.confirm(
-      "¿Estás seguro de que deseas eliminar esta cobranza?"
-    );
-    if (!confirmDelete) {
-      return;
-    }
+    const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar esta cobranza?");
+    if (!confirmDelete) return;
     try {
       setLoading(true);
-      // Realiza la solicitud para eliminar la cobranza
+      // Asegurar cliente antes de borrar
+      let targetClientId = debt?.cliente_id ?? debt?.clienteId ?? null;
+      if (!targetClientId && params.id) {
+        const pre = await fetch(`${apiUrl}/cobranzas/${params.id}`, { credentials: "include" });
+        const pj = await pre.json().catch(() => ({})); targetClientId = pj?.cliente_id ?? pj?.clienteId ?? null;
+      }
       await fetch(`${apiUrl}/cobranzas/${params.id}`, {
         credentials: "include",
         method: "DELETE",
       });
       setLoading(false);
-      navigate("/accounts/new"); // Redirige a la lista de cobranzas después de eliminar
+
+      navigate("/accounts/new", { state: { preselectedClientId: targetClientId, lockClient: true }, });
     } catch (error) {
       console.error("Error al eliminar la cobranza:", error);
       setLoading(false);
-      // Maneja el error aquí
     }
   };
 
@@ -120,7 +139,7 @@ export default function DebtForm() {
             onChange={handleChange}
             placeholder="Ingresa el monto total"
             className="my-input"
-            // min="0" // Establecer el valor mínimo como 0
+          // min="0" // Establecer el valor mínimo como 0
           />
         </Form.Group>
         <Form.Group className="mb-3">

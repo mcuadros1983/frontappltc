@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import Contexts from "./Contexts";
+import { useSecurity } from "../security/SecurityContext";
 
 
 export default function UserContextProvider({ children }) {
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
+  const { user, setUser } = useSecurity();
 
   const apiUrl = process.env.REACT_APP_API_URL;
   // `${apiUrl}/formas-pago/`

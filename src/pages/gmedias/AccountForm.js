@@ -1,14 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-  Table,
-  Container,
-  Button,
-  FormControl,
-  Modal,
-  Form,
-} from "react-bootstrap";
-// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { Table, Container, Button, FormControl, Modal, Form, Alert, Row, Col } from "react-bootstrap";
+import { useNavigate, useLocation } from "react-router-dom";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 
 export default function AccountForm() {
@@ -16,155 +8,168 @@ export default function AccountForm() {
   const [selectedCliente, setSelectedCliente] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
   const [saldoActual, setSaldoActual] = useState(0);
-  const [showModal, setShowModal] = useState(false); // Nuevo estado para controlar la visibilidad del modal
-  const [montoCobranza, setMontoCobranza] = useState(""); // Nuevo estado para el monto de la cobranza
-  const [descripcionCobranza, setDescripcionCobranza] = useState(""); // Nuevo estado para el monto de la cobranza
-  const [formaCobro, setFormaCobro] = useState(""); // Nuevo estado para el monto de la cobranza
+
+  const [showModal, setShowModal] = useState(false);
+  const [montoCobranza, setMontoCobranza] = useState("");
+  const [descripcionCobranza, setDescripcionCobranza] = useState("");
+  const [formaCobro, setFormaCobro] = useState("");
+  const [fechaCobranza, setFechaCobranza] = useState("");
+
   const [currentPage, setCurrentPage] = useState(1);
   const [movimientosPerPage] = useState(10);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
-  // Nuevo estado para la fecha de la cobranza
-  const [fechaCobranza, setFechaCobranza] = useState("");
+
+  // 🔎 Filtros nuevos
+  const [filterDesde, setFilterDesde] = useState("");
+  const [filterHasta, setFilterHasta] = useState("");
+  const [filterTipo, setFilterTipo] = useState("todos"); // "todos" | "venta" | "cobranza"
 
   const navigate = useNavigate();
-
+  const location = useLocation();
   const apiUrl = process.env.REACT_APP_API_URL;
+
+  // Preselección (state o query)
+  const preselectedFromState = location.state?.preselectedClientId;
+  const preselectedFromQuery = new URLSearchParams(location.search).get("clienteId");
+  const preselectedClientId = preselectedFromState ?? (preselectedFromQuery ? Number(preselectedFromQuery) : undefined);
+
+  // Bloqueo por “Saldos”
+  const lockedByState = Boolean(location.state?.lockClient);
+  const lockedByQuery = Boolean(preselectedFromQuery) && true;
+  const isClientLocked = lockedByState || lockedByQuery;
+
+  const alreadyAppliedPreselectRef = useRef(false);
 
   const obtenerClientes = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/clientes/`, {
-        credentials: "include",
-      }); // Ajusta la ruta de la API
+      const response = await fetch(`${apiUrl}/clientes/`, { credentials: "include" });
       const data = await response.json();
-      // Ordenar los clientes alfabéticamente por el nombre
-      const sortedClientes = [...data].sort((a, b) =>
-        a.nombre.localeCompare(b.nombre)
-      );
+      const sortedClientes = [...data].sort((a, b) => String(a.nombre).localeCompare(String(b.nombre)));
       setClientes(sortedClientes);
-      // setClientes(data);
-
-      // setLoaded(true);
     } catch (error) {
-      console.error("Error al obtener clientes", error); 
+      console.error("Error al obtener clientes", error);
     }
   }, [apiUrl]);
 
   useEffect(() => {
-    // Obtener lista de clientes al cargar el componente
     obtenerClientes();
   }, [obtenerClientes]);
 
   const obtenerCliente = async (clienteId) => {
     try {
-      const response = await fetch(`${apiUrl}/clientes/${clienteId}/`, {
-        credentials: "include",
-      });
-      
+      const response = await fetch(`${apiUrl}/clientes/${clienteId}/`, { credentials: "include" });
       const cliente = await response.json();
-      console.log("cliente", cliente)
       return cliente;
     } catch (error) {
       console.error("Error al obtener datos del cliente", error);
       return null;
     }
   };
-  const handleClienteChange = async (clienteId) => {
+
+  const obtenerOperaciones = async (clienteId) => {
+    const response = await fetch(`${apiUrl}/cuentas-corrientes/${clienteId}/operaciones`, {
+      credentials: "include",
+    });
+    return response.json();
+  };
+
+  const handleClienteChange = async (clienteIdRaw) => {
+    const clienteId = Number(clienteIdRaw);
+    if (!clienteId) {
+      setSelectedCliente(null);
+      setMovimientos([]);
+      setSaldoActual(0);
+      return;
+    }
+
     try {
-      // Obtener datos del cliente y operaciones de cuenta corriente
-      const [cliente, operaciones] = await Promise.all([
-        obtenerCliente(clienteId),
-        fetch(`${apiUrl}/cuentas-corrientes/${clienteId}/operaciones`, {
-          credentials: "include",
-        }).then((response) => response.json()),
-      ]);
+      const [cliente, operaciones] = await Promise.all([obtenerCliente(clienteId), obtenerOperaciones(clienteId)]);
 
-      // Verificar si el cliente tiene cuenta corriente
       if (cliente && cliente.cuentaCorriente) {
-        // Verificar si el cliente seleccionado es diferente al cliente anterior
-        if (cliente.id !== selectedCliente?.id) {
-          // Restablecer movimientos y saldo actual
-
-          // setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
-          const allMovimientos = [...operaciones.ventas, ...operaciones.cobranzas]
-            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-          setMovimientos(allMovimientos);
-          setSaldoActual(operaciones.saldoActual);
-          setCurrentPage(1); // Reinicia la página al cambiar de cliente
-        }
+        const allMovs = [...(operaciones.ventas || []), ...(operaciones.cobranzas || [])].sort(
+          (a, b) => new Date(b.fecha) - new Date(a.fecha)
+        );
+        setMovimientos(allMovs);
+        setSaldoActual(operaciones.saldoActual);
+        setCurrentPage(1);
         setSelectedCliente(cliente);
       } else {
-        // Cliente no tiene cuenta corriente, restablecer valores
         setMovimientos([]);
         setSaldoActual(0);
-        setSelectedCliente(null);
+        setSelectedCliente(cliente || null);
       }
     } catch (error) {
       console.error("Error al obtener movimientos y saldo", error);
     }
   };
 
+  // Aplicar preselección cuando haya clientes cargados
+  useEffect(() => {
+    const hasClients = Array.isArray(clientes) && clientes.length > 0;
+    const hasPreselected = preselectedClientId !== undefined && preselectedClientId !== null && preselectedClientId !== "";
+    if (!alreadyAppliedPreselectRef.current && hasClients && hasPreselected) {
+      alreadyAppliedPreselectRef.current = true;
+      handleClienteChange(preselectedClientId);
+    }
+  }, [clientes, preselectedClientId]);
+
+  // Si está bloqueado y hay preselección pero aún no cargó el cliente, cargarlo
+  useEffect(() => {
+    const hasPreselected = preselectedClientId !== undefined && preselectedClientId !== null && preselectedClientId !== "";
+    if (isClientLocked && hasPreselected && !selectedCliente) {
+      handleClienteChange(preselectedClientId);
+    }
+  }, [isClientLocked, preselectedClientId, selectedCliente]);
+
+  // onChange defensivo: no cambiar si está bloqueado
+  const handleClienteSelectChange = (e) => {
+    if (isClientLocked) return;
+    handleClienteChange(e.target.value);
+  };
+
+  const hasMissingPrice = (mov) => {
+    if (!Array.isArray(mov?.productos)) return false;
+    return mov.productos.some((p) => {
+      const val = Number(p?.precio);
+      return p?.precio === null || p?.precio === undefined || Number.isNaN(val) || val <= 0;
+    });
+  };
+
   const handleRegistrarCobranza = () => {
-    // Limpiar los campos antes de abrir el modal
     setMontoCobranza("");
     setDescripcionCobranza("");
     setFormaCobro("");
+    setFechaCobranza("");
     setShowModal(true);
   };
 
   const handleSort = (columnName) => {
-    const newSortDirection =
-      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
     setSortColumn(columnName);
     setSortDirection(newSortDirection);
-
-    const sortedMovimientos = [...movimientos].sort((a, b) => {
-      const valueA = a[columnName] ?? "";
-      const valueB = b[columnName] ?? "";
-
-      if (typeof valueA === "number" && typeof valueB === "number") {
-        return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
-      }
-
-      return newSortDirection === "asc"
-        ? String(valueA).localeCompare(String(valueB))
-        : String(valueB).localeCompare(String(valueA));
-    });
-
-    setMovimientos(sortedMovimientos);
   };
 
-  const handleCloseModal = () => {
-    // Cierra el formulario modal
-    setShowModal(false);
-  };
+  const handleCloseModal = () => setShowModal(false);
 
   const handleGuardarCobranza = async () => {
-    // Validación: Verificar que el monto de la cobranza no sea vacío
-    if (!montoCobranza.trim()) {
+    if (!String(montoCobranza).trim()) {
       alert("Por favor, ingrese un monto de cobranza válido.");
       return;
     }
-
-    // Validación: Verificar que el monto de la cobranza sea un número
     if (isNaN(parseFloat(montoCobranza))) {
-      alert(
-        "Por favor, ingrese un valor numérico para el monto de la cobranza."
-      );
+      alert("Por favor, ingrese un valor numérico para el monto de la cobranza.");
+      return;
+    }
+    if (!selectedCliente?.id) {
+      alert("Debe haber un cliente seleccionado.");
       return;
     }
 
-    const confirmGuardarCobranza = window.confirm(
-      "¿Seguro que desea grabar esta cobranza?"
-    );
-
-    if (!confirmGuardarCobranza) {
-      return;
-    }
+    const confirmGuardar = window.confirm("¿Seguro que desea grabar esta cobranza?");
+    if (!confirmGuardar) return;
 
     try {
-      // Lógica para guardar la cobranza, puedes implementarla según tu necesidad
-      // Aquí puedes realizar la lógica para enviar el monto de la cobranza al servidor, por ejemplo
       await fetch(`${apiUrl}/cobranzas`, {
         credentials: "include",
         method: "POST",
@@ -176,73 +181,108 @@ export default function AccountForm() {
           montoTotal: montoCobranza,
           fecha: fechaCobranza,
         }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-      // Obtén nuevamente las operaciones de cuenta corriente para el cliente
-      const response = await fetch(
-        `${apiUrl}/cuentas-corrientes/${selectedCliente.id}/operaciones`,
-        {
-          credentials: "include",
-        }
-      );
-      const operaciones = await response.json();
 
-      // Actualiza los movimientos en el estado
-      // setMovimientos([...operaciones.ventas, ...operaciones.cobranzas]);
-      const allMovimientos = [...operaciones.ventas, ...operaciones.cobranzas]
-        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-      setMovimientos(allMovimientos);
-      setSaldoActual(operaciones.saldoActual);
-      setCurrentPage(1); // Reinicia la página luego de actualizar movimientos
-    } catch (error) {
-      console.error(
-        "Error al guardar la cobranza o al obtener movimientos y saldo después de la cobranza",
-        error
+      const operaciones = await obtenerOperaciones(selectedCliente.id);
+      const allMovs = [...(operaciones.ventas || []), ...(operaciones.cobranzas || [])].sort(
+        (a, b) => new Date(b.fecha) - new Date(a.fecha)
       );
-      // Puedes manejar el error de alguna manera, como mostrar un mensaje al usuario
+      setMovimientos(allMovs);
+      setSaldoActual(operaciones.saldoActual);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error("Error al guardar cobranza/recargar movimientos", error);
       alert("Error al guardar la cobranza o al obtener movimientos y saldo.");
     }
-    // Resto de la lógica (limpiar campos, cerrar modal, etc.)
+
     setMontoCobranza("");
     handleCloseModal();
   };
 
-  // *** LÓGICA DE PAGINACIÓN ***
-  // Calcular el índice del último movimiento y del primero según la página actual
+  // === Filtro + Orden + Paginación ===
+  const filteredAndSortedMovs = useMemo(() => {
+    const desde = filterDesde ? new Date(filterDesde) : null;
+    const hasta = filterHasta ? new Date(filterHasta) : null;
+
+    const movsFiltrados = (movimientos || []).filter((m) => {
+      const fecha = new Date(m.fecha);
+      const isVenta = Boolean(m.productos);
+      const tipoOK =
+        filterTipo === "todos" ? true : filterTipo === "venta" ? isVenta : !isVenta;
+
+      const fechaOK =
+        (!desde || fecha >= desde) &&
+        (!hasta || fecha <= hasta);
+
+      return tipoOK && fechaOK;
+    });
+
+    // Ordenar
+    const arr = [...movsFiltrados];
+    if (sortColumn) {
+      arr.sort((a, b) => {
+        let va = a[sortColumn];
+        let vb = b[sortColumn];
+
+        if (sortColumn === "fecha") {
+          va = new Date(a.fecha);
+          vb = new Date(b.fecha);
+        } else if (sortColumn === "monto_total") {
+          va = Number(a.monto_total) || 0;
+          vb = Number(b.monto_total) || 0;
+        } else {
+          va = String(va ?? "");
+          vb = String(vb ?? "");
+        }
+
+        if (va < vb) return sortDirection === "asc" ? -1 : 1;
+        if (va > vb) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return arr;
+  }, [movimientos, filterDesde, filterHasta, filterTipo, sortColumn, sortDirection]);
+
   const indexOfLastMovimiento = currentPage * movimientosPerPage;
   const indexOfFirstMovimiento = indexOfLastMovimiento - movimientosPerPage;
-  // Obtener el subconjunto de movimientos a mostrar
-  const currentMovimientos = movimientos.slice(
-    indexOfFirstMovimiento,
-    indexOfLastMovimiento
-  );
+  const currentMovimientos = filteredAndSortedMovs.slice(indexOfFirstMovimiento, indexOfLastMovimiento);
 
   const handleNextPage = () => {
-    if (currentPage < Math.ceil(movimientos.length / movimientosPerPage)) {
-      setCurrentPage(currentPage + 1);
+    if (currentPage < Math.ceil(filteredAndSortedMovs.length / movimientosPerPage)) {
+      setCurrentPage((p) => p + 1);
     }
+  };
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
   };
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+  // Indicador en headers
+  const sortIndicator = (col) =>
+    sortColumn === col ? (sortDirection === "asc" ? " ▲" : " ▼") : "";
 
   return (
     <Container>
-      <h1 className="my-list-title dark-text">
-        Registros de Cuentas Corrientes
-      </h1>
+      <h1 className="my-list-title dark-text">Registros de Cuentas Corrientes</h1>
 
+      {/* Aviso opcional de bloqueo */}
+      {isClientLocked && (
+        <Alert variant="info" className="py-2">
+          Cliente fijado desde Saldos. Para ver otro cliente, volvé a la lista de saldos y elegí con doble clic.
+        </Alert>
+      )}
+
+      {/* Selector de Cliente */}
       <div className="mb-3" style={{ width: "30%", float: "left" }}>
-        <label>Filtrar por Cliente:</label>
+        <label>Cliente:</label>
         <select
-          onChange={(e) => handleClienteChange(e.target.value)}
+          value={Number(selectedCliente?.id ?? preselectedClientId ?? "") || ""}
+          onChange={handleClienteSelectChange}
           className="form-control rounded-0 border-transparent text-center"
           style={{ width: "100%" }}
+          disabled={isClientLocked}
+          title={isClientLocked ? "Cliente bloqueado: cambialo desde Saldos" : "Seleccionar cliente"}
         >
           <option value="">Seleccione un cliente</option>
           {clientes.map((cliente) => (
@@ -253,117 +293,158 @@ export default function AccountForm() {
         </select>
       </div>
 
+      {/* Filtros: Fecha y Tipo */}
+      <div style={{ clear: "both" }} />
+      <Row className="mb-3" xs={1} md={3}>
+        <Col>
+          <label>Desde:</label>
+          <FormControl
+            type="date"
+            value={filterDesde}
+            onChange={(e) => {
+              setFilterDesde(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </Col>
+        <Col>
+          <label>Hasta:</label>
+          <FormControl
+            type="date"
+            value={filterHasta}
+            onChange={(e) => {
+              setFilterHasta(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </Col>
+        <Col>
+          <label>Tipo de operación:</label>
+          <Form.Select
+            value={filterTipo}
+            onChange={(e) => {
+              setFilterTipo(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="form-control"
+          >
+            <option value="todos">Todos</option>
+            <option value="venta">Venta</option>
+            <option value="cobranza">Cobranza</option>
+          </Form.Select>
+        </Col>
+      </Row>
+
       {selectedCliente ? (
-        <div style={{ clear: "both", marginTop: "20px" }}>
+        <div style={{ clear: "both", marginTop: "10px" }}>
           <div className="mb-3" style={{ width: "30%", float: "right" }}>
             <Button
               variant="primary"
               onClick={handleRegistrarCobranza}
-              disabled={!selectedCliente.cuentaCorriente} // Deshabilitar el botón si el cliente no tiene cuenta corriente
+              disabled={!selectedCliente.cuentaCorriente}
             >
               Registrar Cobranza
             </Button>
           </div>
 
-          {/* Movimientos de Cuenta Corriente */}
           <h2>Movimientos de Cuenta Corriente</h2>
+
+          <div className="mb-2 small text-muted">
+            <span style={{ backgroundColor: "#ffe5e5", padding: "2px 6px", borderRadius: 4 }} />
+            {" "}Fila en rojo: venta con productos sin precio.
+          </div>
 
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th
-                  onClick={() => handleSort("fecha")}
-                  style={{ cursor: "pointer" }}
-                >
-                  Fecha
+                <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha{sortIndicator("fecha")}</th>
+                <th onClick={() => handleSort("descripcion")} style={{ cursor: "pointer" }}>
+                  Descripción{sortIndicator("descripcion")}
                 </th>
-                <th
-                  onClick={() => handleSort("descripcion")}
-                  style={{ cursor: "pointer" }}
-                >
-                  Descripción
-                </th>
-                <th
-                  onClick={() => handleSort("monto_total")}
-                  style={{ cursor: "pointer" }}
-                >
-                  Monto
+                <th onClick={() => handleSort("monto_total")} style={{ cursor: "pointer" }}>
+                  Monto{sortIndicator("monto_total")}
                 </th>
               </tr>
             </thead>
             <tbody>
-              {/* Iterar sobre los movimientos y mostrarlos en la tabla */}
-              {currentMovimientos.map((movimiento, index) => (
-                <tr
-                  key={index}
-                  onDoubleClick={() => {
-                    if (movimiento.productos) {
-                      navigate(`/sells/${movimiento.id}/products`);
-                    } else {
-                      navigate(`/debts/${movimiento.id}/edit`);
+              {currentMovimientos.map((movimiento, index) => {
+                const isVenta = Boolean(movimiento.productos);
+                const faltaPrecio = isVenta && hasMissingPrice(movimiento);
+
+                return (
+                  <tr
+                    key={`${movimiento.id}-${index}`}
+                    onDoubleClick={() => {
+                      if (isVenta) {
+                        navigate(`/sells/${movimiento.id}/products`);
+                      } else {
+                        navigate(`/debts/${movimiento.id}/edit`, {
+                          state: { preselectedClientId: selectedCliente?.id, lockClient: true },
+                        });
+                      }
+                    }}
+                    style={{
+                      cursor: "pointer",
+                      backgroundColor: faltaPrecio ? "#ffe5e5" : undefined,
+                    }}
+                    title={
+                      faltaPrecio
+                        ? "Esta venta tiene productos sin precio"
+                        : isVenta
+                          ? "Doble clic para ver productos"
+                          : "Doble clic para editar cobranza"
                     }
-                  }}
-                >
-                  <td>{movimiento.fecha}</td>
-                  <td>{movimiento.productos ? "Venta" : "Cobranza"}</td>
-                  <td>
-                    {movimiento.monto_total != null
-                      ? movimiento.monto_total.toLocaleString("es-AR", {
-                        style: "currency",
-                        currency: "ARS",
-                        minimumFractionDigits: 2,
-                      })
-                      : "$0,00"}
-                  </td>
-                </tr>
-              ))}
+                  >
+                    <td>{movimiento.fecha}</td>
+                    <td>{isVenta ? "Venta" : "Cobranza"}</td>
+                    <td>
+                      {movimiento.monto_total != null
+                        ? Number(movimiento.monto_total).toLocaleString("es-AR", {
+                            style: "currency",
+                            currency: "ARS",
+                            minimumFractionDigits: 2,
+                          })
+                        : "$0,00"}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
+
           <div className="d-flex justify-content-center align-items-center">
             <Button onClick={handlePrevPage} disabled={currentPage === 1}>
               <BsChevronLeft />
             </Button>
             <span className="mx-2">
-              Página {currentPage} de{" "}
-              {Math.ceil(movimientos.length / movimientosPerPage)}
+              Página {currentPage} de {Math.ceil(filteredAndSortedMovs.length / movimientosPerPage) || 1}
             </span>
             <Button
               onClick={handleNextPage}
-              disabled={
-                currentPage ===
-                Math.ceil(movimientos.length / movimientosPerPage)
-              }
+              disabled={currentPage === Math.ceil(filteredAndSortedMovs.length / movimientosPerPage) || filteredAndSortedMovs.length === 0}
             >
               <BsChevronRight />
             </Button>
           </div>
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "20px",
-            }}
-          >
-            {/* Aquí puedes mostrar el saldo actual o cualquier otra información */}
-            <tr>
-              <td>Saldo Actual: </td>
-              <td>
+
+          <div style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "20px" }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              <strong>Saldo Actual:</strong>
+              <span>
                 {saldoActual != null
-                  ? saldoActual.toLocaleString("es-AR", {
-                    style: "currency",
-                    currency: "ARS",
-                    minimumFractionDigits: 2,
-                  })
+                  ? Number(saldoActual).toLocaleString("es-AR", {
+                      style: "currency",
+                      currency: "ARS",
+                      minimumFractionDigits: 2,
+                    })
                   : "$0,00"}
-              </td>
-            </tr>
+              </span>
+            </div>
           </div>
         </div>
       ) : (
         <div style={{ clear: "both", marginTop: "20px" }}>
-          {/* Movimientos de Cuenta Corriente */}
           <h2>Movimientos de Cuenta Corriente</h2>
-
           <Table striped bordered hover>
             <thead>
               <tr>
@@ -377,39 +458,28 @@ export default function AccountForm() {
         </div>
       )}
 
-      {/* Formulario Modal para Registrar Cobranza */}
-      <Modal
-        show={showModal}
-        onHide={handleCloseModal}
-        backdrop="static"
-        keyboard={false}
-      >
+      {/* Modal Cobranza */}
+      <Modal show={showModal} onHide={handleCloseModal} backdrop="static" keyboard={false}>
         <Modal.Header closeButton>
           <Modal.Title>Registrar Cobranza</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <label>Fecha:</label>
-          <FormControl
-            type="date"
-            value={fechaCobranza}
-            onChange={(e) => setFechaCobranza(e.target.value)}
-          />
-          <label>Monto:</label>
-          <label>Monto:</label>
+          <Form.Label>Fecha:</Form.Label>
+          <FormControl type="date" value={fechaCobranza} onChange={(e) => setFechaCobranza(e.target.value)} />
+          <Form.Label className="mt-2">Monto:</Form.Label>
           <FormControl
             type="number"
             value={montoCobranza}
             onChange={(e) => setMontoCobranza(e.target.value)}
-            min="0" // Establecer el valor mínimo como 0
+            min="0"
           />
-          <label>Descripción:</label>
+          <Form.Label className="mt-2">Descripción:</Form.Label>
           <FormControl
             type="text"
             value={descripcionCobranza}
             onChange={(e) => setDescripcionCobranza(e.target.value)}
-          // min="0" // Establecer el valor mínimo como 0
           />
-          <Form.Label>Forma de pago:</Form.Label>
+          <Form.Label className="mt-2">Forma de pago:</Form.Label>
           <Form.Select
             value={formaCobro}
             onChange={(e) => setFormaCobro(e.target.value)}

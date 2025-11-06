@@ -324,7 +324,7 @@ export default function CajaTesoreriaList() {
         </div>
         <Alert variant="warning" className="d-flex justify-content-between align-items-center">
           <div><strong>No hay caja abierta.</strong> Para ver y registrar movimientos, primero abrí una caja.</div>
-          <div><Button variant="primary" onClick={() => navigate("/tesoreria/abrir-caja")}>Abrir Caja</Button></div>
+          <div><Button variant="primary" onClick={() => navigate("/tesoreria/cajas/apertura")}>Abrir Caja</Button></div>
         </Alert>
       </Container>
     );
@@ -505,7 +505,7 @@ export default function CajaTesoreriaList() {
         }}
       />
 
-      <MovimientoCajaIngresoDetalleModal
+      <MovimientoCajaIngresoDetalleModal 
         show={showDetalleIngreso}
         onHide={() => setShowDetalleIngreso(false)}
         movimiento={movSeleccionado}

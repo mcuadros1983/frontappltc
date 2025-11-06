@@ -1,7 +1,8 @@
+// AccountList.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { Table, Container, Button } from "react-bootstrap";
-// import { createAuthenticatedRequest } from "../../utils/createAuthenticatedRequest";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 
 const AccountList = () => {
   const [clientesConCuenta, setClientesConCuenta] = useState([]);
@@ -11,49 +12,25 @@ const AccountList = () => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
-
   const apiUrl = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
 
   const obtenerClientesConCuenta = useCallback(async () => {
     try {
-      // Lógica para obtener clientes con cuenta corriente desde el servidor
-      // Puedes ajustar la ruta y la lógica según tu API
-      const response = await fetch(`${apiUrl}/clientes/`, {
-        credentials: "include",
-      });
+      const response = await fetch(`${apiUrl}/clientes/`, { credentials: "include" });
       const data = await response.json();
 
-      // Filtrar solo los clientes que tienen cuenta corriente
-      const clientesConCuenta = data.filter(
-        (cliente) => cliente.cuentaCorriente !== null
-      );
-
-
-      // Mapear los clientes con cuenta corriente
-      // const clientes = clientesConCuenta.map((cliente) => ({
-      //   id: cliente.id,
-      //   nombre: cliente.nombre,
-      //   saldo: cliente.cuentaCorriente.saldoActual,
-      // }));
-
-      // setClientesConCuenta(clientes);
-
-      // Mapear los clientes con cuenta corriente
-      const clientes = clientesConCuenta.map((cliente) => ({
-        id: cliente.id,
-        nombre: cliente.nombre,
-        saldo: cliente.cuentaCorriente.saldoActual,
+      const soloConCuenta = data.filter((c) => c.cuentaCorriente !== null);
+      const clientes = soloConCuenta.map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        saldo: c.cuentaCorriente.saldoActual,
       }));
 
-      // Ordenar alfabéticamente por el nombre (de A a Z)
-      const sortedClientes = [...clientes].sort((a, b) =>
-        a.nombre.localeCompare(b.nombre)
-      );
+      const sorted = [...clientes].sort((a, b) => a.nombre.localeCompare(b.nombre));
+      setClientesConCuenta(sorted);
 
-      setClientesConCuenta(sortedClientes);
-
-      // // Calcular la suma total de los saldos
-      const total = clientes.reduce((suma, cliente) => suma + cliente.saldo, 0);
+      const total = clientes.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0);
       setTotalSaldo(total);
     } catch (error) {
       console.error("Error al obtener clientes con cuenta corriente", error);
@@ -61,51 +38,39 @@ const AccountList = () => {
   }, [apiUrl]);
 
   useEffect(() => {
-    // Lógica para obtener la lista de clientes con cuenta corriente
     obtenerClientesConCuenta();
   }, [obtenerClientesConCuenta]);
 
-  // Paginación
   const indexOfLastCliente = currentPage * clientesPerPage;
   const indexOfFirstCliente = indexOfLastCliente - clientesPerPage;
-  const currentClientes = clientesConCuenta.slice(
-    indexOfFirstCliente,
-    indexOfLastCliente
-  );
+  const currentClientes = clientesConCuenta.slice(indexOfFirstCliente, indexOfLastCliente);
 
   const nextPage = () => {
     if (currentPage < Math.ceil(clientesConCuenta.length / clientesPerPage)) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage((p) => p + 1);
     }
   };
 
   const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage((p) => p - 1);
   };
 
   const handleSort = (columnName) => {
-    const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+    const newDir = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
     setSortColumn(columnName);
-    setSortDirection(newSortDirection);
+    setSortDirection(newDir);
 
-    const sortedClientes = [...clientesConCuenta].sort((a, b) => {
-      const valueA = a[columnName] ?? "";
-      const valueB = b[columnName] ?? "";
-
-      if (typeof valueA === "number" && typeof valueB === "number") {
-        return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
+    const sorted = [...clientesConCuenta].sort((a, b) => {
+      const A = a[columnName] ?? "";
+      const B = b[columnName] ?? "";
+      if (typeof A === "number" && typeof B === "number") {
+        return newDir === "asc" ? A - B : B - A;
       }
-
-      return newSortDirection === "asc"
-        ? String(valueA).localeCompare(String(valueB))
-        : String(valueB).localeCompare(String(valueA));
+      return newDir === "asc" ? String(A).localeCompare(String(B)) : String(B).localeCompare(String(A));
     });
 
-    setClientesConCuenta(sortedClientes);
+    setClientesConCuenta(sorted);
   };
-
 
   return (
     <Container>
@@ -119,52 +84,56 @@ const AccountList = () => {
         </thead>
         <tbody>
           {currentClientes.map((cliente) => (
-            <tr key={cliente.id}>
+            <tr
+              key={cliente.id}
+              onDoubleClick={() =>
+                navigate("/accounts/new", {
+                  state: { preselectedClientId: cliente.id, lockClient: true }, // 👈 NUEVO
+                })
+              }
+              style={{ cursor: "pointer" }}
+              title="Doble clic para abrir movimientos"
+            >
               <td>{cliente.nombre}</td>
               <td>
                 {cliente.saldo != null
                   ? cliente.saldo.toLocaleString("es-AR", {
-                    style: "currency",
-                    currency: "ARS",
-                    minimumFractionDigits: 2,
-                  })
+                      style: "currency",
+                      currency: "ARS",
+                      minimumFractionDigits: 2,
+                    })
                   : "$0,00"}
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
+
       <div className="d-flex justify-content-center align-items-center">
         <Button onClick={prevPage} disabled={currentPage === 1}>
           <BsChevronLeft />
         </Button>
         <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(clientesConCuenta.length / clientesPerPage)}
+          Página {currentPage} de {Math.ceil(clientesConCuenta.length / clientesPerPage)}
         </span>
         <Button
           onClick={nextPage}
-          disabled={
-            currentPage ===
-            Math.ceil(clientesConCuenta.length / clientesPerPage)
-          }
+          disabled={currentPage === Math.ceil(clientesConCuenta.length / clientesPerPage)}
         >
           <BsChevronRight />
         </Button>
       </div>
+
       <div>
         <strong>
           Total Saldo:{" "}
-          {
-            <td>
-              {totalSaldo != null
-                ? totalSaldo.toLocaleString("es-AR", {
-                  style: "currency",
-                  currency: "ARS",
-                  minimumFractionDigits: 2,
-                }) : "$0,00"}
-            </td>
-          }
+          {totalSaldo != null
+            ? totalSaldo.toLocaleString("es-AR", {
+                style: "currency",
+                currency: "ARS",
+                minimumFractionDigits: 2,
+              })
+            : "$0,00"}
         </strong>
       </div>
     </Container>

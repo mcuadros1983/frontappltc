@@ -961,11 +961,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     </Nav.Item>
                     <Collapse in={ctacteitem}>
                       <div className="ml-3 sb-sub">
-                        {can("gmedias:ctacte.registros") && (
+                        {/* {can("gmedias:ctacte.registros") && (
                           <Link to="/accounts/new" className="nav-link" onClick={handleLinkClick}>
                             Registros
                           </Link>
-                        )}
+                        )} */}
                         {can("gmedias:ctacte.view") && (
                           <Link to="/accounts" className="nav-link" onClick={handleLinkClick}>
                             Saldos

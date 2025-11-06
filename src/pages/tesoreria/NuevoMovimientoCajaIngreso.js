@@ -1,3 +1,4 @@
+// src/pages/tesoreria/NuevoMovimientoCajaIngreso.jsx
 import React, { useContext, useMemo, useState } from "react";
 import { Modal, Button, Form, Row, Col, Alert, Spinner, Tabs, Tab } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
@@ -26,7 +27,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
   const caja_id = cajaAbierta?.caja?.id || null;
 
   // ====== UI general
-  const [activeKey, setActiveKey] = useState("cobranza"); // "varios" | "cobranza" | "retiro"
+  const [activeKey, setActiveKey] = useState("cobranza"); // "varios" | "cobranza"
   const [enviando, setEnviando] = useState(false);
   const [msg, setMsg] = useState(null);
 
@@ -38,7 +39,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
 
   // Cobranza Clientes
   const [clienteId, setClienteId] = useState("");
-  const [proyecto_id, setProyectoId] = useState("");
+  const [proyecto_id, setProyectoId] = useState(""); // ✅ opcional (string vacío = null)
   const [categoriaingreso_id, setCategoriaIngresoId] = useState("");
 
   // Idempotencia (opcional)
@@ -58,33 +59,33 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
     ? categoriasIngresoTabla
     : Array.isArray(categoriasIngreso) ? categoriasIngreso : [];
 
+  // ===== Validaciones (Proyecto ya NO es requerido)
   const puedeGuardarCobranza = useMemo(() => {
     if (!show) return false;
     if (!empresa_id || !caja_id) return false;
     if (!clienteId) return false;
-    if (!proyecto_id) return false;
     if (!fecha) return false;
     if (!descripcion?.trim()) return false;
     const n = Number(monto);
     if (!(n > 0)) return false;
     if (!formaCobroCajaId) return false;
-    // Si querés que categoría sea obligatoria en cobranza, descomentá la siguiente línea:
-    // if (!categoriaingreso_id) return false;
+    // categoría en cobranza: opcional
+    if (!categoriaingreso_id) return false;   // ✅ ahora es obligatoria
     return true;
-  }, [show, empresa_id, caja_id, clienteId, proyecto_id, fecha, descripcion, monto, formaCobroCajaId /*, categoriaingreso_id */]);
+  }, [show, empresa_id, caja_id, clienteId, fecha, descripcion, monto, formaCobroCajaId, categoriaingreso_id]);
 
   const puedeGuardarVarios = useMemo(() => {
     if (!show) return false;
     if (!empresa_id || !caja_id) return false;
-    if (!proyecto_id) return false;
     if (!fecha) return false;
     if (!descripcion?.trim()) return false;
     const n = Number(monto);
     if (!(n > 0)) return false;
     if (!categoriaingreso_id) return false; // requerido para “varios”
     if (!formaCobroCajaId) return false;
+    // proyecto opcional
     return true;
-  }, [show, empresa_id, caja_id, proyecto_id, fecha, descripcion, monto, categoriaingreso_id, formaCobroCajaId]);
+  }, [show, empresa_id, caja_id, fecha, descripcion, monto, categoriaingreso_id, formaCobroCajaId]);
 
   const handleSubmitVarios = async (e) => {
     e?.preventDefault?.();
@@ -104,8 +105,8 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
         fecha,
         descripcion: descripcion?.trim(),
         montoTotal: Number(monto),
-        proyecto_id: Number(proyecto_id),
-        categoriaingreso_id: categoriaingreso_id ? Number(categoriaingreso_id) : null,
+        proyecto_id: proyecto_id ? Number(proyecto_id) : null,           // ✅ opcional
+        categoriaingreso_id: Number(categoriaingreso_id),   // ✅ requerida
         observaciones: observaciones?.trim() || null,
         formacobro_id: Number(formaCobroCajaId),
         idempotencyKey: idempotencyKey?.trim() || null,
@@ -137,7 +138,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
     setMonto("");
     setObservaciones("");
     setClienteId("");
-    setProyectoId("");
+    setProyectoId("");          // ✅ limpia a vacío (null en payload)
     setCategoriaIngresoId("");
     setIdempotencyKey("");
     setMsg(null);
@@ -170,8 +171,8 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
         fecha,
         descripcion: descripcion?.trim(),
         montoTotal: Number(monto),
-        proyecto_id: Number(proyecto_id),
-        categoriaingreso_id: categoriaingreso_id ? Number(categoriaingreso_id) : null,
+        proyecto_id: proyecto_id ? Number(proyecto_id) : null,          // ✅ opcional
+        categoriaingreso_id: categoriaingreso_id ? Number(categoriaingreso_id) : null, // opcional en cobranza
         observaciones: observaciones?.trim() || null,
         formacobro_id: Number(formaCobroCajaId),
         idempotencyKey: idempotencyKey?.trim() || null,
@@ -218,9 +219,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
 
         <Modal.Body>
           {!empresa_id && (
-            <Alert variant="warning" className="py-2">
-              Seleccioná una empresa para continuar.
-            </Alert>
+            <Alert variant="warning" className="py-2">Seleccioná una empresa para continuar.</Alert>
           )}
           {!caja_id && (
             <Alert variant="warning" className="py-2">
@@ -248,37 +247,24 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
           >
             {/* ======= Ingresos Varios ======= */}
             <Tab eventKey="varios" title="Ingresos Varios">
-              {/* Proyecto */}
+              {/* Proyecto (SIEMPRE SELECT, OPCIONAL) */}
               <Row className="mb-3">
                 <Col md={6}>
-                  <Form.Label>Proyecto</Form.Label>
-                  {Array.isArray(proyectosTabla) && proyectosTabla.length > 0 ? (
-                    <Form.Select
-                      name="varios_proyecto"
-                      value={proyecto_id}
-                      onChange={(e) => setProyectoId(e.target.value)}
-                      required={activeKey === "varios"}
-                      disabled={activeKey !== "varios"}
-                      className="form-control my-input"
-                    >
-                      <option value="">Seleccione…</option>
-                      {proyectosTabla.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.descripcion || p.nombre || `Proyecto #${p.id}`}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  ) : (
-                    <Form.Control
-                      name="varios_proyecto"
-                      type="number"
-                      placeholder="ID proyecto"
-                      value={proyecto_id}
-                      onChange={(e) => setProyectoId(e.target.value)}
-                      required={activeKey === "varios"}
-                      disabled={activeKey !== "varios"}
-                    />
-                  )}
+                  <Form.Label>Proyecto (opcional)</Form.Label>
+                  <Form.Select
+                    name="varios_proyecto"
+                    value={proyecto_id}
+                    onChange={(e) => setProyectoId(e.target.value)}
+                    disabled={activeKey !== "varios"}
+                    className="form-control my-input"
+                  >
+                    <option value="">(Opcional) Sin proyecto</option>
+                    {(proyectosTabla || []).map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.descripcion || p.nombre || `Proyecto #${p.id}`}
+                      </option>
+                    ))}
+                  </Form.Select>
                 </Col>
               </Row>
 
@@ -323,7 +309,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                 </Col>
               </Row>
 
-              {/* Categoría de Ingreso */}
+              {/* Categoría de Ingreso (requerida en “varios”) */}
               <Row className="mb-3">
                 <Col md={6}>
                   <Form.Label>Categoría de Ingreso</Form.Label>
@@ -362,11 +348,10 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
 
             {/* ======= Cobranza Clientes ======= */}
             <Tab eventKey="cobranza" title="Cobranza Clientes">
-              {/* 1) Cliente + Proyecto */}
+              {/* Cliente + Proyecto (Proyecto opcional) */}
               <Row className="mb-3">
                 <Col md={6}>
                   <Form.Label>Cliente</Form.Label>
-
                   <Form.Select
                     name="cobranza_cliente"
                     value={clienteId}
@@ -382,41 +367,27 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                       </option>
                     ))}
                   </Form.Select>
-
                 </Col>
                 <Col md={6}>
-                  <Form.Label>Proyecto</Form.Label>
-                  {Array.isArray(proyectosTabla) && proyectosTabla.length > 0 ? (
-                    <Form.Select
-                      name="cobranza_proyecto"
-                      value={proyecto_id}
-                      onChange={(e) => setProyectoId(e.target.value)}
-                      required={activeKey === "cobranza"}
-                      disabled={activeKey !== "cobranza"}
-                      className="form-control my-input"
-                    >
-                      <option value="">Seleccione…</option>
-                      {proyectosTabla.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.descripcion || p.nombre || `Proyecto #${p.id}`}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  ) : (
-                    <Form.Control
-                      name="cobranza_proyecto"
-                      type="number"
-                      placeholder="ID proyecto"
-                      value={proyecto_id}
-                      onChange={(e) => setProyectoId(e.target.value)}
-                      required={activeKey === "cobranza"}
-                      disabled={activeKey !== "cobranza"}
-                    />
-                  )}
+                  <Form.Label>Proyecto (opcional)</Form.Label>
+                  <Form.Select
+                    name="cobranza_proyecto"
+                    value={proyecto_id}
+                    onChange={(e) => setProyectoId(e.target.value)}
+                    disabled={activeKey !== "cobranza"}
+                    className="form-control my-input"
+                  >
+                    <option value="">(Opcional) Sin proyecto</option>
+                    {(proyectosTabla || []).map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.descripcion || p.nombre || `Proyecto #${p.id}`}
+                      </option>
+                    ))}
+                  </Form.Select>
                 </Col>
               </Row>
 
-              {/* 2) Fecha + Descripción + Monto */}
+              {/* Fecha + Descripción + Monto */}
               <Row className="mb-3">
                 <Col md={3}>
                   <Form.Label>Fecha</Form.Label>
@@ -457,7 +428,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                 </Col>
               </Row>
 
-              {/* 3) Categoría Ingreso */}
+              {/* Categoría Ingreso (opcional en cobranza) */}
               <Row className="mb-3">
                 <Col md={6}>
                   <Form.Label>Categoría de Ingreso</Form.Label>
@@ -466,8 +437,8 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                     value={categoriaingreso_id}
                     onChange={(e) => setCategoriaIngresoId(e.target.value)}
                     className="form-control my-input"
-                    required={activeKey === "cobranza"}
                     disabled={activeKey !== "cobranza"}
+                    required={activeKey === "cobranza"}   // ✅ ahora requerida
                   >
                     <option value="">Seleccione…</option>
                     {catIngreso.map((c) => (
@@ -479,7 +450,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                 </Col>
               </Row>
 
-              {/* 4) Observaciones */}
+              {/* Observaciones */}
               <Form.Group className="mb-0">
                 <Form.Label>Observaciones</Form.Label>
                 <Form.Control
@@ -493,9 +464,6 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                 />
               </Form.Group>
             </Tab>
-
-            {/* ======= Retiro Sucursales (placeholder) ======= */}
-
           </Tabs>
         </Modal.Body>
 
