@@ -185,7 +185,7 @@ export default function CalculoRinde() {
   // Resetear ingVendido si cambian montoVentas, montoMovimientos, montoMovimientosOtros, mbcerdo, montoInventarioFinal, montoInventarioInicial o totalKg
   useEffect(() => {
     setIngVendido(0);
-  }, [montoVentas, montoMovimientos, montoMovimientosOtros, mbcerdo, montoInventarioFinal, montoInventarioInicial, totalKg, ajustes, achuras]);
+  }, [montoVentas, montoMovimientos, montoMovimientosOtros, mbcerdo, montoInventarioFinal, montoInventarioInicial, totalKg, ajustes]);
 
   // Resetear difEsperado si cambian ingEsperado o costoprom
   useEffect(() => {
@@ -914,7 +914,7 @@ const handleCalculoRinde = () => {
       const cerdoMb = parseFloat(mbcerdo) || 0;
       const invFinal = parseFloat(montoInventarioFinal) || 0;
       const invInicial = parseFloat(montoInventarioInicial) || 0;
-      const ach = parseFloat(achuras) || 0;
+      // const ach = parseFloat(achuras) || 0;
 
       // 🔹 Nuevo: sumar (o restar si viene negativo) los ajustes al ingreso vendido
       const montoAjuste = (ajustes || []).reduce(
@@ -932,8 +932,8 @@ const handleCalculoRinde = () => {
         (ventas +
           movimientos -
           movimientosOtros -
-          cerdoMb -
-          ach +
+          cerdoMb +
+          // ach +
           (invFinal - invInicial) +
           montoAjuste // ⬅️ Ajustes se incorporan acá
         ) / totalKg;
@@ -1169,7 +1169,7 @@ const handleCalculoRinde = () => {
             cajagrande: parseFloat(cajagrande),
             otros: parseFloat(otros),
             costovacuno: parseFloat(costovacuno),
-            achuras: parseFloat(achuras),
+            // achuras: parseFloat(achuras),
             difInventario: parseFloat(difInventario),
             costoporcino: parseFloat(costoporcino),
             ingEsperado: parseFloat(ingEsperado),
