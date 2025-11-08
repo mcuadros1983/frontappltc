@@ -1169,7 +1169,7 @@ const handleCalculoRinde = () => {
             cajagrande: parseFloat(cajagrande),
             otros: parseFloat(otros),
             costovacuno: parseFloat(costovacuno),
-            // achuras: parseFloat(achuras),
+            achuras: parseFloat(achuras),
             difInventario: parseFloat(difInventario),
             costoporcino: parseFloat(costoporcino),
             ingEsperado: parseFloat(ingEsperado),
