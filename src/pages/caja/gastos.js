@@ -210,7 +210,7 @@ export default function Gastos() {
         </FormControl>
       </div>
 
-      <div className="d-inline-block">
+      <div className="d-inline-block ml-2">
         <label className="d-block">Tipo de gasto</label>
         <FormControl
           as="select"
@@ -235,7 +235,7 @@ export default function Gastos() {
         <Button
           onClick={exportarExcel}
           disabled={gastos.length === 0}
-          className="vt-btn-secondary"
+          className="vt-btn-secondary ml-2"
         >
           Exportar a Excel
         </Button>
