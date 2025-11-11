@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext, useCallback, useMemo } from "react";
 import { Container, Table, Button, FormControl, Spinner, Row, Col, Card } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import Contexts from "../../context/Contexts";
 
 export default function Cupones() {
@@ -67,6 +69,7 @@ export default function Cupones() {
           setCupones(datos);
           setCuponesOriginales(datos);
           setClienteSeleccionado("");
+
           const clientes = datos.map((cupon) => parseInt(cupon.cliente_id));
           const clientesUnicos = [...new Set(clientes)];
           const _clientesFiltrados = contexto.clientesTabla.filter((cliente) =>
@@ -85,22 +88,22 @@ export default function Cupones() {
   };
 
   const manejarOrden = (nombreColumna) => {
-    setDireccionOrden(
-      nombreColumna === columnaOrden && direccionOrden === "asc" ? "desc" : "asc"
-    );
+    const nextDirection =
+      nombreColumna === columnaOrden && direccionOrden === "asc" ? "desc" : "asc";
+    setDireccionOrden(nextDirection);
     setColumnaOrden(nombreColumna);
 
     const cuponesOrdenados = [...cupones].sort((a, b) => {
       let valorA = a[nombreColumna];
       let valorB = b[nombreColumna];
 
-      if (nombreColumna === "importecupon") {
+      if (nombreColumna === "importecupon" || nombreColumna === "importecuponconrecargo") {
         valorA = parseFloat(valorA);
         valorB = parseFloat(valorB);
       }
 
-      if (valorA < valorB) return direccionOrden === "asc" ? -1 : 1;
-      if (valorA > valorB) return direccionOrden === "asc" ? 1 : -1;
+      if (valorA < valorB) return nextDirection === "asc" ? -1 : 1;
+      if (valorA > valorB) return nextDirection === "asc" ? 1 : -1;
       return 0;
     });
 
@@ -109,7 +112,7 @@ export default function Cupones() {
 
   const esFechaValida = (cadenaFecha) => {
     const regEx = /^\d{4}-\d{2}-\d{2}$/;
-    if (!cadenaFecha.match(regEx)) return false;
+    if (!regEx.test(cadenaFecha)) return false;
     const fecha = new Date(cadenaFecha);
     if (!fecha.getTime()) return false;
     return fecha.toISOString().slice(0, 10) === cadenaFecha;
@@ -126,9 +129,7 @@ export default function Cupones() {
 
     for (const c of cupones) {
       const importe = Number(c?.importecupon) || 0;
-      const conRecargo =
-        Number(c?.importecuponconrecargo) ||
-        importe; // si no viene, tomamos el importe base
+      const conRecargo = Number(c?.importecuponconrecargo) || importe;
       _totalImporte += importe;
       _totalConRecargo += conRecargo;
     }
@@ -146,7 +147,79 @@ export default function Cupones() {
   const formatMoney = (n) =>
     (Number(n) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // ====== Paginación (se mantiene paginando la vista, no los totales) ======
+  // ====== Exportación a Excel (todo lo filtrado, NO solo la página) ======
+  const handleExportExcel = () => {
+    if (!cupones || cupones.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    // Mapeo a valores legibles
+    const exportData = cupones.map((c) => {
+      const sucursalNombre =
+        contexto.sucursalesTabla.find((s) => s.id === parseInt(c.sucursal_id))?.nombre ||
+        "Desconocido";
+
+      const clienteObj = contexto.clientesTabla.find((cli) => cli.id === parseInt(c.cliente_id));
+      const clienteNombre = clienteObj ? `${clienteObj.nombre || ""} ${clienteObj.apellido || ""}`.trim() : "Desconocido";
+
+      const planDesc =
+        contexto.planTarjetaTabla.find((p) => p.id === parseInt(c.plantarjeta_id))?.descripcion ||
+        "Desconocido";
+
+      const importe = Number(c.importecupon) || 0;
+      const conRecargo = Number(c.importecuponconrecargo) || importe;
+      const recargo = conRecargo - importe;
+
+      return {
+        Fecha: c.fecha,
+        "Importe": Number(importe.toFixed(2)),
+        "Recargo": Number(recargo.toFixed(2)),
+        "Importe c/ Recargo": Number(conRecargo.toFixed(2)),
+        Sucursal: sucursalNombre,
+        Cliente: clienteNombre,
+        Caja: c.caja_id,
+        Lote: c.lote,
+        Cupón: c.nrocupon,
+        Plan: planDesc,
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+
+    // Ajuste automático de ancho de columnas
+    const colWidths = Object.keys(exportData[0]).map((key) => {
+      const maxLen = Math.max(
+        key.length,
+        ...exportData.map((row) => (row[key] ? String(row[key]).length : 0))
+      );
+      return { wch: Math.min(Math.max(maxLen + 2, 10), 50) };
+    });
+    ws["!cols"] = colWidths;
+
+    // Hoja de totales (opcional, útil para tu flujo)
+    const totals = [
+      { Métrica: "Cantidad", Valor: cantidad },
+      { Métrica: "Total Importe", Valor: Number(totalImporte.toFixed(2)) },
+      { Métrica: "Total Recargo", Valor: Number(totalRecargo.toFixed(2)) },
+      { Métrica: "Total c/ Recargo", Valor: Number(totalConRecargo.toFixed(2)) },
+    ];
+    const wsTotals = XLSX.utils.json_to_sheet(totals);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Cupones");
+    XLSX.utils.book_append_sheet(wb, wsTotals, "Totales");
+
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const fileData = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const nombre = `cupones_${fechaDesde || "sin-desde"}_a_${fechaHasta || "sin-hasta"}.xlsx`.replaceAll("/", "-");
+    saveAs(fileData, nombre);
+  };
+
+  // ====== Paginación (solo para la vista) ======
   const indiceUltimoCupon = paginaActual * cuponesPorPagina;
   const indicePrimerCupon = indiceUltimoCupon - cuponesPorPagina;
   const cuponesActuales = cupones.slice(indicePrimerCupon, indiceUltimoCupon);
@@ -164,166 +237,181 @@ export default function Cupones() {
   };
 
   return (
-  <Container className="vt-page">
-    <h1 className="my-list-title dark-text vt-title">Cupones</h1>
+    <Container className="vt-page">
+      <h1 className="my-list-title dark-text vt-title">Cupones</h1>
 
-    {/* Filtros */}
-    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-      <div className="d-inline-block w-auto mx-2">
-        <label className="mr-2">DESDE:</label>
-        <input
-          type="date"
-          value={fechaDesde}
-          onChange={(e) => setFechaDesde(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
+      {/* Filtros */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto mx-2">
+          <label className="mr-2">DESDE:</label>
+          <input
+            type="date"
+            value={fechaDesde}
+            onChange={(e) => setFechaDesde(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block w-auto mx-2">
+          <label className="ml-2 mr-2">HASTA:</label>
+          <input
+            type="date"
+            value={fechaHasta}
+            onChange={(e) => setFechaHasta(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block">
+          <label className="d-block">Sucursal</label>
+          <FormControl
+            as="select"
+            value={buscarSucursal}
+            onChange={(e) => setBuscarSucursal(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 240 }}
+          >
+            <option value="">Seleccione una sucursal</option>
+            {contexto.sucursalesTabla.map((sucursal) => (
+              <option key={sucursal.id} value={sucursal.id}>
+                {sucursal.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block ml-2">
+          <label className="d-block">Cliente</label>
+          <FormControl
+            as="select"
+            value={clienteSeleccionado}
+            onChange={(e) => setClienteSeleccionado(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 280 }}
+          >
+            <option value="">Seleccione un cliente</option>
+            {clientesFiltrados.map((cliente) => (
+              <option key={cliente.id} value={cliente.id}>
+                {cliente.nombre} {cliente.apellido}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block mx-2">
+          <Button onClick={manejarBusqueda} disabled={cargando} className="vt-btn">
+            {cargando ? (
+              <span>
+                Cargando… <Spinner as="span" animation="border" size="sm" />
+              </span>
+            ) : (
+              "Filtrar"
+            )}
+          </Button>
+        </div>
+
+        {/* Botón Exportar (verde) */}
+        <div className="d-inline-block mx-2">
+          <Button
+            onClick={handleExportExcel}
+            className="vt-btn"
+            style={{ backgroundColor: "#28a745", borderColor: "#28a745" }}
+            disabled={cargando || cupones.length === 0}
+          >
+            Exportar
+          </Button>
+        </div>
       </div>
 
-      <div className="d-inline-block w-auto mx-2">
-        <label className="ml-2 mr-2">HASTA:</label>
-        <input
-          type="date"
-          value={fechaHasta}
-          onChange={(e) => setFechaHasta(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
+      {/* Totales */}
+      <Card className="mb-3 vt-card">
+        <Card.Body>
+          <Row className="gy-2">
+            <Col md={3} sm={6} xs={12}>
+              <strong>Cantidad:</strong> {cantidad}
+            </Col>
+            <Col md={3} sm={6} xs={12}>
+              <strong>Total Importe:</strong> ${formatMoney(totalImporte)}
+            </Col>
+            <Col md={3} sm={6} xs={12}>
+              <strong>Total Recargo:</strong> ${formatMoney(totalRecargo)}
+            </Col>
+            <Col md={3} sm={6} xs={12}>
+              <strong>Total c/ Recargo:</strong> ${formatMoney(totalConRecargo)}
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
+
+      {/* Tabla */}
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th onClick={() => manejarOrden("fecha")} className="vt-th-sort">Fecha</th>
+              <th onClick={() => manejarOrden("importecupon")} className="vt-th-sort text-end">Importe</th>
+              <th onClick={() => manejarOrden("sucursal_id")} className="vt-th-sort">Sucursal</th>
+              <th onClick={() => manejarOrden("cliente_id")} className="vt-th-sort">Cliente</th>
+              <th onClick={() => manejarOrden("caja_id")} className="vt-th-sort">Caja</th>
+              <th onClick={() => manejarOrden("recargo")} className="vt-th-sort text-end">Recargo</th>
+              <th onClick={() => manejarOrden("lote")} className="vt-th-sort">Lote</th>
+              <th onClick={() => manejarOrden("cupon")} className="vt-th-sort">Cupon</th>
+              <th onClick={() => manejarOrden("plan")} className="vt-th-sort">Plan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cuponesActuales.map((cupon) => {
+              const importe = Number(cupon.importecupon) || 0;
+              const conRecargo = Number(cupon.importecuponconrecargo) || importe;
+              const recargo = conRecargo - importe;
+
+              const sucursalNombre =
+                contexto.sucursalesTabla.find((s) => s.id === parseInt(cupon.sucursal_id))?.nombre ||
+                "Desconocido";
+
+              const clienteObj = contexto.clientesTabla.find((c) => c.id === parseInt(cupon.cliente_id));
+              const clienteNombre = clienteObj
+                ? `${clienteObj.nombre || ""} ${clienteObj.apellido || ""}`.trim()
+                : "Desconocido";
+
+              const planDesc =
+                contexto.planTarjetaTabla.find((plan) => plan.id === parseInt(cupon.plantarjeta_id))
+                  ?.descripcion || "Desconocido";
+
+              return (
+                <tr key={cupon.id}>
+                  <td>{cupon.fecha}</td>
+                  <td className="text-end">{importe.toFixed(2)}</td>
+                  <td>{sucursalNombre}</td>
+                  <td>{clienteNombre}</td>
+                  <td>{cupon.caja_id}</td>
+                  <td className="text-end">{recargo.toFixed(2)}</td>
+                  <td>{cupon.lote}</td>
+                  <td>{cupon.nrocupon}</td>
+                  <td>{planDesc}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
       </div>
 
-      <div className="d-inline-block">
-        <label className="d-block">Sucursal</label>
-        <FormControl
-          as="select"
-          value={buscarSucursal}
-          onChange={(e) => setBuscarSucursal(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 240 }}
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vt-pager">
+        <Button onClick={paginaAnterior} disabled={paginaActual === 1} variant="light">
+          <BsChevronLeft />
+        </Button>
+        <span className="mx-2">
+          Página {paginaActual} de {Math.ceil(cupones.length / cuponesPorPagina)}
+        </span>
+        <Button
+          onClick={paginaSiguiente}
+          disabled={paginaActual === Math.ceil(cupones.length / cuponesPorPagina)}
+          variant="light"
         >
-          <option value="">Seleccione una sucursal</option>
-          {contexto.sucursalesTabla.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-
-      <div className="d-inline-block">
-        <label className="d-block">Cliente</label>
-        <FormControl
-          as="select"
-          value={clienteSeleccionado}
-          onChange={(e) => setClienteSeleccionado(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 280 }}
-        >
-          <option value="">Seleccione un cliente</option>
-          {clientesFiltrados.map((cliente) => (
-            <option key={cliente.id} value={cliente.id}>
-              {cliente.nombre} {cliente.apellido}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-
-      <div className="d-inline-block mx-2">
-        <Button onClick={manejarBusqueda} disabled={cargando} className="vt-btn">
-          {cargando ? (
-            <span>
-              Cargando… <Spinner as="span" animation="border" size="sm" />
-            </span>
-          ) : (
-            "Filtrar"
-          )}
+          <BsChevronRight />
         </Button>
       </div>
-    </div>
-
-    {/* Totales */}
-    <Card className="mb-3 vt-card">
-      <Card.Body>
-        <Row className="gy-2">
-          <Col md={3} sm={6} xs={12}>
-            <strong>Cantidad:</strong> {cantidad}
-          </Col>
-          <Col md={3} sm={6} xs={12}>
-            <strong>Total Importe:</strong> ${formatMoney(totalImporte)}
-          </Col>
-          <Col md={3} sm={6} xs={12}>
-            <strong>Total Recargo:</strong> ${formatMoney(totalRecargo)}
-          </Col>
-          <Col md={3} sm={6} xs={12}>
-            <strong>Total c/ Recargo:</strong> ${formatMoney(totalConRecargo)}
-          </Col>
-        </Row>
-      </Card.Body>
-    </Card>
-
-    {/* Tabla */}
-    <div className="vt-tablewrap table-responsive">
-      <Table striped bordered hover className="mb-2">
-        <thead>
-          <tr>
-            <th onClick={() => manejarOrden("fecha")} className="vt-th-sort">Fecha</th>
-            <th onClick={() => manejarOrden("importecupon")} className="vt-th-sort text-end">Importe</th>
-            <th onClick={() => manejarOrden("sucursal_id")} className="vt-th-sort">Sucursal</th>
-            <th onClick={() => manejarOrden("cliente_id")} className="vt-th-sort">Cliente</th>
-            <th onClick={() => manejarOrden("caja_id")} className="vt-th-sort">Caja</th>
-            <th onClick={() => manejarOrden("recargo")} className="vt-th-sort text-end">Recargo</th>
-            <th onClick={() => manejarOrden("lote")} className="vt-th-sort">Lote</th>
-            <th onClick={() => manejarOrden("cupon")} className="vt-th-sort">Cupon</th>
-            <th onClick={() => manejarOrden("plan")} className="vt-th-sort">Plan</th>
-          </tr>
-        </thead>
-        <tbody>
-          {cuponesActuales.map((cupon) => (
-            <tr key={cupon.id}>
-              <td>{cupon.fecha}</td>
-              <td className="text-end">{(Number(cupon.importecupon) || 0).toFixed(2)}</td>
-              <td>
-                {contexto.sucursalesTabla.find((s) => s.id === parseInt(cupon.sucursal_id))?.nombre ||
-                  "Desconocido"}
-              </td>
-              <td>
-                {contexto.clientesTabla.find((c) => c.id === parseInt(cupon.cliente_id))?.nombre || ""}{" "}
-                {contexto.clientesTabla.find((c) => c.id === parseInt(cupon.cliente_id))?.apellido ||
-                  "Desconocido"}
-              </td>
-              <td>{cupon.caja_id}</td>
-              <td className="text-end">
-                {(
-                  (Number(cupon.importecuponconrecargo) || Number(cupon.importecupon) || 0) -
-                  (Number(cupon.importecupon) || 0)
-                ).toFixed(2)}
-              </td>
-              <td>{cupon.lote}</td>
-              <td>{cupon.nrocupon}</td>
-              <td>
-                {contexto.planTarjetaTabla.find((plan) => plan.id === parseInt(cupon.plantarjeta_id))
-                  ?.descripcion || "Desconocido"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
-
-    {/* Paginación */}
-    <div className="d-flex justify-content-center align-items-center vt-pager">
-      <Button onClick={paginaAnterior} disabled={paginaActual === 1} variant="light">
-        <BsChevronLeft />
-      </Button>
-      <span className="mx-2">
-        Página {paginaActual} de {Math.ceil(cupones.length / cuponesPorPagina)}
-      </span>
-      <Button
-        onClick={paginaSiguiente}
-        disabled={paginaActual === Math.ceil(cupones.length / cuponesPorPagina)}
-        variant="light"
-      >
-        <BsChevronRight />
-      </Button>
-    </div>
-  </Container>
-);
-
+    </Container>
+  );
 }
