@@ -506,10 +506,9 @@
 //     </Container>
 //   );
 // }
-
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { Table, Container, Button, FormControl, Form, Spinner } from "react-bootstrap"; // ⬅️ Spinner
+import { Table, Container, Button, FormControl, Form, Spinner } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 import CategorySummaryTable from "../../utils/CategorySummaryTable";
 import { GenerateReceiptHTML } from "./GenerateReceiptHTML";
@@ -528,15 +527,18 @@ export default function SellItem() {
   const [editedTropa, setEditedTropa] = useState("");
 
   const [venta, setVenta] = useState(null);
-  const [pigPriceInput, setPigPriceInput] = useState("");
+
+  // Precios manuales por categoría
+  const [pigPriceInput, setPigPriceInput] = useState("");       // Porcino (obligatorio si hay porcinos)
+  const [bovinePriceInput, setBovinePriceInput] = useState(""); // Bovino (opcional, tiene prioridad)
 
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(20);
 
   // Carga / UI
-  const [loading, setLoading] = useState(true);            // ⬅️ spinner inicial
-  const [recalcLoading, setRecalcLoading] = useState(false); // ⬅️ spinner botón Recalcular
+  const [loading, setLoading] = useState(true);
+  const [recalcLoading, setRecalcLoading] = useState(false);
 
   const context = useContext(Contexts.UserContext);
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -614,10 +616,10 @@ export default function SellItem() {
   useEffect(() => {
     (async () => {
       try {
-        setLoading(true); // ⬅️ mostrar spinner
+        setLoading(true);
         await Promise.all([loadVenta(params.id), loadProductsSell(params.id)]);
       } finally {
-        setLoading(false); // ⬅️ ocultar spinner
+        setLoading(false);
       }
     })();
   }, [params.id, loadVenta, loadProductsSell]);
@@ -727,10 +729,10 @@ export default function SellItem() {
     setTimeout(() => win.close(), 1000);
   };
 
-  // ===== Recalcular precios (margen solo si hay bovinos) =====
+  // ===== Recalcular precios =====
   const handleRecalcAll = async () => {
     try {
-      setRecalcLoading(true); // ⬅️ spinner botón
+      setRecalcLoading(true);
       if (!venta) {
         alert("No hay datos de la venta cargados.");
         return;
@@ -749,25 +751,10 @@ export default function SellItem() {
         (p) => (p.categoria_producto || "").toLowerCase() === "porcino"
       );
 
-      // 1) Solo si hay bovinos: obtener margen del cliente
-      let margenNum = null;
-      if (hayBovinos) {
-        const resCli = await fetch(`${apiUrl}/clientes/${venta.cliente_id}`, { credentials: "include" });
-        if (!resCli.ok) {
-          alert("No se pudo cargar el cliente para recalcular.");
-          return;
-        }
-        const cliente = await resCli.json();
-        margenNum = parseARNumber(cliente?.margen);
+      // --- 0) Parsear inputs manuales ---
+      const bovPriceNum = parseARNumber(bovinePriceInput); // opcional
+      const useManualBovine = Number.isFinite(bovPriceNum) && bovPriceNum > 0;
 
-        if (!Number.isFinite(margenNum) || margenNum <= 0) {
-          // ANTES esto frenaba siempre. Ahora solo frena si hay bovinos.
-          alert("El cliente no tiene margen definido.");
-          return;
-        }
-      }
-
-      // 2) Para porcinos: exigir precio manual válido
       let pigPriceNum = null;
       if (hayPorcinos) {
         pigPriceNum = parseARNumber(pigPriceInput);
@@ -777,8 +764,24 @@ export default function SellItem() {
         }
       }
 
-      // 3) Validar costos de bovinos si corresponde
-      if (hayBovinos) {
+      // --- 1) Solo validar margen si hay bovinos y NO hay precio manual bovino ---
+      let margenNum = null;
+      if (hayBovinos && !useManualBovine) {
+        const resCli = await fetch(`${apiUrl}/clientes/${venta.cliente_id}`, { credentials: "include" });
+        if (!resCli.ok) {
+          alert("No se pudo cargar el cliente para recalcular.");
+          return;
+        }
+        const cliente = await resCli.json();
+        margenNum = parseARNumber(cliente?.margen);
+        if (!Number.isFinite(margenNum) || margenNum <= 0) {
+          alert("El cliente no tiene margen definido.");
+          return;
+        }
+      }
+
+      // --- 2) Validar costos solo para bovinos que NO usarán el precio manual ---
+      if (hayBovinos && !useManualBovine) {
         const bovinosSinCosto = productosObjetivo
           .filter((p) => (p.categoria_producto || "").toLowerCase() === "bovino")
           .filter((p) => {
@@ -790,26 +793,32 @@ export default function SellItem() {
           const ids = bovinosSinCosto.map((p) => p.id).join(", ");
           alert(
             `No hay costo cargado para el recalculo en ${bovinosSinCosto.length} producto(s) bovino(s): ${ids}.\n` +
-              `Cargá el costo antes de recalcular.`
+              `Cargá el costo antes de recalcular o ingresa un precio manual para bovino.`
           );
           return;
         }
       }
 
-      // 4) Optimistic UI (opcional)
+      // --- 3) Optimistic UI ---
       const updatedFiltered = [...filteredProducts];
       const updatedAll = [...productsSell];
 
-      // 5) Recalcular y persistir
+      // --- 4) Recalcular y persistir ---
       for (const prod of productosObjetivo) {
         const categoria = (prod.categoria_producto || "").toLowerCase();
         let nuevoPrecio = Number(prod.precio || 0);
 
-        if (categoria === "bovino" && hayBovinos) {
-          const costo = parseARNumber(prod?.costo ?? 0);
-          nuevoPrecio = parseFloat(((1 + margenNum / 100) * costo).toFixed(2));
-        } else if (categoria === "porcino" && hayPorcinos) {
-          nuevoPrecio = pigPriceNum; // precio manual para porcino
+        if (categoria === "porcino") {
+          nuevoPrecio = pigPriceNum; // siempre manual para porcino
+        } else if (categoria === "bovino") {
+          if (useManualBovine) {
+            // Prioridad al precio manual si fue provisto
+            nuevoPrecio = bovPriceNum;
+          } else {
+            // Lógica tradicional: margen * costo
+            const costo = parseARNumber(prod?.costo ?? 0);
+            nuevoPrecio = parseFloat(((1 + margenNum / 100) * costo).toFixed(2));
+          }
         } else {
           // otras categorías: no tocar
           continue;
@@ -839,7 +848,7 @@ export default function SellItem() {
       setFilteredProducts(updatedFiltered);
       setProductsSell(updatedAll);
 
-      // 6) Recalcular totales de la venta en backend
+      // --- 5) Recalcular totales de la venta en backend ---
       await fetch(`${apiUrl}/ventas/${params.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -847,17 +856,17 @@ export default function SellItem() {
         body: JSON.stringify({ clienteId: venta.cliente_id }),
       });
 
-      // 7) Refrescar datos
+      // --- 6) Refrescar datos ---
       await Promise.all([loadVenta(params.id), loadProductsSell(params.id)]);
     } catch (err) {
       console.error("Error en handleRecalcAll:", err);
       alert("Ocurrió un error al recalcular.");
     } finally {
-      setRecalcLoading(false); // ⬅️ fin spinner botón
+      setRecalcLoading(false);
     }
   };
 
-  // ===== Paginación sobre lo filtrado =====
+  // ===== Paginación =====
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentFilteredProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
@@ -865,7 +874,7 @@ export default function SellItem() {
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
   const paginate = (n) => setCurrentPage(n);
 
-  // ===== Spinner inicial de carga =====
+  // ===== Spinner inicial =====
   if (loading) {
     return (
       <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "40vh" }}>
@@ -881,10 +890,9 @@ export default function SellItem() {
     <Container>
       <h1 className="my-list-title dark-text">Lista de Productos Vendidos</h1>
 
-      {/* Barra superior: recálculo + reimpresión */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <div className="d-flex align-items-center gap-2">
-          {/* Buscar */}
+      {/* Barra superior: búsqueda + precios manuales + acciones */}
+      <div className="d-flex flex-wrap justify-content-between align-items-center mb-3" style={{ gap: 8 }}>
+        <div className="d-flex flex-wrap align-items-center" style={{ gap: 8 }}>
           <FormControl
             placeholder="Buscar por código, media, tropa o sucursal"
             value={searchTerm}
@@ -892,7 +900,7 @@ export default function SellItem() {
             style={{ maxWidth: 360 }}
           />
 
-          {/* Porcino: precio único si hay porcinos visibles */}
+          {/* Campo precio manual PORCINO si hay porcinos visibles */}
           {filteredProducts.some((p) => (p.categoria_producto || "").toLowerCase() === "porcino") && (
             <FormControl
               type="number"
@@ -901,11 +909,22 @@ export default function SellItem() {
               onChange={(e) => setPigPriceInput(e.target.value)}
               placeholder="Precio único porcino"
               style={{ width: 180 }}
-              className="ml-2"
             />
           )}
 
-          <Button variant="warning" onClick={handleRecalcAll} disabled={recalcLoading} className="ml-2">
+          {/* Campo precio manual BOVINO si hay bovinos visibles (opcional, prioridad si se carga) */}
+          {filteredProducts.some((p) => (p.categoria_producto || "").toLowerCase() === "bovino") && (
+            <FormControl
+              type="number"
+              step="0.01"
+              value={bovinePriceInput}
+              onChange={(e) => setBovinePriceInput(e.target.value)}
+              placeholder="Precio único bovino (opcional)"
+              style={{ width: 220 }}
+            />
+          )}
+
+          <Button variant="warning" onClick={handleRecalcAll} disabled={recalcLoading}>
             {recalcLoading ? (
               <>
                 <Spinner animation="border" size="sm" className="me-2" /> Recalculando...
