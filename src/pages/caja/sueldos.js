@@ -218,7 +218,7 @@ export default function Sueldos() {
         </FormControl>
       </div>
 
-      <div className="d-inline-block">
+      <div className="d-inline-block ml-2">
         <label className="d-block">Empleado</label>
         <FormControl
           as="select"
@@ -238,7 +238,7 @@ export default function Sueldos() {
 
       <div className="d-inline-block mx-2">
         <Button onClick={manejarBusqueda} className="vt-btn">Filtrar</Button>
-        <Button onClick={exportarExcel} disabled={sueldos.length === 0} className="vt-btn ms-2">
+        <Button onClick={exportarExcel} disabled={sueldos.length === 0} className="vt-btn ms-2 ml-2">
           Exportar a Excel
         </Button>
       </div>
