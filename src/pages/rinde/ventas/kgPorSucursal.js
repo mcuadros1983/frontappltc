@@ -30,7 +30,7 @@ export default function KgPorSucursal() {
         ? { fechaDesde: startDate, fechaHasta: endDate, sucursalId: selectedSucursal }
         : { fechaDesde: startDate, fechaHasta: endDate };
 
-      const response = await fetch(`${apiUrl}/ventas/kg_por_sucursal_filtradas`, {
+      const response = await fetch(`${apiUrl}/ventas/kg_por_sucursal_filtradas`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
