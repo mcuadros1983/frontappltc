@@ -112,7 +112,14 @@ export default function DataContextProvider({ children }) {
       if (!cancelled) setTarjetasTesoreriaTabla(toArray(dataTarjetaTesoreriaTabla));
 
       const dataEmpleadosTabla = await fetchJsonSafe(`${apiUrl}/obtenerempleados`);
-      if (!cancelled) setEmpleados(toArray(dataEmpleadosTabla));
+
+      if (!cancelled) {
+        const empleadosActivos = toArray(dataEmpleadosTabla).filter(
+          (emp) => emp.fechabaja === null
+        );
+
+        setEmpleados(empleadosActivos);
+      }
 
       const dataUsuariosTabla = await fetchJsonSafe(`${apiUrl}/obtenerusuario`);
       if (!cancelled) setUsuariosTabla(toArray(dataUsuariosTabla));
