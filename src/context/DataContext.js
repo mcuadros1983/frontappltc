@@ -115,7 +115,7 @@ export default function DataContextProvider({ children }) {
 
       if (!cancelled) {
         const empleadosActivos = toArray(dataEmpleadosTabla).filter(
-          (emp) => emp.fechabaja === null
+          (emp) => emp.empleado.fechabaja === null
         );
 
         setEmpleados(empleadosActivos);
