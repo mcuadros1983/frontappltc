@@ -1,23 +1,9 @@
 // src/utils/navApi.js
 const RAW_BASE = process.env.REACT_APP_API_URL || "";
+// quita trailing slash y espacios
 const base = RAW_BASE.trim().replace(/\/+$/, "");
 
-// Helper para armar headers con Authorization si hay token
-function getAuthHeaders(extra = {}) {
-  let token = null;
-  try {
-    token = sessionStorage.getItem("jwtToken");
-  } catch (e) {
-    console.warn("No se pudo leer jwtToken de sessionStorage:", e);
-  }
-
-  return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...extra,
-  };
-}
-
-export async function getNavLinks({ roleId, userId, signal } = {}) {
+export async function getNavLinks({ roleId, userId, signal } = {}) { 
   console.log("datos", roleId, userId, signal);
   console.log("[navApi.getNavLinks] params IN:", { roleId, userId, hasSignal: !!signal });
 
@@ -25,6 +11,7 @@ export async function getNavLinks({ roleId, userId, signal } = {}) {
   if (roleId != null) params.set("roleId", String(roleId));
   if (userId != null) params.set("userId", String(userId));
 
+  // ⛏️ FIX: sin coma al final
   const url = `${base}/nav/links${params.toString() ? `?${params.toString()}` : ""}`;
   console.log("[navApi.getNavLinks] GET", url);
 
@@ -32,7 +19,7 @@ export async function getNavLinks({ roleId, userId, signal } = {}) {
     method: "GET",
     signal,
     credentials: "include",
-    headers: getAuthHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
   });
 
   console.log("[navApi.getNavLinks] status:", res.status);
@@ -60,7 +47,7 @@ export async function searchNav({ q = "", roleId, userId, signal } = {}) {
     method: "GET",
     signal,
     credentials: "include",
-    headers: getAuthHeaders({ "Content-Type": "application/json" }),
+    headers: { "Content-Type": "application/json" },
   });
 
   console.log("[navApi.searchNav] status:", res.status);

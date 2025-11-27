@@ -1,13 +1,17 @@
-// src/context/UserContextProvider.jsx
-import React from "react";
+import React, { useState } from "react";
 import Contexts from "./Contexts";
 import { useSecurity } from "../security/SecurityContext";
 
+
 export default function UserContextProvider({ children }) {
+  // const [user, setUser] = useState(null);
   const { user, setUser } = useSecurity();
 
   const apiUrl = process.env.REACT_APP_API_URL;
+  // `${apiUrl}/formas-pago/`
 
+
+  // UserContextProvider.jsx (cambios mínimos)
   const login = async (credentials) => {
     try {
       const response = await fetch(`${apiUrl}/login/`, {
@@ -18,26 +22,12 @@ export default function UserContextProvider({ children }) {
       });
       console.log("🔹 Resultado del fetch login:", response);
 
-      const data = await response.json();
+      const data = await response.json();    // <= MOVER el json arriba para poder retornarlo siempre
 
       if (response.ok) {
         console.log("🔹 Data recibida:", data);
-        const loggedUser = data.user;
-
-        // 🟢 Guardar user en contexto
-        setUser(loggedUser);
-
-        // 🟢 Guardar token en sessionStorage (si viene)
-        if (loggedUser && loggedUser.token) {
-          try {
-            sessionStorage.setItem("jwtToken", loggedUser.token);
-            console.log("🔹 jwtToken guardado en sessionStorage");
-          } catch (e) {
-            console.warn("No se pudo guardar jwtToken en sessionStorage:", e);
-          }
-        }
-
-        return loggedUser;
+        setUser(data.user);                  // sigue seteando el viejo contexto por compatibilidad
+        return data.user;                    // <= DEVOLVER EL USUARIO
       } else {
         throw new Error(data.error || "Credenciales inválidas");
       }
@@ -46,25 +36,17 @@ export default function UserContextProvider({ children }) {
     }
   };
 
-  const logout = async () => {
-    try {
-      await fetch(`${apiUrl}/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (e) {
-      console.warn("Error en logout backend (se ignora):", e);
-    }
 
-    // 🧹 Limpiar contexto y token local
+
+  const logout = async () => {
+    const res = await fetch(`${apiUrl}/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+    // No intentes clearCookie acá: eso es del backend
     setUser(null);
-    try {
-      sessionStorage.removeItem("jwtToken");
-      console.log("🔹 jwtToken eliminado de sessionStorage en logout");
-    } catch (e) {
-      console.warn("No se pudo borrar jwtToken de sessionStorage:", e);
-    }
   };
+
 
   return (
     <Contexts.UserContext.Provider value={{ user, login, logout }}>
