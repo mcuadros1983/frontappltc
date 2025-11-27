@@ -1,12 +1,13 @@
 // src/services/categoriasApi.js
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3001"; 
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3001";
 // ajustá esto si ya estás usando otra constante global
 
 export const categoriasApi = {
   /* ======================
    * CATEGORÍAS
    * ====================== */
+
 
   async getCategorias() {
     const res = await fetch(`${API_BASE}/documentos/categorias`, {
@@ -20,13 +21,13 @@ export const categoriasApi = {
     return res.json();
   },
 
-  // vos me mostraste que hoy esto existe así:
-  async createCategoria(nombre) {
+  // AHORA recibe un objeto: { nombre }
+  async createCategoria(data) {
     const res = await fetch(`${API_BASE}/documentos/categorias`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ nombre }),
+      body: JSON.stringify(data), // 👈 { nombre: "MANUALES" }
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -35,12 +36,13 @@ export const categoriasApi = {
     return res.json();
   },
 
-  async updateCategoria(id, nombre) {
+  // AHORA recibe (id, data)
+  async updateCategoria(id, data) {
     const res = await fetch(`${API_BASE}/documentos/categorias/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ nombre }),
+      body: JSON.stringify(data), // 👈 { nombre: "MANUALES" }
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -60,6 +62,7 @@ export const categoriasApi = {
     }
     return res.json();
   },
+
 
   /* ======================
    * SUBCATEGORÍAS
