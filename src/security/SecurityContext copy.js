@@ -7,25 +7,11 @@ export function SecurityProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
+  useEffect(()=> {
+    (async ()=>{
       try {
         console.log("⚙️ Consultando /auth/me...");
-
-        let token = null;
-        try {
-          token = sessionStorage.getItem("jwtToken");
-        } catch (e) {
-          console.warn("No se pudo leer jwtToken de sessionStorage en SecurityContext:", e);
-        }
-
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, {
-          credentials: "include",
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/auth/me`, { credentials:"include" });
         console.log("⚙️ Respuesta status /auth/me:", res.status);
         if (!res.ok) throw new Error("No auth");
         const data = await res.json();
@@ -37,15 +23,15 @@ export function SecurityProvider({ children }) {
         setLoading(false);
       }
     })();
-  }, []);
+  },[]);
 
-  const can = useMemo(() => {
+  const can = useMemo(()=> {
     const perms = user?.permissions || [];
-    const isAdmin = perms.includes("admin.all") || user?.rol_id === 1;
+    const isAdmin = perms.includes("admin.all") || user?.rol_id === 1; // ✅ fallback por rol
 
     return (...required) => {
       if (isAdmin) return true;
-      return required.every((p) => perms.includes(p));
+      return required.every(p => perms.includes(p));
     };
   }, [user]);
 
