@@ -1491,11 +1491,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
             {showSueldosItems && (
               <>
                 <div className="ml-3 sb-sub">
-                  {can("sueldos:telefono.assign") && (
+                  {/* {can("sueldos:telefono.assign") && (
                     <Link to="/sueldostesoreria/asignartelefono" className="nav-link" onClick={handleLinkClick}>
                       Asignar Teléfono
                     </Link>
-                  )}
+                  )} */}
 
                   {can("sueldos:datosEmpleado.assign") && (
                     <Link to="/sueldostesoreria/asignardatosempleado" className="nav-link" onClick={handleLinkClick}>
