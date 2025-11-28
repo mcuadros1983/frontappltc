@@ -1232,7 +1232,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
                 {can("asistencia:asignacion.manage") && (
                   <Link to="/asistencias/asignarempleado" className="nav-link" onClick={handleLinkClick}>
-                    Asignar Empleado
+                    Asignar Datos a Empleado
                   </Link>
                 )}
 

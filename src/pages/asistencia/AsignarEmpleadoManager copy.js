@@ -53,7 +53,7 @@ const dniEmpleado = (item) => {
 };
 
 export default function AsignarEmpleadoManager() {
-  const dataContext = useContext(Contexts.DataContext);
+  const dataContext = useContext(Contexts.DataContext); 
   const empleadosCtx = dataContext?.empleados || [];
 
   const [datos, setDatos] = useState([]); // filas de datosempleado
@@ -139,8 +139,10 @@ export default function AsignarEmpleadoManager() {
   const sucursalNombre = useCallback(
     (id) => {
       if (!id) return "—";
-      const s = (sucursales || []).find((x) => Number(x.id) === Number(id));
-      return s?.nombre || s?.descripcion || s?.denominacion || `Sucursal #${id}`;
+      const s = (sucursales || []).find(
+        (x) => Number(x.id) === Number(id)
+      );
+      return s?.nombre || `Sucursal #${id}`;
     },
     [sucursales]
   );
@@ -149,7 +151,9 @@ export default function AsignarEmpleadoManager() {
   const jornadaNombre = useCallback(
     (id) => {
       if (!id) return "—";
-      const j = (jornadas || []).find((x) => Number(x.id) === Number(id));
+      const j = (jornadas || []).find(
+        (x) => Number(x.id) === Number(id)
+      );
       return j?.nombre || `Jornada #${id}`;
     },
     [jornadas]
@@ -184,7 +188,9 @@ export default function AsignarEmpleadoManager() {
   // Filtrado: solo activos (sin fechabaja) y por texto
   const rowsFiltradas = useMemo(() => {
     const q = filtroNombre.trim().toLowerCase();
-    const activos = viewRows.filter(({ emp }) => !emp?.empleado?.fechabaja);
+    const activos = viewRows.filter(
+      ({ emp }) => !emp?.empleado?.fechabaja
+    );
     if (!q) return activos;
     return activos.filter(({ emp }) => {
       const ap =
@@ -204,20 +210,18 @@ export default function AsignarEmpleadoManager() {
       jornada_id: null,
       franco_am: null,
       franco_pm: null,
-      telefono: "", // nuevo: para poder cargar teléfono al crear
     });
     setShowModal(true);
   };
 
   // Abrir modal en modo "editar"
-  const abrirEditar = ({ empId, de }) => {
+  const abrirEditar = (row) => {
     setModalPayload({
-      empleado_id: empId,
-      sucursal_id: de?.sucursal_id ?? null,
-      jornada_id: de?.jornada_id ?? null,
-      franco_am: de?.franco_am ?? null,
-      franco_pm: de?.franco_pm ?? null,
-      telefono: de?.telefono ?? "", // 🔹 acá pasamos el teléfono existente al modal
+      empleado_id: row.empId,
+      sucursal_id: row.de?.sucursal_id ?? null,
+      jornada_id: row.de?.jornada_id ?? null,
+      franco_am: row.de?.franco_am ?? null,
+      franco_pm: row.de?.franco_pm ?? null,
     });
     setShowModal(true);
   };
@@ -242,7 +246,9 @@ export default function AsignarEmpleadoManager() {
       });
       const data = await r.json().catch(() => null);
       if (!r.ok)
-        throw new Error(data?.error || "No se pudo eliminar la asignación.");
+        throw new Error(
+          data?.error || "No se pudo eliminar la asignación."
+        );
       fetchAll();
     } catch (e) {
       console.error(e);
@@ -334,7 +340,6 @@ export default function AsignarEmpleadoManager() {
                   <th style={{ width: 80 }}>Legajo</th>
                   <th style={{ width: 140 }}>DNI / CUIL</th>
                   <th>Empleado</th>
-                  <th style={{ width: 160 }}>Teléfono</th> {/* 🔹 nueva columna */}
                   <th style={{ width: 180 }}>Sucursal</th>
                   <th style={{ width: 180 }}>Jornada</th>
                   <th style={{ width: 140 }}>Franco AM</th>
@@ -347,7 +352,7 @@ export default function AsignarEmpleadoManager() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-4">
+                    <td colSpan={8} className="text-center py-4">
                       <Spinner size="sm" className="me-2" /> Cargando…
                     </td>
                   </tr>
@@ -365,17 +370,8 @@ export default function AsignarEmpleadoManager() {
                         <td className="text-muted">{empId}</td>
                         <td className="text-muted">{dniEmpleado(emp)}</td>
                         <td className="fw-medium">{nombreEmpleado(emp)}</td>
-                        <td>{de?.telefono || "—"}</td> {/* 🔹 muestra teléfono */}
-                        <td>
-                          {de?.sucursal_id
-                            ? sucursalNombre(de.sucursal_id)
-                            : "—"}
-                        </td>
-                        <td>
-                          {de?.jornada_id
-                            ? jornadaNombre(de.jornada_id)
-                            : "—"}
-                        </td>
+                        <td>{de?.sucursal_id ? sucursalNombre(de.sucursal_id) : "—"}</td>
+                        <td>{de?.jornada_id ? jornadaNombre(de.jornada_id) : "—"}</td>
                         <td>{am}</td>
                         <td>{pm}</td>
                         <td>
@@ -424,7 +420,7 @@ export default function AsignarEmpleadoManager() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={9} className="text-center py-4 text-muted">
+                    <td colSpan={8} className="text-center py-4 text-muted">
                       Sin resultados
                     </td>
                   </tr>
