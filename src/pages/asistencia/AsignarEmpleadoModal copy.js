@@ -39,7 +39,6 @@ export default function AsignarEmpleadoModal({
   const [jornadaId, setJornadaId] = useState(initialData?.jornada_id ?? "");
   const [francoAm, setFrancoAm] = useState(initialData?.franco_am ?? "");
   const [francoPm, setFrancoPm] = useState(initialData?.franco_pm ?? "");
-  const [telefono, setTelefono] = useState(initialData?.telefono || "");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
 
@@ -50,7 +49,6 @@ export default function AsignarEmpleadoModal({
     setJornadaId(initialData?.jornada_id ?? "");
     setFrancoAm(initialData?.franco_am ?? "");
     setFrancoPm(initialData?.franco_pm ?? "");
-    setTelefono(initialData?.telefono || "");
   }, [show, initialData]);
 
   const sucursalOpts = useMemo(() => {
@@ -71,16 +69,9 @@ export default function AsignarEmpleadoModal({
 
   const validar = () => {
     if (!initialData?.empleado_id) return "Falta empleado_id.";
-
-    // ✅ Validación de teléfono (misma lógica que en el otro modal)
-    const clean = String(telefono || "").trim();
-    if (clean && !/^\d{10}$/.test(clean)) {
-      return "Si cargás teléfono, debe tener exactamente 10 dígitos (solo números).";
-    }
-
     if (francoAm && (Number(francoAm) < 1 || Number(francoAm) > 7))
       return "Franco AM inválido.";
-    if (francoPm && (Number(francoPm) < 1 || Number(francoPm) > 7))
+    if (francoPm && (Number(francoPm) < 1 || Number(francoPm) > 7)) 
       return "Franco PM inválido.";
     return null;
   };
@@ -100,7 +91,6 @@ export default function AsignarEmpleadoModal({
 
       // Mandamos SOLO lo que definió el usuario.
       const payload = {};
-
       if (sucursalId !== "") payload.sucursal_id = Number(sucursalId);
       else payload.sucursal_id = null;
 
@@ -112,9 +102,6 @@ export default function AsignarEmpleadoModal({
 
       if (francoPm !== "") payload.franco_pm = Number(francoPm);
       else payload.franco_pm = null;
-
-      // ✅ Envío de teléfono como en el primer modal
-      payload.telefono = telefono ? String(telefono).trim() : null;
 
       const r = await fetch(`${apiUrl}/empleados/${empleadoId}/datos`, {
         method: "PUT", // tu upsertPorEmpleado acepta POST o PUT
@@ -146,7 +133,6 @@ export default function AsignarEmpleadoModal({
     setJornadaId("");
     setFrancoAm("");
     setFrancoPm("");
-    setTelefono("");
   };
 
   return (
@@ -180,7 +166,6 @@ export default function AsignarEmpleadoModal({
                 value={sucursalId ?? ""}
                 onChange={(e) => setSucursalId(e.target.value || "")}
                 size="sm"
-                className="form-control my-input"
               >
                 <option value="">— Sin asignar —</option>
                 {sucursalOpts.map((s) => (
@@ -202,7 +187,6 @@ export default function AsignarEmpleadoModal({
                 value={jornadaId ?? ""}
                 onChange={(e) => setJornadaId(e.target.value || "")}
                 size="sm"
-                className="form-control my-input"
               >
                 <option value="">— Sin asignar —</option>
                 {jornadaOpts.map((j) => (
@@ -217,33 +201,6 @@ export default function AsignarEmpleadoModal({
             </Form.Group>
           </Col>
 
-          {/* Teléfono */}
-          <Col md={12}>
-            <Form.Group>
-              <Form.Label className="small fw-semibold text-muted text-uppercase">
-                Teléfono (10 dígitos)
-              </Form.Label>
-              <Form.Control
-                type="text"
-                inputMode="numeric"
-                pattern="\d*"
-                maxLength={10}
-                placeholder="Ej: 3515551234"
-                value={telefono}
-                onChange={(e) => {
-                  const onlyDigits = e.target.value
-                    .replace(/\D+/g, "")
-                    .slice(0, 10);
-                  setTelefono(onlyDigits);
-                }}
-                size="sm"
-              />
-              <Form.Text className="text-muted small">
-                Opcional. Solo números.
-              </Form.Text>
-            </Form.Group>
-          </Col>
-
           {/* Franco AM */}
           <Col md={6}>
             <Form.Group>
@@ -254,7 +211,6 @@ export default function AsignarEmpleadoModal({
                 value={francoAm ?? ""}
                 onChange={(e) => setFrancoAm(e.target.value || "")}
                 size="sm"
-                className="form-control my-input"
               >
                 <option value="">— Sin franco —</option>
                 {daysOfWeek.map((d) => (
@@ -276,7 +232,6 @@ export default function AsignarEmpleadoModal({
                 value={francoPm ?? ""}
                 onChange={(e) => setFrancoPm(e.target.value || "")}
                 size="sm"
-                className="form-control my-input"
               >
                 <option value="">— Sin franco —</option>
                 {daysOfWeek.map((d) => (

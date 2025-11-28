@@ -1496,12 +1496,12 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Asignar Teléfono
                     </Link>
                   )} */}
-
+{/* 
                   {can("sueldos:datosEmpleado.assign") && (
                     <Link to="/sueldostesoreria/asignardatosempleado" className="nav-link" onClick={handleLinkClick}>
                       Asignar Datos a Empleado
                     </Link>
-                  )}
+                  )} */}
 
                   {can("sueldos:adicionalFijo.tipo.manage") && (
                     <Link to="/sueldostesoreria/adicionalfijotipo" className="nav-link" onClick={handleLinkClick}>
