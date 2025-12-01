@@ -1,6 +1,6 @@
 // src/components/tesoreria/NuevoMovimientoBanco.jsx
 import React, { useContext, useMemo, useState, useEffect } from "react";
-import { Modal, Button, Form, Row, Col, Alert, Spinner, Table, Badge } from "react-bootstrap"; 
+import { Modal, Button, Form, Row, Col, Alert, Spinner, Table, Badge } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 
 const apiUrl = process.env.REACT_APP_API_URL;
@@ -9,19 +9,111 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
   const data = useContext(Contexts.DataContext) || {};
   const {
     empresaSeleccionada,
+
     categoriasEgresoTabla = [],
     categoriasEgreso = [],
     proyectosTabla = [],
     proveedoresTabla = [],
     formasPagoTesoreria = [],
     bancosTabla = [],
+
+    // 👇 setters para refrescar lookups desde el modal
+    setCategoriasEgresoTabla,
+    setCategoriasEgreso,
+    setProyectosTabla,
+    setProveedoresTabla,
+    setBancosTabla,
+    setFormasPagoTesoreria,
   } = data;
+
+  // 👉 Al abrir el modal, refrescamos lookups críticos
+  useEffect(() => {
+    if (!show) return;
+
+    let cancelado = false;
+
+    const fetchJsonSafe = async (url, def = []) => {
+      try {
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) return def;
+        const json = await res.json();
+        return Array.isArray(json) ? json : def;
+      } catch (err) {
+        console.error("Error en fetchJsonSafe:", url, err);
+        return def;
+      }
+    };
+
+    const cargarLookups = async () => {
+      // 🔹 Ajustá estas rutas según tu backend
+      const [
+        cats,
+        proys,
+        provs,
+        bancos,
+        formas,
+      ] = await Promise.all([
+        fetchJsonSafe(`${apiUrl}/categorias-egreso`),          // categorías egreso
+        fetchJsonSafe(`${apiUrl}/proyectos`),                  // proyectos
+        fetchJsonSafe(`${apiUrl}/proveedores`),                // proveedores
+        fetchJsonSafe(`${apiUrl}/bancos-tesoreria`),           // bancos vinculados a tesorería
+        fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`),      // formas de pago tesorería
+      ]);
+
+      if (cancelado) return;
+
+      if (typeof setCategoriasEgresoTabla === "function") {
+        setCategoriasEgresoTabla(cats);
+      } else if (typeof setCategoriasEgreso === "function") {
+        setCategoriasEgreso(cats);
+      }
+
+      if (typeof setProyectosTabla === "function") {
+        setProyectosTabla(proys);
+      }
+
+      if (typeof setProveedoresTabla === "function") {
+        setProveedoresTabla(provs);
+      }
+
+      if (typeof setBancosTabla === "function") {
+        setBancosTabla(bancos);
+      }
+
+      if (typeof setFormasPagoTesoreria === "function") {
+        setFormasPagoTesoreria(formas);
+      }
+    };
+
+    cargarLookups();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [
+    show,
+    setCategoriasEgresoTabla,
+    setCategoriasEgreso,
+    setProyectosTabla,
+    setProveedoresTabla,
+    setBancosTabla,
+    setFormasPagoTesoreria,
+  ]);
 
   // Preferir tabla de categorías del contexto
   const categorias = useMemo(
     () => (categoriasEgresoTabla?.length ? categoriasEgresoTabla : categoriasEgreso) || [],
     [categoriasEgresoTabla, categoriasEgreso]
   );
+
+  // Proveedores ordenados alfabéticamente
+  const proveedoresOrdenados = useMemo(() => {
+    return [...(proveedoresTabla || [])].sort((a, b) => {
+      const nA = (a.razonsocial || a.nombre || "").toLowerCase();
+      const nB = (b.razonsocial || b.nombre || "").toLowerCase();
+      return nA.localeCompare(nB);
+    });
+  }, [proveedoresTabla]);
 
   // UI
   const [tipo, setTipo] = useState("egresos"); // 'egresos' | 'anticipo'
@@ -51,14 +143,19 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
 
   // ==== Derivar imputación automáticamente desde la categoría ====
   useEffect(() => {
-    if (!categoriaegreso_id) { setImputacionId(""); return; }
+    if (!categoriaegreso_id) {
+      setImputacionId("");
+      return;
+    }
     const cat = (categorias || []).find((c) => Number(c.id) === Number(categoriaegreso_id));
     setImputacionId(cat?.imputacioncontable_id ? String(cat.imputacioncontable_id) : "");
   }, [categoriaegreso_id, categorias]);
 
   // ==== Detectar forma de pago “Banco / Transferencia” ====
   const formaPagoBancoId = useMemo(() => {
-    const m = (formasPagoTesoreria || []).find((f) => /(transfer|banco)/i.test(String(f.descripcion || "")));
+    const m = (formasPagoTesoreria || []).find((f) =>
+      /(transfer|banco)/i.test(String(f.descripcion || ""))
+    );
     return m?.id || null;
   }, [formasPagoTesoreria]);
 
@@ -69,7 +166,7 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
   }, [bancosTabla, empresa_id]);
 
   // ==== Helpers para instancias ====
-  const ymFromDate = (d) => (String(d || "").slice(0, 7)); // 'YYYY-MM'
+  const ymFromDate = (d) => String(d || "").slice(0, 7); // 'YYYY-MM'
   const baseInst = (it) => Number(it?.monto_real ?? it?.monto_estimado ?? 0);
   const saldoInst = (it) => Math.max(0, baseInst(it) - Number(it?.monto_pagado || 0));
 
@@ -81,7 +178,9 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
     const r = await fetch(url, { credentials: "include" });
     if (!r.ok) throw new Error("No se pudieron buscar instancias mensuales");
     const arr = await r.json();
-    return (Array.isArray(arr) ? arr : []).filter(x => x.estado !== "pagado" && x.estado !== "anulado");
+    return (Array.isArray(arr) ? arr : []).filter(
+      (x) => x.estado !== "pagado" && x.estado !== "anulado"
+    );
   }
 
   async function aplicarPagoAInstancia(instanciaId, payload) {
@@ -121,12 +220,15 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
           );
           const s0 = ordered[0];
           const sug = Math.min(Number(monto || 0) || 0, saldoInst(s0));
-          setSelecciones(sug > 0 ? [{ id: String(s0.id), monto: String(sug), cancelarRenov: false }] : []);
+          setSelecciones(
+            sug > 0 ? [{ id: String(s0.id), monto: String(sug), cancelarRenov: false }] : []
+          );
 
           // Prefill no intrusivo
           const inst0 = ordered[0];
           if (!descripcion?.trim() && inst0?.descripcion) setDescripcion(inst0.descripcion);
-          if (!categoriaegreso_id && inst0?.categoriaegreso_id) setCategoriaId(String(inst0.categoriaegreso_id));
+          if (!categoriaegreso_id && inst0?.categoriaegreso_id)
+            setCategoriaId(String(inst0.categoriaegreso_id));
         }
       } catch (e) {
         setErrMensual(e.message || "No se pudieron recuperar instancias mensuales");
@@ -169,10 +271,14 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
     });
   };
   const setMontoSeleccion = (instId, value) => {
-    setSelecciones((prev) => prev.map((s) => s.id === String(instId) ? { ...s, monto: value } : s));
+    setSelecciones((prev) =>
+      prev.map((s) => (s.id === String(instId) ? { ...s, monto: value } : s))
+    );
   };
   const setCancelarSeleccion = (instId, checked) => {
-    setSelecciones((prev) => prev.map((s) => s.id === String(instId) ? { ...s, cancelarRenov: !!checked } : s));
+    setSelecciones((prev) =>
+      prev.map((s) => (s.id === String(instId) ? { ...s, cancelarRenov: !!checked } : s))
+    );
   };
 
   // ==== Validaciones ====
@@ -189,15 +295,25 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
     const nMonto = montoMovimiento;
 
     if (tipo === "egresos" && esPagoMensual) {
-      if (!(totalAsignado > 0)) return false;   // debe asignar algo
-      if (totalAsignado > nMonto) return false; // seguridad (deberían ser iguales)
+      if (!(totalAsignado > 0)) return false; // debe asignar algo
+      if (totalAsignado > nMonto) return false; // seguridad
     } else {
       if (!(nMonto > 0)) return false;
     }
     return true;
   }, [
-    show, empresa_id, fecha, descripcion, proveedor_id, categoriaegreso_id,
-    proyecto_id, banco_id, tipo, esPagoMensual, totalAsignado, montoMovimiento
+    show,
+    empresa_id,
+    fecha,
+    descripcion,
+    proveedor_id,
+    categoriaegreso_id,
+    proyecto_id,
+    banco_id,
+    tipo,
+    esPagoMensual,
+    totalAsignado,
+    montoMovimiento,
   ]);
 
   const limpiar = () => {
@@ -218,7 +334,12 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
     setMsg(null);
   };
 
-  const handleClose = () => { if (!enviando) { limpiar(); onHide?.(); } };
+  const handleClose = () => {
+    if (!enviando) {
+      limpiar();
+      onHide?.();
+    }
+  };
 
   // ==== Submit ====
   const handleSubmit = async (e) => {
@@ -234,11 +355,17 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
       for (const sel of selecciones) {
         const toApply = Number(sel.monto || 0);
         if (!(toApply > 0)) {
-          return setMsg({ type: "warning", text: `Ingresá un monto válido para la instancia #${sel.id}.` });
+          return setMsg({
+            type: "warning",
+            text: `Ingresá un monto válido para la instancia #${sel.id}.`,
+          });
         }
       }
       if (totalAsignado > montoMovimiento) {
-        return setMsg({ type: "warning", text: "El total asignado supera el monto del movimiento." });
+        return setMsg({
+          type: "warning",
+          text: "El total asignado supera el monto del movimiento.",
+        });
       }
     }
 
@@ -261,18 +388,23 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
               detalle: descripcion?.trim(),
               proyecto_id: Number(proyecto_id),
               categoriaegreso_id: Number(categoriaegreso_id),
-              imputacioncontable_id: imputacioncontable_id ? Number(imputacioncontable_id) : null,
+              imputacioncontable_id: imputacioncontable_id
+                ? Number(imputacioncontable_id)
+                : null,
               formapago_id: formaPagoBancoId || null,
             },
           ],
         };
 
-        const res = await fetch(`${apiUrl}/movimientos-banco-tesoreria/anticiposaproveedores`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(
+          `${apiUrl}/movimientos-banco-tesoreria/anticiposaproveedores`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload),
+          }
+        );
         const json = await res.json();
         if (!res.ok) throw new Error(json?.error || "No se pudo registrar el anticipo");
         onCreated?.(json);
@@ -281,7 +413,8 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
       }
 
       // --- EGRESOS VARIOS (BANCO) ---
-      const montoEgreso = (tipo === "egresos" && esPagoMensual) ? totalAsignado : Number(montoMovimiento);
+      const montoEgreso =
+        tipo === "egresos" && esPagoMensual ? totalAsignado : Number(montoMovimiento);
 
       const payload = {
         empresa_id,
@@ -292,29 +425,31 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
           descripcion: descripcion?.trim(),
           proyecto_id: Number(proyecto_id),
           categoriaegreso_id: Number(categoriaegreso_id),
-          imputacioncontable_id: imputacioncontable_id ? Number(imputacioncontable_id) : null,
+          imputacioncontable_id: imputacioncontable_id
+            ? Number(imputacioncontable_id)
+            : null,
           observaciones: observaciones?.trim() || null,
           proveedor_id: Number(proveedor_id),
           formapago_id: formaPagoBancoId || null,
         },
       };
 
-      const res = await fetch(`${apiUrl}/movimientos-banco-tesoreria/egresos-independientes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${apiUrl}/movimientos-banco-tesoreria/egresos-independientes`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        }
+      );
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "No se pudo registrar el egreso");
 
       // 🔹 Aplicar a 1..N instancias (si corresponde)
       if (tipo === "egresos" && esPagoMensual && selecciones.length > 0) {
         const refId =
-          json?.movimientoBanco?.id
-          ?? json?.movimiento?.id
-          ?? json?.id
-          ?? null;
+          json?.movimientoBanco?.id ?? json?.movimiento?.id ?? json?.id ?? null;
 
         const errores = [];
         for (const sel of selecciones) {
@@ -327,7 +462,8 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
               formapago_id: formaPagoBancoId || null,
               fecha_aplicacion: fecha,
               monto_aplicado: toApply,
-              observaciones: observaciones?.trim() || descripcion?.trim() || null,
+              observaciones:
+                observaciones?.trim() || descripcion?.trim() || null,
               cancelar_renovacion: !!sel.cancelarRenov,
             });
           } catch (e2) {
@@ -387,7 +523,10 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
           <Row className="mb-3">
             <Col md={6}>
               <Form.Label>Tipo de movimiento</Form.Label>
-              <div className="d-flex flex-wrap align-items-center" style={{ gap: 16 }}>
+              <div
+                className="d-flex flex-wrap align-items-center"
+                style={{ gap: 16 }}
+              >
                 <Form.Check
                   inline
                   type="radio"
@@ -435,7 +574,10 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
                 </option>
                 {bancosDisponibles.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.nombre || b.descripcion || b.alias || `Banco ${b.id}`}
+                    {b.nombre ||
+                      b.descripcion ||
+                      b.alias ||
+                      `Banco ${b.id}`}
                   </option>
                 ))}
               </Form.Select>
@@ -446,7 +588,7 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
           <Row className="mb-3">
             <Col md={6}>
               <Form.Label>Proveedor / Entidad</Form.Label>
-              {Array.isArray(proveedoresTabla) && proveedoresTabla.length > 0 ? (
+              {Array.isArray(proveedoresOrdenados) && proveedoresOrdenados.length > 0 ? (
                 <Form.Select
                   value={proveedor_id}
                   onChange={(e) => setProveedorId(e.target.value)}
@@ -454,7 +596,30 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
                   className="form-control my-input"
                 >
                   <option value="">Seleccione…</option>
-                  {proveedoresTabla.map((p) => (
+                  {proveedoresOrdenados.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.razonsocial || p.nombre || `Proveedor #${p.id}`}
+                    </option>
+                  ))}
+                </Form.Select>
+              ) : (
+                <Form.Control
+                  type="number"
+                  placeholder="ID proveedor/entidad"
+                  value={proveedor_id}
+                  onChange={(e) => setProveedorId(e.target.value)}
+                  required
+                />
+              )}<Form.Label>Proveedor / Entidad</Form.Label>
+              {Array.isArray(proveedoresOrdenados) && proveedoresOrdenados.length > 0 ? (
+                <Form.Select
+                  value={proveedor_id}
+                  onChange={(e) => setProveedorId(e.target.value)}
+                  required
+                  className="form-control my-input"
+                >
+                  <option value="">Seleccione…</option>
+                  {proveedoresOrdenados.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.razonsocial || p.nombre || `Proveedor #${p.id}`}
                     </option>
@@ -521,12 +686,18 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
             <Row className="mb-3">
               <Col md={12}>
                 {loadingMensual ? (
-                  <Alert variant="info" className="py-2">Buscando instancias mensuales…</Alert>
+                  <Alert variant="info" className="py-2">
+                    Buscando instancias mensuales…
+                  </Alert>
                 ) : errMensual ? (
-                  <Alert variant="warning" className="py-2">{errMensual}</Alert>
+                  <Alert variant="warning" className="py-2">
+                    {errMensual}
+                  </Alert>
                 ) : instanciasMensuales.length === 0 ? (
                   <Alert variant="secondary" className="py-2">
-                    No se encontraron instancias para este proveedor en {ymFromDate(fecha)} (ni pendientes). Podés continuar sin aplicar a instancia.
+                    No se encontraron instancias para este proveedor en{" "}
+                    {ymFromDate(fecha)} (ni pendientes). Podés continuar
+                    sin aplicar a instancia.
                   </Alert>
                 ) : (
                   <div className="p-2 border rounded">
@@ -547,15 +718,28 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
                             <th className="text-end">Base</th>
                             <th className="text-end">Pagado</th>
                             <th className="text-end">Saldo</th>
-                            <th style={{ width: 160 }} className="text-end">Asignar</th>
-                            <th style={{ width: 180 }}>Cancelar renovación</th>
+                            <th
+                              style={{ width: 160 }}
+                              className="text-end"
+                            >
+                              Asignar
+                            </th>
+                            <th style={{ width: 180 }}>
+                              Cancelar renovación
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {instanciasMensuales
-                            .sort((a, b) => String(a.fecha_vencimiento).localeCompare(String(b.fecha_vencimiento)))
+                            .sort((a, b) =>
+                              String(a.fecha_vencimiento).localeCompare(
+                                String(b.fecha_vencimiento)
+                              )
+                            )
                             .map((it) => {
-                              const sel = selecciones.find(s => s.id === String(it.id));
+                              const sel = selecciones.find(
+                                (s) => s.id === String(it.id)
+                              );
                               const saldo = saldoInst(it);
                               return (
                                 <tr key={it.id}>
@@ -563,28 +747,59 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
                                     <Form.Check
                                       type="checkbox"
                                       checked={!!sel}
-                                      onChange={() => toggleSeleccion(it.id)}
+                                      onChange={() =>
+                                        toggleSeleccion(it.id)
+                                      }
                                     />
                                   </td>
                                   <td>{it.id}</td>
                                   <td>{it.descripcion || "—"}</td>
                                   <td>{it.fecha_vencimiento}</td>
-                                  <td className="text-end">${(baseInst(it)).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                  <td className="text-end">${Number(it.monto_pagado || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                  <td className="text-end">${saldo.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                  <td className="text-end">
+                                    $
+                                    {baseInst(it).toLocaleString("es-AR", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </td>
+                                  <td className="text-end">
+                                    $
+                                    {Number(
+                                      it.monto_pagado || 0
+                                    ).toLocaleString("es-AR", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </td>
+                                  <td className="text-end">
+                                    $
+                                    {saldo.toLocaleString("es-AR", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </td>
                                   <td className="text-end">
                                     <Form.Control
                                       type="number"
                                       step="0.01"
                                       disabled={!sel}
                                       value={sel?.monto ?? ""}
-                                      onChange={(e) => setMontoSeleccion(it.id, e.target.value)}
+                                      onChange={(e) =>
+                                        setMontoSeleccion(
+                                          it.id,
+                                          e.target.value
+                                        )
+                                      }
                                     />
-                                    {sel && Number(sel.monto || 0) > saldo && (
-                                      <small className="text-warning d-block mt-1">
-                                        Supera saldo: se actualizará el valor base / próximo rollover
-                                      </small>
-                                    )}
+                                    {sel &&
+                                      Number(sel.monto || 0) >
+                                      saldo && (
+                                        <small className="text-warning d-block mt-1">
+                                          Supera saldo: se
+                                          actualizará el valor
+                                          base / próximo rollover
+                                        </small>
+                                      )}
                                   </td>
 
                                   <td>
@@ -594,7 +809,12 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
                                       disabled={!sel}
                                       label="Cancelar"
                                       checked={!!sel?.cancelarRenov}
-                                      onChange={(e) => setCancelarSeleccion(it.id, e.target.checked)}
+                                      onChange={(e) =>
+                                        setCancelarSeleccion(
+                                          it.id,
+                                          e.target.checked
+                                        )
+                                      }
                                     />
                                   </td>
                                 </tr>
@@ -614,7 +834,11 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
             <Col md={8}>
               <Form.Label>Descripción</Form.Label>
               <Form.Control
-                placeholder={tipo === "anticipo" ? "Anticipo / concepto" : "Descripción del gasto/servicio"}
+                placeholder={
+                  tipo === "anticipo"
+                    ? "Anticipo / concepto"
+                    : "Descripción del gasto/servicio"
+                }
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 required
@@ -625,13 +849,19 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
               <Form.Control
                 type="number"
                 step="0.01"
-                value={tipo === "egresos" && esPagoMensual ? String(totalAsignado || "") : monto}
+                value={
+                  tipo === "egresos" && esPagoMensual
+                    ? String(totalAsignado || "")
+                    : monto
+                }
                 onChange={(e) => setMonto(e.target.value)}
                 disabled={tipo === "egresos" && esPagoMensual}
                 required
               />
               {tipo === "egresos" && esPagoMensual && (
-                <small className="text-muted">Calculado automáticamente por la suma de “Asignar”.</small>
+                <small className="text-muted">
+                  Calculado automáticamente por la suma de “Asignar”.
+                </small>
               )}
             </Col>
           </Row>
@@ -654,7 +884,8 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
                 ))}
               </Form.Select>
               <Form.Text className="text-muted">
-                La imputación contable se deriva automáticamente de la categoría.
+                La imputación contable se deriva automáticamente de la
+                categoría.
               </Form.Text>
             </Col>
 
@@ -674,11 +905,30 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={handleClose} disabled={enviando}>
+          <Button
+            variant="outline-secondary"
+            onClick={handleClose}
+            disabled={enviando}
+          >
             Cancelar
           </Button>
-          <Button variant="primary" type="submit" disabled={!puedeGuardar || enviando}>
-            {enviando ? (<><Spinner size="sm" animation="border" className="me-2" /> Guardando…</>) : ("Guardar")}
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={!puedeGuardar || enviando}
+          >
+            {enviando ? (
+              <>
+                <Spinner
+                  size="sm"
+                  animation="border"
+                  className="me-2"
+                />{" "}
+                Guardando…
+              </>
+            ) : (
+              "Guardar"
+            )}
           </Button>
         </Modal.Footer>
       </Form>

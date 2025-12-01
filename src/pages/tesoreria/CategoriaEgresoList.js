@@ -19,6 +19,7 @@ const apiUrl = process.env.REACT_APP_API_URL;
 const CategoriaEgresoList = () => {
   const {
     imputacionContableTabla = [],
+    setImputacionContableTabla,
     categoriasEgreso = [],
     setCategoriasEgreso,
   } = useContext(Contexts.DataContext) || {};
@@ -65,6 +66,22 @@ const CategoriaEgresoList = () => {
     }
   };
 
+  const fetchImputaciones = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/imputaciones-contables`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (typeof setImputacionContableTabla === "function") {
+        setImputacionContableTabla(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error("Error al recargar imputaciones contables:", err);
+    }
+  };
+
+
   useEffect(() => {
     if (!categoriasEgreso?.length) fetchCategorias();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,17 +101,17 @@ const CategoriaEgresoList = () => {
   }, [categoriasEgreso, busqueda, imputacionMap]);
 
   // ---- Modal helpers ----
-  const openModalNew = () => {
+  const openModalNew = async () => {
     setFormError("");
     setFormMsg(null);
     setEditing(false);
     setEditId(null);
     setNombre("");
     setImputacionContableId("");
+    await fetchImputaciones(); // ⬅️ refresca imputaciones antes de mostrar el modal
     setShowModal(true);
   };
-
-  const openModalEdit = (cat) => {
+  const openModalEdit = async (cat) => {
     setFormError("");
     setFormMsg(null);
     setEditing(true);
@@ -103,6 +120,7 @@ const CategoriaEgresoList = () => {
     setImputacionContableId(
       cat.imputacioncontable_id ? String(cat.imputacioncontable_id) : ""
     );
+    await fetchImputaciones(); // ⬅️ refresca imputaciones antes de mostrar el modal
     setShowModal(true);
   };
 

@@ -130,34 +130,47 @@ export default function ImputacionContableList() {
       const raw = await res.text();
       if (!res.ok) {
         let msg = "No se pudo guardar";
-        try { msg = JSON.parse(raw)?.error || msg; } catch {}
+        try { msg = JSON.parse(raw)?.error || msg; } catch { }
         throw new Error(msg);
       }
 
       let saved = null;
-      if (raw) { try { saved = JSON.parse(raw); } catch {} }
+      if (raw) {
+        try {
+          saved = JSON.parse(raw);
+        } catch { }
+      }
 
-      const finalItem = saved || { id: editing ? editId : undefined, ...payload };
-
-      // Update optimista
-      if (typeof setImputacionContableTabla === "function") {
+      // Actualizar SIEMPRE el contexto con lo que devuelve el backend
+      if (typeof setImputacionContableTabla === "function" && saved) {
         setImputacionContableTabla((prev = []) => {
           const arr = Array.isArray(prev) ? [...prev] : [];
+
           if (editing) {
-            const i = arr.findIndex((x) => Number(x.id) === Number(editId));
-            if (i >= 0) arr[i] = { ...arr[i], ...finalItem };
+            const i = arr.findIndex((x) => Number(x.id) === Number(saved.id));
+            if (i >= 0) {
+              arr[i] = { ...arr[i], ...saved };
+            } else {
+              arr.push(saved);
+            }
           } else {
-            const tempId = finalItem.id ?? Date.now();
-            arr.push({ ...finalItem, id: tempId });
+            arr.push(saved);
           }
-          arr.sort((a, b) => a.id - b.id);
-          return arr;
+
+          return arr.sort((a, b) => a.id - b.id);
         });
       }
 
-      setFormMsg({ type: "success", text: editing ? "Imputación actualizada" : "Imputación creada" });
-      await fetchImputaciones(); // normaliza ids/estado
+      setFormMsg({
+        type: "success",
+        text: editing ? "Imputación actualizada" : "Imputación creada",
+      });
+
+      // Opcional: si querés normalizar 100% contra base
+      await fetchImputaciones();
+
       closeModal();
+
     } catch (err2) {
       setFormError(err2.message || "Error al guardar");
     } finally {

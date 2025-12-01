@@ -18,6 +18,9 @@ export default function NuevoMovimientoCajaRetiro({
   const {
     formasPagoTesoreria = [],
     categoriasIngreso = [],
+    // 👇 setters opcionales para refrescar listas
+    setCategoriasIngresoTabla,
+    setCategoriasIngreso,
   } = dataContext;
 
   // ==== Helpers
@@ -25,6 +28,39 @@ export default function NuevoMovimientoCajaRetiro({
     typeof n === "number" || typeof n === "string"
       ? `$${Number(n).toLocaleString("es-AR", { minimumFractionDigits: 2 })}`
       : "";
+
+  // 👉 REFRESCAR categorías de ingreso al abrir el modal
+  useEffect(() => {
+    if (!show) return;
+
+    let cancelado = false;
+
+    const refrescarCategoriasIngreso = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/categorias-ingreso`, {
+          credentials: "include",
+        });
+        const json = res.ok ? await res.json() : [];
+        const lista = Array.isArray(json) ? json : [];
+
+        if (cancelado) return;
+
+        if (typeof setCategoriasIngresoTabla === "function") {
+          setCategoriasIngresoTabla(lista);
+        } else if (typeof setCategoriasIngreso === "function") {
+          setCategoriasIngreso(lista);
+        }
+      } catch (err) {
+        console.error("Error refrescando categorías de ingreso (retiros):", err);
+      }
+    };
+
+    refrescarCategoriasIngreso();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [show, setCategoriasIngresoTabla, setCategoriasIngreso]);
 
   // Resolver formacobro "Caja/Efectivo" desde el contexto
   const formaCobroCajaId = useMemo(() => {
@@ -232,7 +268,6 @@ export default function NuevoMovimientoCajaRetiro({
         if (!res.ok) throw new Error(json?.error || "No se pudo registrar el/los retiro(s)");
       } else {
         // EDITAR (sync completo por movimiento):
-        // Enviamos cada sobre con su id (si existe) + importe. Los que no mandes, se eliminarán en backend.
         const retiros = (sobres || [])
           .map((s) => ({
             ...(s.id ? { id: Number(s.id) } : {}),
@@ -241,7 +276,7 @@ export default function NuevoMovimientoCajaRetiro({
           .filter((r) => r.importe > 0);
 
         const body = {
-          fecha, // si el backend decide ignorar cambios de fecha, no pasa nada
+          fecha,
           categoriaingreso_id: categoriaingreso_id ? Number(categoriaingreso_id) : null,
           descripcion: descripcion?.trim() || null,
           observaciones: observaciones?.trim() || null,

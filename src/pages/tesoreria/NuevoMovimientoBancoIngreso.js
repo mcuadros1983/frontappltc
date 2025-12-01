@@ -19,9 +19,77 @@ export default function NuevoMovimientoBancoIngreso({ show, onHide, onCreated })
     categoriasIngreso = [],
     // Formas de pago (para banco: transferencia/depósito/cheque, etc.)
     formasPagoTesoreria = [],
+
+    // 👇 setters para refrescar lookups cuando se abre el modal
+    setBancosTabla,
+    setBancos,
+    setClientes,
+    setProyectosTabla,
+    setCategoriasIngreso,
+    setFormasPagoTesoreria,
   } = data;
 
   const empresa_id = empresaSeleccionada?.id || null;
+
+  // ====== REFRESH DE LOOKUPS AL ABRIR ======
+  useEffect(() => {
+    if (!show) return;
+
+    let cancelado = false;
+
+    const fetchJsonSafe = async (url, def = []) => {
+      try {
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) return def;
+        const json = await res.json();
+        return Array.isArray(json) ? json : def;
+      } catch (err) {
+        console.error("Error en fetchJsonSafe:", url, err);
+        return def;
+      }
+    };
+
+    const cargarLookups = async () => {
+      // 🔹 Ajustá estas rutas a tu API real
+      const [
+        bancosApi,
+        clientesApi,
+        proyectosApi,
+        categoriasApi,
+        formasApi,
+      ] = await Promise.all([
+        fetchJsonSafe(`${apiUrl}/bancos-tesoreria`),        // bancos / cuentas bancarias
+        fetchJsonSafe(`${apiUrl}/clientes`),                // clientes
+        fetchJsonSafe(`${apiUrl}/proyectos`),               // proyectos
+        fetchJsonSafe(`${apiUrl}/categorias-ingreso`),      // categorías de ingreso
+        fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`),   // formas de pago tesorería
+      ]);
+
+      if (cancelado) return;
+
+      if (typeof setBancosTabla === "function") setBancosTabla(bancosApi);
+      else if (typeof setBancos === "function") setBancos(bancosApi);
+
+      if (typeof setClientes === "function") setClientes(clientesApi);
+      if (typeof setProyectosTabla === "function") setProyectosTabla(proyectosApi);
+      if (typeof setCategoriasIngreso === "function") setCategoriasIngreso(categoriasApi);
+      if (typeof setFormasPagoTesoreria === "function") setFormasPagoTesoreria(formasApi);
+    };
+
+    cargarLookups();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [
+    show,
+    setBancosTabla,
+    setBancos,
+    setClientes,
+    setProyectosTabla,
+    setCategoriasIngreso,
+    setFormasPagoTesoreria,
+  ]);
 
   // ====== UI general
   const [activeKey, setActiveKey] = useState("varios"); // "varios" | "cobranza"
@@ -253,6 +321,17 @@ export default function NuevoMovimientoBancoIngreso({ show, onHide, onCreated })
           {sinBancosEmpresa && (
             <Alert variant="info" className="py-2">
               No hay bancos/cuentas asociados a la empresa seleccionada.
+            </Alert>
+          )}
+
+          {msg && (
+            <Alert
+              variant={msg.type}
+              className="py-2"
+              onClose={() => setMsg(null)}
+              dismissible
+            >
+              {msg.text}
             </Alert>
           )}
 

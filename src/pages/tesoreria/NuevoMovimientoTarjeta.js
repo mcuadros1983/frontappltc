@@ -15,9 +15,80 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
     proyectosTabla = [],
     bancosTabla = [],
     planTarjetaTesoreriaTabla = [],
+
+    // 👇 setters para refrescar lookups al abrir el modal
+    setCategoriasEgresoTabla,
+    setCategoriasEgreso,
+    setProveedoresTabla,
+    setProyectosTabla,
+    setBancosTabla,
+    setPlanTarjetaTesoreriaTabla,
   } = data;
 
   const empresa_id = empresaSeleccionada?.id || null;
+
+  // ====== REFRESH DE LOOKUPS AL ABRIR ======
+  useEffect(() => {
+    if (!show) return;
+
+    let cancelado = false;
+
+    const fetchJsonSafe = async (url, def = []) => {
+      try {
+        const res = await fetch(url, { credentials: "include" });
+        if (!res.ok) return def;
+        const json = await res.json();
+        return Array.isArray(json) ? json : def;
+      } catch (err) {
+        console.error("Error en fetchJsonSafe:", url, err);
+        return def;
+      }
+    };
+
+    const cargarLookups = async () => {
+      // 🔹 Ajustá estas rutas a tu API real
+      const [
+        categoriasApi,
+        proveedoresApi,
+        proyectosApi,
+        bancosApi,
+        planesApi,
+      ] = await Promise.all([
+        fetchJsonSafe(`${apiUrl}/categorias-egreso`),
+        fetchJsonSafe(`${apiUrl}/proveedores`),
+        fetchJsonSafe(`${apiUrl}/proyectos`),
+        fetchJsonSafe(`${apiUrl}/bancos-tesoreria`),
+        fetchJsonSafe(`${apiUrl}/planes-tarjeta-tesoreria`),
+      ]);
+
+      if (cancelado) return;
+
+      if (typeof setCategoriasEgresoTabla === "function") {
+        setCategoriasEgresoTabla(categoriasApi);
+      } else if (typeof setCategoriasEgreso === "function") {
+        setCategoriasEgreso(categoriasApi);
+      }
+
+      if (typeof setProveedoresTabla === "function") setProveedoresTabla(proveedoresApi);
+      if (typeof setProyectosTabla === "function") setProyectosTabla(proyectosApi);
+      if (typeof setBancosTabla === "function") setBancosTabla(bancosApi);
+      if (typeof setPlanTarjetaTesoreriaTabla === "function") setPlanTarjetaTesoreriaTabla(planesApi);
+    };
+
+    cargarLookups();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [
+    show,
+    setCategoriasEgresoTabla,
+    setCategoriasEgreso,
+    setProveedoresTabla,
+    setProyectosTabla,
+    setBancosTabla,
+    setPlanTarjetaTesoreriaTabla,
+  ]);
 
   // Listas desde contexto
   const categorias = useMemo(
@@ -63,14 +134,20 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
 
   // Derivar imputación desde categoría
   useEffect(() => {
-    if (!categoriaegreso_id) { setImputacionId(""); return; }
+    if (!categoriaegreso_id) {
+      setImputacionId("");
+      return;
+    }
     const cat = (categorias || []).find((c) => Number(c.id) === Number(categoriaegreso_id));
     setImputacionId(cat?.imputacioncontable_id ? String(cat.imputacioncontable_id) : "");
   }, [categoriaegreso_id, categorias]);
 
   // Cargar tarjetas por empresa (y filtro por terminación opcional)
   const loadTarjetas = async () => {
-    if (!empresa_id) { setTarjetas([]); return; }
+    if (!empresa_id) {
+      setTarjetas([]);
+      return;
+    }
     const qs = new URLSearchParams();
     qs.set("empresa_id", empresa_id);
     if (terminacionFiltro) qs.set("terminacion", String(terminacionFiltro).padStart(4, "0"));
@@ -92,14 +169,20 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
 
   useEffect(() => {
     if (!show) return;
-    const t = setTimeout(() => { loadTarjetas(); }, 250);
+    const t = setTimeout(() => {
+      loadTarjetas();
+    }, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [terminacionFiltro]);
 
   // ==== Helpers mensual ====
-  const ymFromDate = (d) => (String(d || "").slice(0, 7)); // 'YYYY-MM'
-  const toMoney = (n) => Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const ymFromDate = (d) => String(d || "").slice(0, 7); // 'YYYY-MM'
+  const toMoney = (n) =>
+    Number(n || 0).toLocaleString("es-AR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   async function buscarInstanciasMensuales({ proveedorId, fechaStr }) {
     const qs = new URLSearchParams();
@@ -109,8 +192,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
     const r = await fetch(url, { credentials: "include" });
     if (!r.ok) throw new Error("No se pudieron buscar instancias mensuales");
     const arr = await r.json();
-    return (Array.isArray(arr) ? arr : [])
-      .filter(x => x.estado !== "pagado" && x.estado !== "anulado");
+    return (Array.isArray(arr) ? arr : []).filter(
+      (x) => x.estado !== "pagado" && x.estado !== "anulado"
+    );
   }
 
   async function aplicarPagoAInstancia(instanciaId, payload) {
@@ -153,7 +237,8 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
           );
           const inst0 = ordered[0];
           if (!descripcion?.trim() && inst0?.descripcion) setDescripcion(inst0.descripcion);
-          if (!categoriaegreso_id && inst0?.categoriaegreso_id) setCategoriaId(String(inst0.categoriaegreso_id));
+          if (!categoriaegreso_id && inst0?.categoriaegreso_id)
+            setCategoriaId(String(inst0.categoriaegreso_id));
         }
       } catch (e) {
         setErrMensual(e.message || "No se pudieron recuperar instancias mensuales");
@@ -219,7 +304,8 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
   function resolverReferenciaTarjeta(json) {
     if (json?.id) return { tipo: "PagoTarjetaCredito", id: json.id };
     if (json?.pagoTarjeta?.id) return { tipo: "PagoTarjetaCredito", id: json.pagoTarjeta.id };
-    if (json?.movimientoTarjeta?.id) return { tipo: "MovimientoTarjetaTesoreria", id: json.movimientoTarjeta.id };
+    if (json?.movimientoTarjeta?.id)
+      return { tipo: "MovimientoTarjetaTesoreria", id: json.movimientoTarjeta.id };
     if (json?.movimiento?.id) return { tipo: "MovimientoTarjetaTesoreria", id: json.movimiento.id };
     if (json?.pago?.id) return { tipo: "PagoTarjetaCredito", id: json.pago.id };
     if (json?.registro?.id) return { tipo: "PagoTarjetaCredito", id: json.registro.id };
@@ -241,16 +327,25 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
     const nMonto = montoMovimiento;
 
     if (tipo === "egresos" && esPagoMensual) {
-      if (!(totalAsignado > 0)) return false;   // debe asignar algo
+      if (!(totalAsignado > 0)) return false; // debe asignar algo
       if (totalAsignado > nMonto) return false; // seguridad (deberían ser iguales)
     } else {
       if (!(nMonto > 0)) return false;
     }
     return true;
   }, [
-    show, empresa_id, fecha, descripcion,
-    tarjetacomun_id, proveedor_id, categoriaegreso_id, proyecto_id,
-    tipo, esPagoMensual, totalAsignado, montoMovimiento
+    show,
+    empresa_id,
+    fecha,
+    descripcion,
+    tarjetacomun_id,
+    proveedor_id,
+    categoriaegreso_id,
+    proyecto_id,
+    tipo,
+    esPagoMensual,
+    totalAsignado,
+    montoMovimiento,
   ]);
 
   const limpiar = () => {
@@ -278,7 +373,12 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
     setMsg(null);
   };
 
-  const handleClose = () => { if (!enviando) { limpiar(); onHide?.(); } };
+  const handleClose = () => {
+    if (!enviando) {
+      limpiar();
+      onHide?.();
+    }
+  };
 
   // Submit
   const handleSubmit = async (e) => {
@@ -294,11 +394,17 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
       for (const sel of selecciones) {
         const toApply = Number(sel.monto || 0);
         if (!(toApply > 0)) {
-          return setMsg({ type: "warning", text: `Ingresá un monto válido para la instancia #${sel.id}.` });
+          return setMsg({
+            type: "warning",
+            text: `Ingresá un monto válido para la instancia #${sel.id}.`,
+          });
         }
       }
       if (totalAsignado > montoMovimiento) {
-        return setMsg({ type: "warning", text: "El total asignado supera el monto del movimiento." });
+        return setMsg({
+          type: "warning",
+          text: "El total asignado supera el monto del movimiento.",
+        });
       }
     }
 
@@ -319,7 +425,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
               detalle: descripcion?.trim(),
               proyecto_id: Number(proyecto_id),
               categoriaegreso_id: Number(categoriaegreso_id),
-              imputacioncontable_id: imputacioncontable_id ? Number(imputacioncontable_id) : null,
+              imputacioncontable_id: imputacioncontable_id
+                ? Number(imputacioncontable_id)
+                : null,
               cupon_numero: cupon_numero || null,
               planpago_id: planpago_id ? Number(planpago_id) : null,
             },
@@ -374,9 +482,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
 
         const tasks = selecciones.map((sel) =>
           aplicarPagoAInstancia(sel.id, {
-            referencia_tipo: refTipo,       // "PagoTarjetaCredito"
+            referencia_tipo: refTipo, // "PagoTarjetaCredito"
             referencia_id: refId,
-            formapago_id: null,             // opcional
+            formapago_id: null, // opcional
             fecha_aplicacion: fecha,
             monto_aplicado: Number(sel.monto || 0),
             observaciones: observaciones?.trim() || descripcion?.trim() || null,
@@ -389,7 +497,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
 
         const results = await Promise.allSettled(tasks);
         const fails = results
-          .map((r) => (r.status === "fulfilled" ? r.value : { ok: false, error: r.reason?.message }))
+          .map((r) =>
+            r.status === "fulfilled" ? r.value : { ok: false, error: r.reason?.message }
+          )
           .filter((x) => !x.ok);
 
         if (fails.length > 0) {
@@ -419,7 +529,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
 
         <Modal.Body>
           {!empresa_id && (
-            <Alert variant="warning" className="py-2">Seleccioná una empresa para continuar.</Alert>
+            <Alert variant="warning" className="py-2">
+              Seleccioná una empresa para continuar.
+            </Alert>
           )}
           {msg && (
             <Alert variant={msg.type} className="py-2" onClose={() => setMsg(null)} dismissible>
@@ -433,14 +545,20 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
               <Form.Label>Tipo de movimiento</Form.Label>
               <div className="d-flex flex-wrap align-items-center" style={{ gap: 16 }}>
                 <Form.Check
-                  inline type="radio" id="tipo-egresos" name="tipo"
+                  inline
+                  type="radio"
+                  id="tipo-egresos"
+                  name="tipo"
                   label="Egresos varios (Tarjeta)"
                   value="egresos"
                   checked={tipo === "egresos"}
                   onChange={(e) => setTipo(e.target.value)}
                 />
                 <Form.Check
-                  inline type="radio" id="tipo-anticipo" name="tipo"
+                  inline
+                  type="radio"
+                  id="tipo-anticipo"
+                  name="tipo"
                   label="Anticipo a Proveedores (Tarjeta)"
                   value="anticipo"
                   checked={tipo === "anticipo"}
@@ -450,7 +568,12 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
             </Col>
             <Col md={4}>
               <Form.Label>Fecha</Form.Label>
-              <Form.Control type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required />
+              <Form.Control
+                type="date"
+                value={fecha}
+                onChange={(e) => setFecha(e.target.value)}
+                required
+              />
             </Col>
           </Row>
 
@@ -462,7 +585,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                 placeholder="Últimos 4 (ej: 1234)"
                 maxLength={4}
                 value={terminacionFiltro}
-                onChange={(e) => setTerminacionFiltro(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                onChange={(e) =>
+                  setTerminacionFiltro(e.target.value.replace(/\D/g, "").slice(0, 4))
+                }
                 disabled={!empresa_id || enviando}
               />
             </Col>
@@ -475,13 +600,19 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                 disabled={!empresa_id || tarjetas.length === 0 || enviando}
                 className="form-control my-input"
               >
-                <option value="">{tarjetas.length ? "Seleccione…" : "No hay tarjetas disponibles"}</option>
+                <option value="">
+                  {tarjetas.length ? "Seleccione…" : "No hay tarjetas disponibles"}
+                </option>
                 {tarjetas.map((t) => {
                   const banco = bancosTabla.find((b) => Number(b.id) === Number(t.banco_id));
-                  const bancoTxt = banco?.nombre || banco?.descripcion || banco?.alias || "";
+                  const bancoTxt =
+                    banco?.nombre || banco?.descripcion || banco?.alias || "";
                   return (
                     <option key={t.id} value={t.id}>
-                      ****{t.terminacion} {bancoTxt ? `· ${bancoTxt}` : ""} {t.marca_id ? `· Marca #${t.marca_id}` : ""} {t.tipotarjeta_id ? `· Tipo #${t.tipotarjeta_id}` : ""}
+                      ****{t.terminacion}{" "}
+                      {bancoTxt ? `· ${bancoTxt}` : ""}{" "}
+                      {t.marca_id ? `· Marca #${t.marca_id}` : ""}{" "}
+                      {t.tipotarjeta_id ? `· Tipo #${t.tipotarjeta_id}` : ""}
                     </option>
                   );
                 })}
@@ -493,7 +624,7 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
           <Row className="mb-3">
             <Col md={6}>
               <Form.Label>Proveedor</Form.Label>
-              {(Array.isArray(proveedoresTabla) && proveedoresTabla.length > 0) ? (
+              {Array.isArray(proveedoresTabla) && proveedoresTabla.length > 0 ? (
                 <Form.Select
                   value={proveedor_id}
                   onChange={(e) => setProveedorId(e.target.value)}
@@ -564,22 +695,40 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
             <Row className="mb-3">
               <Col md={12}>
                 {loadingMensual ? (
-                  <Alert variant="info" className="py-2">Buscando instancias…</Alert>
+                  <Alert variant="info" className="py-2">
+                    Buscando instancias…
+                  </Alert>
                 ) : errMensual ? (
-                  <Alert variant="warning" className="py-2">{errMensual}</Alert>
+                  <Alert variant="warning" className="py-2">
+                    {errMensual}
+                  </Alert>
                 ) : instanciasMensuales.length === 0 ? (
                   <Alert variant="secondary" className="py-2">
-                    No se encontraron instancias abiertas para este proveedor en {ymFromDate(fecha)}.
+                    No se encontraron instancias abiertas para este proveedor en{" "}
+                    {ymFromDate(fecha)}.
                   </Alert>
                 ) : (
                   <>
                     <div className="d-flex justify-content-between align-items-center mb-2">
                       <div className="small text-muted">
-                        Seleccioná una o varias instancias y definí el monto a aplicar (podés superar el saldo).
+                        Seleccioná una o varias instancias y definí el monto a aplicar (podés
+                        superar el saldo).
                       </div>
                       <div className="d-flex gap-2">
-                        <Button size="sm" variant="outline-secondary" onClick={seleccionarTodo}>Seleccionar todo</Button>
-                        <Button size="sm" variant="outline-secondary" onClick={seleccionarNinguno}>Ninguno</Button>
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          onClick={seleccionarTodo}
+                        >
+                          Seleccionar todo
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          onClick={seleccionarNinguno}
+                        >
+                          Ninguno
+                        </Button>
                       </div>
                     </div>
 
@@ -594,13 +743,19 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                             <th className="text-end">Base</th>
                             <th className="text-end">Pagado</th>
                             <th className="text-end">Saldo</th>
-                            <th className="text-end" style={{ width: 150 }}>Asignar</th>
+                            <th className="text-end" style={{ width: 150 }}>
+                              Asignar
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {instanciasMensuales
                             .slice()
-                            .sort((a, b) => String(a.fecha_vencimiento).localeCompare(String(b.fecha_vencimiento)))
+                            .sort((a, b) =>
+                              String(a.fecha_vencimiento).localeCompare(
+                                String(b.fecha_vencimiento)
+                              )
+                            )
                             .map((it) => {
                               const base = Number(it.monto_real ?? it.monto_estimado ?? 0);
                               const pagado = Number(it.monto_pagado || 0);
@@ -612,7 +767,13 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                                     <Form.Check
                                       type="checkbox"
                                       checked={!!sel}
-                                      onChange={(e) => toggleSeleccion(it.id, e.target.checked, saldo > 0 ? String(saldo) : String(base))}
+                                      onChange={(e) =>
+                                        toggleSeleccion(
+                                          it.id,
+                                          e.target.checked,
+                                          saldo > 0 ? String(saldo) : String(base)
+                                        )
+                                      }
                                     />
                                   </td>
                                   <td>#{it.id}</td>
@@ -627,11 +788,14 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                                       step="0.01"
                                       disabled={!sel}
                                       value={sel?.monto ?? ""}
-                                      onChange={(e)=> setMontoSeleccion(it.id, e.target.value)}
+                                      onChange={(e) =>
+                                        setMontoSeleccion(it.id, e.target.value)
+                                      }
                                     />
                                     {sel && Number(sel.monto || 0) > saldo && (
                                       <small className="text-warning d-block mt-1">
-                                        Supera saldo: se actualizará el valor base / próximo rollover
+                                        Supera saldo: se actualizará el valor base / próximo
+                                        rollover
                                       </small>
                                     )}
                                   </td>
@@ -653,7 +817,8 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                         />
                       </div>
                       <div className="fw-bold">
-                        Total a aplicar: ${toMoney(totalAsignado)} / Monto movimiento: ${toMoney(montoMovimiento)}
+                        Total a aplicar: ${toMoney(totalAsignado)} / Monto movimiento: $
+                        {toMoney(montoMovimiento)}
                       </div>
                     </div>
                   </>
@@ -667,7 +832,11 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
             <Col md={8}>
               <Form.Label>Descripción / Concepto</Form.Label>
               <Form.Control
-                placeholder={tipo === "anticipo" ? "Anticipo / concepto" : "Descripción del gasto/servicio"}
+                placeholder={
+                  tipo === "anticipo"
+                    ? "Anticipo / concepto"
+                    : "Descripción del gasto/servicio"
+                }
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 required
@@ -684,7 +853,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                 required
               />
               {tipo === "egresos" && esPagoMensual && (
-                <small className="text-muted">Calculado automáticamente por la suma de “Asignar”.</small>
+                <small className="text-muted">
+                  Calculado automáticamente por la suma de “Asignar”.
+                </small>
               )}
             </Col>
           </Row>
@@ -764,7 +935,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
               <>
                 <Spinner size="sm" animation="border" className="me-2" /> Guardando…
               </>
-            ) : ("Guardar")}
+            ) : (
+              "Guardar"
+            )}
           </Button>
         </Modal.Footer>
       </Form>

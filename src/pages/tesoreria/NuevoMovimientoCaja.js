@@ -1,6 +1,6 @@
 // src/components/tesoreria/NuevoMovimientoCaja.jsx
 import React, { useContext, useMemo, useState, useEffect } from "react";
-import { Modal, Button, Form, Row, Col, Alert, Spinner, Table, Badge } from "react-bootstrap";
+import { Modal, Button, Form, Row, Col, Alert, Spinner, Table } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 
 const apiUrl = process.env.REACT_APP_API_URL;
@@ -10,15 +10,21 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
   const {
     empresaSeleccionada,
     cajaAbierta,
+
+    // 🔹 Listas + setters desde el contexto
     categoriasEgreso = [],
+    setCategoriasEgreso,
     proveedoresTabla = [],
+    setProveedoresTabla,
+    proyectosTabla = [],
+    setProyectosTabla,
+
     formasPagoTesoreria = [],
     bancosTabla = [],
     empresasTabla = [],
-    proyectosTabla = [],
   } = data;
 
-  // UI
+  // ================== UI / FORM ==================
   const [tipo, setTipo] = useState("egresos"); // 'egresos' | 'anticipo' | 'deposito'
   const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
   const [descripcion, setDescripcion] = useState("");
@@ -45,16 +51,72 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
   const empresa_id = empresaSeleccionada?.id || null;
   const caja_id = cajaAbierta?.caja?.id || null;
 
-  // ==== Derivar imputación automáticamente desde la categoría ====
+  // ================== REFRESCAR DATOS AL ABRIR MODAL ==================
   useEffect(() => {
-    if (!categoriaegreso_id) { setImputacionId(""); return; }
-    const cat = (categoriasEgreso || []).find((c) => Number(c.id) === Number(categoriaegreso_id));
-    setImputacionId(cat?.imputacioncontable_id ? String(cat.imputacioncontable_id) : "");
+    if (!show) return;
+
+    let cancelado = false;
+
+    const refrescarListas = async () => {
+      try {
+        const [resProv, resProy, resCat] = await Promise.all([
+          fetch(`${apiUrl}/proveedores`, { credentials: "include" }),
+          fetch(`${apiUrl}/proyectos`, { credentials: "include" }),
+          fetch(`${apiUrl}/categorias-egreso`, { credentials: "include" }),
+        ]);
+
+        const [
+          dataProv = [],
+          dataProy = [],
+          dataCat = [],
+        ] = await Promise.all([
+          resProv.ok ? resProv.json() : Promise.resolve([]),
+          resProy.ok ? resProy.json() : Promise.resolve([]),
+          resCat.ok ? resCat.json() : Promise.resolve([]),
+        ]);
+
+        if (cancelado) return;
+
+        if (typeof setProveedoresTabla === "function") {
+          setProveedoresTabla(Array.isArray(dataProv) ? dataProv : []);
+        }
+        if (typeof setProyectosTabla === "function") {
+          setProyectosTabla(Array.isArray(dataProy) ? dataProy : []);
+        }
+        if (typeof setCategoriasEgreso === "function") {
+          setCategoriasEgreso(Array.isArray(dataCat) ? dataCat : []);
+        }
+      } catch (err) {
+        console.error("Error refrescando proveedores/proyectos/categorías:", err);
+      }
+    };
+
+    refrescarListas();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [show, setProveedoresTabla, setProyectosTabla, setCategoriasEgreso]);
+
+  // ================== IMPUTACIÓN AUTOMÁTICA ==================
+  useEffect(() => {
+    if (!categoriaegreso_id) {
+      setImputacionId("");
+      return;
+    }
+    const cat = (categoriasEgreso || []).find(
+      (c) => Number(c.id) === Number(categoriaegreso_id)
+    );
+    setImputacionId(
+      cat?.imputacioncontable_id ? String(cat.imputacioncontable_id) : ""
+    );
   }, [categoriaegreso_id, categoriasEgreso]);
 
   // ==== Detectar forma de pago "Caja/Efectivo" ====
   const formaPagoCajaId = useMemo(() => {
-    const m = (formasPagoTesoreria || []).find((f) => /(caja|efectivo)/i.test(String(f.descripcion || "")));
+    const m = (formasPagoTesoreria || []).find((f) =>
+      /(caja|efectivo)/i.test(String(f.descripcion || ""))
+    );
     return m?.id || null;
   }, [formasPagoTesoreria]);
 
@@ -64,17 +126,37 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
   const empresasByNombre = useMemo(() => {
     const map = new Map();
     (empresasTabla || []).forEach((e) => {
-      const key = norm(e.descripcion) || norm(e.nombre) || norm(e.fantasia) || norm(e.alias);
+      const key =
+        norm(e.descripcion) ||
+        norm(e.nombre) ||
+        norm(e.fantasia) ||
+        norm(e.alias);
       if (key) map.set(key, e);
     });
     return map;
   }, [empresasTabla]);
 
+  // ==== Proveedores ordenados alfabéticamente ====
+  const proveedoresOrdenados = useMemo(() => {
+    return [...(proveedoresTabla || [])].sort((a, b) => {
+      const nA = (a.descripcion || a.nombre || "").toLowerCase();
+      const nB = (b.descripcion || b.nombre || "").toLowerCase();
+      return nA.localeCompare(nB);
+    });
+  }, [proveedoresTabla]);
+
   // ==== Proveedores visibles en DEPÓSITO ====
   const proveedoresParaUI = useMemo(() => {
-    if (tipo !== "deposito") return proveedoresTabla;
-    return (proveedoresTabla || []).filter((p) => empresasByNombre.has(norm(p.descripcion || p.nombre)));
-  }, [tipo, proveedoresTabla, empresasByNombre]);
+    if (tipo !== "deposito") return proveedoresOrdenados;
+
+    return [...(proveedoresTabla || [])]
+      .filter((p) => empresasByNombre.has(norm(p.descripcion || p.nombre)))
+      .sort((a, b) => {
+        const nA = (a.descripcion || a.nombre || "").toLowerCase();
+        const nB = (b.descripcion || b.nombre || "").toLowerCase();
+        return nA.localeCompare(nB);
+      });
+  }, [tipo, proveedoresTabla, empresasByNombre, proveedoresOrdenados]);
 
   const proveedorIdToEmpresaId = useMemo(() => {
     const map = new Map();
@@ -90,40 +172,47 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
     return proveedorIdToEmpresaId.get(Number(proveedor_id)) || null;
   }, [tipo, proveedor_id, proveedorIdToEmpresaId]);
 
-  const empresaDestinoObj = useMemo(() => {
-    if (!empresaDestinoId) return null;
-    return (empresasTabla || []).find((e) => Number(e.id) === Number(empresaDestinoId)) || null;
-  }, [empresaDestinoId, empresasTabla]);
-
   const bancosDisponibles = useMemo(() => {
     if (tipo !== "deposito" || !empresaDestinoId) return [];
-    return (bancosTabla || []).filter((b) => Number(b.empresa_id) === Number(empresaDestinoId));
+    return (bancosTabla || []).filter(
+      (b) => Number(b.empresa_id) === Number(empresaDestinoId)
+    );
   }, [tipo, empresaDestinoId, bancosTabla]);
 
-  useEffect(() => { setBancoId(""); }, [tipo, proveedor_id]);
+  useEffect(() => {
+    setBancoId("");
+  }, [tipo, proveedor_id]);
 
-  // ==== Totales multi-asignación ====
+  // ================== TOTALES / MONTO ==================
   const totalAsignado = useMemo(
-    () => (selecciones || []).reduce((acc, s) => acc + (Number(s.monto) || 0), 0),
+    () =>
+      (selecciones || []).reduce(
+        (acc, s) => acc + (Number(s.monto) || 0),
+        0
+      ),
     [selecciones]
   );
 
-  const restante = useMemo(() => Number(monto || 0) - totalAsignado, [monto, totalAsignado]);
+  const restante = useMemo(
+    () => Number(monto || 0) - totalAsignado,
+    [monto, totalAsignado]
+  );
 
-  // 👉 Monto efectivo del movimiento: si es mensual, usa la suma asignada
   const montoMovimiento = useMemo(
-    () => (tipo === "egresos" && esPagoMensual ? totalAsignado : Number(monto || 0)),
+    () =>
+      tipo === "egresos" && esPagoMensual
+        ? totalAsignado
+        : Number(monto || 0),
     [tipo, esPagoMensual, totalAsignado, monto]
   );
 
-  // 👉 Cuando es mensual, mantener "monto" sincronizado (solo visual/submit)
   useEffect(() => {
     if (tipo === "egresos" && esPagoMensual) {
       setMonto(totalAsignado ? String(totalAsignado) : "");
     }
   }, [tipo, esPagoMensual, totalAsignado]);
 
-  // ==== Validaciones ====
+  // ================== VALIDACIONES ==================
   const puedeGuardar = useMemo(() => {
     if (!show) return false;
     if (!empresa_id || !caja_id) return false;
@@ -141,18 +230,30 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
     const nMonto = montoMovimiento;
 
     if (tipo === "egresos" && esPagoMensual) {
-      if (!(totalAsignado > 0)) return false;   // debe asignar algo
-      if (totalAsignado > nMonto) return false; // seguridad (deberían ser iguales)
+      if (!(totalAsignado > 0)) return false;
+      if (totalAsignado > nMonto) return false;
     } else {
-      if (!(nMonto > 0)) return false;          // flujo normal
+      if (!(nMonto > 0)) return false;
     }
 
     return true;
   }, [
-    show, empresa_id, caja_id, fecha, descripcion, proveedor_id,
-    categoriaegreso_id, proyecto_id, tipo, banco_id, empresaDestinoId,
-    esPagoMensual, totalAsignado, montoMovimiento
+    show,
+    empresa_id,
+    caja_id,
+    fecha,
+    descripcion,
+    proveedor_id,
+    categoriaegreso_id,
+    proyecto_id,
+    tipo,
+    banco_id,
+    empresaDestinoId,
+    esPagoMensual,
+    totalAsignado,
+    montoMovimiento,
   ]);
+
 
   const limpiar = () => {
     setTipo("egresos");
@@ -172,10 +273,15 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
     setMsg(null);
   };
 
-  const handleClose = () => { if (!enviando) { limpiar(); onHide?.(); } };
+  const handleClose = () => {
+    if (!enviando) {
+      limpiar();
+      onHide?.();
+    }
+  };
 
-  // ========= Helpers para mensual =========
-  const ymFromDate = (d) => (String(d || "").slice(0, 7)); // 'YYYY-MM'
+  // ================== HELPERS MENSUAL ==================
+  const ymFromDate = (d) => String(d || "").slice(0, 7);
 
   function baseInst(it) {
     return Number(it?.monto_real ?? it?.monto_estimado ?? 0);
@@ -194,22 +300,29 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
     const r = await fetch(url, { credentials: "include" });
     if (!r.ok) throw new Error("No se pudieron buscar instancias mensuales");
     const arr = await r.json();
-    return (Array.isArray(arr) ? arr : []).filter(x => x.estado !== "pagado" && x.estado !== "anulado");
+    return (Array.isArray(arr) ? arr : []).filter(
+      (x) => x.estado !== "pagado" && x.estado !== "anulado"
+    );
   }
 
   async function aplicarPagoAInstancia(instanciaId, payload) {
-    const r = await fetch(`${apiUrl}/gasto-estimado/instancias/${instanciaId}/pagos`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const r = await fetch(
+      `${apiUrl}/gasto-estimado/instancias/${instanciaId}/pagos`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
     const json = await r.json();
-    if (!r.ok) throw new Error(json?.error || "No se pudo aplicar el pago a la instancia mensual");
+    if (!r.ok)
+      throw new Error(
+        json?.error || "No se pudo aplicar el pago a la instancia mensual"
+      );
     return json;
   }
 
-  // Buscar instancia cuando: esPagoMensual ON y hay proveedor/empresa/fecha y tipo==='egresos'
   useEffect(() => {
     (async () => {
       setErrMensual(null);
@@ -229,24 +342,30 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
         });
         setInstanciasMensuales(items || []);
 
-        // Prefill suave con la más próxima
         if (items && items.length > 0) {
           const ordered = [...items].sort((a, b) =>
-            String(a.fecha_vencimiento).localeCompare(String(b.fecha_vencimiento))
+            String(a.fecha_vencimiento).localeCompare(
+              String(b.fecha_vencimiento)
+            )
           );
-
-          // sugerir 1 seleccionada por defecto (importe = min(restante, saldo))
           const s0 = ordered[0];
           const sug = Math.min(Math.max(0, restante), saldoInst(s0));
-          setSelecciones(sug > 0 ? [{ id: String(s0.id), monto: String(sug), cancelarRenov: false }] : []);
+          setSelecciones(
+            sug > 0
+              ? [{ id: String(s0.id), monto: String(sug), cancelarRenov: false }]
+              : []
+          );
 
-          // Prefill no intrusivo
           const inst0 = ordered[0];
-          if (!descripcion?.trim() && inst0?.descripcion) setDescripcion(inst0.descripcion);
-          if (!categoriaegreso_id && inst0?.categoriaegreso_id) setCategoriaId(String(inst0.categoriaegreso_id));
+          if (!descripcion?.trim() && inst0?.descripcion)
+            setDescripcion(inst0.descripcion);
+          if (!categoriaegreso_id && inst0?.categoriaegreso_id)
+            setCategoriaId(String(inst0.categoriaegreso_id));
         }
       } catch (e) {
-        setErrMensual(e.message || "No se pudieron recuperar instancias mensuales");
+        setErrMensual(
+          e.message || "No se pudieron recuperar instancias mensuales"
+        );
       } finally {
         setLoadingMensual(false);
       }
@@ -254,33 +373,43 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show, tipo, esPagoMensual, empresa_id, proveedor_id, fecha]);
 
-  // ========= Handlers de selección múltiple =========
+  // ================== HANDLERS SELECCIONES MENSUAL ==================
   const toggleSeleccion = (instId) => {
     setSelecciones((prev) => {
       const exists = prev.find((s) => s.id === String(instId));
       if (exists) {
         return prev.filter((s) => s.id !== String(instId));
       }
-      // agregar con sugerencia = min(restante, saldo)
-      const it = instanciasMensuales.find((x) => String(x.id) === String(instId));
+      const it = instanciasMensuales.find(
+        (x) => String(x.id) === String(instId)
+      );
       const sug = Math.min(Math.max(0, restante), saldoInst(it));
-      return [...prev, { id: String(instId), monto: sug ? String(sug) : "", cancelarRenov: false }];
+      return [
+        ...prev,
+        { id: String(instId), monto: sug ? String(sug) : "", cancelarRenov: false },
+      ];
     });
   };
 
   const setMontoSeleccion = (instId, value) => {
     setSelecciones((prev) =>
-      prev.map((s) => s.id === String(instId) ? { ...s, monto: value } : s)
+      prev.map((s) =>
+        s.id === String(instId) ? { ...s, monto: value } : s
+      )
     );
   };
 
   const setCancelarSeleccion = (instId, checked) => {
     setSelecciones((prev) =>
-      prev.map((s) => s.id === String(instId) ? { ...s, cancelarRenov: !!checked } : s)
+      prev.map((s) =>
+        s.id === String(instId)
+          ? { ...s, cancelarRenov: !!checked }
+          : s
+      )
     );
   };
 
-  // ========= Submit =========
+  // ================== SUBMIT ==================
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
     setMsg(null);
@@ -289,16 +418,21 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
       return;
     }
 
-    // Validaciones extra de multi-asignación
     if (tipo === "egresos" && esPagoMensual && selecciones.length > 0) {
       for (const sel of selecciones) {
         const toApply = Number(sel.monto || 0);
         if (!(toApply > 0)) {
-          return setMsg({ type: "warning", text: `Ingresá un monto válido para la instancia #${sel.id}.` });
+          return setMsg({
+            type: "warning",
+            text: `Ingresá un monto válido para la instancia #${sel.id}.`,
+          });
         }
       }
       if (totalAsignado > montoMovimiento) {
-        return setMsg({ type: "warning", text: "El total asignado supera el monto del movimiento." });
+        return setMsg({
+          type: "warning",
+          text: "El total asignado supera el monto del movimiento.",
+        });
       }
     }
 
@@ -322,19 +456,25 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
               detalle: descripcion?.trim(),
               proyecto_id: Number(proyecto_id),
               categoriaegreso_id: Number(categoriaegreso_id),
-              imputacioncontable_id: imputacioncontable_id ? Number(imputacioncontable_id) : null,
+              imputacioncontable_id: imputacioncontable_id
+                ? Number(imputacioncontable_id)
+                : null,
               proveedor_id: Number(proveedor_id) || null,
             },
           ],
         };
-        const res = await fetch(`${apiUrl}/movimientos-caja-tesoreria/anticiposaproveedores`, { 
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(
+          `${apiUrl}/movimientos-caja-tesoreria/anticiposaproveedores`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload),
+          }
+        );
         const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || "No se pudo registrar el anticipo");
+        if (!res.ok)
+          throw new Error(json?.error || "No se pudo registrar el anticipo");
         onCreated?.(json);
         handleClose();
         return;
@@ -353,27 +493,38 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
             descripcion: descripcion?.trim(),
             proyecto_id: Number(proyecto_id),
             categoriaegreso_id: Number(categoriaegreso_id),
-            imputacioncontable_id: imputacioncontable_id ? Number(imputacioncontable_id) : null,
+            imputacioncontable_id: imputacioncontable_id
+              ? Number(imputacioncontable_id)
+              : null,
             observaciones: observaciones?.trim() || null,
             proveedor_id: Number(proveedor_id) || null,
             formapago_id: formaPagoCajaId || null,
           },
         };
-        const res = await fetch(`${apiUrl}/movimientos-caja-tesoreria/deposito-bancario`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(
+          `${apiUrl}/movimientos-caja-tesoreria/deposito-bancario`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload),
+          }
+        );
         const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || "No se pudo registrar el depósito bancario");
+        if (!res.ok)
+          throw new Error(
+            json?.error || "No se pudo registrar el depósito bancario"
+          );
         onCreated?.(json);
         handleClose();
         return;
       }
 
       // --- EGRESOS VARIOS ---
-      const montoEgreso = (tipo === "egresos" && esPagoMensual) ? totalAsignado : Number(montoMovimiento);
+      const montoEgreso =
+        tipo === "egresos" && esPagoMensual
+          ? totalAsignado
+          : Number(montoMovimiento);
 
       const payload = {
         empresa_id,
@@ -384,28 +535,33 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
           descripcion: descripcion?.trim(),
           proyecto_id: Number(proyecto_id),
           categoriaegreso_id: Number(categoriaegreso_id),
-          imputacioncontable_id: imputacioncontable_id ? Number(imputacioncontable_id) : null,
+          imputacioncontable_id: imputacioncontable_id
+            ? Number(imputacioncontable_id)
+            : null,
           observaciones: observaciones?.trim() || null,
           proveedor_id: Number(proveedor_id),
           formapago_id: formaPagoCajaId || null,
         },
       };
 
-      const res = await fetch(`${apiUrl}/movimientos-caja-tesoreria/egresos-independientes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${apiUrl}/movimientos-caja-tesoreria/egresos-independientes`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        }
+      );
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "No se pudo registrar el egreso");
+      if (!res.ok)
+        throw new Error(json?.error || "No se pudo registrar el egreso");
 
-      // 🔹 Aplicar a 1..N instancias (si corresponde)
       if (tipo === "egresos" && esPagoMensual && selecciones.length > 0) {
         const errores = [];
         for (const sel of selecciones) {
           const toApply = Number(sel.monto || 0);
-          if (!(toApply > 0)) continue; // skip
+          if (!(toApply > 0)) continue;
           try {
             await aplicarPagoAInstancia(sel.id, {
               referencia_tipo: "MovimientoCajaTesoreria",
@@ -413,7 +569,8 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
               formapago_id: formaPagoCajaId || null,
               fecha_aplicacion: fecha,
               monto_aplicado: toApply,
-              observaciones: observaciones?.trim() || descripcion?.trim() || null,
+              observaciones:
+                observaciones?.trim() || descripcion?.trim() || null,
               cancelar_renovacion: !!sel.cancelarRenov,
             });
           } catch (e2) {
@@ -446,6 +603,7 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
     }
   };
 
+  // ================== RENDER ==================
   return (
     <Modal show={show} onHide={handleClose} size="lg" centered>
       <Form onSubmit={handleSubmit}>
@@ -479,23 +637,55 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
           <Row className="mb-3">
             <Col md={8}>
               <Form.Label>Tipo de movimiento</Form.Label>
-              <div className="d-flex flex-wrap align-items-center" style={{ gap: 16 }}>
-                <Form.Check inline type="radio" id="tipo-egresos" name="tipo"
-                  label="Egresos varios" value="egresos"
-                  checked={tipo === "egresos"} onChange={(e) => setTipo(e.target.value)} />
-                <Form.Check inline type="radio" id="tipo-anticipo" name="tipo"
-                  label="Anticipo a Proveedores" value="anticipo"
-                  checked={tipo === "anticipo"} onChange={(e) => setTipo(e.target.value)} />
-                <Form.Check inline type="radio" id="tipo-deposito" name="tipo"
-                  label="Depósito bancario" value="deposito"
-                  checked={tipo === "deposito"} onChange={(e) => setTipo(e.target.value)} />
+              <div
+                className="d-flex flex-wrap align-items-center"
+                style={{ gap: 16 }}
+              >
+                <Form.Check
+                  inline
+                  type="radio"
+                  id="tipo-egresos"
+                  name="tipo"
+                  label="Egresos varios"
+                  value="egresos"
+                  checked={tipo === "egresos"}
+                  onChange={(e) => setTipo(e.target.value)}
+                />
+                <Form.Check
+                  inline
+                  type="radio"
+                  id="tipo-anticipo"
+                  name="tipo"
+                  label="Anticipo a Proveedores"
+                  value="anticipo"
+                  checked={tipo === "anticipo"}
+                  onChange={(e) => setTipo(e.target.value)}
+                />
+                <Form.Check
+                  inline
+                  type="radio"
+                  id="tipo-deposito"
+                  name="tipo"
+                  label="Depósito bancario"
+                  value="deposito"
+                  checked={tipo === "deposito"}
+                  onChange={(e) => setTipo(e.target.value)}
+                />
               </div>
             </Col>
             <Col md={4}>
               <Form.Label>Fecha</Form.Label>
-              <Form.Control type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required />
+              <Form.Control
+                type="date"
+                value={fecha}
+                onChange={(e) => setFecha(e.target.value)}
+                required
+              />
               <small className="text-muted d-block mt-1 text-end">
-                Caja #{caja_id ?? "-"} · {formaPagoCajaId ? "Caja/Efectivo" : "Forma de pago no detectada"}
+                Caja #{caja_id ?? "-"} ·{" "}
+                {formaPagoCajaId
+                  ? "Caja/Efectivo"
+                  : "Forma de pago no detectada"}
               </small>
             </Col>
           </Row>
@@ -503,50 +693,60 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
           {/* 2) Proveedor / Entidad + Proyecto */}
           <Row className="mb-3">
             <Col md={6}>
-              <Form.Label>{tipo === "deposito" ? "Entidad (empresa destino)" : "Proveedor / Entidad"}</Form.Label>
+              <Form.Label>
+                {tipo === "deposito"
+                  ? "Entidad (empresa destino)"
+                  : "Proveedor / Entidad"}
+              </Form.Label>
 
               {tipo === "deposito" ? (
                 <Form.Select
                   value={proveedor_id}
-                  onChange={(e) => { setProveedorId(e.target.value); setBancoId(""); }}
+                  onChange={(e) => {
+                    setProveedorId(e.target.value);
+                    setBancoId("");
+                  }}
                   required
                   className="form-control my-input"
                   disabled={proveedoresParaUI.length === 0}
                 >
-                  <option value="">{proveedoresParaUI.length ? "Seleccione…" : "No hay entidades compatibles"}</option>
+                  <option value="">
+                    {proveedoresParaUI.length
+                      ? "Seleccione…"
+                      : "No hay entidades compatibles"}
+                  </option>
                   {proveedoresParaUI.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.descripcion || p.nombre || `Proveedor #${p.id}`}
                     </option>
                   ))}
                 </Form.Select>
+              ) : Array.isArray(proveedoresOrdenados) &&
+                proveedoresOrdenados.length > 0 ? (
+                <Form.Select
+                  value={proveedor_id}
+                  onChange={(e) => setProveedorId(e.target.value)}
+                  required
+                  className="form-control my-input"
+                >
+                  <option value="">Seleccione…</option>
+                  {proveedoresOrdenados.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.descripcion || p.nombre || `Proveedor #${p.id}`}
+                    </option>
+                  ))}
+                </Form.Select>
               ) : (
-                (Array.isArray(proveedoresTabla) && proveedoresTabla.length > 0) ? (
-                  <Form.Select
-                    value={proveedor_id}
-                    onChange={(e) => setProveedorId(e.target.value)}
-                    required
-                    className="form-control my-input"
-                  >
-                    <option value="">Seleccione…</option>
-                    {proveedoresTabla.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.descripcion || p.nombre || `Proveedor #${p.id}`}
-                      </option>
-                    ))}
-                  </Form.Select>
-                ) : (
-                  <Form.Control
-                    type="number"
-                    placeholder="ID proveedor/entidad"
-                    value={proveedor_id}
-                    onChange={(e) => setProveedorId(e.target.value)}
-                    required
-                  />
-                )
+                <Form.Control
+                  type="number"
+                  placeholder="ID proveedor/entidad"
+                  value={proveedor_id}
+                  onChange={(e) => setProveedorId(e.target.value)}
+                  required
+                />
               )}
 
-              {/* 🔹 Toggle mensual SOLO en egresos */}
+              {/* Toggle mensual SOLO en egresos */}
               {tipo === "egresos" && (
                 <div className="mt-2">
                   <Form.Check
@@ -566,7 +766,9 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
 
             <Col md={6}>
               <Form.Label>Proyecto</Form.Label>
-              {Array.isArray(proyectosTabla) && proyectosTabla.length > 0 ? (
+              {Array.isArray(proveedoresOrdenados) &&
+                proveedoresOrdenados.length > 0 ? (
+
                 <Form.Select
                   value={proyecto_id}
                   onChange={(e) => setProyectoId(e.target.value)}
@@ -592,17 +794,23 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
             </Col>
           </Row>
 
-          {/* 🔹 Bloque instancias mensuales (multi) */}
+          {/* Bloque instancias mensuales */}
           {tipo === "egresos" && esPagoMensual && (
             <Row className="mb-3">
               <Col md={12}>
                 {loadingMensual ? (
-                  <Alert variant="info" className="py-2">Buscando instancias mensuales…</Alert>
+                  <Alert variant="info" className="py-2">
+                    Buscando instancias mensuales…
+                  </Alert>
                 ) : errMensual ? (
-                  <Alert variant="warning" className="py-2">{errMensual}</Alert>
+                  <Alert variant="warning" className="py-2">
+                    {errMensual}
+                  </Alert>
                 ) : instanciasMensuales.length === 0 ? (
                   <Alert variant="secondary" className="py-2">
-                    No se encontraron instancias para este proveedor en {ymFromDate(fecha)} (ni pendientes). Podés continuar sin aplicar a instancia.
+                    No se encontraron instancias para este proveedor en{" "}
+                    {ymFromDate(fecha)} (ni pendientes). Podés continuar sin
+                    aplicar a instancia.
                   </Alert>
                 ) : (
                   <div className="p-2 border rounded">
@@ -623,15 +831,28 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
                             <th className="text-end">Base</th>
                             <th className="text-end">Pagado</th>
                             <th className="text-end">Saldo</th>
-                            <th style={{ width: 160 }} className="text-end">Asignar</th>
-                            <th style={{ width: 180 }}>Cancelar renovación</th>
+                            <th
+                              style={{ width: 160 }}
+                              className="text-end"
+                            >
+                              Asignar
+                            </th>
+                            <th style={{ width: 180 }}>
+                              Cancelar renovación
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
                           {instanciasMensuales
-                            .sort((a, b) => String(a.fecha_vencimiento).localeCompare(String(b.fecha_vencimiento)))
+                            .sort((a, b) =>
+                              String(a.fecha_vencimiento).localeCompare(
+                                String(b.fecha_vencimiento)
+                              )
+                            )
                             .map((it) => {
-                              const sel = selecciones.find(s => s.id === String(it.id));
+                              const sel = selecciones.find(
+                                (s) => s.id === String(it.id)
+                              );
                               const saldo = saldoInst(it);
                               return (
                                 <tr key={it.id}>
@@ -639,28 +860,58 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
                                     <Form.Check
                                       type="checkbox"
                                       checked={!!sel}
-                                      onChange={() => toggleSeleccion(it.id)}
+                                      onChange={() =>
+                                        toggleSeleccion(it.id)
+                                      }
                                     />
                                   </td>
                                   <td>{it.id}</td>
                                   <td>{it.descripcion || "—"}</td>
                                   <td>{it.fecha_vencimiento}</td>
-                                  <td className="text-end">${(baseInst(it)).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                  <td className="text-end">${Number(it.monto_pagado || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                  <td className="text-end">${saldo.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                  <td className="text-end">
+                                    $
+                                    {baseInst(it).toLocaleString("es-AR", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </td>
+                                  <td className="text-end">
+                                    $
+                                    {Number(
+                                      it.monto_pagado || 0
+                                    ).toLocaleString("es-AR", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </td>
+                                  <td className="text-end">
+                                    $
+                                    {saldo.toLocaleString("es-AR", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </td>
                                   <td className="text-end">
                                     <Form.Control
                                       type="number"
                                       step="0.01"
                                       disabled={!sel}
                                       value={sel?.monto ?? ""}
-                                      onChange={(e) => setMontoSeleccion(it.id, e.target.value)}
+                                      onChange={(e) =>
+                                        setMontoSeleccion(
+                                          it.id,
+                                          e.target.value
+                                        )
+                                      }
                                     />
-                                    {sel && Number(sel.monto || 0) > saldo && (
-                                      <small className="text-warning d-block mt-1">
-                                        Supera saldo: se actualizará el valor base / próximo rollover
-                                      </small>
-                                    )}
+                                    {sel &&
+                                      Number(sel.monto || 0) >
+                                      saldo && (
+                                        <small className="text-warning d-block mt-1">
+                                          Supera saldo: se actualizará el
+                                          valor base / próximo rollover
+                                        </small>
+                                      )}
                                   </td>
 
                                   <td>
@@ -670,7 +921,12 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
                                       disabled={!sel}
                                       label="Cancelar"
                                       checked={!!sel?.cancelarRenov}
-                                      onChange={(e) => setCancelarSeleccion(it.id, e.target.checked)}
+                                      onChange={(e) =>
+                                        setCancelarSeleccion(
+                                          it.id,
+                                          e.target.checked
+                                        )
+                                      }
                                     />
                                   </td>
                                 </tr>
@@ -693,7 +949,9 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
                 placeholder={
                   tipo === "anticipo"
                     ? "Anticipo / concepto"
-                    : (tipo === "deposito" ? "Depósito en banco — concepto" : "Descripción del gasto/servicio")
+                    : tipo === "deposito"
+                      ? "Depósito en banco — concepto"
+                      : "Descripción del gasto/servicio"
                 }
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
@@ -705,13 +963,19 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
               <Form.Control
                 type="number"
                 step="0.01"
-                value={tipo === "egresos" && esPagoMensual ? String(totalAsignado || "") : monto}
+                value={
+                  tipo === "egresos" && esPagoMensual
+                    ? String(totalAsignado || "")
+                    : monto
+                }
                 onChange={(e) => setMonto(e.target.value)}
                 disabled={tipo === "egresos" && esPagoMensual}
                 required
               />
               {tipo === "egresos" && esPagoMensual && (
-                <small className="text-muted">Calculado automáticamente por la suma de “Asignar”.</small>
+                <small className="text-muted">
+                  Calculado automáticamente por la suma de “Asignar”.
+                </small>
               )}
             </Col>
           </Row>
@@ -728,10 +992,17 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
                   className="form-control my-input"
                   disabled={!empresaDestinoId}
                 >
-                  <option value="">{empresaDestinoId ? "Seleccione…" : "Seleccione entidad primero"}</option>
+                  <option value="">
+                    {empresaDestinoId
+                      ? "Seleccione…"
+                      : "Seleccione entidad primero"}
+                  </option>
                   {bancosDisponibles.map((b) => (
                     <option key={b.id} value={b.id}>
-                      {b.nombre || b.descripcion || b.alias || `Banco ${b.id}`}
+                      {b.nombre ||
+                        b.descripcion ||
+                        b.alias ||
+                        `Banco ${b.id}`}
                     </option>
                   ))}
                 </Form.Select>
@@ -754,7 +1025,8 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
                 ))}
               </Form.Select>
               <Form.Text className="text-muted">
-                La imputación contable se deriva automáticamente de la categoría.
+                La imputación contable se deriva automáticamente de la
+                categoría.
               </Form.Text>
             </Col>
           </Row>
@@ -775,9 +1047,30 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={handleClose} disabled={enviando}>Cancelar</Button>
-          <Button variant="primary" type="submit" disabled={!puedeGuardar || enviando}>
-            {enviando ? (<><Spinner size="sm" animation="border" className="me-2" /> Guardando…</>) : ("Guardar")}
+          <Button
+            variant="outline-secondary"
+            onClick={handleClose}
+            disabled={enviando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            disabled={!puedeGuardar || enviando}
+          >
+            {enviando ? (
+              <>
+                <Spinner
+                  size="sm"
+                  animation="border"
+                  className="me-2"
+                />{" "}
+                Guardando…
+              </>
+            ) : (
+              "Guardar"
+            )}
           </Button>
         </Modal.Footer>
       </Form>

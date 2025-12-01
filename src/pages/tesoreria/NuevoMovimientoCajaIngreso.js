@@ -1,5 +1,5 @@
 // src/pages/tesoreria/NuevoMovimientoCajaIngreso.jsx
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import { Modal, Button, Form, Row, Col, Alert, Spinner, Tabs, Tab } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 
@@ -13,11 +13,16 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
 
     // Datos para Cobranza Clientes
     clientes = [],
+    setClientes,
+
     proyectosTabla = [],
+    setProyectosTabla,
 
     // Categorías de ingreso
     categoriasIngresoTabla = [],
     categoriasIngreso = [],
+    setCategoriasIngresoTabla,
+    setCategoriasIngreso,
 
     // Para detectar "Caja / Efectivo"
     formasPagoTesoreria = [],
@@ -37,13 +42,59 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
   const [monto, setMonto] = useState("");
   const [observaciones, setObservaciones] = useState("");
 
-  // Cobranza Clientes
+  // Cobranza Clientes / Varios
   const [clienteId, setClienteId] = useState("");
-  const [proyecto_id, setProyectoId] = useState(""); // ✅ opcional (string vacío = null)
+  const [proyecto_id, setProyectoId] = useState(""); // opcional (string vacío = null)
   const [categoriaingreso_id, setCategoriaIngresoId] = useState("");
 
   // Idempotencia (opcional)
   const [idempotencyKey, setIdempotencyKey] = useState("");
+
+  // ====== REFRESCAR DATOS AL ABRIR MODAL (clientes, proyectos, categorías ingreso)
+  useEffect(() => {
+    if (!show) return;
+
+    let cancelado = false;
+
+    const refrescarListas = async () => {
+      try {
+        const [resCli, resProy, resCat] = await Promise.all([
+          fetch(`${apiUrl}/clientes`, { credentials: "include" }),
+          fetch(`${apiUrl}/proyectos`, { credentials: "include" }),
+          fetch(`${apiUrl}/categorias-ingreso`, { credentials: "include" }),
+        ]);
+
+        const [dataCli = [], dataProy = [], dataCat = []] = await Promise.all([
+          resCli.ok ? resCli.json() : Promise.resolve([]),
+          resProy.ok ? resProy.json() : Promise.resolve([]),
+          resCat.ok ? resCat.json() : Promise.resolve([]),
+        ]);
+
+        if (cancelado) return;
+
+        if (typeof setClientes === "function") {
+          setClientes(Array.isArray(dataCli) ? dataCli : []);
+        }
+        if (typeof setProyectosTabla === "function") {
+          setProyectosTabla(Array.isArray(dataProy) ? dataProy : []);
+        }
+        if (typeof setCategoriasIngresoTabla === "function") {
+          setCategoriasIngresoTabla(Array.isArray(dataCat) ? dataCat : []);
+        } else if (typeof setCategoriasIngreso === "function") {
+          // fallback si usás el otro nombre
+          setCategoriasIngreso(Array.isArray(dataCat) ? dataCat : []);
+        }
+      } catch (err) {
+        console.error("Error refrescando clientes/proyectos/categorías ingreso:", err);
+      }
+    };
+
+    refrescarListas();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [show, setClientes, setProyectosTabla, setCategoriasIngresoTabla, setCategoriasIngreso]);
 
   // ==== Resolver forma de cobro "Caja / Efectivo"
   const formaCobroCajaId = useMemo(() => {
@@ -55,11 +106,14 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
   }, [formasPagoTesoreria]);
 
   // ==== categorías ingreso visibles
-  const catIngreso = Array.isArray(categoriasIngresoTabla) && categoriasIngresoTabla.length
-    ? categoriasIngresoTabla
-    : Array.isArray(categoriasIngreso) ? categoriasIngreso : [];
+  const catIngreso =
+    Array.isArray(categoriasIngresoTabla) && categoriasIngresoTabla.length
+      ? categoriasIngresoTabla
+      : Array.isArray(categoriasIngreso)
+      ? categoriasIngreso
+      : [];
 
-  // ===== Validaciones (Proyecto ya NO es requerido)
+  // ===== Validaciones (Proyecto NO es requerido)
   const puedeGuardarCobranza = useMemo(() => {
     if (!show) return false;
     if (!empresa_id || !caja_id) return false;
@@ -69,8 +123,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
     const n = Number(monto);
     if (!(n > 0)) return false;
     if (!formaCobroCajaId) return false;
-    // categoría en cobranza: opcional
-    if (!categoriaingreso_id) return false;   // ✅ ahora es obligatoria
+    if (!categoriaingreso_id) return false; // ahora requerida
     return true;
   }, [show, empresa_id, caja_id, clienteId, fecha, descripcion, monto, formaCobroCajaId, categoriaingreso_id]);
 
@@ -83,7 +136,6 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
     if (!(n > 0)) return false;
     if (!categoriaingreso_id) return false; // requerido para “varios”
     if (!formaCobroCajaId) return false;
-    // proyecto opcional
     return true;
   }, [show, empresa_id, caja_id, fecha, descripcion, monto, categoriaingreso_id, formaCobroCajaId]);
 
@@ -105,8 +157,8 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
         fecha,
         descripcion: descripcion?.trim(),
         montoTotal: Number(monto),
-        proyecto_id: proyecto_id ? Number(proyecto_id) : null,           // ✅ opcional
-        categoriaingreso_id: Number(categoriaingreso_id),   // ✅ requerida
+        proyecto_id: proyecto_id ? Number(proyecto_id) : null,
+        categoriaingreso_id: Number(categoriaingreso_id),
         observaciones: observaciones?.trim() || null,
         formacobro_id: Number(formaCobroCajaId),
         idempotencyKey: idempotencyKey?.trim() || null,
@@ -138,7 +190,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
     setMonto("");
     setObservaciones("");
     setClienteId("");
-    setProyectoId("");          // ✅ limpia a vacío (null en payload)
+    setProyectoId("");
     setCategoriaIngresoId("");
     setIdempotencyKey("");
     setMsg(null);
@@ -171,8 +223,8 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
         fecha,
         descripcion: descripcion?.trim(),
         montoTotal: Number(monto),
-        proyecto_id: proyecto_id ? Number(proyecto_id) : null,          // ✅ opcional
-        categoriaingreso_id: categoriaingreso_id ? Number(categoriaingreso_id) : null, // opcional en cobranza
+        proyecto_id: proyecto_id ? Number(proyecto_id) : null,
+        categoriaingreso_id: categoriaingreso_id ? Number(categoriaingreso_id) : null,
         observaciones: observaciones?.trim() || null,
         formacobro_id: Number(formaCobroCajaId),
         idempotencyKey: idempotencyKey?.trim() || null,
@@ -209,8 +261,8 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
           activeKey === "cobranza"
             ? handleSubmitCobranza
             : activeKey === "varios"
-              ? handleSubmitVarios
-              : (e) => e.preventDefault()
+            ? handleSubmitVarios
+            : (e) => e.preventDefault()
         }
       >
         <Modal.Header closeButton>
@@ -219,7 +271,9 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
 
         <Modal.Body>
           {!empresa_id && (
-            <Alert variant="warning" className="py-2">Seleccioná una empresa para continuar.</Alert>
+            <Alert variant="warning" className="py-2">
+              Seleccioná una empresa para continuar.
+            </Alert>
           )}
           {!caja_id && (
             <Alert variant="warning" className="py-2">
@@ -232,7 +286,12 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
             </Alert>
           )}
           {msg && (
-            <Alert variant={msg.type} dismissible onClose={() => setMsg(null)} className="py-2">
+            <Alert
+              variant={msg.type}
+              dismissible
+              onClose={() => setMsg(null)}
+              className="py-2"
+            >
               {msg.text}
             </Alert>
           )}
@@ -247,7 +306,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
           >
             {/* ======= Ingresos Varios ======= */}
             <Tab eventKey="varios" title="Ingresos Varios">
-              {/* Proyecto (SIEMPRE SELECT, OPCIONAL) */}
+              {/* Proyecto (opcional) */}
               <Row className="mb-3">
                 <Col md={6}>
                   <Form.Label>Proyecto (opcional)</Form.Label>
@@ -309,7 +368,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                 </Col>
               </Row>
 
-              {/* Categoría de Ingreso (requerida en “varios”) */}
+              {/* Categoría de Ingreso (requerida en varios) */}
               <Row className="mb-3">
                 <Col md={6}>
                   <Form.Label>Categoría de Ingreso</Form.Label>
@@ -348,7 +407,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
 
             {/* ======= Cobranza Clientes ======= */}
             <Tab eventKey="cobranza" title="Cobranza Clientes">
-              {/* Cliente + Proyecto (Proyecto opcional) */}
+              {/* Cliente + Proyecto */}
               <Row className="mb-3">
                 <Col md={6}>
                   <Form.Label>Cliente</Form.Label>
@@ -428,7 +487,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                 </Col>
               </Row>
 
-              {/* Categoría Ingreso (opcional en cobranza) */}
+              {/* Categoría Ingreso (requerida ahora en cobranza también) */}
               <Row className="mb-3">
                 <Col md={6}>
                   <Form.Label>Categoría de Ingreso</Form.Label>
@@ -438,7 +497,7 @@ export default function NuevoMovimientoCajaIngreso({ show, onHide, onCreated }) 
                     onChange={(e) => setCategoriaIngresoId(e.target.value)}
                     className="form-control my-input"
                     disabled={activeKey !== "cobranza"}
-                    required={activeKey === "cobranza"}   // ✅ ahora requerida
+                    required={activeKey === "cobranza"}
                   >
                     <option value="">Seleccione…</option>
                     {catIngreso.map((c) => (

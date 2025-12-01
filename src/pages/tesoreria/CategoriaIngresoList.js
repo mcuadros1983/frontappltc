@@ -115,13 +115,12 @@ const CategoriaIngresoList = () => {
         body: JSON.stringify(payload),
       });
 
-      // Tolerar 200/201/204 y body vacío
       const raw = await res.text();
       if (!res.ok) {
         let msg = "Error al guardar";
         try {
           msg = JSON.parse(raw)?.error || msg;
-        } catch {}
+        } catch { }
         throw new Error(msg);
       }
 
@@ -135,26 +134,34 @@ const CategoriaIngresoList = () => {
       }
 
       const finalItem = saved || {
-        id: editing ? editId : undefined, // si no llega id, se corrige con refetch
+        id: editing ? editId : undefined,
         ...payload,
       };
 
-      // Update optimista
       if (typeof setCategoriasIngreso === "function") {
         setCategoriasIngreso((prev = []) => {
+          const arr = Array.isArray(prev) ? [...prev] : [];
           if (editing) {
-            return prev.map((c) =>
-              Number(c.id) === Number(editId) ? { ...c, ...finalItem } : c
+            const idx = arr.findIndex(
+              (c) => Number(c.id) === Number(finalItem.id ?? editId)
             );
+            if (idx >= 0) {
+              arr[idx] = { ...arr[idx], ...finalItem };
+            }
+          } else {
+            const tempId = finalItem.id ?? Date.now();
+            arr.push({ ...finalItem, id: tempId });
           }
-          const tempId = finalItem.id ?? Date.now();
-          return [...prev, { ...finalItem, id: tempId }];
+          return arr.sort((a, b) => Number(a.id) - Number(b.id));
         });
       }
 
-      setFormMsg({ type: "success", text: editing ? "Categoría actualizada" : "Categoría creada" });
+      setFormMsg({
+        type: "success",
+        text: editing ? "Categoría actualizada" : "Categoría creada",
+      });
 
-      // Refetch para normalizar (id real, etc.)
+      // Normalizar contra backend (ids reales, etc.)
       await fetchCategorias();
 
       closeModal();
