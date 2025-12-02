@@ -30,13 +30,14 @@ export default function VerificarProductosPorTropa() {
         const res = await fetch(`${apiUrl}/productos`, {
           credentials: "include",
         });
-        const data = await res.json();
+          const data = await res.json();
         setProductos(data);
 
         const categorias = new Set();
         const tropas = new Set();
         data.forEach((producto) => {
-          if (producto.categoria_producto) categorias.add(producto.categoria_producto);
+          if (producto.categoria_producto)
+            categorias.add(producto.categoria_producto);
           if (producto.tropa) tropas.add(producto.tropa);
         });
         setCategoriasDisponibles(Array.from(categorias).sort());
@@ -65,36 +66,55 @@ export default function VerificarProductosPorTropa() {
           completosSubcategoria: true,
           completosCosto: true,
           categorias: new Set(),
+          costosSet: new Set(), // 👈 set de costos por tropa
         };
       }
 
       agrupados[tropa].total += 1;
+
+      // Categoría
       if (!categoria_producto || categoria_producto === "") {
         agrupados[tropa].completosCategoria = false;
       } else {
         agrupados[tropa].categorias.add(categoria_producto);
       }
 
+      // Subcategoría
       if (!subcategoria || subcategoria === "") {
         agrupados[tropa].completosSubcategoria = false;
       }
 
-      if (
-        costo === null ||
-        costo === undefined ||
-        costo === "" ||
-        isNaN(costo) ||
-        Number(costo) === 0
-      ) {
+      // Costo
+      const costoNum =
+        costo === null || costo === undefined || costo === ""
+          ? null
+          : Number(costo);
+
+      if (costoNum === null || isNaN(costoNum) || costoNum === 0) {
         agrupados[tropa].completosCosto = false;
+      } else {
+        agrupados[tropa].costosSet.add(costoNum);
       }
     });
 
-    const resultado = Object.entries(agrupados).map(([tropa, data]) => ({
-      tropa,
-      ...data,
-      categorias: Array.from(data.categorias).join(", "),
-    }));
+    const resultado = Object.entries(agrupados).map(([tropa, data]) => {
+      const costosIguales = data.completosCosto && data.costosSet.size === 1;
+
+      // si todos los costos son iguales, tomamos ese único valor
+      const costoUnico =
+        costosIguales ? [...data.costosSet][0] : null;
+
+      return {
+        tropa,
+        total: data.total,
+        completosCategoria: data.completosCategoria,
+        completosSubcategoria: data.completosSubcategoria,
+        completosCosto: data.completosCosto,
+        categorias: Array.from(data.categorias).join(", "),
+        costosIguales,
+        costoUnico, // 👈 nuevo campo
+      };
+    });
 
     setAgrupadosPorTropa(resultado);
     setCurrentPage(1);
@@ -105,16 +125,21 @@ export default function VerificarProductosPorTropa() {
     setSortDirection(direction);
     setAgrupadosPorTropa((prev) =>
       [...prev].sort((a, b) =>
-        direction === "asc" ? a.tropa.localeCompare(b.tropa) : b.tropa.localeCompare(a.tropa)
+        direction === "asc"
+          ? a.tropa.localeCompare(b.tropa)
+          : b.tropa.localeCompare(a.tropa)
       )
     );
   };
 
   const filteredData = useMemo(() => {
     return agrupadosPorTropa.filter((row) => {
-      const matchesCategoria = categoriaFilter === "" || row.categorias.includes(categoriaFilter);
-      const matchesTropa = tropaFilter === "" || row.tropa.includes(tropaFilter);
-      const matchesSelectedTropas = selectedTropas.length === 0 || selectedTropas.includes(row.tropa);
+      const matchesCategoria =
+        categoriaFilter === "" || row.categorias.includes(categoriaFilter);
+      const matchesTropa =
+        tropaFilter === "" || row.tropa.includes(tropaFilter);
+      const matchesSelectedTropas =
+        selectedTropas.length === 0 || selectedTropas.includes(row.tropa);
       return matchesCategoria && matchesTropa && matchesSelectedTropas;
     });
   }, [agrupadosPorTropa, categoriaFilter, tropaFilter, selectedTropas]);
@@ -147,7 +172,10 @@ export default function VerificarProductosPorTropa() {
         <>
           <div className="mb-4 d-flex flex-wrap align-items-end">
             {/* Filtro por categoría */}
-            <div className="d-flex flex-column mr-3 mb-2" style={{ minWidth: "200px" }}>
+            <div
+              className="d-flex flex-column mr-3 mb-2"
+              style={{ minWidth: "200px" }}
+            >
               <label className="mb-1 font-weight-bold">Categoría</label>
               <Form.Select
                 value={categoriaFilter}
@@ -156,13 +184,18 @@ export default function VerificarProductosPorTropa() {
               >
                 <option value="">Todas</option>
                 {categoriasDisponibles.map((cat, idx) => (
-                  <option key={idx} value={cat}>{cat}</option>
+                  <option key={idx} value={cat}>
+                    {cat}
+                  </option>
                 ))}
               </Form.Select>
             </div>
 
             {/* Filtro por tropa manual */}
-            <div className="d-flex flex-column mr-3 mb-2" style={{ minWidth: "200px" }}>
+            <div
+              className="d-flex flex-column mr-3 mb-2"
+              style={{ minWidth: "200px" }}
+            >
               <label className="mb-1 font-weight-bold">Tropa</label>
               <FormControl
                 type="text"
@@ -174,20 +207,30 @@ export default function VerificarProductosPorTropa() {
             </div>
 
             {/* Filtro múltiple por tropas */}
-            <div className="d-flex flex-column mr-3 mb-2" style={{ minWidth: "250px", maxHeight: "150px" }}>
-              <label className="mb-1 font-weight-bold">Tropas seleccionadas</label>
+            <div
+              className="d-flex flex-column mr-3 mb-2"
+              style={{ minWidth: "250px", maxHeight: "150px" }}
+            >
+              <label className="mb-1 font-weight-bold">
+                Tropas seleccionadas
+              </label>
               <Form.Select
                 multiple
                 value={selectedTropas}
                 onChange={(e) => {
-                  const options = Array.from(e.target.selectedOptions, (opt) => opt.value);
+                  const options = Array.from(
+                    e.target.selectedOptions,
+                    (opt) => opt.value
+                  );
                   setSelectedTropas(options);
                 }}
                 className="form-control"
                 style={{ overflowY: "auto" }}
               >
                 {tropasDisponibles.map((tropa, idx) => (
-                  <option key={idx} value={tropa}>{tropa}</option>
+                  <option key={idx} value={tropa}>
+                    {tropa}
+                  </option>
                 ))}
               </Form.Select>
             </div>
@@ -210,11 +253,16 @@ export default function VerificarProductosPorTropa() {
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th style={{ cursor: "pointer" }} onClick={handleSort}>Tropa</th>
+                <th style={{ cursor: "pointer" }} onClick={handleSort}>
+                  Tropa
+                </th>
                 <th>Cantidad de Productos</th>
                 <th>Categoría</th>
                 <th>Subcategoría</th>
-                <th>Costo</th>
+                <th>Costo cargado</th>
+                <th>Costos iguales</th>
+                {/* 👇 Nueva columna */}
+                <th>Costo (si todos iguales)</th>
               </tr>
             </thead>
             <tbody>
@@ -225,6 +273,13 @@ export default function VerificarProductosPorTropa() {
                   <td>{renderCheck(row.completosCategoria)}</td>
                   <td>{renderCheck(row.completosSubcategoria)}</td>
                   <td>{renderCheck(row.completosCosto)}</td>
+                  <td>{renderCheck(row.costosIguales)}</td>
+                  {/* muestra costo si todos iguales, si no, "-" */}
+                  <td>
+                    {row.costosIguales
+                      ? Number(row.costoUnico).toFixed(2)
+                      : "-"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -235,11 +290,16 @@ export default function VerificarProductosPorTropa() {
               Anterior
             </Button>
             <span className="mx-3">
-              Página {currentPage} de {Math.ceil(filteredData.length / tropasPerPage)}
+              Página {currentPage} de{" "}
+              {Math.ceil(filteredData.length / tropasPerPage) || 1}
             </span>
             <Button
               onClick={nextPage}
-              disabled={currentPage === Math.ceil(filteredData.length / tropasPerPage)}
+              disabled={
+                currentPage ===
+                  Math.ceil(filteredData.length / tropasPerPage) ||
+                filteredData.length === 0
+              }
             >
               Siguiente
             </Button>
