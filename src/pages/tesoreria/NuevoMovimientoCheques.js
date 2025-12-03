@@ -51,7 +51,7 @@ export default function NuevoMovimientoCheques({ show, onHide, onCreated }) {
         categoriasApi,
         proyectosApi,
       ] = await Promise.all([
-        fetchJsonSafe(`${apiUrl}/bancos-tesoreria`),
+        fetchJsonSafe(`${apiUrl}/bancos`),
         fetchJsonSafe(`${apiUrl}/proveedores`),
         fetchJsonSafe(`${apiUrl}/categorias-egreso`),
         fetchJsonSafe(`${apiUrl}/proyectos`),

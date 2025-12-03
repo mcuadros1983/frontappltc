@@ -58,7 +58,7 @@ export default function NuevoMovimientoBancoIngreso({ show, onHide, onCreated })
         categoriasApi,
         formasApi,
       ] = await Promise.all([
-        fetchJsonSafe(`${apiUrl}/bancos-tesoreria`),        // bancos / cuentas bancarias
+        fetchJsonSafe(`${apiUrl}/bancos`),        // bancos / cuentas bancarias
         fetchJsonSafe(`${apiUrl}/clientes`),                // clientes
         fetchJsonSafe(`${apiUrl}/proyectos`),               // proyectos
         fetchJsonSafe(`${apiUrl}/categorias-ingreso`),      // categorías de ingreso

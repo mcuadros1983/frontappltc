@@ -57,7 +57,7 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
         fetchJsonSafe(`${apiUrl}/categorias-egreso`),
         fetchJsonSafe(`${apiUrl}/proveedores`),
         fetchJsonSafe(`${apiUrl}/proyectos`),
-        fetchJsonSafe(`${apiUrl}/bancos-tesoreria`),
+        fetchJsonSafe(`${apiUrl}/bancos`),
         fetchJsonSafe(`${apiUrl}/planes-tarjeta-tesoreria`),
       ]);
 

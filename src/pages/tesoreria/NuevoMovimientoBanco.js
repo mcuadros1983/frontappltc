@@ -56,7 +56,7 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
         fetchJsonSafe(`${apiUrl}/categorias-egreso`),          // categorías egreso
         fetchJsonSafe(`${apiUrl}/proyectos`),                  // proyectos
         fetchJsonSafe(`${apiUrl}/proveedores`),                // proveedores
-        fetchJsonSafe(`${apiUrl}/bancos-tesoreria`),           // bancos vinculados a tesorería
+        fetchJsonSafe(`${apiUrl}/bancos`),           // bancos vinculados a tesorería
         fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`),      // formas de pago tesorería
       ]);
 
@@ -573,6 +573,7 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
                   {empresa_id ? "Seleccione…" : "Seleccione empresa primero"}
                 </option>
                 {bancosDisponibles.map((b) => (
+                  // console.log("Banco disponible:", b),  
                   <option key={b.id} value={b.id}>
                     {b.nombre ||
                       b.descripcion ||
@@ -587,7 +588,7 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
           {/* 2) Proveedor + Proyecto */}
           <Row className="mb-3">
             <Col md={6}>
-              <Form.Label>Proveedor / Entidad</Form.Label>
+              {/* <Form.Label>Proveedor / Entidad</Form.Label>
               {Array.isArray(proveedoresOrdenados) && proveedoresOrdenados.length > 0 ? (
                 <Form.Select
                   value={proveedor_id}
@@ -610,7 +611,9 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
                   onChange={(e) => setProveedorId(e.target.value)}
                   required
                 />
-              )}<Form.Label>Proveedor / Entidad</Form.Label>
+              )} */}
+              
+              <Form.Label>Proveedor / Entidad</Form.Label>
               {Array.isArray(proveedoresOrdenados) && proveedoresOrdenados.length > 0 ? (
                 <Form.Select
                   value={proveedor_id}
