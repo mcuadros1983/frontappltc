@@ -13,6 +13,8 @@ export default function OrderForm() {
   // "vacuno" = comportamiento original
   // "cerdo"  = nueva lógica de carga manual porcino
   const [orderMode, setOrderMode] = useState("vacuno");
+  // --- cache de num_media de porcino ya existentes en la BD ---
+  const [existingPorcinoNumMedias, setExistingPorcinoNumMedias] = useState(new Set());
 
   const codigoDeBarraRef = useRef(null);
 
@@ -56,6 +58,41 @@ export default function OrderForm() {
   const [fecha, setFecha] = useState(new Date().toISOString().split("T")[0]); // YYYY-MM-DD
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadAllProducts, setLoadAllProducts] = useState(true);
+
+  // helper: num_media de porcino que ya están en la lista local de la orden
+  const localPorcinoNumMedias = new Set(
+    products
+      .filter((p) => p?.categoria_producto === "porcino" && p?.num_media)
+      .map((p) => String(p.num_media))
+  );
+
+  /**
+ * Genera un num_media único considerando:
+ * - existentes en DB (existingSet)
+ * - existentes en la lista parcial (localSet)
+ * Reglas:
+ *  - si base no existe -> devuelve base
+ *  - si existe -> prueba base+"1"
+ *  - si también existe -> base+"2", etc.
+ */
+  const generateUniqueNumMedia = (base, existingSet, localSet) => {
+    if (!base) return "";
+    let candidate = String(base);
+    let sufijo = 0;
+
+    const taken = (v) =>
+      existingSet.has(String(v)) || localSet.has(String(v));
+
+    if (!taken(candidate)) return candidate;
+
+    while (true) {
+      sufijo += 1; // 1, 2, 3...
+      candidate = `${base}${sufijo}`;
+      if (!taken(candidate)) return candidate;
+      if (sufijo > 9999) break; // por las dudas
+    }
+    return "";
+  };
 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -111,7 +148,7 @@ export default function OrderForm() {
 
     fetchBranches();
   }, [apiUrl]);
-  
+
 
   // ==========================
   // FETCH PRODUCTOS (solo modo vacuno)
@@ -161,6 +198,46 @@ export default function OrderForm() {
 
     setFilteredProducts(filtered);
   }, [searchMedia, searchPeso, searchTropa, searchGarron, availableProducts]);
+
+  // Cargar num_media existentes de porcino desde la BD cuando entro al modo "cerdo"
+  useEffect(() => {
+    const fetchPorcinoNumMedias = async () => {
+      try {
+        // Opción A: endpoint liviano que ya usás en ventas
+        // GET /productos/num_media/porcino  ->  ["1001","1002","10021",...]
+        let res = await fetch(`${apiUrl}/productos/num_media/porcino`, {
+          credentials: "include",
+        });
+
+        // Fallback si por algún motivo no existe ese endpoint
+        if (!res.ok) {
+          res = await fetch(`${apiUrl}/productos?categoria=porcino`, {
+            credentials: "include",
+          });
+        }
+
+        if (!res.ok) throw new Error("No se pudo obtener num_media porcino");
+
+        const data = await res.json();
+
+        const nums = new Set(
+          (Array.isArray(data) ? data : [])
+            .map((x) => (typeof x === "string" ? x : x?.num_media))
+            .filter(Boolean)
+            .map(String)
+        );
+
+        setExistingPorcinoNumMedias(nums);
+      } catch (err) {
+        console.error("fetchPorcinoNumMedias error:", err);
+        setExistingPorcinoNumMedias(new Set());
+      }
+    };
+
+    if (orderMode === "cerdo") {
+      fetchPorcinoNumMedias();
+    }
+  }, [orderMode, apiUrl]);
 
   // ==========================
   // IMPRESIÓN / COMPROBANTE
@@ -326,25 +403,76 @@ export default function OrderForm() {
   const handleSave = async () => {
     // ----- MODO CERDO: creación manual directa -----
     if (orderMode === "cerdo") {
+
+      // podés ajustar qué campos querés exigir, yo te dejo estos mínimos
+      if (!product.num_media || !product.kg || Number(product.kg) <= 0) {
+        alert("Debes ingresar al menos num_media y un peso mayor a 0.");
+        return;
+      }
+
+      const baseNum = String(product.num_media).trim();
+
+      // 1) Generar candidato único considerando BD + lista local
+      let candidate = generateUniqueNumMedia(
+        baseNum,
+        existingPorcinoNumMedias,
+        localPorcinoNumMedias
+      );
+
+      if (!candidate) {
+        alert("No fue posible generar un num_media único. Reintente con otro número.");
+        return;
+      }
+
+      // 2) Armar el item con ese num_media único
       const porcinoItem = {
-        codigo_de_barra:
-          product.codigo_de_barra || product.num_media || "",
-        num_media: product.num_media || product.codigo_de_barra || "",
-        kg: product.kg || 0,
+        codigo_de_barra: candidate, // se puede usar candidate acá, el backend igual genera el suyo si querés
+        num_media: candidate,
+        kg: Number(product.kg) || 0,
         tropa: product.tropa || "",
         garron: product.garron || "",
         categoria_producto: "porcino",
         subcategoria: "cerdo",
-        precio: 0, // siempre 0
-        costo: 0, // siempre 0
-        sucursal_id: selectedBranchId
-          ? Number(selectedBranchId)
-          : undefined,
+        precio: 0,
+        costo: 0,
+        sucursal_id: selectedBranchId ? Number(selectedBranchId) : undefined,
         fecha,
       };
 
+      // 3) Evitar duplicados exactos dentro de la lista local
+      const alreadyInList = products.some(
+        (p) =>
+          p?.categoria_producto === "porcino" &&
+          String(p?.num_media) === candidate
+      );
+
+      if (alreadyInList) {
+        // Intentamos forzar un nuevo sufijo solo respecto a la lista local
+        const localOnlySet = new Set([...localPorcinoNumMedias, candidate]);
+        const nextCandidate = generateUniqueNumMedia(
+          candidate,
+          new Set(),
+          localOnlySet
+        );
+
+        if (!nextCandidate) {
+          alert("El num_media ya está en la lista. Intente con otro.");
+          return;
+        }
+
+        porcinoItem.codigo_de_barra = nextCandidate;
+        porcinoItem.num_media = nextCandidate;
+      }
+
       // agregamos el producto a la lista local que va a enviarse
       setProducts((prev) => [...prev, porcinoItem]);
+
+      // 5) Actualizar el set cacheado para futuras validaciones en esta sesión
+      setExistingPorcinoNumMedias((prev) => {
+        const clone = new Set(prev);
+        clone.add(porcinoItem.num_media);
+        return clone;
+      });
 
       // reseteamos el form con defaults porcino
       setProduct({
@@ -991,8 +1119,8 @@ export default function OrderForm() {
           {isSubmitting
             ? "Grabando..."
             : orderMode === "cerdo"
-            ? "Grabar (Cerdo)"
-            : "Grabar"}
+              ? "Grabar (Cerdo)"
+              : "Grabar"}
         </Button>
       </div>
 
