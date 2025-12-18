@@ -7,6 +7,18 @@ import HaciendaPickerModal from "./HaciendaPickerModal";
 const apiUrl = process.env.REACT_APP_API_URL;
 
 export default function ComprobantesEgresoList() {
+
+  const fmtMoney = (n) => {
+    const num = Number(n);
+    if (!Number.isFinite(num)) return "—";
+    try {
+      return num.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+    } catch {
+      return `$${num.toFixed(2)}`;
+    }
+  };
+
+
   // === Helpers ===
   const isBlank = (v) =>
     v === undefined ||
@@ -918,7 +930,7 @@ export default function ComprobantesEgresoList() {
       <div className="mb-2 d-flex justify-content-between align-items-center">
         <div className="text-muted">
           {comprobantesFiltrados.length} resultado(s) · Total filtrado:{" "}
-          <strong>${totalFiltrado.toFixed(2)}</strong>
+          <strong>{fmtMoney(totalFiltrado)}</strong>
         </div>
 
         <div>
@@ -968,7 +980,7 @@ export default function ComprobantesEgresoList() {
               <td>{comp.nrocomprobante}</td>
               <td>{tiposComprobanteById[comp.tipocomprobante_id] || comp.tipocomprobante_id}</td>
               <td>{comp.fechacomprobante || ""}</td>
-              <td>${Number(comp.total).toFixed(2)}</td>
+              <td>{fmtMoney(comp.total)}</td>
               <td>
                 {proveedoresTabla.find((p) => p.id === comp.proveedor_id)?.nombre ||
                   comp.proveedor_id}
@@ -1436,7 +1448,7 @@ export default function ComprobantesEgresoList() {
                         <td>{p.fecha || "-"}</td>
                         <td>{p.medio}</td>
                         <td>{p.detalle || "-"}</td>
-                        <td>${Number(p.monto || 0).toFixed(2)}</td>
+                        <td>{fmtMoney(p.monto)}</td>
                         {/* <td>
                           {p.formapago_id
                             ? getFormaPagoDesc(p.formapago_id)
@@ -1854,7 +1866,7 @@ export default function ComprobantesEgresoList() {
 
         <Modal.Footer>
           <div className="me-auto text-muted">
-            Suma pagos: <strong>${sumaPagos.toFixed(2)}</strong>{" "}
+            Suma pagos: <strong>{fmtMoney(sumaPagos)}</strong>{" "}
             {montosOk ? "✓" : esLCDCreate ? "↔️ debe coincidir con Monto real" : "↔️ debe coincidir con Total"}
           </div>
           <Button variant="secondary" onClick={handleCloseCreate}>

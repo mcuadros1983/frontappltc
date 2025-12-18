@@ -136,6 +136,16 @@ export default function Cupones() {
   const [cuponesOriginales, setCuponesOriginales] = useState([]);
   const [cargando, setCargando] = useState(false);
 
+  const fmtMoney = (n) => {
+  const num = Number(n);
+  if (!Number.isFinite(num)) return "—";
+  try {
+    return num.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+  } catch {
+    return `$${num.toFixed(2)}`;
+  }
+};
+
   const contexto = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -285,9 +295,9 @@ export default function Cupones() {
 
       return {
         Fecha: c.fecha,
-        Importe: Number(importe.toFixed(2)),
-        Recargo: Number(recargo.toFixed(2)),
-        "Importe c/ Recargo": Number(conRecargo.toFixed(2)),
+        Importe: fmtMoney(importe),
+        Recargo: fmtMoney(recargo),
+        "Importe c/ Recargo": fmtMoney(conRecargo),
         Sucursal: sucursalNombre,
         Cliente: clienteNombre,
         Caja: c.caja_id,
@@ -305,9 +315,9 @@ export default function Cupones() {
 
     const wsTotals = XLSX.utils.json_to_sheet([
       { Métrica: "Cantidad", Valor: cantidad },
-      { Métrica: "Total Importe", Valor: Number(totalImporte.toFixed(2)) },
-      { Métrica: "Total Recargo", Valor: Number((totalConRecargo - totalImporte).toFixed(2)) },
-      { Métrica: "Total c/ Recargo", Valor: Number(totalConRecargo.toFixed(2)) },
+      { Métrica: "Total Importe", Valor: fmtMoney(totalImporte) },
+      { Métrica: "Total Recargo", Valor: fmtMoney(totalConRecargo - totalImporte) },
+      { Métrica: "Total c/ Recargo", Valor: fmtMoney(totalConRecargo) },
     ]);
 
     const wb = XLSX.utils.book_new();
@@ -442,9 +452,9 @@ export default function Cupones() {
         <Card.Body>
           <Row className="gy-2">
             <Col md={3} sm={6} xs={12}><strong>Cantidad:</strong> {cantidad}</Col>
-            <Col md={3} sm={6} xs={12}><strong>Total Importe:</strong> ${formatMoney(totalImporte)}</Col>
-            <Col md={3} sm={6} xs={12}><strong>Total Recargo:</strong> ${formatMoney(totalConRecargo - totalImporte)}</Col>
-            <Col md={3} sm={6} xs={12}><strong>Total c/ Recargo:</strong> ${formatMoney(totalConRecargo)}</Col>
+            <Col md={3} sm={6} xs={12}><strong>Total Importe:</strong> {fmtMoney(totalImporte)}</Col>
+            <Col md={3} sm={6} xs={12}><strong>Total Recargo:</strong> {fmtMoney(totalConRecargo - totalImporte)}</Col>
+            <Col md={3} sm={6} xs={12}><strong>Total c/ Recargo:</strong> {fmtMoney(totalConRecargo)}</Col>
           </Row>
         </Card.Body>
       </Card>
@@ -483,11 +493,11 @@ export default function Cupones() {
               return (
                 <tr key={cupon.id}>
                   <td>{cupon.fecha}</td>
-                  <td className="text-end">{importe.toFixed(2)}</td>
+                  <td className="text-end">{fmtMoney(importe)}</td>
                   <td>{sucursalNombre}</td>
                   <td>{clienteNombre}</td>
                   <td>{cupon.caja_id}</td>
-                  <td className="text-end">{recargo.toFixed(2)}</td>
+                  <td className="text-end">{fmtMoney(recargo)}</td>
                   <td>{cupon.lote}</td>
                   <td>{cupon.nrocupon}</td>
                   <td>{planDesc}</td>

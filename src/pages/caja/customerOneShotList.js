@@ -15,6 +15,16 @@ export default function CustomerOneShotList() {
   const [customersPerPage] = useState(10);
   const [totalAmount, setTotalAmount] = useState(0);
 
+  const fmtMoney = (n) => {
+  const num = Number(n);
+  if (!Number.isFinite(num)) return "—";
+  try {
+    return num.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+  } catch {
+    return `$${num.toFixed(2)}`;
+  }
+};
+
   const context = useContext(Contexts.UserContext); 
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -231,7 +241,7 @@ export default function CustomerOneShotList() {
       </Form>
 
       <div className="mb-3">
-        <strong>Total: ${totalAmount.toFixed(2)}</strong>
+        <strong>Total: {fmtMoney(totalAmount)}</strong>
       </div>
 
       {customersOneShot.length > 0 ? (

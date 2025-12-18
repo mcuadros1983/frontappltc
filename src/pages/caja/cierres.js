@@ -14,6 +14,17 @@ export default function Cierres() {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
 
+  const fmtMoney = (n) => {
+    const num = Number(n);
+    if (!Number.isFinite(num)) return "—";
+    try {
+      return num.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+    } catch {
+      return `$${num.toFixed(2)}`;
+    }
+  };
+
+
   const context = useContext(Contexts.DataContext);
   // const navigate = useNavigate();
 
@@ -129,104 +140,104 @@ export default function Cierres() {
     }
   };
 
- return (
-  <Container className="vt-page">
-    <h1 className="my-list-title dark-text vt-title">Cierres de Ventas</h1>
+  return (
+    <Container className="vt-page">
+      <h1 className="my-list-title dark-text vt-title">Cierres de Ventas</h1>
 
-    {/* Filtros */}
-    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-      <div className="d-inline-block w-auto mx-2">
-        <label className="mr-2">DESDE:</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
+      {/* Filtros */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto mx-2">
+          <label className="mr-2">DESDE:</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block w-auto mx-2">
+          <label className="ml-2 mr-2">HASTA:</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block">
+          <label className="d-block">Sucursal</label>
+          <FormControl
+            as="select"
+            value={searchSucursal}
+            onChange={(e) => setSearchSucursal(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 240 }}
+          >
+            <option value="">Seleccione una sucursal</option>
+            {context.sucursales.map((sucursal) => (
+              <option key={sucursal.id} value={sucursal.id}>
+                {sucursal.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block mx-2">
+          <Button onClick={handleFilter} className="vt-btn">
+            Filtrar
+          </Button>
+        </div>
       </div>
 
-      <div className="d-inline-block w-auto mx-2">
-        <label className="ml-2 mr-2">HASTA:</label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
+      {/* Tabla */}
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th onClick={() => handleSort("fecha")} className="vt-th-sort">Fecha</th>
+              <th onClick={() => handleSort("total")} className="vt-th-sort text-end">Total</th>
+              <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">Sucursal</th>
+              <th onClick={() => handleSort("nro_cierre")} className="vt-th-sort">Número de Cierre</th>
+              <th>Operaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentCierres.map((cierre) => (
+              <tr key={cierre.id}>
+                <td>{cierre.fecha}</td>
+                <td className="text-end">{fmtMoney(cierre.total)}</td>
+                <td>{context.sucursales.find(s => s.id === parseInt(cierre.sucursal_id))?.nombre || "Desconocido"}</td>
+                <td>{cierre.nro_cierre}</td>
+                <td>
+                  <Button variant="danger" onClick={() => handleEliminarCierre(cierre.id)}>
+                    Eliminar
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       </div>
 
-      <div className="d-inline-block">
-        <label className="d-block">Sucursal</label>
-        <FormControl
-          as="select"
-          value={searchSucursal}
-          onChange={(e) => setSearchSucursal(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 240 }}
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vt-pager">
+        <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
+          <BsChevronLeft />
+        </Button>
+        <span className="mx-2">
+          Página {currentPage} de {Math.ceil(cierres.length / cierresPerPage)}
+        </span>
+        <Button
+          onClick={nextPage}
+          disabled={currentPage === Math.ceil(cierres.length / cierresPerPage)}
+          variant="light"
         >
-          <option value="">Seleccione una sucursal</option>
-          {context.sucursales.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-
-      <div className="d-inline-block mx-2">
-        <Button onClick={handleFilter} className="vt-btn">
-          Filtrar
+          <BsChevronRight />
         </Button>
       </div>
-    </div>
-
-    {/* Tabla */}
-    <div className="vt-tablewrap table-responsive">
-      <Table striped bordered hover className="mb-2">
-        <thead>
-          <tr>
-            <th onClick={() => handleSort("fecha")} className="vt-th-sort">Fecha</th>
-            <th onClick={() => handleSort("total")} className="vt-th-sort text-end">Total</th>
-            <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">Sucursal</th>
-            <th onClick={() => handleSort("nro_cierre")} className="vt-th-sort">Número de Cierre</th>
-            <th>Operaciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentCierres.map((cierre) => (
-            <tr key={cierre.id}>
-              <td>{cierre.fecha}</td>
-              <td className="text-end">${cierre.total.toFixed(2)}</td>
-              <td>{context.sucursales.find(s => s.id === parseInt(cierre.sucursal_id))?.nombre || "Desconocido"}</td>
-              <td>{cierre.nro_cierre}</td>
-              <td>
-                <Button variant="danger" onClick={() => handleEliminarCierre(cierre.id)}>
-                  Eliminar
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
-
-    {/* Paginación */}
-    <div className="d-flex justify-content-center align-items-center vt-pager">
-      <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
-        <BsChevronLeft />
-      </Button>
-      <span className="mx-2">
-        Página {currentPage} de {Math.ceil(cierres.length / cierresPerPage)}
-      </span>
-      <Button
-        onClick={nextPage}
-        disabled={currentPage === Math.ceil(cierres.length / cierresPerPage)}
-        variant="light"
-      >
-        <BsChevronRight />
-      </Button>
-    </div>
-  </Container>
-);
+    </Container>
+  );
 
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext,useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -15,6 +15,16 @@ export default function CobranzasCtaCte() {
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
   const [clientesFiltrados, setClientesFiltrados] = useState([]);
   const [cobranzasOriginales, setCobranzasOriginales] = useState([]);
+
+  const fmtMoney = (n) => {
+    const num = Number(n);
+    if (!Number.isFinite(num)) return "—";
+    try {
+      return num.toLocaleString("es-AR", { style: "currency", currency: "ARS" });
+    } catch {
+      return `$${num.toFixed(2)}`;
+    }
+  };
 
   const contexto = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -38,7 +48,7 @@ export default function CobranzasCtaCte() {
   useEffect(() => {
     manejadorFiltroClienteSeleccionado();
   }, [clienteSeleccionado, manejadorFiltroClienteSeleccionado]);
-  
+
   const manejarFiltro = async () => {
     try {
       if (!esFechaValida(fechaDesde) || !esFechaValida(fechaHasta)) {
@@ -253,7 +263,7 @@ export default function CobranzasCtaCte() {
             return (
               <tr key={cobranza.id}>
                 <td>{cobranza.fecha}</td>
-                <td>{parseFloat(cobranza.importe).toFixed(2)}</td>
+                <td className="text-end">{fmtMoney(cobranza.importe)}</td>
                 <td>
                   {contexto.clientesTabla.find(
                     (cliente) => cliente.id === parseInt(cobranza.cliente_id)
