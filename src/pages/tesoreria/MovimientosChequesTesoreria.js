@@ -96,7 +96,11 @@ export default function MovimientosChequesTesoreria() {
     return (bancosTabla || []).filter((b) => Number(b.empresa_id) === Number(empresa_id));
   }, [bancosTabla, empresa_id]);
 
-  const fmtMoney = (n) => `$${Number(n || 0).toFixed(2)}`;
+  const fmtMoney = (n) =>
+  `$${Number(n || 0).toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
   const buildQS = (params = {}) => {
     const qs = new URLSearchParams();

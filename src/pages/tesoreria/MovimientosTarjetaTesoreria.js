@@ -121,7 +121,11 @@ export default function MovimentosTarjetaTesoreria() {
 
   const [eliminandoId, setEliminandoId] = useState(null);
 
-  const fmtMoney = (n) => `$${Number(n || 0).toFixed(2)}`;
+ const fmtMoney = (n) =>
+  `$${Number(n || 0).toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
   const buildQS = (params = {}) => {
     const qs = new URLSearchParams();

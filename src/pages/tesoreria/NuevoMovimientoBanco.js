@@ -184,7 +184,7 @@ export default function NuevoMovimientoBanco({ show, onHide, onCreated }) {
   }
 
   async function aplicarPagoAInstancia(instanciaId, payload) {
-    const r = await fetch(`${apiUrl}/gasto-estimado/instancias/${instanciaId}/pagos`, {
+    const r = await fetch(`${apiUrl}/gasto-estimado/instancias/${instanciaId}/pagos`, { 
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },

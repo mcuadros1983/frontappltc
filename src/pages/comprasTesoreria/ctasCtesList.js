@@ -34,7 +34,11 @@ export default function CtasCtesList() {
     return withName.sort((a, b) => a._nombre.localeCompare(b._nombre));
   }, [saldos, proveedorNombre]);
 
-  const fmtMoney = (n) => `$${Number(n || 0).toFixed(2)}`;
+  const fmtMoney = (n) =>
+  `$${Number(n || 0).toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
   const colorSaldo = (n) => (Number(n) < 0 ? { color: "crimson" } : undefined);
 
   const buildQS = (params = {}) => {

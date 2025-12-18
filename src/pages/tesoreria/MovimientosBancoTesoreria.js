@@ -66,7 +66,12 @@ export default function BancoTesoreriaList() {
   const [showDetalle, setShowDetalle] = useState(false);
   const [movSeleccionado, setMovSeleccionado] = useState(null);
   const [showNuevoIngreso, setShowNuevoIngreso] = useState(false);
-  const fmtMoney = (n) => `$${Number(n || 0).toFixed(2)}`;
+  // const fmtMoney = (n) => `$${Number(n || 0).toFixed(2)}`;
+  const fmtMoney = (n) =>
+    `$${Number(n || 0).toLocaleString("es-AR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   const buildQS = (params = {}) => {
     const qs = new URLSearchParams();
