@@ -56,6 +56,15 @@ export default function CompraProyectadaModal({
     return `${mm}/${p.anio}`;
   }, []);
 
+  const formatLibroIva = useCallback((l) => {
+    if (!l) return "";
+    const mm = String(l.mes ?? "").padStart(2, "0");
+    const yy = l.anio ?? "";
+    const base = `${mm}/${yy}`.replace(/^\/$/, ""); // por si faltan datos
+    const desc = l.descripcion || l.nombre || "";  // según tu modelo real
+    return desc ? `${base} - ${desc}` : base || `Libro IVA ${l.id}`;
+  }, []);
+
   const handleClose = useCallback(
     (ok = false) => {
       if (typeof onClose === "function") onClose(ok);
@@ -204,6 +213,13 @@ export default function CompraProyectadaModal({
         return [...base, sel];
       }
     }
+
+    base.sort((a, b) => {
+      const ka = Number(a.anio) * 100 + Number(a.mes);
+      const kb = Number(b.anio) * 100 + Number(b.mes);
+      return kb - ka; // más nuevos primero
+    });
+
     return base;
   }, [librosIva, empresaIdEfectiva, isEdit, form.libroiva_id]);
 
@@ -312,7 +328,7 @@ export default function CompraProyectadaModal({
                 <option value="">{!empresaIdEfectiva ? "Seleccione empresa" : "Seleccione..."}</option>
                 {librosIvaFiltrados.map((l) => (
                   <option key={l.id} value={String(l.id)}>
-                    {l.descripcion || `Libro ${l.id}`}
+                    {formatLibroIva(l)}
                   </option>
                 ))}
               </Form.Select>

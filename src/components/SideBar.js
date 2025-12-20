@@ -1408,11 +1408,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 )}
 
                 {/* Vencimientos */}
-                {can("tesoreria:vencimientos.view") && (
+                {/* {can("tesoreria:vencimientos.view") && (
                   <Link to="/vencimientos" className="nav-link" onClick={handleLinkClick}>
                     Vencimientos
                   </Link>
-                )}
+                )} */}
               </>
             )}
 

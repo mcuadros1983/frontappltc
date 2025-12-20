@@ -8,6 +8,8 @@ export default function FacturacionTesoreriaList() {
   const dataContext = useContext(Contexts.DataContext);
 
   const {
+    clientes,
+    clientesTabla,
     formasPagoTesoreria,
     librosIvaTabla,
     ptosVentaTabla,
@@ -16,10 +18,7 @@ export default function FacturacionTesoreriaList() {
     empresaSeleccionada,
   } = dataContext;
 
-  // =========================
-  // CLIENTES: AUTOCOMPLETE + CACHE (sin traer todos)
-  // =========================
-  const [clientesCache, setClientesCache] = useState({}); // { [id]: clienteObj }
+  const [customers, setCustomers] = useState([]);
   const [comprobantes, setComprobantes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedComprobante, setSelectedComprobante] = useState(null);
@@ -28,60 +27,6 @@ export default function FacturacionTesoreriaList() {
 
 
   const hoy = new Date().toISOString().split("T")[0];
-
-  const getClienteCachedLabel = (id) => {
-    const c = clientesCache[Number(id)];
-    return c ? clienteLabel(c) : `ID ${id}`;
-  };
-
-  const fetchClienteById = useCallback(
-    async (id) => {
-      const key = Number(id);
-      if (!key || clientesCache[key]) return;
-
-      try {
-        const res = await fetch(`${apiUrl}/clientespersonatabla/id/${key}`, {
-          credentials: "include",
-        });
-        if (!res.ok) return;
-
-        const data = await res.json();
-        setClientesCache((prev) => ({ ...prev, [key]: data }));
-      } catch (e) {
-        // silencioso
-      }
-    },
-    [apiUrl, clientesCache]
-  );
-
-  const buscarClientesPersona = useCallback(
-    async (q) => {
-      const query = String(q || "").trim();
-      if (query.length < 2) return [];
-
-      const res = await fetch(
-        `${apiUrl}/clientespersonatabla/buscar?q=${encodeURIComponent(query)}&limit=20`,
-        { credentials: "include" }
-      );
-      if (!res.ok) throw new Error("No se pudo buscar clientes");
-      const data = await res.json();
-      return Array.isArray(data?.rows) ? data.rows : [];
-    },
-    [apiUrl]
-  );
-
-  // ====== Estado AUTOCOMPLETE CREATE ======
-  const [clienteQueryCreate, setClienteQueryCreate] = useState("");
-  const [clienteResultadosCreate, setClienteResultadosCreate] = useState([]);
-  const [clienteLoadingCreate, setClienteLoadingCreate] = useState(false);
-  const [clienteErrorCreate, setClienteErrorCreate] = useState("");
-
-  // ====== Estado AUTOCOMPLETE EDIT ======
-  const [clienteQueryEdit, setClienteQueryEdit] = useState("");
-  const [clienteResultadosEdit, setClienteResultadosEdit] = useState([]);
-  const [clienteLoadingEdit, setClienteLoadingEdit] = useState(false);
-  const [clienteErrorEdit, setClienteErrorEdit] = useState("");
-
 
   const getNuevoComprobanteInicial = () => ({
     nrocomprobante: "",
@@ -107,7 +52,7 @@ export default function FacturacionTesoreriaList() {
 
   const [nuevoComprobante, setNuevoComprobante] = useState(getNuevoComprobanteInicial);
 
-
+  
 
   const fmtMoney = (n) =>
     (Number(n) || 0).toLocaleString("es-AR", {
@@ -120,29 +65,6 @@ export default function FacturacionTesoreriaList() {
   const toNumber2 = (v) => {
     const n = Number(v);
     return Number.isFinite(n) ? Number(n.toFixed(2)) : 0;
-  };
-
-  const calcIVA105 = () => {
-    const neto = Number(nuevoComprobante.neto || 0);
-    setNuevoComprobante((p) => ({ ...p, iva105: toNumber2(neto * 0.105) }));
-  };
-
-  const calcIVA21 = () => {
-    const neto = Number(nuevoComprobante.neto || 0);
-    setNuevoComprobante((p) => ({ ...p, iva21: toNumber2(neto * 0.21) }));
-  };
-
-  // =========================
-  // CALC IVA - EDICIÓN
-  // =========================
-  const calcIVA105Edit = () => {
-    const neto = Number(selectedComprobante?.neto || 0);
-    setSelectedComprobante((p) => ({ ...p, iva105: toNumber2(neto * 0.105) }));
-  };
-
-  const calcIVA21Edit = () => {
-    const neto = Number(selectedComprobante?.neto || 0);
-    setSelectedComprobante((p) => ({ ...p, iva21: toNumber2(neto * 0.21) }));
   };
 
   const clienteLabel = (c) => {
@@ -170,77 +92,18 @@ export default function FacturacionTesoreriaList() {
     return (personaTxt || baseTxt || `ID ${c.id}`).trim();
   };
 
+  const customersMap = useMemo(
+    () => Object.fromEntries((customers || []).map((c) => [Number(c.id), c])),
+    [customers]
+  );
+
+
   const derivedTotal =
     Number(nuevoComprobante.neto || 0) +
     Number(nuevoComprobante.iva105 || 0) +
     Number(nuevoComprobante.iva21 || 0);
 
-  // =========================
-  // VALIDACIÓN MODAL CREACIÓN
-  // =========================
-  const canCrearComprobante = useMemo(() => {
-    if (!empresaSeleccionada?.id) return false;
 
-    const req = nuevoComprobante || {};
-
-    // requeridos (los IVA y observaciones NO)
-    const requiredText = [
-      "nrocomprobante",
-      "tipocomprobante_id",
-      "ptoventa_id",
-      "libroiva_id",
-      "cliente_id",
-      "fechacomprobante",
-      "fechavencimiento",
-      "imputacioncontable_id",
-      "formapago_id",
-      "estadoPago",
-    ];
-
-    for (const k of requiredText) {
-      if (req[k] === null || req[k] === undefined || String(req[k]).trim() === "") return false;
-    }
-
-    // neto requerido (puede ser 0, pero debe ser número válido)
-    const netoNum = Number(req.neto);
-    if (!Number.isFinite(netoNum)) return false;
-
-    return true;
-  }, [nuevoComprobante, empresaSeleccionada]);
-
-  // =========================
-  // VALIDACIÓN MODAL EDICIÓN
-  // =========================
-  const canGuardarCambios = useMemo(() => {
-    if (!empresaSeleccionada?.id) return false;
-    if (!selectedComprobante?.id) return false;
-
-    const req = selectedComprobante || {};
-
-    // requeridos (los IVA y observaciones NO)
-    const requiredText = [
-      "nrocomprobante",
-      "tipocomprobante_id",
-      "ptoventa_id",
-      "libroiva_id",
-      "cliente_id",
-      "fechacomprobante",
-      "fechavencimiento",
-      "imputacioncontable_id",
-      "formapago_id",
-      "estadoPago",
-    ];
-
-    for (const k of requiredText) {
-      if (req[k] === null || req[k] === undefined || String(req[k]).trim() === "") return false;
-    }
-
-    // neto requerido (puede ser 0, pero debe ser número válido)
-    const netoNum = Number(req.neto);
-    if (!Number.isFinite(netoNum)) return false;
-
-    return true;
-  }, [selectedComprobante, empresaSeleccionada]);
 
 
   // Filtra libros IVA y puntos de venta por empresa seleccionada
@@ -252,7 +115,35 @@ export default function FacturacionTesoreriaList() {
     (l) => l.empresa_id === empresaSeleccionada?.id
   );
 
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/obtenerclientestabla`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("No se pudieron cargar los clientes");
 
+        const data = await response.json();
+        const arr = Array.isArray(data) ? data : [];
+
+        // Orden: CENTRAL primero (si existiera por label) y luego alfabético por label
+        const sorted = arr.sort((a, b) => {
+          const la = clienteLabel(a).toUpperCase();
+          const lb = clienteLabel(b).toUpperCase();
+
+          if (la.includes("CENTRAL")) return -1;
+          if (lb.includes("CENTRAL")) return 1;
+          return la.localeCompare(lb, "es");
+        });
+
+        setCustomers(sorted);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
 
   useEffect(() => {
     const fetchEmpresas = async () => {
@@ -268,23 +159,10 @@ export default function FacturacionTesoreriaList() {
     fetchEmpresas();
   }, []);
 
-
-
   const empresasMap = useMemo(
     () => Object.fromEntries(empresas.map((e) => [e.id, e])),
     [empresas]
   );
-
-  useEffect(() => {
-    // precargar clientes de los comprobantes visibles
-    const ids = Array.from(
-      new Set((comprobantes || []).map((c) => Number(c.cliente_id)).filter(Boolean))
-    );
-
-    ids.forEach((id) => {
-      if (!clientesCache[id]) fetchClienteById(id);
-    });
-  }, [comprobantes, clientesCache, fetchClienteById]);
 
   // Cargar comprobantes (con filtro empresa si corresponde)
   const loadComprobantes = useCallback(async () => {
@@ -306,76 +184,6 @@ export default function FacturacionTesoreriaList() {
     }
   }, [dataContext.empresaSeleccionada]);
 
-
-  // ===== Debounce CREATE =====
-  useEffect(() => {
-    if (!showCreateModal) return;
-
-    let cancel = false;
-    const t = setTimeout(async () => {
-      if (cancel) return;
-
-      const q = clienteQueryCreate.trim();
-      if (q.length < 2) {
-        setClienteResultadosCreate([]);
-        setClienteErrorCreate("");
-        return;
-      }
-
-      setClienteLoadingCreate(true);
-      setClienteErrorCreate("");
-
-      try {
-        const rows = await buscarClientesPersona(q);
-        setClienteResultadosCreate(rows);
-      } catch (e) {
-        setClienteErrorCreate(e.message || "Error buscando clientes");
-        setClienteResultadosCreate([]);
-      } finally {
-        setClienteLoadingCreate(false);
-      }
-    }, 300);
-
-    return () => {
-      cancel = true;
-      clearTimeout(t);
-    };
-  }, [clienteQueryCreate, showCreateModal, buscarClientesPersona]);
-
-  // ===== Debounce EDIT =====
-  useEffect(() => {
-    if (!showModal) return;
-
-    let cancel = false;
-    const t = setTimeout(async () => {
-      if (cancel) return;
-
-      const q = clienteQueryEdit.trim();
-      if (q.length < 2) {
-        setClienteResultadosEdit([]);
-        setClienteErrorEdit("");
-        return;
-      }
-
-      setClienteLoadingEdit(true);
-      setClienteErrorEdit("");
-
-      try {
-        const rows = await buscarClientesPersona(q);
-        setClienteResultadosEdit(rows);
-      } catch (e) {
-        setClienteErrorEdit(e.message || "Error buscando clientes");
-        setClienteResultadosEdit([]);
-      } finally {
-        setClienteLoadingEdit(false);
-      }
-    }, 300);
-
-    return () => {
-      cancel = true;
-      clearTimeout(t);
-    };
-  }, [clienteQueryEdit, showModal, buscarClientesPersona]);
   // ... dentro del componente FacturacionTesoreriaList
 
   const handleEliminarComprobante = async (id) => {
@@ -406,20 +214,10 @@ export default function FacturacionTesoreriaList() {
     const numeric = new Set(["neto", "iva105", "iva21"]);
     const v = type === "checkbox" ? checked : value;
 
-    setNuevoComprobante((prev) => {
-      const next = {
-        ...prev,
-        [name]: numeric.has(name) ? (v === "" ? "" : Number(v)) : v,
-      };
-
-      // ✅ si cambia neto: reset IVA
-      if (name === "neto") {
-        next.iva105 = 0;
-        next.iva21 = 0;
-      }
-
-      return next;
-    });
+    setNuevoComprobante((prev) => ({
+      ...prev,
+      [name]: numeric.has(name) ? (v === "" ? "" : Number(v)) : v,
+    }));
   };
 
   useEffect(() => {
@@ -432,83 +230,36 @@ export default function FacturacionTesoreriaList() {
       alert("Debe seleccionar una empresa para editar comprobantes.");
       return;
     }
-
     setSelectedComprobante(comprobante);
-
-    const id = comprobante?.cliente_id;
-    if (id) {
-      const cached = clientesCache[Number(id)];
-      setClienteQueryEdit(cached ? clienteLabel(cached) : `ID ${id}`);
-      if (!cached) fetchClienteById(id);
-    } else {
-      setClienteQueryEdit("");
-    }
-
-    setClienteResultadosEdit([]);
-    setClienteErrorEdit("");
-    setClienteLoadingEdit(false);
-
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setSelectedComprobante(null);
     setShowModal(false);
-
-    setClienteQueryEdit("");
-    setClienteResultadosEdit([]);
-    setClienteErrorEdit("");
-    setClienteLoadingEdit(false);
-
   };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const numeric = new Set(["neto", "iva105", "iva21", "total"]);
-    const v = type === "checkbox" ? checked : value;
-
-    setSelectedComprobante((prev) => {
-      const next = {
-        ...prev,
-        [name]: numeric.has(name) ? (v === "" ? "" : Number(v)) : v,
-      };
-
-      // ✅ si cambia neto: reset IVA
-      if (name === "neto") {
-        next.iva105 = 0;
-        next.iva21 = 0;
-      }
-
-      return next;
+    setSelectedComprobante({
+      ...selectedComprobante,
+      [e.target.name]: e.target.value,
     });
   };
 
-
   const handleGuardarCambios = async () => {
-    if (!canGuardarCambios) {
-      alert("Faltan completar campos obligatorios antes de guardar.");
-      return;
-    }
     try {
-      const payload = {
-        ...selectedComprobante,
-        total: toNumber2(derivedTotalEdit),
-      };
-
       await fetch(`${apiUrl}/comprobantes-ingreso/${selectedComprobante.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(selectedComprobante),
       });
-
       await loadComprobantes();
       handleCloseModal();
     } catch (error) {
       console.error("Error al actualizar comprobante:", error);
     }
   };
-
 
   // Crear Comprobante y, si forma de pago es Tarjeta, abrir Modal Tarjeta
   const handleCrearComprobante = async () => {
@@ -554,10 +305,7 @@ export default function FacturacionTesoreriaList() {
         estadoPago: "pendiente",
         conFactura: true,
       });
-      setClienteQueryCreate("");
-      setClienteResultadosCreate([]);
-      setClienteErrorCreate("");
-      setClienteLoadingCreate(false);
+
 
     } catch (error) {
       console.error("❌ Error al crear comprobante:", error);
@@ -586,15 +334,8 @@ export default function FacturacionTesoreriaList() {
               return;
             }
             setNuevoComprobante(getNuevoComprobanteInicial()); // ← reset
-
-            setClienteQueryCreate("");
-            setClienteResultadosCreate([]);
-            setClienteErrorCreate("");
-            setClienteLoadingCreate(false);
-
             setShowCreateModal(true);
           }}
-
         >
           Nuevo Comprobante
         </Button>
@@ -631,11 +372,9 @@ export default function FacturacionTesoreriaList() {
               <td>{comp.nrocomprobante}</td>
               <td className="text-end">{fmtMoney(comp.total)}</td>
               <td>
-                {comp.cliente_id
-                  ? (clientesCache[Number(comp.cliente_id)]
-                    ? clienteLabel(clientesCache[Number(comp.cliente_id)])
-                    : "Cargando...")
-                  : "-"}
+                {customersMap[Number(comp.cliente_id)]
+                  ? clienteLabel(customersMap[Number(comp.cliente_id)])
+                  : comp.cliente_id}
               </td>
               <td>
                 {formasPagoTesoreria.find((fp) => fp.id === comp.formapago_id)
@@ -683,63 +422,19 @@ export default function FacturacionTesoreriaList() {
 
                 <Form.Group className="mb-3 col-md-6">
                   <Form.Label>Cliente</Form.Label>
-
-                  <Form.Control
+                  <Form.Select
+                    name="cliente_id"
+                    value={selectedComprobante.cliente_id || ""}
+                    onChange={handleChange}
                     className="form-control my-input"
-                    placeholder="Buscar por apellido, nombre, DNI/CUIL..."
-                    value={clienteQueryEdit}
-                    onChange={(e) => setClienteQueryEdit(e.target.value)}
-                  />
-
-                  {selectedComprobante?.cliente_id ? (
-                    <div className="mt-2 d-flex justify-content-between align-items-center">
-                      <small className="text-muted">
-                        Seleccionado: <strong>{getClienteCachedLabel(selectedComprobante.cliente_id)}</strong>
-                      </small>
-
-                      <Button
-                        size="sm"
-                        variant="outline-secondary"
-                        onClick={() => {
-                          setSelectedComprobante((p) => ({ ...p, cliente_id: "" }));
-                          setClienteQueryEdit("");
-                          setClienteResultadosEdit([]);
-                        }}
-                      >
-                        Quitar
-                      </Button>
-                    </div>
-                  ) : (
-                    <small className="text-muted">Escribí al menos 2 caracteres para buscar.</small>
-                  )}
-
-                  {(clienteLoadingEdit || clienteErrorEdit || clienteResultadosEdit.length > 0) && (
-                    <div className="list-group mt-2" style={{ maxHeight: 220, overflowY: "auto" }}>
-                      {clienteLoadingEdit && <div className="list-group-item">Buscando...</div>}
-
-                      {!clienteLoadingEdit && clienteErrorEdit && (
-                        <div className="list-group-item text-danger">{clienteErrorEdit}</div>
-                      )}
-
-                      {!clienteLoadingEdit &&
-                        !clienteErrorEdit &&
-                        clienteResultadosEdit.map((c) => (
-                          <button
-                            type="button"
-                            key={c.id}
-                            className="list-group-item list-group-item-action"
-                            onClick={() => {
-                              setSelectedComprobante((p) => ({ ...p, cliente_id: c.id }));
-                              setClientesCache((prev) => ({ ...prev, [Number(c.id)]: c }));
-                              setClienteQueryEdit(clienteLabel(c));
-                              setClienteResultadosEdit([]);
-                            }}
-                          >
-                            {clienteLabel(c)}
-                          </button>
-                        ))}
-                    </div>
-                  )}
+                  >
+                    <option value="">Seleccione...</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {clienteLabel(c)}
+                      </option>
+                    ))}
+                  </Form.Select>
                 </Form.Group>
               </div>
 
@@ -757,48 +452,25 @@ export default function FacturacionTesoreriaList() {
 
                 <Form.Group className="mb-3 col-md-4">
                   <Form.Label>IVA 10.5%</Form.Label>
-
-                  <div className="d-flex gap-2">
-                    <Form.Control
-                      type="number"
-                      step="0.01"
-                      name="iva105"
-                      value={selectedComprobante.iva105 || 0}
-                      onChange={handleChange}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      onClick={calcIVA105Edit}
-                      style={{ whiteSpace: "nowrap" }}
-                    >
-                      Calc
-                    </Button>
-                  </div>
+                  <Form.Control
+                    type="number"
+                    step="0.01"
+                    name="iva105"
+                    value={selectedComprobante.iva105 || 0}
+                    onChange={handleChange}
+                  />
                 </Form.Group>
 
                 <Form.Group className="mb-3 col-md-4">
                   <Form.Label>IVA 21%</Form.Label>
-
-                  <div className="d-flex gap-2">
-                    <Form.Control
-                      type="number"
-                      step="0.01"
-                      name="iva21"
-                      value={selectedComprobante.iva21 || 0}
-                      onChange={handleChange}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      onClick={calcIVA21Edit}
-                      style={{ whiteSpace: "nowrap" }}
-                    >
-                      Calc
-                    </Button>
-                  </div>
+                  <Form.Control
+                    type="number"
+                    step="0.01"
+                    name="iva21"
+                    value={selectedComprobante.iva21 || 0}
+                    onChange={handleChange}
+                  />
                 </Form.Group>
-
               </div>
 
               <div className="row">
@@ -809,7 +481,7 @@ export default function FacturacionTesoreriaList() {
                     type="number"
                     step="0.01"
                     name="total"
-                    value={toNumber2(derivedTotalEdit).toFixed(2)}
+                    value={toNumber2(derivedTotal).toFixed(2)}
                     readOnly
                   />
                 </Form.Group>
@@ -973,11 +645,7 @@ export default function FacturacionTesoreriaList() {
           <Button variant="secondary" onClick={handleCloseModal}>
             Cancelar
           </Button>
-          <Button
-            variant="success"
-            onClick={handleGuardarCambios}
-            disabled={!canGuardarCambios}
-          >
+          <Button variant="success" onClick={handleGuardarCambios}>
             Guardar Cambios
           </Button>
         </Modal.Footer>
@@ -989,11 +657,6 @@ export default function FacturacionTesoreriaList() {
         onHide={() => {
           setShowCreateModal(false);
           setNuevoComprobante(getNuevoComprobanteInicial()); // ← reset
-
-          setClienteQueryCreate("");
-          setClienteResultadosCreate([]);
-          setClienteErrorCreate("");
-          setClienteLoadingCreate(false);
         }}
         backdrop="static"
         centered
@@ -1016,63 +679,19 @@ export default function FacturacionTesoreriaList() {
 
               <Form.Group className="mb-3 col-md-6">
                 <Form.Label>Cliente</Form.Label>
-
-                <Form.Control
+                <Form.Select
+                  name="cliente_id"
+                  value={nuevoComprobante.cliente_id}
+                  onChange={handleNuevoChange}
                   className="form-control my-input"
-                  placeholder="Buscar por apellido, nombre, DNI/CUIL..."
-                  value={clienteQueryCreate}
-                  onChange={(e) => setClienteQueryCreate(e.target.value)}
-                />
-
-                {nuevoComprobante.cliente_id ? (
-                  <div className="mt-2 d-flex justify-content-between align-items-center">
-                    <small className="text-muted">
-                      Seleccionado: <strong>{getClienteCachedLabel(nuevoComprobante.cliente_id)}</strong>
-                    </small>
-
-                    <Button
-                      size="sm"
-                      variant="outline-secondary"
-                      onClick={() => {
-                        setNuevoComprobante((p) => ({ ...p, cliente_id: "" }));
-                        setClienteQueryCreate("");
-                        setClienteResultadosCreate([]);
-                      }}
-                    >
-                      Quitar
-                    </Button>
-                  </div>
-                ) : (
-                  <small className="text-muted">Escribí al menos 2 caracteres para buscar.</small>
-                )}
-
-                {(clienteLoadingCreate || clienteErrorCreate || clienteResultadosCreate.length > 0) && (
-                  <div className="list-group mt-2" style={{ maxHeight: 220, overflowY: "auto" }}>
-                    {clienteLoadingCreate && <div className="list-group-item">Buscando...</div>}
-
-                    {!clienteLoadingCreate && clienteErrorCreate && (
-                      <div className="list-group-item text-danger">{clienteErrorCreate}</div>
-                    )}
-
-                    {!clienteLoadingCreate &&
-                      !clienteErrorCreate &&
-                      clienteResultadosCreate.map((c) => (
-                        <button
-                          type="button"
-                          key={c.id}
-                          className="list-group-item list-group-item-action"
-                          onClick={() => {
-                            setNuevoComprobante((p) => ({ ...p, cliente_id: c.id }));
-                            setClientesCache((prev) => ({ ...prev, [Number(c.id)]: c })); // cache
-                            setClienteQueryCreate(clienteLabel(c));
-                            setClienteResultadosCreate([]);
-                          }}
-                        >
-                          {clienteLabel(c)}
-                        </button>
-                      ))}
-                  </div>
-                )}
+                >
+                  <option value="">Seleccione...</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {clienteLabel(c)}
+                    </option>
+                  ))}
+                </Form.Select>
               </Form.Group>
             </div>
 
@@ -1090,51 +709,25 @@ export default function FacturacionTesoreriaList() {
 
               <Form.Group className="mb-3 col-md-4">
                 <Form.Label>IVA 10.5%</Form.Label>
-
-                <div className="d-flex gap-2">
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="iva105"
-                    value={nuevoComprobante.iva105}
-                    onChange={handleNuevoChange}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline-secondary"
-                    onClick={calcIVA105}
-                    style={{ whiteSpace: "nowrap" }}
-                  >
-                    Calc
-                  </Button>
-                </div>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  name="iva105"
+                  value={nuevoComprobante.iva105}
+                  onChange={handleNuevoChange}
+                />
               </Form.Group>
-
-
 
               <Form.Group className="mb-3 col-md-4">
                 <Form.Label>IVA 21%</Form.Label>
-
-                <div className="d-flex gap-2">
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="iva21"
-                    value={nuevoComprobante.iva21}
-                    onChange={handleNuevoChange}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline-secondary"
-                    onClick={calcIVA21}
-                    style={{ whiteSpace: "nowrap" }}
-                  >
-                    Calc
-                  </Button>
-                </div>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  name="iva21"
+                  value={nuevoComprobante.iva21}
+                  onChange={handleNuevoChange}
+                />
               </Form.Group>
-
-
             </div>
 
             <div className="row">
@@ -1144,7 +737,7 @@ export default function FacturacionTesoreriaList() {
                   type="number"
                   step="0.01"
                   name="total"
-                  value={toNumber2(derivedTotal).toFixed(2)}
+                  value={toNumber2(derivedTotalEdit).toFixed(2)}
                   readOnly
                 />
               </Form.Group>
@@ -1303,18 +896,10 @@ export default function FacturacionTesoreriaList() {
           <Button variant="secondary" onClick={() => {
             setShowCreateModal(false);
             setNuevoComprobante(getNuevoComprobanteInicial()); // ← reset
-            setClienteQueryCreate("");
-            setClienteResultadosCreate([]);
-            setClienteErrorCreate("");
-            setClienteLoadingCreate(false);
           }}>
             Cancelar
           </Button>
-          <Button
-            variant="success"
-            onClick={handleCrearComprobante}
-            disabled={!canCrearComprobante}
-          >
+          <Button variant="success" onClick={handleCrearComprobante}>
             Crear Comprobante
           </Button>
         </Modal.Footer>

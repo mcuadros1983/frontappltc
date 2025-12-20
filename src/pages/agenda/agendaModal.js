@@ -77,7 +77,8 @@ export default function AgendaModal({
   const [usuarioRespId, setUsuarioRespId] = useState(defaultResponsableId || "");
   const [observaciones, setObservaciones] = useState("");
   const [diaVencimiento, setDiaVencimiento] = useState("");
-
+  const [usuariosAuth, setUsuariosAuth] = useState([]);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   // Cargar si es edición
   useEffect(() => {
     let cancel = false;
@@ -103,6 +104,8 @@ export default function AgendaModal({
       setErr(null);
       return;
     }
+
+
 
     (async () => {
       setLoading(true); setErr(null);
@@ -135,6 +138,28 @@ export default function AgendaModal({
     return () => { cancel = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show, agendaId, isEdit]);
+
+  useEffect(() => {
+    let cancel = false;
+    if (!show) return;
+
+    (async () => {
+      try {
+        setLoadingUsuarios(true);
+        const r = await fetch(`${apiUrl}/usuarios`, { credentials: "include" });
+        if (!r.ok) throw new Error("No se pudieron obtener los usuarios");
+        const data = await r.json();
+        if (!cancel) setUsuariosAuth(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!cancel) console.warn("Usuarios:", e.message);
+        if (!cancel) setUsuariosAuth([]);
+      } finally {
+        if (!cancel) setLoadingUsuarios(false);
+      }
+    })();
+
+    return () => { cancel = true; };
+  }, [show]);
 
   // Mostrar campo día de vencimiento sólo si aplica
   const showDiaVto = useMemo(() => ["mensual", "anual"].includes(periodicidad), [periodicidad]);
@@ -321,15 +346,27 @@ export default function AgendaModal({
               </Col>
 
               <Col md={6}>
-                <Form.Label>Responsable (usuario_id)</Form.Label>
-                <Form.Control
-                  type="number"
-                  value={usuarioRespId || ""}
+                <Form.Label>Responsable</Form.Label>
+                <Form.Select
+                  value={String(usuarioRespId || "")}
                   onChange={(e) => setUsuarioRespId(e.target.value)}
-                  placeholder="ID de usuario responsable (opcional)"
-                />
+                  className="form-control my-input"
+                  disabled={loadingUsuarios}
+                >
+                  <option value="">{loadingUsuarios ? "Cargando..." : "— Sin responsable —"}</option>
+
+                  {usuariosAuth
+                    .slice()
+                    .sort((a, b) => String(a?.usuario || "").localeCompare(String(b?.usuario || "")))
+                    .map((u) => (
+                      <option key={u.id} value={String(u.id)}>
+                        {u.usuario || `Usuario ${u.id}`}
+                      </option>
+                    ))}
+                </Form.Select>
+
                 <Form.Text className="text-muted">
-                  Si no se especifica, queda sin responsable asignado.
+                  Se muestra el usuario, se guarda el ID.
                 </Form.Text>
               </Col>
 
