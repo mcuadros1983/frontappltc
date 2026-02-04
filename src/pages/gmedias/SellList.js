@@ -43,18 +43,68 @@ export default function SellList() {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  // --- helpers derivados desde productos de la venta ---
+  const getSellProductos = (sell) =>
+    sell?.productos || sell?.Productos || sell?.producto || sell?.Producto || [];
+
+  const deriveCategoriaFromSell = (sell) => {
+    const productos = getSellProductos(sell);
+    if (!Array.isArray(productos) || productos.length === 0) return "";
+
+    const setCats = new Set(
+      productos
+        .map((p) => p?.categoria_producto)
+        .filter((x) => typeof x === "string" && x.trim() !== "")
+        .map((x) => x.trim())
+    );
+
+    if (setCats.size === 0) return "";
+    if (setCats.size === 1) return [...setCats][0];
+    return "Mixta";
+  };
+
+  const calcPesoTotal = (sell) => {
+    const productos = getSellProductos(sell);
+    if (!Array.isArray(productos)) return 0;
+    return productos.reduce((acc, p) => acc + (Number(p?.kg) || 0), 0);
+  };
+
+  // "Cantidad de medias" = cantidad de productos (items) en la venta
+  const calcCantidadItems = (sell) => {
+    const productos = getSellProductos(sell);
+    return Array.isArray(productos) ? productos.length : 0;
+  };
+
+  // helper para sort con rutas tipo "Cliente.nombre"
+  const getByPath = (obj, path) => {
+    if (!path) return "";
+    if (!path.includes(".")) return obj?.[path];
+    return path.split(".").reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+  };
+
+
   const loadSells = useCallback(async () => {
     try {
       const res = await fetch(`${apiUrl}/ventas/`, {
         credentials: "include",
       });
       const data = await res.json();
-      const sortedSells = data.sort((a, b) => b.id - a.id);
+
+      // agregamos props derivadas para mostrar en tabla
+      const withDerived = data.map((s) => ({
+        ...s,
+        cantidad_total: calcCantidadItems(s),     // cantidad de productos (items)
+        peso_total: calcPesoTotal(s),             // suma de kg
+        categoria: deriveCategoriaFromSell(s),    // bovino/cerdo/mixta/etc.
+      }));
+
+      const sortedSells = withDerived.sort((a, b) => b.id - a.id);
       setSells(sortedSells);
     } catch (error) {
       console.error(error);
     }
   }, [apiUrl]);
+
 
   const loadClients = useCallback(async () => {
     try {
@@ -184,15 +234,20 @@ export default function SellList() {
   const handleSort = (columnName) => {
     const newSortDirection =
       columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
+
     setSortColumn(columnName);
     setSortDirection(newSortDirection);
 
-    const sortedSells = [...filteredSells].sort((a, b) => {
-      const valueA = a[columnName] ?? "";
-      const valueB = b[columnName] ?? "";
+    const sorted = [...filteredSells].sort((a, b) => {
+      const valueA = getByPath(a, columnName) ?? "";
+      const valueB = getByPath(b, columnName) ?? "";
 
-      if (typeof valueA === "number" && typeof valueB === "number") {
-        return newSortDirection === "asc" ? valueA - valueB : valueB - valueA;
+      const numA = Number(valueA);
+      const numB = Number(valueB);
+      const bothNumeric = Number.isFinite(numA) && Number.isFinite(numB);
+
+      if (bothNumeric) {
+        return newSortDirection === "asc" ? numA - numB : numB - numA;
       }
 
       return newSortDirection === "asc"
@@ -200,7 +255,7 @@ export default function SellList() {
         : String(valueB).localeCompare(String(valueA));
     });
 
-    setFilteredSells(sortedSells);
+    setFilteredSells(sorted);
   };
 
   const indexOfLastSell = currentPage * sellsPerPage;
@@ -334,9 +389,22 @@ export default function SellList() {
             <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha</th>
             <th onClick={() => handleSort("Cliente.nombre")} style={{ cursor: "pointer" }}>Cliente</th>
             <th onClick={() => handleSort("FormaPago.tipo")} style={{ cursor: "pointer" }}>Forma de Pago</th>
-            <th onClick={() => handleSort("monto_total")} style={{ cursor: "pointer" }}>Monto</th>
+
+            {/* NUEVAS COLUMNAS */}
+            <th onClick={() => handleSort("cantidad_total")} style={{ cursor: "pointer" }}>
+              Cantidad (medias)
+            </th>
+            <th onClick={() => handleSort("peso_total")} style={{ cursor: "pointer" }}>
+              Peso total
+            </th>
+            <th onClick={() => handleSort("categoria")} style={{ cursor: "pointer" }}>
+              Categoría
+            </th>
+
+            <th style={{ cursor: "pointer" }}>Monto</th>
             <th>Operaciones</th>
           </tr>
+
         </thead>
         <tbody>
           {currentSells.map((sell) => (
@@ -396,6 +464,11 @@ export default function SellList() {
                   "Forma de pago desconocida"
                 )}
               </td>
+
+              <td>{sell.cantidad_total ?? 0}</td>
+              <td>{(sell.peso_total ?? 0).toFixed(2)}</td>
+              <td>{sell.categoria || ""}</td>
+
               <td>
                 {sell.productos
                   .reduce((total, p) => total + p.precio * p.kg, 0)
