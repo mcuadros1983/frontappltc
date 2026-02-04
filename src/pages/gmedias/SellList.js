@@ -44,6 +44,7 @@ export default function SellList() {
   const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
+  console.log("info")
 
   // --- helpers derivados desde productos de la venta ---
   const getSellProductos = (sell) =>
