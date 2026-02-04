@@ -3,6 +3,9 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Table, Container, Button } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 
 const AccountList = () => {
   const [clientesConCuenta, setClientesConCuenta] = useState([]);
@@ -72,9 +75,50 @@ const AccountList = () => {
     setClientesConCuenta(sorted);
   };
 
+  const exportarExcel = () => {
+    if (!clientesConCuenta || clientesConCuenta.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    const data = clientesConCuenta.map((c) => ({
+      "ID": c.id,
+      "Nombre": c.nombre,
+      "Saldo": Number(c.saldo) || 0,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    ws["!cols"] = [{ wch: 10 }, { wch: 40 }, { wch: 18 }];
+
+    // (Opcional) fila total al final
+    const lastRow = data.length + 2;
+    XLSX.utils.sheet_add_aoa(ws, [["", "TOTAL SALDO", Number(totalSaldo) || 0]], {
+      origin: `A${lastRow}`,
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Saldos");
+
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const nombreArchivo = `saldos_clientes_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    saveAs(blob, nombreArchivo);
+  };
+
+
   return (
     <Container>
       <h1>Saldos de Clientes</h1>
+
+      <Button variant="success" onClick={exportarExcel} disabled={!clientesConCuenta.length}>
+        Exportar Excel
+      </Button>
+
+
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -98,10 +142,10 @@ const AccountList = () => {
               <td>
                 {cliente.saldo != null
                   ? cliente.saldo.toLocaleString("es-AR", {
-                      style: "currency",
-                      currency: "ARS",
-                      minimumFractionDigits: 2,
-                    })
+                    style: "currency",
+                    currency: "ARS",
+                    minimumFractionDigits: 2,
+                  })
                   : "$0,00"}
               </td>
             </tr>
@@ -129,10 +173,10 @@ const AccountList = () => {
           Total Saldo:{" "}
           {totalSaldo != null
             ? totalSaldo.toLocaleString("es-AR", {
-                style: "currency",
-                currency: "ARS",
-                minimumFractionDigits: 2,
-              })
+              style: "currency",
+              currency: "ARS",
+              minimumFractionDigits: 2,
+            })
             : "$0,00"}
         </strong>
       </div>

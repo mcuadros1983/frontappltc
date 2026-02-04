@@ -9,6 +9,9 @@ import {
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 
 const DebtList = () => {
   const [debts, setDebts] = useState([]);
@@ -271,9 +274,69 @@ const DebtList = () => {
     }
   };
 
+  const exportarExcel = () => {
+    if (!sortedCobranzas || sortedCobranzas.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    const toNumber = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const data = sortedCobranzas.map((row) => ({
+      "ID": row.id,
+      "Fecha": row.fecha,                 // si viene YYYY-MM-DD queda ok
+      "Monto Total": toNumber(row.monto_total),
+      "Cliente": row.clienteNombre,
+      "Forma de pago": getFormaPagoNombre(row),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    ws["!cols"] = [
+      { wch: 10 },  // ID
+      { wch: 14 },  // Fecha
+      { wch: 18 },  // Monto
+      { wch: 35 },  // Cliente
+      { wch: 25 },  // Forma pago
+    ];
+
+    // (Opcional) Agregar total al final
+    const total = sortedCobranzas.reduce((acc, r) => acc + (Number(r.monto_total) || 0), 0);
+    const lastRow = data.length + 2;
+    XLSX.utils.sheet_add_aoa(ws, [["", "", "TOTAL", total]], { origin: `A${lastRow}` });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Cobranzas");
+
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const nombreArchivo =
+      `cobranzas_${startDate || "desde"}_${endDate || "hasta"}` +
+      (searchCliente ? `_cliente_${searchCliente}` : "") +
+      (searchMonto ? `_monto_${searchMonto}` : "") +
+      ".xlsx";
+
+    saveAs(blob, nombreArchivo);
+  };
+
+
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Cobranzas</h1>
+
+      <Button
+        variant="success"
+        onClick={exportarExcel}
+        disabled={loading || sortedCobranzas.length === 0}
+      >
+        Exportar Excel
+      </Button>
 
       {/* Filtros */}
       <div className="mb-3">
