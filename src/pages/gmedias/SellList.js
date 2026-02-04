@@ -541,21 +541,35 @@ export default function SellList() {
                   })}
               </td>
               <td className="text-center">
-                {editingSellId && editingSellId.id === sell.id ? (
-                  <>
-                    <Button variant="primary" onClick={handleSaveEdit} className="mx-2">Guardar</Button>
-                    <Button variant="secondary" onClick={handleCancelEdit} className="mx-2">Cancelar</Button>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="primary" onClick={() => handleEditClient(sell.id)} className="mx-2">Editar Cliente</Button>
-                    <Button variant="primary" onClick={() => handleEditPaymentMethod(sell.id)} className="mx-2">Editar FPago</Button>
-                  </>
-                )}
-                {context.user?.usuario === "admin" && (
-                  <Button variant="danger" onClick={() => handleDelete(sell.id)} className="mx-2">Eliminar</Button>
-                )}
+                <div className="d-flex flex-column align-items-center gap-2">
+                  {editingSellId && editingSellId.id === sell.id ? (
+                    <>
+                      <Button variant="primary" onClick={handleSaveEdit} className="w-100">
+                        Guardar
+                      </Button>
+                      <Button variant="secondary" onClick={handleCancelEdit} className="w-100">
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="primary" onClick={() => handleEditClient(sell.id)} className="w-100">
+                        Editar Cliente
+                      </Button>
+                      <Button variant="primary" onClick={() => handleEditPaymentMethod(sell.id)} className="w-100">
+                        Editar FPago
+                      </Button>
+                    </>
+                  )}
+
+                  {context.user?.usuario === "admin" && (
+                    <Button variant="danger" onClick={() => handleDelete(sell.id)} className="w-100">
+                      Eliminar
+                    </Button>
+                  )}
+                </div>
               </td>
+
             </tr>
           ))}
         </tbody>
