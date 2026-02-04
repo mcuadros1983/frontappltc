@@ -9,6 +9,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import Contexts from "../../context/Contexts";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 export default function SellList() {
   const [sells, setSells] = useState([]);
@@ -208,9 +210,76 @@ export default function SellList() {
   const nextPage = () => setCurrentPage(currentPage + 1);
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
 
+
+  const exportarExcel = () => {
+    if (!filteredSells || filteredSells.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    const toNumber = (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const getMontoVenta = (sell) => {
+      if (!Array.isArray(sell?.productos)) return 0;
+      return sell.productos.reduce((total, p) => {
+        const precio = toNumber(p?.precio);
+        const kg = toNumber(p?.kg);
+        return total + precio * kg;
+      }, 0);
+    };
+
+    const data = filteredSells.map((sell) => ({
+      "ID": sell.id,
+      "Fecha": sell.fecha,
+      "Cliente": sell?.Cliente?.nombre || "Cliente Desconocido",
+      "Forma de Pago": sell?.FormaPago?.tipo || "Forma de pago desconocida",
+      "Monto": getMontoVenta(sell),              // numérico en Excel
+      "Falta Precio": hasMissingPrice(sell) ? "SI" : "NO",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    ws["!cols"] = [
+      { wch: 10 }, // ID
+      { wch: 12 }, // Fecha
+      { wch: 30 }, // Cliente
+      { wch: 20 }, // Forma de pago
+      { wch: 18 }, // Monto
+      { wch: 12 }, // Falta precio
+    ];
+
+    // (Opcional) Total Monto al final
+    const totalMonto = filteredSells.reduce((acc, s) => acc + getMontoVenta(s), 0);
+    const lastRow = data.length + 2;
+    XLSX.utils.sheet_add_aoa(ws, [["", "", "", "TOTAL", totalMonto]], { origin: `A${lastRow}` });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Ventas");
+
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const nombreArchivo =
+      `ventas_${startDate || "desde"}_${endDate || "hasta"}` +
+      (searchTerm ? `_cliente_${searchTerm}` : "") +
+      ".xlsx";
+
+    saveAs(blob, nombreArchivo);
+  };
+
+
   return (
     <Container>
       <h1 className="my-list-title dark-text">Lista de Ventas</h1>
+
+      <Button variant="success" onClick={exportarExcel} disabled={!filteredSells.length}>
+        Exportar Excel
+      </Button>
 
       <div className="mb-3">
         <div className="d-inline-block w-auto">
