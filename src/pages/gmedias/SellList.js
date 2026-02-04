@@ -27,6 +27,8 @@ export default function SellList() {
   const [sellsPerPage] = useState(20);
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
+  // cache: { [sellId]: "bovino" | "porcino" | "Mixta" | "" }
+  const [categoriaCache, setCategoriaCache] = useState({});
 
   // Si alguno de los productos de la venta no tiene precio válido, marcamos la venta
   const hasMissingPrice = (sell) => {
@@ -46,6 +48,22 @@ export default function SellList() {
   // --- helpers derivados desde productos de la venta ---
   const getSellProductos = (sell) =>
     sell?.productos || sell?.Productos || sell?.producto || sell?.Producto || [];
+
+  const deriveCategoriaFromProducts = (products) => {
+    if (!Array.isArray(products) || products.length === 0) return "";
+
+    const setCats = new Set(
+      products
+        .map((p) => p?.categoria_producto)
+        .filter((x) => typeof x === "string" && x.trim() !== "")
+        .map((x) => x.trim())
+    );
+
+    if (setCats.size === 0) return "";
+    if (setCats.size === 1) return [...setCats][0];
+    return "Mixta";
+  };
+
 
   const deriveCategoriaFromSell = (sell) => {
     const productos = getSellProductos(sell);
@@ -93,9 +111,9 @@ export default function SellList() {
       // agregamos props derivadas para mostrar en tabla
       const withDerived = data.map((s) => ({
         ...s,
-        cantidad_total: calcCantidadItems(s),     // cantidad de productos (items)
-        peso_total: calcPesoTotal(s),             // suma de kg
-        categoria: deriveCategoriaFromSell(s),    // bovino/cerdo/mixta/etc.
+        cantidad_total: calcCantidadItems(s),
+        peso_total: calcPesoTotal(s),
+        // categoria se completa luego vía categoriaCache (endpoint /ventas/:id/productos/)
       }));
 
       const sortedSells = withDerived.sort((a, b) => b.id - a.id);
@@ -129,6 +147,46 @@ export default function SellList() {
       console.error(error);
     }
   }, [apiUrl]);
+
+  const fetchCategoriasForVisibleSells = useCallback(
+    async (visibleSells) => {
+      if (!Array.isArray(visibleSells) || visibleSells.length === 0) return;
+
+      // solo ids que no están en cache
+      const pending = visibleSells
+        .map((s) => s.id)
+        .filter((id) => categoriaCache[id] === undefined);
+
+      if (pending.length === 0) return;
+
+      // límite de concurrencia para no saturar el server
+      const concurrency = 6;
+      const ids = [...pending];
+      const updates = {};
+
+      const worker = async () => {
+        while (ids.length) {
+          const id = ids.shift();
+          try {
+            const res = await fetch(`${apiUrl}/ventas/${id}/productos/`, {
+              credentials: "include",
+            });
+            const products = await res.json();
+            updates[id] = deriveCategoriaFromProducts(products);
+          } catch (e) {
+            updates[id] = "";
+          }
+        }
+      };
+
+      await Promise.all(Array.from({ length: concurrency }, worker));
+
+      // merge al cache
+      setCategoriaCache((prev) => ({ ...prev, ...updates }));
+    },
+    [apiUrl, categoriaCache]
+  );
+
 
   const handleSearch = useCallback(() => {
     const startDateFilter = startDate ? startDate : null;
@@ -261,6 +319,10 @@ export default function SellList() {
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = [...filteredSells].slice(indexOfFirstSell, indexOfLastSell);
+
+  useEffect(() => {
+    fetchCategoriasForVisibleSells(currentSells);
+  }, [currentSells, fetchCategoriasForVisibleSells]);
 
   const nextPage = () => setCurrentPage(currentPage + 1);
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
@@ -397,9 +459,7 @@ export default function SellList() {
             <th onClick={() => handleSort("peso_total")} style={{ cursor: "pointer" }}>
               Peso total
             </th>
-            <th onClick={() => handleSort("categoria")} style={{ cursor: "pointer" }}>
-              Categoría
-            </th>
+            <th>Categoría</th>
 
             <th style={{ cursor: "pointer" }}>Monto</th>
             <th>Operaciones</th>
@@ -467,7 +527,8 @@ export default function SellList() {
 
               <td>{sell.cantidad_total ?? 0}</td>
               <td>{(sell.peso_total ?? 0).toFixed(2)}</td>
-              <td>{sell.categoria || ""}</td>
+              <td>{categoriaCache[sell.id] ?? ""}</td>
+
 
               <td>
                 {sell.productos
