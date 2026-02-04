@@ -2,6 +2,8 @@ import React, { useState, useContext } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts.js";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 export default function Cajas() {
   const [cajas, setCajas] = useState([]);
@@ -112,106 +114,177 @@ export default function Cajas() {
     }
   };
 
- return (
-  <Container className="vt-page">
-    <h1 className="my-list-title dark-text vt-title">Cajas</h1>
+  const exportarExcel = () => {
+    if (!cajas || cajas.length === 0) {
+      alert("No hay datos para exportar. Filtrá primero.");
+      return;
+    }
 
-    {/* Filtros */}
-    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-      <div className="d-inline-block w-auto mx-2">
-        <label className="mr-2">DESDE:</label>
-        <input
-          type="date"
-          value={fechaDesde}
-          onChange={(e) => setFechaDesde(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
+    const data = cajas.map((caja) => {
+      const sucursalNombre =
+        context.sucursalesTabla.find(
+          (s) => s.id === parseInt(caja.sucursal_id)
+        )?.nombre || "Desconocido";
+
+      return {
+        "Número": caja.id,
+        "Fecha Inicio": caja.fechainicio,
+        "Fecha Fin": caja.fechafin,
+        "Caja Inicial": toNumber(caja.cajainicial),
+        "Caja Final": toNumber(caja.cajafinal),
+        "Sucursal": sucursalNombre,
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // anchos opcionales
+    ws["!cols"] = [
+      { wch: 10 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 28 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Cajas");
+
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const nombreArchivo =
+      `cajas_${fechaDesde || "desde"}_${fechaHasta || "hasta"}` +
+      (buscarSucursal ? `_sucursal_${buscarSucursal}` : "") +
+      ".xlsx";
+
+    saveAs(blob, nombreArchivo);
+  };
+
+  // helper para asegurar números
+  const toNumber = (v) => {
+    if (v === null || v === undefined) return 0;
+    if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+
+    // por si viene como string con formato AR: 1.234,56
+    if (typeof v === "string") {
+      const cleaned = v.replace(/\./g, "").replace(",", ".");
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  return (
+    <Container className="vt-page">
+      <h1 className="my-list-title dark-text vt-title">Cajas</h1>
+
+      {/* Filtros */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto mx-2">
+          <label className="mr-2">DESDE:</label>
+          <input
+            type="date"
+            value={fechaDesde}
+            onChange={(e) => setFechaDesde(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block w-auto mx-2">
+          <label className="ml-2 mr-2">HASTA:</label>
+          <input
+            type="date"
+            value={fechaHasta}
+            onChange={(e) => setFechaHasta(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block">
+          <label className="d-block">Sucursal</label>
+          <FormControl
+            as="select"
+            value={buscarSucursal}
+            onChange={(e) => setBuscarSucursal(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 240 }}
+          >
+            <option value="">Seleccione una sucursal</option>
+            {context.sucursalesTabla.map((sucursal) => (
+              <option key={sucursal.id} value={sucursal.id}>
+                {sucursal.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block mx-2">
+          <Button onClick={handleSearchClick} className="vt-btn">
+            Filtrar
+          </Button>
+
+
+          <Button variant="success" onClick={exportarExcel} disabled={!cajas.length}>
+            Exportar Excel
+          </Button>
+        </div>
       </div>
 
-      <div className="d-inline-block w-auto mx-2">
-        <label className="ml-2 mr-2">HASTA:</label>
-        <input
-          type="date"
-          value={fechaHasta}
-          onChange={(e) => setFechaHasta(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
+      {/* Tabla */}
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th onClick={() => handleSort("id")} className="vt-th-sort">Número</th>
+              <th onClick={() => handleSort("fechainicio")} className="vt-th-sort">Fecha Inicio</th>
+              <th onClick={() => handleSort("fechafin")} className="vt-th-sort">Fecha Fin</th>
+              <th onClick={() => handleSort("cajainicial")} className="vt-th-sort text-end">Caja Inicial</th>
+              <th onClick={() => handleSort("cajafinal")} className="vt-th-sort text-end">Caja Final</th>
+              <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">Sucursal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentCajas.map((caja) => (
+              <tr key={caja.id}>
+                <td>{caja.id}</td>
+                <td>{caja.fechainicio}</td>
+                <td>{caja.fechafin}</td>
+                <td className="text-end">{caja.cajainicial}</td>
+                <td className="text-end">{caja.cajafinal}</td>
+                <td>
+                  {context.sucursalesTabla.find(
+                    (sucursal) => sucursal.id === parseInt(caja.sucursal_id)
+                  )?.nombre || "Desconocido"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       </div>
 
-      <div className="d-inline-block">
-        <label className="d-block">Sucursal</label>
-        <FormControl
-          as="select"
-          value={buscarSucursal}
-          onChange={(e) => setBuscarSucursal(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 240 }}
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vt-pager">
+        <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
+          <BsChevronLeft />
+        </Button>
+        <span className="mx-2">
+          Página {currentPage} de {Math.ceil(cajas.length / cajasPerPage)}
+        </span>
+        <Button
+          onClick={nextPage}
+          disabled={currentPage === Math.ceil(cajas.length / cajasPerPage)}
+          variant="light"
         >
-          <option value="">Seleccione una sucursal</option>
-          {context.sucursalesTabla.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-
-      <div className="d-inline-block mx-2">
-        <Button onClick={handleSearchClick} className="vt-btn">
-          Filtrar
+          <BsChevronRight />
         </Button>
       </div>
-    </div>
-
-    {/* Tabla */}
-    <div className="vt-tablewrap table-responsive">
-      <Table striped bordered hover className="mb-2">
-        <thead>
-          <tr>
-            <th onClick={() => handleSort("id")} className="vt-th-sort">Número</th>
-            <th onClick={() => handleSort("fechainicio")} className="vt-th-sort">Fecha Inicio</th>
-            <th onClick={() => handleSort("fechafin")} className="vt-th-sort">Fecha Fin</th>
-            <th onClick={() => handleSort("cajainicial")} className="vt-th-sort text-end">Caja Inicial</th>
-            <th onClick={() => handleSort("cajafinal")} className="vt-th-sort text-end">Caja Final</th>
-            <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">Sucursal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentCajas.map((caja) => (
-            <tr key={caja.id}>
-              <td>{caja.id}</td>
-              <td>{caja.fechainicio}</td>
-              <td>{caja.fechafin}</td>
-              <td className="text-end">{caja.cajainicial}</td>
-              <td className="text-end">{caja.cajafinal}</td>
-              <td>
-                {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === parseInt(caja.sucursal_id)
-                )?.nombre || "Desconocido"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
-
-    {/* Paginación */}
-    <div className="d-flex justify-content-center align-items-center vt-pager">
-      <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
-        <BsChevronLeft />
-      </Button>
-      <span className="mx-2">
-        Página {currentPage} de {Math.ceil(cajas.length / cajasPerPage)}
-      </span>
-      <Button
-        onClick={nextPage}
-        disabled={currentPage === Math.ceil(cajas.length / cajasPerPage)}
-        variant="light"
-      >
-        <BsChevronRight />
-      </Button>
-    </div>
-  </Container>
-);
+    </Container>
+  );
 
 }
