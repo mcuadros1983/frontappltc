@@ -541,29 +541,41 @@ export default function SellList() {
                   })}
               </td>
               <td className="text-center">
-                <div className="d-flex flex-column align-items-center gap-2">
+                <div className="d-flex justify-content-center align-items-center gap-2 flex-wrap">
                   {editingSellId && editingSellId.id === sell.id ? (
                     <>
-                      <Button variant="primary" onClick={handleSaveEdit} className="w-100">
+                      <Button variant="primary" onClick={handleSaveEdit} size="sm">
                         Guardar
                       </Button>
-                      <Button variant="secondary" onClick={handleCancelEdit} className="w-100">
+                      <Button variant="secondary" onClick={handleCancelEdit} size="sm">
                         Cancelar
                       </Button>
                     </>
                   ) : (
                     <>
-                      <Button variant="primary" onClick={() => handleEditClient(sell.id)} className="w-100">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleEditClient(sell.id)}
+                      >
                         Editar Cliente
                       </Button>
-                      <Button variant="primary" onClick={() => handleEditPaymentMethod(sell.id)} className="w-100">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleEditPaymentMethod(sell.id)}
+                      >
                         Editar FPago
                       </Button>
                     </>
                   )}
 
                   {context.user?.usuario === "admin" && (
-                    <Button variant="danger" onClick={() => handleDelete(sell.id)} className="w-100">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(sell.id)}
+                    >
                       Eliminar
                     </Button>
                   )}
