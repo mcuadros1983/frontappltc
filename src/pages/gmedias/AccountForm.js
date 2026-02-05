@@ -136,6 +136,34 @@ export default function AccountForm() {
     });
   };
 
+  const calcCantidadItemsFromMov = (mov) => {
+    const prods = mov?.productos;
+    return Array.isArray(prods) ? prods.length : 0;
+  };
+
+  const calcPesoTotalFromMov = (mov) => {
+    const prods = mov?.productos;
+    if (!Array.isArray(prods)) return 0;
+    return prods.reduce((acc, p) => acc + (Number(p?.kg) || 0), 0);
+  };
+
+  const deriveCategoriaFromMov = (mov) => {
+    const prods = mov?.productos;
+    if (!Array.isArray(prods) || prods.length === 0) return "";
+
+    const setCats = new Set(
+      prods
+        .map((p) => p?.categoria_producto)
+        .filter((x) => typeof x === "string" && x.trim() !== "")
+        .map((x) => x.trim().toLowerCase())
+    );
+
+    if (setCats.size === 0) return "";
+    if (setCats.size === 1) return [...setCats][0];
+    return "Mixta";
+  };
+
+
   const handleRegistrarCobranza = () => {
     setMontoCobranza("");
     setDescripcionCobranza("");
@@ -361,6 +389,13 @@ export default function AccountForm() {
                 <th onClick={() => handleSort("descripcion")} style={{ cursor: "pointer" }}>
                   Descripción{sortIndicator("descripcion")}
                 </th>
+
+
+                {/* NUEVAS COLUMNAS */}
+                <th>Cantidad</th>
+                <th>Peso</th>
+                <th>Categoría</th>
+
                 <th onClick={() => handleSort("monto_total")} style={{ cursor: "pointer" }}>
                   Monto{sortIndicator("monto_total")}
                 </th>
@@ -397,13 +432,16 @@ export default function AccountForm() {
                   >
                     <td>{movimiento.fecha}</td>
                     <td>{isVenta ? "Venta" : "Cobranza"}</td>
+                    <td>{isVenta ? calcCantidadItemsFromMov(movimiento) : ""}</td>
+                    <td>{isVenta ? calcPesoTotalFromMov(movimiento).toFixed(2) : ""}</td>
+                    <td>{isVenta ? deriveCategoriaFromMov(movimiento) : ""}</td>
                     <td>
                       {movimiento.monto_total != null
                         ? Number(movimiento.monto_total).toLocaleString("es-AR", {
-                            style: "currency",
-                            currency: "ARS",
-                            minimumFractionDigits: 2,
-                          })
+                          style: "currency",
+                          currency: "ARS",
+                          minimumFractionDigits: 2,
+                        })
                         : "$0,00"}
                     </td>
                   </tr>
@@ -433,10 +471,10 @@ export default function AccountForm() {
               <span>
                 {saldoActual != null
                   ? Number(saldoActual).toLocaleString("es-AR", {
-                      style: "currency",
-                      currency: "ARS",
-                      minimumFractionDigits: 2,
-                    })
+                    style: "currency",
+                    currency: "ARS",
+                    minimumFractionDigits: 2,
+                  })
                   : "$0,00"}
               </span>
             </div>
