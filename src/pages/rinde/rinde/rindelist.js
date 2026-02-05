@@ -2,6 +2,9 @@ import React, { useState, useEffect, useContext, useCallback, useMemo } from "re
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 
 export default function ListaRindes() {
   // Datos
@@ -36,10 +39,10 @@ export default function ListaRindes() {
 
   // -------- Helpers de ordenamiento ----------
   const numericCols = new Set([
-    "mes","anio","totalVentas","rinde","ingresoEsperadoCerdo","ingresoEsperadoNovillo",
-    "ingresoEsperadoVaca","totalInventarioFinal","totalInventarioInicial",
-    "totalKgCerdo","totalKgNovillo","totalKgVaca",
-    "totalMovimientos","totalventa","costovacuno","costoporcino","gastos","difInventario",
+    "mes", "anio", "totalVentas", "rinde", "ingresoEsperadoCerdo", "ingresoEsperadoNovillo",
+    "ingresoEsperadoVaca", "totalInventarioFinal", "totalInventarioInicial",
+    "totalKgCerdo", "totalKgNovillo", "totalKgVaca",
+    "totalMovimientos", "totalventa", "costovacuno", "costoporcino", "gastos", "difInventario",
     "sucursal_id"
   ]);
 
@@ -132,7 +135,91 @@ export default function ListaRindes() {
     }
   };
 
+
+
   // -------- UI ----------
+  const exportarExcel = () => {
+    if (!rindesFiltradosYOrdenados || rindesFiltradosYOrdenados.length === 0) {
+      alert("No hay datos para exportar (revisá filtros).");
+      return;
+    }
+
+    const toNumber = (v) => {
+      if (v === null || v === undefined) return 0;
+      if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+      // por si viene con separadores o símbolos
+      const cleaned = String(v).replace(/[^\d.-]/g, "");
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const getSucursalNombre = (sucursalId) =>
+      context.sucursalesTabla.find((s) => s.id === parseInt(sucursalId))?.nombre ||
+      "Desconocido";
+
+    const data = rindesFiltradosYOrdenados.map((r) => ({
+      "Mes": toNumber(r.mes),
+      "Año": toNumber(r.anio),
+      "Ventas": toNumber(r.totalVentas),
+      "Rinde (%)": toNumber(r.rinde),
+      "Sucursal": getSucursalNombre(r.sucursal_id),
+      "IE CE": toNumber(r.ingresoEsperadoCerdo),
+      "IE NT": toNumber(r.ingresoEsperadoNovillo),
+      "IE EX": toNumber(r.ingresoEsperadoVaca),
+      "Inv. Final": toNumber(r.totalInventarioFinal),
+      "Inv. Inicial": toNumber(r.totalInventarioInicial),
+      "KG CE": toNumber(r.totalKgCerdo),
+      "KG NT": toNumber(r.totalKgNovillo),
+      "KG EX": toNumber(r.totalKgVaca),
+      "Mov.": toNumber(r.totalMovimientos),
+      "Total Venta": toNumber(r.totalventa),
+      "Costo Vacuno": toNumber(r.costovacuno),
+      "Costo Porcino": toNumber(r.costoporcino),
+      "Gastos": toNumber(r.gastos),
+      "Dif. Inventario": toNumber(r.difInventario),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    ws["!cols"] = [
+      { wch: 6 },  // Mes
+      { wch: 6 },  // Año
+      { wch: 14 }, // Ventas
+      { wch: 10 }, // Rinde
+      { wch: 22 }, // Sucursal
+      { wch: 10 }, // IE CE
+      { wch: 10 }, // IE NT
+      { wch: 10 }, // IE EX
+      { wch: 12 }, // Inv Final
+      { wch: 12 }, // Inv Inicial
+      { wch: 10 }, // KG CE
+      { wch: 10 }, // KG NT
+      { wch: 10 }, // KG EX
+      { wch: 10 }, // Mov
+      { wch: 12 }, // Total Venta
+      { wch: 12 }, // Costo Vacuno
+      { wch: 12 }, // Costo Porcino
+      { wch: 10 }, // Gastos
+      { wch: 14 }, // Dif Inv
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rindes");
+
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const nombreArchivo =
+      `rindes_${searchMes || "mes"}_${searchAnio || "anio"}` +
+      (searchSucursal ? `_sucursal_${searchSucursal}` : "") +
+      ".xlsx";
+
+    saveAs(blob, nombreArchivo);
+  };
+
+
   return (
     <Container className="vt-page">
       <h1 className="my-list-title dark-text vt-title">Rindes</h1>
@@ -184,6 +271,14 @@ export default function ListaRindes() {
         <div className="d-inline-block">
           <Button onClick={handleSearchClick} className="vt-btn">
             Filtrar
+          </Button>
+
+          <Button
+            variant="success"
+            onClick={exportarExcel}
+            disabled={!rindesFiltradosYOrdenados.length}
+          >
+            Exportar Excel
           </Button>
         </div>
       </div>
