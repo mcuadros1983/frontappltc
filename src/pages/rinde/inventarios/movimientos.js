@@ -8,6 +8,9 @@ import {
 } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 
 export default function MovimientosInternos() {
   const [movimientos, setMovimientos] = useState([]);
@@ -175,6 +178,60 @@ export default function MovimientosInternos() {
     return s?.nombre || "Desconocido";
   };
 
+  const exportarExcel = () => {
+    if (!movimientosFiltradosPorTipo || movimientosFiltradosPorTipo.length === 0) {
+      alert("No hay datos para exportar. Filtrá primero.");
+      return;
+    }
+
+    const toNumber = (v) => {
+      if (v === null || v === undefined) return 0;
+      if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+      const cleaned = String(v).replace(/[^\d.-]/g, "");
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const data = movimientosFiltradosPorTipo.map((m) => ({
+      "Fecha": m.fecha,
+      "Lote": m.numerolote,
+      "Código Artículo": m.articulocodigo,
+      "Descripción": m.articulodescripcion,
+      "Cantidad": toNumber(m.cantidad),
+      "Tipo": m.tipo,
+      "Sucursal": sucursalNombreById(m.sucursal_id),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    ws["!cols"] = [
+      { wch: 12 }, // Fecha
+      { wch: 12 }, // Lote
+      { wch: 16 }, // Código
+      { wch: 45 }, // Descripción
+      { wch: 12 }, // Cantidad
+      { wch: 18 }, // Tipo
+      { wch: 22 }, // Sucursal
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Movimientos");
+
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const nombreArchivo =
+      `movimientos_internos_${startDate || "desde"}_${endDate || "hasta"}` +
+      (searchSucursal ? `_sucursal_${searchSucursal}` : "") +
+      (tipoSeleccionado ? `_tipo_${tipoSeleccionado}` : "") +
+      ".xlsx";
+
+    saveAs(blob, nombreArchivo);
+  };
+
+
   return (
     <Container className="vt-page">
       <h1 className="my-list-title dark-text vt-title">Movimientos Internos</h1>
@@ -227,6 +284,14 @@ export default function MovimientosInternos() {
         <div className="d-inline-block">
           <Button onClick={handleSearchClick} disabled={loading} className="vt-btn">
             Filtrar
+          </Button>
+
+          <Button
+            variant="success"
+            onClick={exportarExcel}
+            disabled={loading || movimientosFiltradosPorTipo.length === 0}
+          >
+            Exportar Excel
           </Button>
         </div>
       </div>
@@ -360,7 +425,7 @@ export default function MovimientosInternos() {
           onClick={nextPage}
           disabled={
             currentPage ===
-              Math.ceil(movimientosFiltradosPorTipo.length / movimientosPerPage) ||
+            Math.ceil(movimientosFiltradosPorTipo.length / movimientosPerPage) ||
             loading
           }
           variant="light"
