@@ -164,13 +164,15 @@ export default function AccountForm() {
   };
 
 
-  const handleRegistrarCobranza = () => {
-    setMontoCobranza("");
-    setDescripcionCobranza("");
-    setFormaCobro("");
-    setFechaCobranza("");
-    setShowModal(true);
-  };
+const handleRegistrarCobranza = () => {
+  const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+  setMontoCobranza("");
+  setDescripcionCobranza("");
+  setFormaCobro("");
+  setFechaCobranza(today); // ✅ por defecto hoy (editable)
+  setShowModal(true);
+};
 
   const handleSort = (columnName) => {
     const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
