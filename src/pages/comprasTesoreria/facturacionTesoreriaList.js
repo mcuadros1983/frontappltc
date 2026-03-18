@@ -107,6 +107,21 @@ export default function ComprobantesEgresoList() {
   const [showHaciendaPickerEdit, setShowHaciendaPickerEdit] = useState(false);
   const [hasHaciendaDisponiblesCreate, setHasHaciendaDisponiblesCreate] = useState(false);
   const [hasHaciendaDisponiblesEdit, setHasHaciendaDisponiblesEdit] = useState(false);
+  const [showProveedorCreateModal, setShowProveedorCreateModal] = useState(false);
+  const [loadingCrearProveedor, setLoadingCrearProveedor] = useState(false);
+  const [errorCrearProveedor, setErrorCrearProveedor] = useState("");
+  const [proveedoresOptions, setProveedoresOptions] = useState([]);
+
+  const [nuevoProveedorModal, setNuevoProveedorModal] = useState({
+    nombre: "",
+    direccion: "",
+    telefono: "",
+    email: "",
+    cuit: "",
+    dni: "",
+    imputacioncontable_id: "",
+    formapago_id: "",
+  });
 
   // === Filtros (UI restaurada/extendida) ===
   const [filtros, setFiltros] = useState({
@@ -196,6 +211,10 @@ export default function ComprobantesEgresoList() {
   useEffect(() => {
     loadComprobantes();
   }, [loadComprobantes]);
+
+  useEffect(() => {
+    setProveedoresOptions(Array.isArray(proveedoresTabla) ? proveedoresTabla : []);
+  }, [proveedoresTabla]);
 
   // const checkHaciendaDisponibles = useCallback(async ({ empresaId, proveedorId }) => {
   //   try {
@@ -808,6 +827,102 @@ export default function ComprobantesEgresoList() {
   const handleCloseCreate = () => {
     setShowCreateModal(false);
     resetCreateForm();
+  };
+
+  const resetProveedorModal = () => {
+    setNuevoProveedorModal({
+      nombre: "",
+      direccion: "",
+      telefono: "",
+      email: "",
+      cuit: "",
+      dni: "",
+      imputacioncontable_id: "",
+      formapago_id: "",
+    });
+    setErrorCrearProveedor("");
+  };
+
+  const handleOpenProveedorCreateModal = () => {
+    resetProveedorModal();
+    setShowProveedorCreateModal(true);
+  };
+
+  const handleCloseProveedorCreateModal = () => {
+    resetProveedorModal();
+    setShowProveedorCreateModal(false);
+  };
+
+  const handleNuevoProveedorModalChange = (e) => {
+    const { name, value } = e.target;
+
+    setNuevoProveedorModal((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errorCrearProveedor) {
+      setErrorCrearProveedor("");
+    }
+  };
+
+  const handleCrearProveedorDesdeComprobante = async () => {
+    if (!nuevoProveedorModal.cuit || nuevoProveedorModal.cuit.trim() === "") {
+      setErrorCrearProveedor("El CUIT es obligatorio");
+      return;
+    }
+
+    try {
+      setLoadingCrearProveedor(true);
+      setErrorCrearProveedor("");
+
+      const response = await fetch(`${apiUrl}/proveedores/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ...nuevoProveedorModal,
+          cuit: nuevoProveedorModal.cuit.trim(),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setErrorCrearProveedor(data.error || "Error al crear el proveedor");
+        return;
+      }
+
+      const proveedorCreado = data;
+
+      setProveedoresOptions((prev) =>
+        [...prev, proveedorCreado].sort((a, b) =>
+          (a.nombre || "").localeCompare(b.nombre || "")
+        )
+      );
+
+      setNuevoComprobante((prev) => ({
+        ...prev,
+        proveedor_id: proveedorCreado.id,
+      }));
+
+      if (empresaSeleccionada?.id && proveedorCreado?.id) {
+        const ok = await checkHaciendaDisponibles({
+          empresaId: empresaSeleccionada.id,
+          proveedorId: proveedorCreado.id,
+        });
+        setHasHaciendaDisponiblesCreate(ok);
+      } else {
+        setHasHaciendaDisponiblesCreate(false);
+      }
+
+      handleCloseProveedorCreateModal();
+    } catch (error) {
+      console.error("Error al crear proveedor desde comprobante:", error);
+      setErrorCrearProveedor("Error al crear el proveedor");
+    } finally {
+      setLoadingCrearProveedor(false);
+    }
   };
 
   // ====== Totales y pagos (creación)
@@ -1627,12 +1742,22 @@ export default function ComprobantesEgresoList() {
                   className="form-control my-input"
                 >
                   <option value="">Seleccione...</option>
-                  {proveedoresTabla.map((p) => (
+                  {proveedoresOptions.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.nombre}
                     </option>
                   ))}
                 </Form.Select>
+
+                <div className="mt-2">
+                  <Button
+                    variant="outline-success"
+                    size="sm"
+                    onClick={handleOpenProveedorCreateModal}
+                  >
+                    + Nuevo proveedor
+                  </Button>
+                </div>
               </Form.Group>
 
               {/* Hacienda (ID + Buscar + Quitar todo junto) */}
@@ -1879,6 +2004,136 @@ export default function ComprobantesEgresoList() {
             disabled={!montosOk || !empresaSeleccionada}
           >
             Crear Comprobante
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal
+        show={showProveedorCreateModal}
+        onHide={handleCloseProveedorCreateModal}
+        backdrop="static"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Nuevo Proveedor</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <Form>
+            <div className="row">
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>Nombre</Form.Label>
+                <Form.Control
+                  name="nombre"
+                  value={nuevoProveedorModal.nombre}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>Teléfono</Form.Label>
+                <Form.Control
+                  name="telefono"
+                  value={nuevoProveedorModal.telefono}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+            </div>
+
+            <div className="row">
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>Email</Form.Label>
+                <Form.Control
+                  name="email"
+                  value={nuevoProveedorModal.email}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>Dirección</Form.Label>
+                <Form.Control
+                  name="direccion"
+                  value={nuevoProveedorModal.direccion}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+            </div>
+
+            <div className="row">
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>CUIT</Form.Label>
+                <Form.Control
+                  name="cuit"
+                  value={nuevoProveedorModal.cuit}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>DNI</Form.Label>
+                <Form.Control
+                  name="dni"
+                  value={nuevoProveedorModal.dni}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+            </div>
+
+            <div className="row">
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>Imputación Contable</Form.Label>
+                <Form.Select
+                  name="imputacioncontable_id"
+                  value={nuevoProveedorModal.imputacioncontable_id}
+                  onChange={handleNuevoProveedorModalChange}
+                  className="form-control my-input"
+                >
+                  <option value="">Seleccione...</option>
+                  {imputacionContableTabla.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.descripcion}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>Forma de Pago</Form.Label>
+                <Form.Select
+                  name="formapago_id"
+                  value={nuevoProveedorModal.formapago_id}
+                  onChange={handleNuevoProveedorModalChange}
+                  className="form-control my-input"
+                >
+                  <option value="">Seleccione...</option>
+                  {formasPagoTesoreria.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.descripcion}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </div>
+
+            {errorCrearProveedor && (
+              <div className="alert alert-danger py-2 mb-0">
+                {errorCrearProveedor}
+              </div>
+            )}
+          </Form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseProveedorCreateModal}>
+            Cancelar
+          </Button>
+          <Button
+            variant="success"
+            onClick={handleCrearProveedorDesdeComprobante}
+            disabled={loadingCrearProveedor}
+          >
+            {loadingCrearProveedor ? "Creando..." : "Crear Proveedor"}
           </Button>
         </Modal.Footer>
       </Modal>

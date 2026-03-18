@@ -79,13 +79,28 @@ export default function ProveedorTesoreriaList() {
     };
 
     const handleCrearProveedor = async () => {
+
+        if (!nuevoProveedor.cuit || nuevoProveedor.cuit.trim() === "") {
+            alert("El CUIT es obligatorio");
+            return;
+        }
+
         try {
-            await fetch(`${apiUrl}/proveedores/`, {
+            const response = await fetch(`${apiUrl}/proveedores/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
                 body: JSON.stringify(nuevoProveedor),
             });
+
+            // 🔥 NUEVO BLOQUE (AGREGAR JUSTO DESPUÉS DEL FETCH)
+            const data = await response.json();
+
+            if (!response.ok) {
+                // Error del backend (ej: CUIT duplicado)
+                alert(data.error || "Error al crear el proveedor");
+                return;
+            }
             await loadProveedores();
             setShowCreateModal(false);
             setNuevoProveedor({
