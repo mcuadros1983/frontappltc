@@ -164,15 +164,15 @@ export default function AccountForm() {
   };
 
 
-const handleRegistrarCobranza = () => {
-  const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const handleRegistrarCobranza = () => {
+    const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
 
-  setMontoCobranza("");
-  setDescripcionCobranza("");
-  setFormaCobro("");
-  setFechaCobranza(today); // ✅ por defecto hoy (editable)
-  setShowModal(true);
-};
+    setMontoCobranza("");
+    setDescripcionCobranza("");
+    setFormaCobro("");
+    setFechaCobranza(today); // ✅ por defecto hoy (editable)
+    setShowModal(true);
+  };
 
   const handleSort = (columnName) => {
     const newSortDirection = columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc";
@@ -183,12 +183,15 @@ const handleRegistrarCobranza = () => {
   const handleCloseModal = () => setShowModal(false);
 
   const handleGuardarCobranza = async () => {
+    const montoNum = Number(montoCobranza);
+
     if (!String(montoCobranza).trim()) {
-      alert("Por favor, ingrese un monto de cobranza válido.");
+      alert("Por favor, ingrese un monto válido.");
       return;
     }
-    if (isNaN(parseFloat(montoCobranza))) {
-      alert("Por favor, ingrese un valor numérico para el monto de la cobranza.");
+
+    if (!Number.isFinite(montoNum) || montoNum === 0) {
+      alert("El monto debe ser numérico y distinto de 0.");
       return;
     }
     if (!selectedCliente?.id) {
@@ -511,7 +514,7 @@ const handleRegistrarCobranza = () => {
             type="number"
             value={montoCobranza}
             onChange={(e) => setMontoCobranza(e.target.value)}
-            min="0"
+            min="0.01"
           />
           <Form.Label className="mt-2">Descripción:</Form.Label>
           <FormControl
