@@ -180,7 +180,7 @@ export async function getBotEventMeta(filters = {}) {
 }
 
 export async function getBotEventMetaById(id) {
-  return api.get(`/bot/event-meta/${id}`);
+  return api.get(`/bot/event-meta/${id}`); 
 }
 
 export async function createBotEventMeta(payload) {

@@ -33,6 +33,7 @@ const initialForm = {
   aliases: [],
   activo_bot: true,
   prioridad: 0,
+  impacto: "normal",
 };
 
 const tiposEvento = [
@@ -95,6 +96,7 @@ const BotEventMetaForm = () => {
           aliases: Array.isArray(row.aliases) ? row.aliases : [],
           activo_bot: Boolean(row.activo_bot),
           prioridad: row.prioridad ?? 0,
+          impacto: row.impacto || "normal",
         });
       } catch (err) {
         console.error(err);
@@ -163,6 +165,7 @@ const BotEventMetaForm = () => {
     aliases: form.aliases,
     activo_bot: Boolean(form.activo_bot),
     prioridad: Number(form.prioridad || 0),
+    impacto: form.impacto || "normal",
   });
 
   const handleSubmit = async (e) => {
@@ -356,6 +359,25 @@ const BotEventMetaForm = () => {
                     style={{ borderRadius: "10px" }}
                   />
                 </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Impacto</Form.Label>
+
+                  <Form.Select
+                    name="impacto"
+                    value={form.impacto}
+                    onChange={handleChange}
+                  >
+                    <option value="normal">Normal</option>
+                    <option value="horario_reducido">Horario reducido</option>
+                    <option value="cerrado">Cerrado</option>
+                  </Form.Select>
+
+                  <Form.Text muted>
+                    Define cómo afecta este evento a la atención de la sucursal.
+                  </Form.Text>
+                </Form.Group>
+
               </Col>
             </Row>
 
