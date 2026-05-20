@@ -581,23 +581,108 @@ const handleCalculoRinde = () => {
     }
   };
 
-  const handleObtenerMgtotal = () => {
-    try {
-      console.log("valores", "montoVentas", montoVentas, "montoMovimientos", montoMovimientos, "montoMovimientosOtros", montoMovimientosOtros, "montocosto", ((Number(totalKg) || 0) * (Number(costoprom) || 0)))
-      const total =
-        (Number(montoVentas) || 0) +
-        (Number(montoMovimientos) || 0) -
-        (Number(montoMovimientosOtros) || 0) -
-        ((Number(totalKg) || 0) * (Number(costoprom) || 0)) -
-        ((Number(kgCerdo) || 0) * (Number(cerdosIngresos) || 0));
+  // const handleObtenerMgtotal = () => {
+  //   try {
+  //     console.log("valores", "montoVentas", montoVentas, "montoMovimientos", montoMovimientos, "montoMovimientosOtros", montoMovimientosOtros, "montocosto", ((Number(totalKg) || 0) * (Number(costoprom) || 0)))
+  //     const total =
+  //       (Number(montoVentas) || 0) +
+  //       (Number(montoMovimientos) || 0) -
+  //       (Number(montoMovimientosOtros) || 0) -
+  //       ((Number(totalKg) || 0) * (Number(costoprom) || 0)) -
+  //       ((Number(kgCerdo) || 0) * (Number(cerdosIngresos) || 0));
 
-      setMgtotal(total.toFixed(2));
-      console.log("MG total:", total);
-    } catch (error) {
-      console.error("Error al calcular mgtotal:", error);
-      alert("Error al calcular mgtotal");
+  //     setMgtotal(total.toFixed(2));
+  //     console.log("MG total:", total);
+  //   } catch (error) {
+  //     console.error("Error al calcular mgtotal:", error);
+  //     alert("Error al calcular mgtotal");
+  //   }
+  // };
+
+  // Reemplazá COMPLETO este handler
+const handleObtenerMgtotal = () => {
+  try {
+    console.log("========== INICIO CALCULO MG TOTAL ==========");
+
+    const ventas = Number(montoVentas) || 0;
+    const movimientos = Number(montoMovimientos) || 0;
+    const movimientosOtros = Number(montoMovimientosOtros) || 0;
+    const kilos = Number(totalKg) || 0;
+    const costoPromedio = Number(costoprom) || 0;
+    const kilosCerdo = Number(kgCerdo) || 0;
+    const ingresoCerdo = Number(cerdosIngresos) || 0;
+
+    // 🔹 Logs de valores originales y parseados
+    console.log("montoVentas:", montoVentas, "=>", ventas);
+    console.log("montoMovimientos:", montoMovimientos, "=>", movimientos);
+    console.log("montoMovimientosOtros:", montoMovimientosOtros, "=>", movimientosOtros);
+
+    console.log("totalKg:", totalKg, "=>", kilos);
+    console.log("costoprom:", costoprom, "=>", costoPromedio);
+
+    console.log("kgCerdo:", kgCerdo, "=>", kilosCerdo);
+    console.log("cerdosIngresos:", cerdosIngresos, "=>", ingresoCerdo);
+
+    // 🔹 Cálculos intermedios
+    const montoCosto = kilos * costoPromedio;
+    const montoCerdo = kilosCerdo * ingresoCerdo;
+
+    console.log("==================================");
+    console.log("CALCULOS INTERMEDIOS");
+
+    console.log(
+      "Monto costo:",
+      `${kilos} * ${costoPromedio} =`,
+      montoCosto
+    );
+
+    console.log(
+      "Monto cerdo:",
+      `${kilosCerdo} * ${ingresoCerdo} =`,
+      montoCerdo
+    );
+
+    // 🔹 Fórmula detallada
+    console.log("==================================");
+    console.log("FORMULA MG TOTAL");
+
+    console.log("+ ventas:", ventas);
+    console.log("+ movimientos:", movimientos);
+    console.log("- movimientosOtros:", movimientosOtros);
+    console.log("- montoCosto:", montoCosto);
+    console.log("- montoCerdo:", montoCerdo);
+
+    const total =
+      ventas +
+      movimientos -
+      movimientosOtros -
+      montoCosto -
+      montoCerdo;
+
+    console.log("==================================");
+    console.log("RESULTADO");
+
+    console.log(
+      `(${ventas} + ${movimientos} - ${movimientosOtros} - ${montoCosto} - ${montoCerdo})`
+    );
+
+    console.log("MG Total bruto:", total);
+
+    if (!isFinite(total) || isNaN(total)) {
+      console.warn("Resultado inválido detectado.");
     }
-  };
+
+    console.log("MG Total formateado:", total.toFixed(2));
+
+    setMgtotal(total.toFixed(2));
+
+    console.log("========== FIN CALCULO MG TOTAL ==========");
+  } catch (error) {
+    console.error("Error al calcular mgtotal:", error);
+    alert("Error al calcular mgtotal");
+  }
+};
+
   const handleObtenerMgporkg = () => {
     try {
       const total =
@@ -905,50 +990,146 @@ const handleCalculoRinde = () => {
   };
 
 
-  // Reemplazá COMPLETO este handler (ahora SÍ aplica ajustes acá)
-  const handleObtenerIngVendido = () => {
-    try {
-      const ventas = parseFloat(montoVentas) || 0;
-      const movimientos = parseFloat(montoMovimientos) || 0;
-      const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
-      const cerdoMb = parseFloat(mbcerdo) || 0;
-      const invFinal = parseFloat(montoInventarioFinal) || 0;
-      const invInicial = parseFloat(montoInventarioInicial) || 0;
-      // const ach = parseFloat(achuras) || 0;
+  // // Reemplazá COMPLETO este handler (ahora SÍ aplica ajustes acá)
+  // const handleObtenerIngVendido = () => {
+  //   try {
+  //     const ventas = parseFloat(montoVentas) || 0;
+  //     const movimientos = parseFloat(montoMovimientos) || 0;
+  //     const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
+  //     const cerdoMb = parseFloat(mbcerdo) || 0;
+  //     const invFinal = parseFloat(montoInventarioFinal) || 0;
+  //     const invInicial = parseFloat(montoInventarioInicial) || 0;
+  //     // const ach = parseFloat(achuras) || 0;
 
-      // 🔹 Nuevo: sumar (o restar si viene negativo) los ajustes al ingreso vendido
-      const montoAjuste = (ajustes || []).reduce(
-        (total, a) => total + (parseFloat(a.importe) || 0),
-        0
+  //     // 🔹 Nuevo: sumar (o restar si viene negativo) los ajustes al ingreso vendido
+  //     const montoAjuste = (ajustes || []).reduce(
+  //       (total, a) => total + (parseFloat(a.importe) || 0),
+  //       0
+  //     );
+
+  //     if (!totalKg || totalKg === 0) {
+  //       setIngVendido(0);
+  //       alert("No hay kilos suficientes para calcular ingreso vendido.");
+  //       return;
+  //     }
+
+  //     let ingresoVendido =
+  //       (ventas +
+  //         movimientos -
+  //         movimientosOtros -
+  //         cerdoMb +
+  //         // ach +
+  //         (invFinal - invInicial) +
+  //         montoAjuste // ⬅️ Ajustes se incorporan acá
+  //       ) / totalKg;
+
+  //     if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
+  //       ingresoVendido = 0;
+  //     }
+
+  //     setIngVendido(ingresoVendido.toFixed(2));
+  //     console.log("Ingreso vendido (con ajustes):", ingresoVendido, "Ajustes:", montoAjuste);
+  //   } catch (error) {
+  //     console.error("Error al calcular ingreso vendido:", error);
+  //     alert("Error al calcular ingreso vendido.");
+  //   }
+  // };
+
+  // Reemplazá COMPLETO este handler
+const handleObtenerIngVendido = () => {
+  try {
+    console.log("========== INICIO CALCULO INGRESO VENDIDO ==========");
+
+    const ventas = parseFloat(montoVentas) || 0;
+    const movimientos = parseFloat(montoMovimientos) || 0;
+    const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
+    const cerdoMb = parseFloat(mbcerdo) || 0;
+    const invFinal = parseFloat(montoInventarioFinal) || 0;
+    const invInicial = parseFloat(montoInventarioInicial) || 0;
+    const kilos = parseFloat(totalKg) || 0;
+
+    // Logs individuales
+    console.log("montoVentas:", montoVentas, "=>", ventas);
+    console.log("montoMovimientos:", montoMovimientos, "=>", movimientos);
+    console.log("montoMovimientosOtros:", montoMovimientosOtros, "=>", movimientosOtros);
+    console.log("mbcerdo:", mbcerdo, "=>", cerdoMb);
+    console.log("montoInventarioFinal:", montoInventarioFinal, "=>", invFinal);
+    console.log("montoInventarioInicial:", montoInventarioInicial, "=>", invInicial);
+    console.log("totalKg:", totalKg, "=>", kilos);
+
+    // 🔹 Ver detalle de ajustes
+    console.log("Listado ajustes:", ajustes);
+
+    const montoAjuste = (ajustes || []).reduce((total, a, index) => {
+      const importe = parseFloat(a.importe) || 0;
+
+      console.log(
+        `Ajuste #${index + 1}`,
+        "Objeto:",
+        a,
+        "Importe parseado:",
+        importe
       );
 
-      if (!totalKg || totalKg === 0) {
-        setIngVendido(0);
-        alert("No hay kilos suficientes para calcular ingreso vendido.");
-        return;
-      }
+      return total + importe;
+    }, 0);
 
-      let ingresoVendido =
-        (ventas +
-          movimientos -
-          movimientosOtros -
-          cerdoMb +
-          // ach +
-          (invFinal - invInicial) +
-          montoAjuste // ⬅️ Ajustes se incorporan acá
-        ) / totalKg;
+    console.log("Monto total ajustes:", montoAjuste);
 
-      if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
-        ingresoVendido = 0;
-      }
-
-      setIngVendido(ingresoVendido.toFixed(2));
-      console.log("Ingreso vendido (con ajustes):", ingresoVendido, "Ajustes:", montoAjuste);
-    } catch (error) {
-      console.error("Error al calcular ingreso vendido:", error);
-      alert("Error al calcular ingreso vendido.");
+    if (!kilos || kilos === 0) {
+      console.warn("No hay kilos suficientes para calcular ingreso vendido.");
+      setIngVendido(0);
+      alert("No hay kilos suficientes para calcular ingreso vendido.");
+      return;
     }
-  };
+
+    // 🔹 Mostrar fórmula paso a paso
+    const sumaBase =
+      ventas +
+      movimientos -
+      movimientosOtros -
+      cerdoMb +
+      (invFinal - invInicial);
+
+    console.log("==================================");
+    console.log("CALCULO PASO A PASO");
+    console.log("ventas:", ventas);
+    console.log("+ movimientos:", movimientos);
+    console.log("- movimientosOtros:", movimientosOtros);
+    console.log("- cerdoMb:", cerdoMb);
+    console.log(
+      "+ diferencia inventario:",
+      `(${invFinal} - ${invInicial}) =`,
+      invFinal - invInicial
+    );
+    console.log("+ montoAjuste:", montoAjuste);
+
+    console.log("Subtotal sin ajustes:", sumaBase);
+
+    const numerador = sumaBase + montoAjuste;
+
+    console.log("Numerador final:", numerador);
+    console.log("Divisor totalKg:", kilos);
+
+    let ingresoVendido = numerador / kilos;
+
+    console.log("Resultado bruto:", ingresoVendido);
+
+    if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
+      console.warn("Resultado inválido detectado. Se fuerza a 0.");
+      ingresoVendido = 0;
+    }
+
+    console.log("Resultado final formateado:", ingresoVendido.toFixed(2));
+
+    setIngVendido(ingresoVendido.toFixed(2));
+
+    console.log("========== FIN CALCULO INGRESO VENDIDO ==========");
+  } catch (error) {
+    console.error("Error al calcular ingreso vendido:", error);
+    alert("Error al calcular ingreso vendido.");
+  }
+};
 
   const handleObtenerDifEsperado = () => {
     try {

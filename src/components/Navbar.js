@@ -1,5 +1,5 @@
 // src/components/Navbar.jsx
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react"; 
 import { Navbar, Nav, Container, Modal, Form } from "react-bootstrap";
 import Contexts from "../context/Contexts";
 import "../styles/Navigation.css";

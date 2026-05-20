@@ -240,6 +240,22 @@ export const PERMISSION_CATEGORIES = [
       "tesoreria:info.caja.detalle.view",
     ],
   },
+    {
+    id: "fidelizacion",
+    title: "COMERCIOS AMIGOS / FIDELIZACIÓN",
+    perms: [
+      "fidelizacion:view",
+      "fidelizacion:manage",
+      "fidelizacion:comercios",
+      "fidelizacion:campanias",
+      "fidelizacion:premios",
+      "fidelizacion:cupones",
+      "fidelizacion:puntos",
+      "fidelizacion:premiosComercio",
+      "fidelizacion:canjesComercio",
+      "fidelizacion:fraude",
+    ],
+  },
 ];
 
 // Utilidades

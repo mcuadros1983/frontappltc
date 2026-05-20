@@ -116,6 +116,32 @@ const ROUTE_PERMISSIONS = {
   "/periodos": ["config:manage"],
   "/sync": ["config:manage"],
   "/registros": ["config:manage"],
+
+    // Comercios Amigos / Fidelización
+  "/fidelizacion/dashboard": ["fidelizacion:view"],
+  "/fidelizacion/comercios/nuevo": ["fidelizacion:manage"],
+  "/fidelizacion/comercios/:id/editar": ["fidelizacion:manage"],
+  "/fidelizacion/comercios/:id/qr": ["fidelizacion:view"],
+  "/fidelizacion/comercios/:id/puntos": ["fidelizacion:view"],
+  "/fidelizacion/comercios": ["fidelizacion:view"],
+
+  "/fidelizacion/campanias/nueva": ["fidelizacion:manage"],
+  "/fidelizacion/campanias/:id/editar": ["fidelizacion:manage"],
+  "/fidelizacion/campanias": ["fidelizacion:view"],
+
+  "/fidelizacion/premios-clientes/nuevo": ["fidelizacion:manage"],
+  "/fidelizacion/premios-clientes/:id/editar": ["fidelizacion:manage"],
+  "/fidelizacion/premios-clientes": ["fidelizacion:view"],
+
+  "/fidelizacion/validar-cupon": ["fidelizacion:view"],
+  "/fidelizacion/puntos-comercio": ["fidelizacion:view"],
+
+  "/fidelizacion/premios-comercios/nuevo": ["fidelizacion:manage"],
+  "/fidelizacion/premios-comercios/:id/editar": ["fidelizacion:manage"],
+  "/fidelizacion/premios-comercios": ["fidelizacion:view"],
+
+  "/fidelizacion/canjes-comercios": ["fidelizacion:view"],
+  "/fidelizacion/alertas-fraude": ["fidelizacion:view"],
 };
 
 function longestPrefix(pathname) {

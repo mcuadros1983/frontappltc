@@ -1228,20 +1228,9 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 )}
 
                 {can("fidelizacion:cupones") && (
-                  <>
-                    <Link to="/fidelizacion/cupones" className="nav-link" onClick={handleLinkClick}>
-                      Cupones Generados
-                    </Link>
-                    <Link to="/fidelizacion/canjes-cupones" className="nav-link" onClick={handleLinkClick}>
-                      Canjes de Cupones
-                    </Link>
-                    <Link to="/fidelizacion/clientes" className="nav-link" onClick={handleLinkClick}>
-                      Clientes Registrados
-                    </Link>
-                    <Link to="/fidelizacion/validar-cupon" className="nav-link" onClick={handleLinkClick}>
-                      Validar Cupón
-                    </Link>
-                  </>
+                  <Link to="/fidelizacion/validar-cupon" className="nav-link" onClick={handleLinkClick}>
+                    Validar Cupón
+                  </Link>
                 )}
 
                 {can("fidelizacion:puntos") && (

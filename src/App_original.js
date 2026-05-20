@@ -260,9 +260,6 @@ import PremiosComercioList from "./pages/fidelizacion/admin/PremiosComercioList"
 import PremioComercioForm from "./pages/fidelizacion/admin/PremioComercioForm";
 import CanjesComerciosList from "./pages/fidelizacion/admin/CanjesComerciosList";
 import AlertasFraudeList from "./pages/fidelizacion/admin/AlertasFraudeList";
-import CuponesClienteList from "./pages/fidelizacion/admin/CuponesClienteList";
-import CanjesCuponesList from "./pages/fidelizacion/admin/CanjesCuponesList";
-import ClientesFidelizacionList from "./pages/fidelizacion/admin/ClientesFidelizacionList";
 
 
 // Simple 403 page 
@@ -839,9 +836,6 @@ export default function App() {
                         <Route path="/fidelizacion/premios-clientes/nuevo" element={<PremioClienteForm />} />
                         <Route path="/fidelizacion/premios-clientes/:id/editar" element={<PremioClienteForm />} />
 
-                        <Route path="/fidelizacion/cupones" element={<CuponesClienteList />} />
-                        <Route path="/fidelizacion/canjes-cupones" element={<CanjesCuponesList />} />
-                        <Route path="/fidelizacion/clientes" element={<ClientesFidelizacionList />} />
                         <Route path="/fidelizacion/validar-cupon" element={<ValidarCupon />} />
                         <Route path="/fidelizacion/puntos-comercio" element={<PuntosComercioView />} />
 

@@ -11,6 +11,7 @@ import {
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
 import "../../../components/css/Stock.css"; // ⬅️ NUEVO
+import * as XLSX from "xlsx";
 
 export default function Stock() {
   const [articulos, setArticulos] = useState([]);
@@ -25,6 +26,10 @@ export default function Stock() {
   const [showInventarioModal, setShowInventarioModal] = useState(false);
   const [inventarios, setInventarios] = useState([]);
   const [selectedInventario, setSelectedInventario] = useState(null);
+  const [calculandoStock, setCalculandoStock] = useState(false);
+  const [cargandoSubcategorias, setCargandoSubcategorias] = useState(false);
+  const [subcategoriasMedias, setSubcategoriasMedias] = useState([]);
+  const [subcategoriasOmitidas, setSubcategoriasOmitidas] = useState([]);
 
   const context = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -32,6 +37,69 @@ export default function Stock() {
   useEffect(() => {
     setSelectedInventario(null);
   }, [searchSucursal]);
+
+  const exportToExcel = (rows, filename) => {
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Stock");
+    XLSX.writeFile(wb, filename);
+  };
+
+  const exportarStockExcel = () => {
+    try {
+      if (!filtered || filtered.length === 0) {
+        alert("No hay datos para exportar.");
+        return;
+      }
+
+      const rows = filtered.map((articulo) => ({
+        codigo: articulo.codigo,
+        descripcion: articulo.descripcion,
+        cantidad: articulo.cantidad,
+        ventas: articulo.ventas || 0,
+        egresos: articulo.egresos || 0,
+      }));
+
+      exportToExcel(
+        rows,
+        `stock_${new Date().toISOString().slice(0, 10)}.xlsx`
+      );
+    } catch (error) {
+      console.error("Error al exportar stock:", error);
+      alert("Error al exportar stock.");
+    }
+  };
+  const fetchSubcategoriasMedias = async () => {
+    try {
+      if (!startDate || !endDate || !searchSucursal) {
+        setSubcategoriasMedias([]);
+        setSubcategoriasOmitidas([]);
+        return;
+      }
+
+      setCargandoSubcategorias(true);
+
+      const response = await fetch(`${apiUrl}/obtenersubcategoriasmedias`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fechaDesde: startDate,
+          fechaHasta: endDate,
+          sucursalId: searchSucursal,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Error al obtener subcategorías");
+
+      const data = await response.json();
+      setSubcategoriasMedias(data);
+      setSubcategoriasOmitidas([]);
+    } catch (error) {
+      console.error("Error al obtener subcategorías de medias:", error);
+    } finally {
+      setCargandoSubcategorias(false);
+    }
+  };
 
   const fetchInventarios = async () => {
     try {
@@ -70,20 +138,32 @@ export default function Stock() {
   const isValidDate = (s) =>
     /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(s).toISOString().slice(0, 10) === s;
 
-  const handleSearch = async () => {
+  useEffect(() => {
+    fetchSubcategoriasMedias();
+  }, [startDate, endDate, searchSucursal]);
+
+  useEffect(() => {
+    fetchSubcategoriasMedias();
+  }, [startDate, endDate, searchSucursal]);
+
+  const handleCalcularStock = async () => {
     try {
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         alert("Ingrese una fecha válida.");
         return;
       }
+
       if (!searchSucursal) {
-        alert("Por favor, seleccione una sucursal antes de buscar.");
+        alert("Por favor, seleccione una sucursal antes de calcular stock.");
         return;
       }
+
       if (!selectedInventario) {
-        alert("Por favor, seleccione un inventario antes de continuar.");
+        alert("Por favor, seleccione un inventario antes de calcular stock.");
         return;
       }
+
+      setCalculandoStock(true);
 
       const response = await fetch(`${apiUrl}/obtenerstock`, {
         method: "POST",
@@ -92,17 +172,22 @@ export default function Stock() {
           fechaDesde: startDate,
           fechaHasta: endDate,
           sucursalId: searchSucursal,
-          searchTerm: searchDescription,
           inventarioId: selectedInventario.id,
+          subcategoriasOmitidas,
         }),
       });
-      if (!response.ok) throw new Error("Error al filtrar los artículos");
+
+      if (!response.ok) throw new Error("Error al calcular stock");
 
       const data = await response.json();
+
       setArticulos(data);
       setCurrentPage(1);
     } catch (e) {
       console.error(e);
+      alert("Error al calcular stock.");
+    } finally {
+      setCalculandoStock(false);
     }
   };
 
@@ -134,6 +219,7 @@ export default function Stock() {
             as="select"
             value={searchSucursal}
             onChange={(e) => setSearchSucursal(e.target.value)}
+            disabled={calculandoStock}
             className="form-control my-input"
             style={{ minWidth: 260 }}
           >
@@ -152,6 +238,7 @@ export default function Stock() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
+            disabled={calculandoStock}
             className="form-control my-input text-center"
           />
         </div>
@@ -162,6 +249,7 @@ export default function Stock() {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
+            disabled={calculandoStock}
             className="form-control my-input text-center"
           />
         </div>
@@ -178,6 +266,7 @@ export default function Stock() {
               }
             }}
             className="stock-btn"
+            disabled={calculandoStock}
           >
             Seleccionar Inventario
           </Button>
@@ -196,6 +285,71 @@ export default function Stock() {
         </div>
       </div>
 
+      {/* Subcategorías de medias a omitir */}
+      <div className="d-flex flex-wrap align-items-end gap-3 mb-3">
+        <div className="mx-2 my-2">
+          <label className="d-block">Omitir subcategorías de medias</label>
+          <FormControl
+            as="select"
+            multiple
+            value={subcategoriasOmitidas}
+            onChange={(e) => {
+              const values = Array.from(
+                e.target.selectedOptions,
+                (option) => option.value
+              );
+              setSubcategoriasOmitidas(values);
+            }}
+            className="form-control my-input"
+            style={{ minWidth: 260, minHeight: 110 }}
+            disabled={calculandoStock}
+          >
+            {subcategoriasMedias.map((subcategoria) => (
+              <option key={subcategoria} value={subcategoria}>
+                {subcategoria}
+              </option>
+            ))}
+          </FormControl>
+          <small className="text-muted">
+            Mantener Ctrl presionado para seleccionar varias.
+          </small>
+        </div>
+      </div>
+
+      {/* Subcategorías de medias a omitir */}
+      {/* <div className="d-flex flex-wrap align-items-end gap-3 mb-3">
+        <div className="mx-2 my-2">
+          <label className="d-block">Omitir subcategorías de medias</label>
+          <FormControl
+            as="select"
+            multiple
+            value={subcategoriasOmitidas}
+            disabled={calculandoStock || cargandoSubcategorias}
+            onChange={(e) => {
+              const values = Array.from(
+                e.target.selectedOptions,
+                (option) => option.value
+              );
+              setSubcategoriasOmitidas(values);
+            }}
+            className="form-control my-input"
+            style={{ minWidth: 260, minHeight: 110 }}
+          >
+            {subcategoriasMedias.map((subcategoria) => (
+              <option key={subcategoria} value={subcategoria}>
+                {subcategoria}
+              </option>
+            ))}
+          </FormControl>
+
+          <small className="text-muted">
+            {cargandoSubcategorias
+              ? "Cargando subcategorías..."
+              : "Mantener Ctrl presionado para seleccionar varias."}
+          </small>
+        </div>
+      </div> */}
+
       {/* Buscador por descripción */}
       <div className="d-flex flex-wrap align-items-end gap-3 mb-3">
         <div className="mx-2 my-2">
@@ -211,8 +365,21 @@ export default function Stock() {
         </div>
         <div className="mx-2 my-2">
           <label className="d-block">&nbsp;</label>
-          <Button onClick={handleSearch} className="stock-btn">
-            Buscar
+          <Button
+            onClick={handleCalcularStock}
+            className="stock-btn"
+            disabled={calculandoStock}
+          >
+            {calculandoStock ? "Calculando..." : "Calcular Stock"}
+          </Button>
+
+          <Button
+            onClick={exportarStockExcel}
+            className="stock-btn ms-2"
+            variant="success"
+            disabled={calculandoStock || !filtered || filtered.length === 0}
+          >
+            Exportar Excel
           </Button>
         </div>
       </div>
@@ -229,8 +396,10 @@ export default function Stock() {
                 Descripción
               </th>
               <th className="st-th-sort text-end" onClick={() => handleSort("cantidad")}>
-                Cantidad
+                Stock
               </th>
+              <th className="st-th-sort text-end" onClick={() => handleSort("ventas")}>Ventas</th>
+              <th className="st-th-sort text-end" onClick={() => handleSort("egresos")}>Egresos</th>
             </tr>
           </thead>
           <tbody>
@@ -239,6 +408,8 @@ export default function Stock() {
                 <td>{art.codigo}</td>
                 <td>{art.descripcion}</td>
                 <td className="text-end">{art.cantidad}</td>
+                <td className="text-end">{art.ventas}</td>
+                <td className="text-end">{art.egresos}</td>
               </tr>
             ))}
           </tbody>

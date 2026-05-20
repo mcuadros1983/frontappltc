@@ -9,6 +9,7 @@ export default function SyncForm() {
   const [loadingPromociones, setLoadingPromociones] = useState(false); // Estado para el botón de sincronizar promociones
   const [loadingPrecios, setLoadingPrecios] = useState(false); // Estado para el botón de sincronizar precios
   const [loadingTablas, setLoadingTablas] = useState(false); // Estado para el botón de sincronizar tablas
+  const [loadingAsistencias, setLoadingAsistencias] = useState(false);
 
   const apiUrl = process.env.REACT_APP_API_URL;
   const navigate = useNavigate();
@@ -120,6 +121,45 @@ export default function SyncForm() {
     }
   };
 
+  // const handleSyncAsistencias = async () => {
+  //   setLoadingAsistencias(true);
+  //   try {
+  //     await fetch(`${apiUrl}/syncasistencias`, {
+  //       method: "POST",
+  //       credentials: "include",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //     });
+  //     alert("Sincronización de asistencias completada con éxito.");
+  //   } catch (error) {
+  //     console.error("Error al sincronizar asistencias:", error);
+  //     alert("Error durante la sincronización de asistencias.");
+  //   } finally {
+  //     setLoadingAsistencias(false);
+  //   }
+  // };
+
+   // Función para manejar la sincronización de tablas
+  const handleSyncAsistencias = async () => {
+    setLoadingAsistencias(true);
+    try {
+      await fetch(`${apiUrl}/syncasistencias`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      alert("Sincronización de asistencias completada con éxito.");
+    } catch (error) {
+      console.error("Error al sincronizar asistencias:", error);
+      alert("Error durante la sincronización de asistencias.");
+    } finally {
+      setLoadingAsistencias(false);
+    }
+  };
+
   return (
     <Container className="d-flex flex-column align-items-center">
       <h1 className="my-form-title text-center">Sincronización y Mensajes</h1>
@@ -184,6 +224,21 @@ export default function SyncForm() {
             "Tablas"
           )}
         </Button>
+
+        <Button
+          variant="primary"
+          onClick={handleSyncAsistencias}
+          disabled={loadingAsistencias}
+          className="mb-3 w-100"
+          style={{ height: "50px", fontSize: "18px" }}
+        >
+          {loadingAsistencias ? (
+            <Spinner animation="border" size="sm" role="status" aria-hidden="true" />
+          ) : (
+            "Asistencias"
+          )}
+        </Button>
+        
       </div>
 
       {/* Formulario para enviar mensajes */}
