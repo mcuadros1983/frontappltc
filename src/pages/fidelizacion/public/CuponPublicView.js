@@ -86,7 +86,6 @@ const CuponPublicView = () => {
     const cliente = cupon?.cliente;
 
     const descargarCupon = () => {
-           const descargarCupon = () => {
         if (!cupon) return;
 
         const premio = cupon?.premio;
