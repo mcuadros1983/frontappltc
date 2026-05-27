@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProductList from "./pages/gmedias/ProductList";
 import ProductUpdate from "./pages/gmedias/ProductUpdate";
@@ -291,6 +292,24 @@ function Forbidden403() {
 
 export default function App() {
   const context = useContext(Contexts.UserContext);
+
+useEffect(() => {
+  const host = window.location.hostname;
+
+  const esSorteos =
+    host === "latradicionsorteos.com" ||
+    host === "www.latradicionsorteos.com";
+
+  document.title = esSorteos
+    ? "Sorteos La Tradición"
+    : "Sistema de Gestión - LTC";
+
+  const favicon = document.querySelector("link[rel='icon']");
+
+  if (favicon) {
+    favicon.href = esSorteos ? "/ltc.png" : "/favicon.ico";
+  }
+}, []);
 
   return (
     <>
