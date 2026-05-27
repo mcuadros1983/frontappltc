@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import ProductList from "./pages/gmedias/ProductList";
 import ProductUpdate from "./pages/gmedias/ProductUpdate";
 import ProductUpdateTropa from "./pages/gmedias/ProductUpdateTropa.js";
@@ -265,6 +265,25 @@ import CanjesCuponesList from "./pages/fidelizacion/admin/CanjesCuponesList";
 import ClientesFidelizacionList from "./pages/fidelizacion/admin/ClientesFidelizacionList";
 
 
+const PUBLIC_FIDELIZACION_HOSTS = [
+  "latradicionsorteos.com",
+  "www.latradicionsorteos.com",
+];
+
+const HomeRedirect = () => {
+  const host = window.location.hostname;
+
+  if (PUBLIC_FIDELIZACION_HOSTS.includes(host)) {
+    return <Navigate to="/comercio/login" replace />;
+  }
+
+  return (
+    <PublicOnlyRoute>
+      <LoginForm />
+    </PublicOnlyRoute>
+  );
+};
+
 // Simple 403 page 
 function Forbidden403() {
   return <div style={{ padding: 24 }}><h2>403 - No autorizado</h2></div>;
@@ -281,8 +300,26 @@ export default function App() {
             <Routes>
 
               {/* Público (redirige si ya hay user) */}
-              <Route
+              {/* <Route
                 index
+                element={
+                  <PublicOnlyRoute>
+                    <LoginForm />
+                  </PublicOnlyRoute>
+                }
+              /> */}
+
+              {/* Público */}
+              {/* <Route index element={<LoginForm />} />
+              <Route path="/login" element={<LoginForm />} />
+              <Route path="/403" element={<Forbidden403 />} /> */}
+
+              {/* Inicio según dominio */}
+              <Route index element={<HomeRedirect />} />
+
+              {/* Público administración */}
+              <Route
+                path="/login"
                 element={
                   <PublicOnlyRoute>
                     <LoginForm />
@@ -290,11 +327,7 @@ export default function App() {
                 }
               />
 
-              {/* Público */}
-              <Route index element={<LoginForm />} />
-              <Route path="/login" element={<LoginForm />} />
               <Route path="/403" element={<Forbidden403 />} />
-
 
               {/* <Route element={<ProtectedRoute isAllowed={!!context.user} />}> */}
 
