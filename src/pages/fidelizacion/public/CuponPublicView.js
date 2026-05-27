@@ -86,30 +86,178 @@ const CuponPublicView = () => {
     const cliente = cupon?.cliente;
 
     const descargarCupon = () => {
-        const contenido = `
-Cupón La Tradición
+           const descargarCupon = () => {
+        if (!cupon) return;
 
-Premio: ${premio?.nombre || "-"}
-Cliente: ${cliente?.nombre || "-"}
-Comercio: ${comercio?.nombre_fantasia || "-"}
-Número: ${cupon.numero_cupon}
-Código: ${cupon.codigo_validacion}
-Emitido: ${formatDate(cupon.fecha_emision)}
-Vence: ${formatDate(cupon.fecha_vencimiento)}
-Estado: ${cupon.estado}
-`;
+        const premio = cupon?.premio;
+        const cliente = cupon?.cliente;
+        const comercio = cupon?.comercio;
 
-        const blob = new Blob([contenido], { type: "text/plain;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
+        const fechaEmision = cupon?.fecha_emision
+            ? new Date(cupon.fecha_emision).toLocaleDateString("es-AR")
+            : "-";
 
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${cupon.numero_cupon}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const fechaVencimiento = cupon?.fecha_vencimiento
+            ? new Date(cupon.fecha_vencimiento).toLocaleDateString("es-AR")
+            : "Sin vencimiento";
 
-        URL.revokeObjectURL(url);
+        const printWindow = window.open("", "_blank");
+
+        printWindow.document.write(`
+    <html>
+      <head>
+        <title>Cupón ${cupon.numero_cupon}</title>
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 12mm;
+          }
+
+          body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f8f8f8;
+            margin: 0;
+            padding: 30px;
+            color: #222;
+          }
+
+          .coupon {
+            max-width: 620px;
+            margin: 0 auto;
+            background: #fff;
+            border: 4px solid #9f1717;
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+          }
+
+          .logo {
+            width: 260px;
+            max-width: 80%;
+            margin-bottom: 20px;
+          }
+
+          .title {
+            background: #9f1717;
+            color: #fff;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 28px;
+            font-weight: 900;
+            margin-bottom: 20px;
+          }
+
+          .premio {
+            font-size: 26px;
+            font-weight: 900;
+            color: #9f1717;
+            margin: 18px 0;
+          }
+
+          .numero {
+            font-size: 22px;
+            font-weight: 900;
+            border: 2px dashed #9f1717;
+            padding: 14px;
+            border-radius: 14px;
+            margin: 18px 0;
+          }
+
+          .info {
+            text-align: left;
+            margin-top: 22px;
+            font-size: 16px;
+            line-height: 1.7;
+          }
+
+          .info strong {
+            color: #9f1717;
+          }
+
+          .estado {
+            display: inline-block;
+            margin-top: 18px;
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: #fef3c7;
+            color: #92400e;
+            font-weight: 800;
+            text-transform: uppercase;
+          }
+
+          .footer {
+            margin-top: 28px;
+            font-size: 13px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 14px;
+          }
+
+          @media print {
+            body {
+              background: #fff;
+              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            .coupon {
+              box-shadow: none;
+              max-width: 100%;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        <div class="coupon">
+          <img class="logo" src="/ltc.png" alt="La Tradición Carnicerías" />
+
+          <div class="title">CUPÓN DE PREMIO</div>
+
+          <div class="premio">
+            ${premio?.nombre || "Premio"}
+          </div>
+
+          ${premio?.descripcion ? `<p>${premio.descripcion}</p>` : ""}
+
+          <div class="numero">
+            ${cupon.numero_cupon}
+          </div>
+
+          <div class="estado">
+            Estado: ${cupon.estado}
+          </div>
+
+          <div class="info">
+            <p><strong>Cliente:</strong> ${cliente?.nombre || "-"}</p>
+            <p><strong>Teléfono:</strong> ${cliente?.telefono || "-"}</p>
+            <p><strong>Comercio origen:</strong> ${comercio?.nombre_fantasia || "-"}</p>
+            <p><strong>Fecha de emisión:</strong> ${fechaEmision}</p>
+            <p><strong>Válido hasta:</strong> ${fechaVencimiento}</p>
+            <p><strong>Código de validación:</strong> ${cupon.codigo_validacion || "-"}</p>
+          </div>
+
+          <div class="footer">
+            Este cupón debe ser validado en sistema antes de ser canjeado.
+            <br />
+            Promoción válida según condiciones vigentes.
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 500);
+          };
+        </script>
+      </body>
+    </html>
+  `);
+
+        printWindow.document.close();
     };
 
     return (
