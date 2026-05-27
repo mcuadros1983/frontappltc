@@ -307,7 +307,7 @@ useEffect(() => {
   const favicon = document.querySelector("link[rel='icon']");
 
   if (favicon) {
-    favicon.href = esSorteos ? "/ltc.png" : "/favicon.ico";
+    favicon.href = esSorteos ? "/ltc.png" : "/ltc.png";
   }
 }, []);
 
