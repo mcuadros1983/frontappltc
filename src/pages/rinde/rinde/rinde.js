@@ -1837,35 +1837,37 @@ return (
       Guardar Rinde
     </Button>
 
-    {/* Modal Inventarios */}
-    <Modal show={showModal} onHide={handleCloseModal} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>
-          Inventarios Sucursal{" "}
-          {
-            context.sucursalesTabla.find(
-              (sucursal) => parseInt(sucursal.id) === parseInt(searchSucursal)
-            )?.nombre
-          }
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <ListGroup>
-          {inventarios.map((inventario) => (
-            <ListGroup.Item
-              key={inventario.id}
-              onClick={() => handleSelectInventario(inventario)}
-              action
-            >
-              Mes: {inventario.mes}, Año: {inventario.anio}
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      </Modal.Body>
-    </Modal>
+{/* Modal Inventarios */}
+      {showIngresosModal && (
+        <Modal show={showModal} onHide={handleCloseModal} className="vt-modal">
+          <Modal.Header closeButton>
+            <Modal.Title>
+              Inventarios Sucursal{" "}
+              {
+                context.sucursalesTabla.find(
+                  (sucursal) => parseInt(sucursal.id) === parseInt(searchSucursal)
+                )?.nombre
+              }
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <ListGroup>
+              {inventarios.map((inventario) => (
+                <ListGroup.Item
+                  key={inventario.id}
+                  onClick={() => handleSelectInventario(inventario)}
+                  action
+                >
+                  Mes: {inventario.mes}, Año: {inventario.anio}
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          </Modal.Body>
+        </Modal>
+      )}
 
-    {/* Modal Ingresos Esperados */}
-          {showIngresosModal && (
+      {/* Modal Ingresos Esperados */}
+      {showIngresosModal && (
         <Modal show={showIngresosModal} onHide={() => setShowIngresosModal(false)} className="vt-modal">
           <Modal.Header closeButton>
             <Modal.Title>Ingresos Esperados</Modal.Title>
@@ -1910,115 +1912,132 @@ return (
         </Modal>
       )}
 
-    {/* Modal Ver Ingresos */}
-    <Modal show={showVerModal} onHide={handleCloseVerModal} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>Ingresos Esperados</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div>Novillos: {novillosIngresos}</div>
-        <div>Exportación: {exportacionIngresos}</div>
-        <div>Cerdos: {cerdosIngresos}</div>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={handleCloseVerModal} className="vt-btn-secondary">
-          Cerrar
-        </Button>
-      </Modal.Footer>
-    </Modal>
+      {/* Modal Ver Ingresos */}
 
-    {/* Modal Categorías (excluir) */}
-    <Modal show={showModalCategories} onHide={() => setShowModalCategories(false)} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>Seleccionar Categorías a excluir</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <p className="vt-muted">Presione Ctrl para una selección múltiple</p>
-        <ListGroup>
-          <FormControl
-            as="select"
-            multiple
-            value={selectedCategorias}
-            onChange={(e) =>
-              setSelectedCategorias(Array.from(e.target.selectedOptions, (option) => option.value))
-            }
-            className="vt-input"
-            style={{ minHeight: 220 }}
-          >
-            {context.subcategoriasTabla.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.descripcion}
-              </option>
-            ))}
-          </FormControl>
-        </ListGroup>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={() => setShowModalCategories(false)} className="vt-btn-secondary">
-          Cerrar
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() =>
-            handleObtenerDatos(
-              `${apiUrl}/ventas/monto_con_articulo_filtradas`,
-              "ventas",
-              selectedCategorias
-            )
-          }
-          className="vt-btn"
+      {showVerModal && (
+        <Modal
+          show={showVerModal}
+          onHide={handleCloseVerModal}
+          className="vt-modal"
         >
-          Continuar
-        </Button>
-      </Modal.Footer>
-    </Modal>
+          <Modal.Header closeButton>
+            <Modal.Title>Ingresos Esperados</Modal.Title>
+          </Modal.Header>
 
-    {/* Modal Ajustes */}
-    <Modal show={showAjustesModal} onHide={() => setShowAjustesModal(false)} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>Ajustes de Rinde</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <InputGroup>
-          <FormControl
-            placeholder="Descripción"
-            value={nuevoAjuste.descripcion}
-            onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, descripcion: e.target.value })}
-            className="vt-input"
-          />
-          <FormControl
-            placeholder="Importe"
-            value={nuevoAjuste.importe}
-            onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, importe: e.target.value })}
-            className="vt-input"
-          />
-          <Button variant="primary" onClick={handleAddAjuste} className="vt-btn">
-            Agregar
-          </Button>
-        </InputGroup>
-        <ListGroup className="mt-3">
-          {ajustes.map((ajuste, index) => (
-            <ListGroup.Item
-              key={index}
-              className="d-flex justify-content-between align-items-center"
+          <Modal.Body>
+            <div>Novillos: {novillosIngresos}</div>
+            <div>Exportación: {exportacionIngresos}</div>
+            <div>Cerdos: {cerdosIngresos}</div>
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button
+              variant="secondary"
+              onClick={handleCloseVerModal}
+              className="vt-btn-secondary"
             >
-              {`${ajuste.descripcion}: $${ajuste.importe}`}
-              <Button variant="danger" onClick={() => handleEliminarAjuste(index)} className="vt-btn-danger">
-                Eliminar
+              Cerrar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
+
+      {/* Modal Categorías (excluir) */}
+      {showModalCategories && (
+        <Modal show={showModalCategories} onHide={() => setShowModalCategories(false)} className="vt-modal">
+          <Modal.Header closeButton>
+            <Modal.Title>Seleccionar Categorías a excluir</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p className="vt-muted">Presione Ctrl para una selección múltiple</p>
+            <ListGroup>
+              <FormControl
+                as="select"
+                multiple
+                value={selectedCategorias}
+                onChange={(e) =>
+                  setSelectedCategorias(Array.from(e.target.selectedOptions, (option) => option.value))
+                }
+                className="vt-input"
+                style={{ minHeight: 220 }}
+              >
+                {context.subcategoriasTabla.map((categoria) => (
+                  <option key={categoria.id} value={categoria.id}>
+                    {categoria.descripcion}
+                  </option>
+                ))}
+              </FormControl>
+            </ListGroup>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModalCategories(false)} className="vt-btn-secondary">
+              Cerrar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() =>
+                handleObtenerDatos(
+                  `${apiUrl}/ventas/monto_con_articulo_filtradas`,
+                  "ventas",
+                  selectedCategorias
+                )
+              }
+              className="vt-btn"
+            >
+              Continuar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
+
+      {/* Modal Ajustes */}
+      {showAjustesModal && (
+        <Modal show={showAjustesModal} onHide={() => setShowAjustesModal(false)} className="vt-modal">
+          <Modal.Header closeButton>
+            <Modal.Title>Ajustes de Rinde</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <InputGroup>
+              <FormControl
+                placeholder="Descripción"
+                value={nuevoAjuste.descripcion}
+                onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, descripcion: e.target.value })}
+                className="vt-input"
+              />
+              <FormControl
+                placeholder="Importe"
+                value={nuevoAjuste.importe}
+                onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, importe: e.target.value })}
+                className="vt-input"
+              />
+              <Button variant="primary" onClick={handleAddAjuste} className="vt-btn">
+                Agregar
               </Button>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={handleCancelarAjustes} className="vt-btn-secondary">
-          Cancelar
-        </Button>
-        <Button variant="primary" onClick={handleGuardarAjustes} className="vt-btn">
-          Guardar Ajustes
-        </Button>
-      </Modal.Footer>
-    </Modal>
+            </InputGroup>
+            <ListGroup className="mt-3">
+              {ajustes.map((ajuste, index) => (
+                <ListGroup.Item
+                  key={index}
+                  className="d-flex justify-content-between align-items-center"
+                >
+                  {`${ajuste.descripcion}: $${ajuste.importe}`}
+                  <Button variant="danger" onClick={() => handleEliminarAjuste(index)} className="vt-btn-danger">
+                    Eliminar
+                  </Button>
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCancelarAjustes} className="vt-btn-secondary">
+              Cancelar
+            </Button>
+            <Button variant="primary" onClick={handleGuardarAjustes} className="vt-btn">
+              Guardar Ajustes
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
   </Container>
 );
 
