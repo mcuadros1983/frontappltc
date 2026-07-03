@@ -455,10 +455,18 @@ export default function CalculoRinde() {
   };
 
   // Función para guardar los valores de ingresos esperados
+  // const handleGuardarIngresos = () => {
+  //   // Aquí puedes realizar acciones adicionales, como enviar los datos al servidor si es necesario
+  //   alert("Valores de ingresos esperados guardados correctamente.");
+  //   setShowIngresosModal(false);
+  // };
+
   const handleGuardarIngresos = () => {
-    // Aquí puedes realizar acciones adicionales, como enviar los datos al servidor si es necesario
-    alert("Valores de ingresos esperados guardados correctamente.");
     setShowIngresosModal(false);
+
+    setTimeout(() => {
+      alert("Valores de ingresos esperados guardados correctamente.");
+    }, 0);
   };
 
   // Función para mostrar el modal de ver ingresos esperados
