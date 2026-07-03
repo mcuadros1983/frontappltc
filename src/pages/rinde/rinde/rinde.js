@@ -1837,7 +1837,6 @@ return (
       Guardar Rinde
     </Button>
 
-{/* Modal Inventarios */}
       {showIngresosModal && (
         <Modal show={showModal} onHide={handleCloseModal} className="vt-modal">
           <Modal.Header closeButton>
@@ -1864,7 +1863,6 @@ return (
             </ListGroup>
           </Modal.Body>
         </Modal>
-      )}
 
       {/* Modal Ingresos Esperados */}
       {showIngresosModal && (
@@ -1914,7 +1912,6 @@ return (
 
       {/* Modal Ver Ingresos */}
 
-      {showVerModal && (
         <Modal
           show={showVerModal}
           onHide={handleCloseVerModal}
@@ -1940,10 +1937,8 @@ return (
             </Button>
           </Modal.Footer>
         </Modal>
-      )}
 
       {/* Modal Categorías (excluir) */}
-      {showModalCategories && (
         <Modal show={showModalCategories} onHide={() => setShowModalCategories(false)} className="vt-modal">
           <Modal.Header closeButton>
             <Modal.Title>Seleccionar Categorías a excluir</Modal.Title>
@@ -1988,10 +1983,9 @@ return (
             </Button>
           </Modal.Footer>
         </Modal>
-      )}
+
 
       {/* Modal Ajustes */}
-      {showAjustesModal && (
         <Modal show={showAjustesModal} onHide={() => setShowAjustesModal(false)} className="vt-modal">
           <Modal.Header closeButton>
             <Modal.Title>Ajustes de Rinde</Modal.Title>
@@ -2037,7 +2031,6 @@ return (
             </Button>
           </Modal.Footer>
         </Modal>
-      )}
   </Container>
 );
 
