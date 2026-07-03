@@ -1865,48 +1865,50 @@ return (
     </Modal>
 
     {/* Modal Ingresos Esperados */}
-    <Modal show={showIngresosModal} onHide={() => setShowIngresosModal(false)} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>Ingresos Esperados</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="mb-3">
-          <label className="vt-label">Novillos:</label>
-          <input
-            type="number"
-            value={novillosIngresos}
-            onChange={(e) => handleNovillosChange(e.target.value)}
-            className="form-control vt-input"
-          />
-        </div>
-        <div className="mb-3">
-          <label className="vt-label">Exportación:</label>
-          <input
-            type="number"
-            value={exportacionIngresos}
-            onChange={(e) => handleExportacionChange(e.target.value)}
-            className="form-control vt-input"
-          />
-        </div>
-        <div className="mb-3">
-          <label className="vt-label">Cerdos:</label>
-          <input
-            type="number"
-            value={cerdosIngresos}
-            onChange={(e) => handleCerdosChange(e.target.value)}
-            className="form-control vt-input"
-          />
-        </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={() => setShowIngresosModal(false)} className="vt-btn-secondary">
-          Cerrar
-        </Button>
-        <Button variant="primary" onClick={handleGuardarIngresos} className="vt-btn">
-          Guardar
-        </Button>
-      </Modal.Footer>
-    </Modal>
+          {showIngresosModal && (
+        <Modal show={showIngresosModal} onHide={() => setShowIngresosModal(false)} className="vt-modal">
+          <Modal.Header closeButton>
+            <Modal.Title>Ingresos Esperados</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-3">
+              <label className="vt-label">Novillos:</label>
+              <input
+                type="number"
+                value={novillosIngresos}
+                onChange={(e) => handleNovillosChange(e.target.value)}
+                className="form-control vt-input"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="vt-label">Exportación:</label>
+              <input
+                type="number"
+                value={exportacionIngresos}
+                onChange={(e) => handleExportacionChange(e.target.value)}
+                className="form-control vt-input"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="vt-label">Cerdos:</label>
+              <input
+                type="number"
+                value={cerdosIngresos}
+                onChange={(e) => handleCerdosChange(e.target.value)}
+                className="form-control vt-input"
+              />
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowIngresosModal(false)} className="vt-btn-secondary">
+              Cerrar
+            </Button>
+            <Button variant="primary" onClick={handleGuardarIngresos} className="vt-btn">
+              Guardar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
 
     {/* Modal Ver Ingresos */}
     <Modal show={showVerModal} onHide={handleCloseVerModal} className="vt-modal">
