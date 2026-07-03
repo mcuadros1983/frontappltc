@@ -110,6 +110,7 @@ export default function CalculoRinde() {
     setCostoporcino(0);
     setIngEsperado(0);
     setIngVendido(0);
+    setCostovacuno(0);
   }, [startDate, endDate, searchSucursal]);
 
   useEffect(() => {
@@ -132,10 +133,13 @@ export default function CalculoRinde() {
     setCantidadMedias(0);
   }, [kgNovillo, kgVaca, totalKg]);
 
-  // Resetear totalKg si cambian kgNovillo o kgVaca
+  // Resetear costovacuno si cambia totalKg
+  // useEffect(() => {
+  //   setCostovacuno(0);
+  // }, [totalKg]);
   useEffect(() => {
-    setTotalKg(0);
-  }, [kgNovillo, kgVaca]);
+  setCostovacuno(0);
+}, [kgNovillo, kgVaca]);
 
   // Resetear costoprom si cambian totalKg o costovacuno
   useEffect(() => {
