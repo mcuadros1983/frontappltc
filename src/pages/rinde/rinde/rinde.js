@@ -469,6 +469,10 @@ export default function CalculoRinde() {
     }, 0);
   };
 
+  useEffect(() => {
+    console.log("showIngresosModal =", showIngresosModal);
+}, [showIngresosModal]);
+
   // Función para mostrar el modal de ver ingresos esperados
   const handleVerIngresos = () => {
     setShowVerModal(true);
