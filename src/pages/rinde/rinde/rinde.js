@@ -316,8 +316,21 @@ export default function CalculoRinde() {
         return;
       }
 
+      // if (operacion === "ventas") {
+      //   setShowModalCategories(false);
+      // }
+
+      // const bodyData = {
+      //   fechaDesde: startDate,
+      //   fechaHasta: endDate,
+      //   sucursalId: searchSucursal,
+      // };
+
       if (operacion === "ventas") {
         setShowModalCategories(false);
+
+        // Espera un ciclo para que React-Bootstrap desmonte el modal
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       const bodyData = {
