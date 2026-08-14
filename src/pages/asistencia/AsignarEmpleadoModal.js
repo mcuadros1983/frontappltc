@@ -30,9 +30,9 @@ export default function AsignarEmpleadoModal({
 }) {
   const isEdit = Boolean(
     initialData?.sucursal_id ||
-      initialData?.jornada_id ||
-      initialData?.franco_am ||
-      initialData?.franco_pm
+    initialData?.jornada_id ||
+    initialData?.franco_am ||
+    initialData?.franco_pm
   );
 
   const [sucursalId, setSucursalId] = useState(initialData?.sucursal_id ?? "");
@@ -40,17 +40,22 @@ export default function AsignarEmpleadoModal({
   const [francoAm, setFrancoAm] = useState(initialData?.franco_am ?? "");
   const [francoPm, setFrancoPm] = useState(initialData?.franco_pm ?? "");
   const [telefono, setTelefono] = useState(initialData?.telefono || "");
+  const [tipo, setTipo] = useState(initialData?.tipo || "VENDEDOR");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
 
   useEffect(() => {
     if (!show) return;
+
+    console.log("initialData recibido por el modal:", initialData);
+    console.log("tipo recibido:", initialData?.tipo);
     setErr(null);
     setSucursalId(initialData?.sucursal_id ?? "");
     setJornadaId(initialData?.jornada_id ?? "");
     setFrancoAm(initialData?.franco_am ?? "");
     setFrancoPm(initialData?.franco_pm ?? "");
     setTelefono(initialData?.telefono || "");
+    setTipo(initialData?.tipo || "VENDEDOR");
   }, [show, initialData]);
 
   const sucursalOpts = useMemo(() => {
@@ -116,6 +121,8 @@ export default function AsignarEmpleadoModal({
       // ✅ Envío de teléfono como en el primer modal
       payload.telefono = telefono ? String(telefono).trim() : null;
 
+      payload.tipo = tipo;
+
       const r = await fetch(`${apiUrl}/empleados/${empleadoId}/datos`, {
         method: "PUT", // tu upsertPorEmpleado acepta POST o PUT
         headers: { "Content-Type": "application/json" },
@@ -147,6 +154,7 @@ export default function AsignarEmpleadoModal({
     setFrancoAm("");
     setFrancoPm("");
     setTelefono("");
+    setTipo("VENDEDOR");
   };
 
   return (
@@ -240,6 +248,29 @@ export default function AsignarEmpleadoModal({
               />
               <Form.Text className="text-muted small">
                 Opcional. Solo números.
+              </Form.Text>
+            </Form.Group>
+          </Col>
+
+          {/* Tipo */}
+          <Col md={12}>
+            <Form.Group>
+              <Form.Label className="small fw-semibold text-muted text-uppercase">
+                Tipo de empleado
+              </Form.Label>
+
+              <Form.Select
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value)}
+                size="sm"
+                className="form-control my-input"
+              >
+                <option value="VENDEDOR">Vendedor</option>
+                <option value="ENCARGADO">Encargado</option>
+              </Form.Select>
+
+              <Form.Text className="text-muted small">
+                Define el rol operativo del empleado.
               </Form.Text>
             </Form.Group>
           </Col>

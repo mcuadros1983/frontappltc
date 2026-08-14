@@ -1,0 +1,55 @@
+/*
+Agregar dentro del bloque de Configuración existente.
+
+Importar el icono junto con los demás iconos:
+*/
+
+import {
+    FiLayers,
+} from "react-icons/fi";
+
+/*
+Opción directa dentro de Configuración:
+*/
+
+{
+    (
+        can("motorconceptos:view") ||
+        can("motorconceptos:config")
+    ) && (
+        <Link
+            to="/motor-conceptos"
+            className="nav-link sb-top"
+            onClick={handleLinkClick}
+        >
+            <FiLayers className="sb-ico" />
+            <span>
+                Motor de Conceptos
+            </span>
+        </Link>
+    )
+}
+
+
+/*
+Dentro del bloque Configuración o del bloque operativo
+donde se registra Motor de Conceptos:
+*/
+
+{
+    can("motorconceptos:registros.view") && (
+        <SidebarItem
+            to="/motor-conceptos/registros"
+            icon={<FiFileText />}
+            label="Registros de Conceptos"
+        />
+    )
+}
+
+/*
+Importar:
+*/
+
+import {
+    FiFileText,
+} from "react-icons/fi";

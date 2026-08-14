@@ -4,7 +4,7 @@ import {
 } from "react-bootstrap";
 import { FiCheckSquare, FiSquare } from "react-icons/fi";
 import CategoryBlock from "./CategoryBlock";
-import { PERMISSION_CATEGORIES, FLAT_PERMISSIONS } from "./PermissionsCatalog";
+import { PERMISSION_CATEGORIES, FLAT_PERMISSIONS } from "./PermissionsCatalog"; 
 
 export default function PermissionsPage() {
   const API = process.env.REACT_APP_API_URL;

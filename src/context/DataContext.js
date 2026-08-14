@@ -20,7 +20,9 @@ export default function DataContextProvider({ children }) {
   const [clientesTabla, setClientesTabla] = useState([]);
   const [empleados, setEmpleados] = useState([]);
   const [usuariosTabla, setUsuariosTabla] = useState([]);
+  const [usuariosSistema, setUsuariosSistema] = useState([]);
   const [tiposTarjetaTabla, setTiposTarjetaTabla] = useState([]);
+  const [tarjetaDeCreditoTabla, setTarjetaDeCreditoTabla] = useState([]);
   const [marcasTarjetaTabla, setMarcasTarjetaTabla] = useState([]);
   const [planTarjetaTesoreriaTabla, setPlanTarjetaTesoreriaTabla] = useState([]);
   const [tarjetasTesoreriaTabla, setTarjetasTesoreriaTabla] = useState([]);
@@ -111,6 +113,9 @@ export default function DataContextProvider({ children }) {
       const dataTarjetaTesoreriaTabla = await fetchJsonSafe(`${apiUrl}/tarjetas-comunes`);
       if (!cancelled) setTarjetasTesoreriaTabla(toArray(dataTarjetaTesoreriaTabla));
 
+      const dataTarjetaDeCreditoTabla = await fetchJsonSafe(`${apiUrl}/obtenertarjetadecredito`);
+      if (!cancelled) setTarjetaDeCreditoTabla(toArray(dataTarjetaDeCreditoTabla));
+
       const dataEmpleadosTabla = await fetchJsonSafe(`${apiUrl}/obtenerempleados`);
 
       if (!cancelled) {
@@ -123,6 +128,9 @@ export default function DataContextProvider({ children }) {
 
       const dataUsuariosTabla = await fetchJsonSafe(`${apiUrl}/obtenerusuario`);
       if (!cancelled) setUsuariosTabla(toArray(dataUsuariosTabla));
+
+      const dataUsuariosSistema = await fetchJsonSafe(`${apiUrl}/usuarios`);
+      if (!cancelled) setUsuariosSistema(toArray(dataUsuariosSistema));
 
       const dataSubcategoriasTabla = await fetchJsonSafe(`${apiUrl}/obtenersubcategorias`);
       if (!cancelled) setSubcategoriasTabla(toArray(dataSubcategoriasTabla));
@@ -198,12 +206,14 @@ export default function DataContextProvider({ children }) {
         formasPago, setFormasPago,
         empleados, setEmpleados,
         usuariosTabla,
+        usuariosSistema, setUsuariosSistema,
         sucursalesTabla,
         articulosTabla,
         tipoDeIngresoTabla,
         tipoDeGastoTabla,
         planTarjetaTabla,
         tiposTarjetaTabla, setTiposTarjetaTabla,
+        tarjetaDeCreditoTabla, setTarjetaDeCreditoTabla,
         marcasTarjetaTabla, setMarcasTarjetaTabla,
         empresasTabla, setEmpresasTabla,
         bancosTabla, setBancosTabla,

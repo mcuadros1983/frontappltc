@@ -4,6 +4,7 @@ import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
 import "../../../components/css/CantidadTicketPorUsuario.css"; // ⬅️ NUEVO
+import * as XLSX from "xlsx";
 
 export default function CantidadTicketPorUsuario() {
   const [cantidadesTicketFiltrados, setCantidadesTicketFiltrados] = useState([]);
@@ -137,6 +138,38 @@ export default function CantidadTicketPorUsuario() {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
   };
 
+  const exportarExcel = () => {
+    const dataToExport = sortedSells.map((venta) => ({
+      [filterBy === "sucursal" ? "Sucursal" : "Usuario"]:
+        filterBy === "sucursal"
+          ? context.sucursalesTabla.find(
+            (s) => s.id === parseInt(venta.sucursal_id)
+          )?.nombre || "Desconocido"
+          : context.usuariosTabla.find(
+            (u) => u.id === parseInt(venta.usuario_id)
+          )?.nombre_completo || "Desconocido",
+
+      "Cantidad de Tickets": Number(venta.cantidad || 0),
+
+      "Monto Total": Number(venta.total_monto || 0).toLocaleString("es-AR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(wb, ws, "Cantidad de Tickets");
+
+    XLSX.writeFile(
+      wb,
+      filterBy === "sucursal"
+        ? "cantidad_tickets_por_sucursal.xlsx"
+        : "cantidad_tickets_por_usuario.xlsx"
+    );
+  };
+
   return (
     <Container className="ctu-page">
       <h1 className="ctu-title">Cantidad de Tickets</h1>
@@ -183,6 +216,16 @@ export default function CantidadTicketPorUsuario() {
         </div>
       </div>
 
+      <div className="mx-2 my-2">
+        <Button
+          variant="success"
+          onClick={exportarExcel}
+          disabled={cantidadesTicketFiltrados.length === 0}
+        >
+          Exportar a Excel
+        </Button>
+      </div>
+
       <h2 className="ctu-subtitle">Resultados de la búsqueda</h2>
 
       <div className="ctu-tablewrap table-responsive">
@@ -223,11 +266,11 @@ export default function CantidadTicketPorUsuario() {
                 <td>
                   {filterBy === "sucursal"
                     ? context.sucursalesTabla.find(
-                        (s) => s.id === parseInt(venta.sucursal_id)
-                      )?.nombre || "Desconocido"
+                      (s) => s.id === parseInt(venta.sucursal_id)
+                    )?.nombre || "Desconocido"
                     : context.usuariosTabla.find(
-                        (u) => u.id === parseInt(venta.usuario_id)
-                      )?.nombre_completo || "Desconocido"}
+                      (u) => u.id === parseInt(venta.usuario_id)
+                    )?.nombre_completo || "Desconocido"}
                 </td>
                 <td className="text-end">{Number(venta.cantidad || 0).toLocaleString("es-AR")}</td>
                 <td className="text-end">

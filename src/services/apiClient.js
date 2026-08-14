@@ -1,4 +1,4 @@
-const API_BASE = process.env.REACT_APP_API_URL 
+const API_BASE = process.env.REACT_APP_API_URL
 
 function baseHeaders() {
   return {
@@ -19,7 +19,29 @@ async function handle(res) {
 
 export const api = {
   get: async (path) => handle(await fetch(`${API_BASE}${path}`, { headers: baseHeaders(), credentials: "include" })),
-  post: async (path, body) => handle(await fetch(`${API_BASE}${path}`, { method: 'POST', headers: baseHeaders(), body: JSON.stringify(body), credentials: "include" })),
-  put: async (path, body) => handle(await fetch(`${API_BASE}${path}`, { method: 'PUT', headers: baseHeaders(), body: JSON.stringify(body), credentials: "include" })),
-  del: async (path) => handle(await fetch(`${API_BASE}${path}`, { method: 'DELETE', headers: baseHeaders(), credentials: "include" }))
+  post: async (path, body) => handle(await fetch(`${API_BASE}${path}`, {
+    method: 'POST', headers: baseHeaders(), body:
+      body === undefined
+        ? undefined
+        : JSON.stringify(body), credentials: "include"
+  })),
+  put: async (path, body) => handle(await fetch(`${API_BASE}${path}`, {
+    method: 'PUT', headers: baseHeaders(), body:
+      body === undefined
+        ? undefined
+        : JSON.stringify(body), credentials: "include"
+  })),
+  del: async (path) => handle(await fetch(`${API_BASE}${path}`, { method: 'DELETE', headers: baseHeaders(), credentials: "include" })),
+
+  postFormData: async (path, formData) =>
+    handle(
+      await fetch(
+        `${API_BASE}${path}`,
+        {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        }
+      )
+    ),
 };

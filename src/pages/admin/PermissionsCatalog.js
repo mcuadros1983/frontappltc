@@ -8,6 +8,19 @@ export const PERMISSION_CATEGORIES = [
     perms: ["agenda:view"],
   },
   {
+    id: "gestion",
+    title: "GESTIÓN OPERATIVA",
+    perms: [
+      "gestion:view",
+      "gestion.tareas:create",
+      "gestion.tareas:update",
+      "gestion.proyectos:create",
+      "gestion.proyectos:update",
+      "gestion.supervision:view",
+      "gestion.reportes:view",
+    ],
+  },
+  {
     id: "asistencia",
     title: "ASISTENCIA / RRHH",
     perms: [
@@ -140,6 +153,58 @@ export const PERMISSION_CATEGORIES = [
     ],
   },
   {
+    id: "inspecciones",
+    title: "INSPECCIONES",
+    perms: [
+      "inspecciones:view",
+      "inspecciones:create",
+      "inspecciones:edit",
+      "inspecciones:review",
+      "inspecciones:reportes",
+      "inspecciones:admin",
+    ],
+  },
+
+  {
+    id: "evaluacion",
+    title: "EVALUACIÓN DE DESEMPEÑO",
+    perms: [
+      "evaluacion:view",
+      "evaluacion:create",
+      "evaluacion:update",
+      "evaluacion:delete",
+      "evaluacion:respond",
+      "evaluacion:finalize",
+      "evaluacion:reportes",
+      "evaluacion:dashboard",
+      "evaluacion:metas",
+      "evaluacion:config",
+      "evaluacion:admin",
+    ],
+  },
+  {
+    id: "notification",
+    title: "CENTRO DE NOTIFICACIONES",
+    perms: [
+      "notification:view",
+      "notification:config",
+      "notification:eventos",
+      "notification:plantillas",
+      "notification:historial",
+      "notification:admin",
+    ],
+  },
+  {
+    id: "scheduler",
+    title: "SCHEDULER",
+    perms: [
+      "scheduler:view",
+      "scheduler:jobs",
+      "scheduler:run",
+      "scheduler:admin",
+    ],
+  },
+  {
     id: "permisos",
     title: "PERMISOS / SEGURIDAD",
     perms: ["permisos:view"],
@@ -240,7 +305,7 @@ export const PERMISSION_CATEGORIES = [
       "tesoreria:info.caja.detalle.view",
     ],
   },
-    {
+  {
     id: "fidelizacion",
     title: "COMERCIOS AMIGOS / FIDELIZACIÓN",
     perms: [
@@ -256,6 +321,59 @@ export const PERMISSION_CATEGORIES = [
       "fidelizacion:fraude",
     ],
   },
+
+  {
+    id: "motorconceptos",
+    title: "MOTOR DE CONCEPTOS",
+    perms: [
+
+      "motorconceptos:view",
+      "motorconceptos:create",
+      "motorconceptos:update",
+      "motorconceptos:delete",
+      "motorconceptos:config",
+
+      "motorconceptos:registros.view",
+      "motorconceptos:registros.create",
+      "motorconceptos:registros.update",
+      "motorconceptos:registros.delete",
+
+      "motorconceptos:vencimientos.view",
+
+      // Gestión Documental
+
+      "motorconceptos:gestion.empleados.view",
+      "motorconceptos:gestion.empresas.view",
+      "motorconceptos:gestion.sucursales.view",
+
+      // Asignaciones
+
+      "motorconceptos:asignaciones.view",
+      "motorconceptos:asignaciones.create",
+      "motorconceptos:asignaciones.update",
+      "motorconceptos:asignaciones.delete",
+
+    ],
+  },
+
+  {
+    id: "legajos",
+    title: "LEGAJOS",
+    perms: [
+      "legajos:view",
+
+      "legajos:conceptos.view",
+
+      "legajos:registros.view",
+
+      "legajos:gestion.empleados.view",
+
+      "legajos:gestion.empresas.view",
+
+      "legajos:gestion.sucursales.view",
+    ],
+  },
+
 ];
 
 // Utilidades

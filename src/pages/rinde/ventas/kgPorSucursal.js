@@ -4,6 +4,7 @@ import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
 import "../../../components/css/KgPorSucursal.css"; // ⬅️ NUEVO
+import * as XLSX from "xlsx";
 
 export default function KgPorSucursal() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
@@ -30,7 +31,7 @@ export default function KgPorSucursal() {
         ? { fechaDesde: startDate, fechaHasta: endDate, sucursalId: selectedSucursal }
         : { fechaDesde: startDate, fechaHasta: endDate };
 
-      const response = await fetch(`${apiUrl}/ventas/kg_por_sucursal_filtradas`, { 
+      const response = await fetch(`${apiUrl}/ventas/kg_por_sucursal_filtradas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -98,6 +99,24 @@ export default function KgPorSucursal() {
     if (currentPage > 1) setCurrentPage((p) => p - 1);
   };
 
+  const exportarExcel = () => {
+    const dataToExport = ventasAgrupadas.map((venta) => ({
+      Sucursal:
+        context.sucursalesTabla.find(
+          (s) => s.id === parseInt(venta.sucursal_id)
+        )?.nombre || "Desconocido",
+
+      "Total Kg": Number(venta.total_kg || 0),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(wb, ws, "Kg por Sucursal");
+
+    XLSX.writeFile(wb, "kg_por_sucursal.xlsx");
+  };
+
   return (
     <Container className="kps-page">
       <h1 className="kps-title">Kg por Sucursal</h1>
@@ -142,7 +161,19 @@ export default function KgPorSucursal() {
         </div>
 
         <div className="mx-2 my-2">
-          <Button onClick={handleFilter} className="kps-btn">Filtrar</Button>
+          <Button onClick={handleFilter} className="kps-btn">
+            Filtrar
+          </Button>
+        </div>
+
+        <div className="mx-2 my-2">
+          <Button
+            variant="success"
+            onClick={exportarExcel}
+            disabled={ventasAgrupadas.length === 0}
+          >
+            Exportar a Excel
+          </Button>
         </div>
       </div>
 

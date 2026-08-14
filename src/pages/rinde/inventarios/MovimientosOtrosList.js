@@ -9,6 +9,8 @@ import {
 } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
+import * as XLSX from "xlsx";
+
 
 export default function MovimientosOtros() {
   const [movimientos, setMovimientos] = useState([]);
@@ -56,6 +58,64 @@ export default function MovimientosOtros() {
     };
     fetchBranches();
   }, [apiUrl]);
+
+  const exportToExcel = (rows, filename) => {
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      wb,
+      ws,
+      "MovimientosOtros"
+    );
+    XLSX.writeFile(wb, filename);
+  };
+
+  const exportarExcel = () => {
+    try {
+
+      if (
+        !movimientosFiltrados ||
+        movimientosFiltrados.length === 0
+      ) {
+        alert("No hay datos para exportar.");
+        return;
+      }
+
+      const rows =
+        movimientosFiltrados.map((mov) => ({
+          fecha: mov.fecha,
+          lote: mov.numerolote,
+          codigo: mov.articulocodigo,
+          descripcion: mov.articulodescripcion,
+          cantidad: mov.cantidad,
+          tipo: mov.tipo,
+          sucursalDestino:
+            sucursalNombreById(
+              mov.sucursaldestino_id
+            ),
+        }));
+
+      exportToExcel(
+        rows,
+        `movimientos_otros_${new Date()
+          .toISOString()
+          .slice(0, 10)
+        }.xlsx`
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Error al exportar:",
+        error
+      );
+
+      alert(
+        "Error al exportar Excel."
+      );
+
+    }
+  };
 
   const obtenerFechasUnicas = async () => {
     try {
@@ -266,6 +326,16 @@ export default function MovimientosOtros() {
         <div className="d-inline-block">
           <Button onClick={handleFilter} disabled={loading} className="vt-btn">
             Filtrar
+          </Button>
+
+          <Button
+            variant="success"
+            onClick={exportarExcel}
+            disabled={
+              movimientosFiltrados.length === 0
+            }
+          >
+            Exportar Excel
           </Button>
         </div>
       </div>

@@ -110,6 +110,7 @@ export default function CalculoRinde() {
     setCostoporcino(0);
     setIngEsperado(0);
     setIngVendido(0);
+    setCostovacuno(0);
   }, [startDate, endDate, searchSucursal]);
 
   useEffect(() => {
@@ -158,9 +159,12 @@ export default function CalculoRinde() {
   }, [totalventa]);
 
   // Resetear costovacuno si cambia totalKg
+  // useEffect(() => {
+  //   setCostovacuno(0);
+  // }, [totalKg]);
   useEffect(() => {
     setCostovacuno(0);
-  }, [totalKg]);
+  }, [kgNovillo, kgVaca]);
 
   // Resetear difInventario si cambian montoInventarioFinal o montoInventarioInicial
   useEffect(() => {
@@ -312,8 +316,21 @@ export default function CalculoRinde() {
         return;
       }
 
+      // if (operacion === "ventas") {
+      //   setShowModalCategories(false);
+      // }
+
+      // const bodyData = {
+      //   fechaDesde: startDate,
+      //   fechaHasta: endDate,
+      //   sucursalId: searchSucursal,
+      // };
+
       if (operacion === "ventas") {
         setShowModalCategories(false);
+
+        // Espera un ciclo para que React-Bootstrap desmonte el modal
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       const bodyData = {
@@ -455,11 +472,23 @@ export default function CalculoRinde() {
   };
 
   // Función para guardar los valores de ingresos esperados
+  // const handleGuardarIngresos = () => {
+  //   // Aquí puedes realizar acciones adicionales, como enviar los datos al servidor si es necesario
+  //   alert("Valores de ingresos esperados guardados correctamente.");
+  //   setShowIngresosModal(false);
+  // };
+
   const handleGuardarIngresos = () => {
-    // Aquí puedes realizar acciones adicionales, como enviar los datos al servidor si es necesario
-    alert("Valores de ingresos esperados guardados correctamente.");
     setShowIngresosModal(false);
+
+    setTimeout(() => {
+      alert("Valores de ingresos esperados guardados correctamente.");
+    }, 0);
   };
+
+  useEffect(() => {
+    console.log("showIngresosModal =", showIngresosModal);
+  }, [showIngresosModal]);
 
   // Función para mostrar el modal de ver ingresos esperados
   const handleVerIngresos = () => {
@@ -471,25 +500,25 @@ export default function CalculoRinde() {
     setShowVerModal(false);
   };
 
-// Reemplazá COMPLETO el handler por esta versión basada en: rinde = (1 - ingresoVendido / ingresoEsperado) * 100
-const handleCalculoRinde = () => {
-  const esperado = parseFloat(ingEsperado) || 0; // $/kg esperado
-  const vendido  = parseFloat(ingVendido)  || 0; // $/kg vendido
+  // Reemplazá COMPLETO el handler por esta versión basada en: rinde = (1 - ingresoVendido / ingresoEsperado) * 100
+  const handleCalculoRinde = () => {
+    const esperado = parseFloat(ingEsperado) || 0; // $/kg esperado
+    const vendido = parseFloat(ingVendido) || 0; // $/kg vendido
 
-  if (esperado <= 0) {
-    setRinde(0);
-    alert("Primero calculá el Ingreso Esperado (y el Ingreso Vendido) para poder obtener el rinde.");
-    return;
-  }
+    if (esperado <= 0) {
+      setRinde(0);
+      alert("Primero calculá el Ingreso Esperado (y el Ingreso Vendido) para poder obtener el rinde.");
+      return;
+    }
 
-  let rindeCalculado = (1 - (vendido / esperado)) * 100;
+    let rindeCalculado = (1 - (vendido / esperado)) * 100;
 
-  if (!isFinite(rindeCalculado) || isNaN(rindeCalculado)) {
-    rindeCalculado = 0;
-  }
+    if (!isFinite(rindeCalculado) || isNaN(rindeCalculado)) {
+      rindeCalculado = 0;
+    }
 
-  setRinde(Number(rindeCalculado.toFixed(2)));
-};
+    setRinde(Number(rindeCalculado.toFixed(2)));
+  };
 
   const handleEliminarAjuste = (index) => {
     const nuevosAjustes = [...ajustes];
@@ -600,88 +629,88 @@ const handleCalculoRinde = () => {
   // };
 
   // Reemplazá COMPLETO este handler
-const handleObtenerMgtotal = () => {
-  try {
-    console.log("========== INICIO CALCULO MG TOTAL ==========");
+  const handleObtenerMgtotal = () => {
+    try {
+      console.log("========== INICIO CALCULO MG TOTAL ==========");
 
-    const ventas = Number(montoVentas) || 0;
-    const movimientos = Number(montoMovimientos) || 0;
-    const movimientosOtros = Number(montoMovimientosOtros) || 0;
-    const kilos = Number(totalKg) || 0;
-    const costoPromedio = Number(costoprom) || 0;
-    const kilosCerdo = Number(kgCerdo) || 0;
-    const ingresoCerdo = Number(cerdosIngresos) || 0;
+      const ventas = Number(montoVentas) || 0;
+      const movimientos = Number(montoMovimientos) || 0;
+      const movimientosOtros = Number(montoMovimientosOtros) || 0;
+      const kilos = Number(totalKg) || 0;
+      const costoPromedio = Number(costoprom) || 0;
+      const kilosCerdo = Number(kgCerdo) || 0;
+      const ingresoCerdo = Number(cerdosIngresos) || 0;
 
-    // 🔹 Logs de valores originales y parseados
-    console.log("montoVentas:", montoVentas, "=>", ventas);
-    console.log("montoMovimientos:", montoMovimientos, "=>", movimientos);
-    console.log("montoMovimientosOtros:", montoMovimientosOtros, "=>", movimientosOtros);
+      // 🔹 Logs de valores originales y parseados
+      console.log("montoVentas:", montoVentas, "=>", ventas);
+      console.log("montoMovimientos:", montoMovimientos, "=>", movimientos);
+      console.log("montoMovimientosOtros:", montoMovimientosOtros, "=>", movimientosOtros);
 
-    console.log("totalKg:", totalKg, "=>", kilos);
-    console.log("costoprom:", costoprom, "=>", costoPromedio);
+      console.log("totalKg:", totalKg, "=>", kilos);
+      console.log("costoprom:", costoprom, "=>", costoPromedio);
 
-    console.log("kgCerdo:", kgCerdo, "=>", kilosCerdo);
-    console.log("cerdosIngresos:", cerdosIngresos, "=>", ingresoCerdo);
+      console.log("kgCerdo:", kgCerdo, "=>", kilosCerdo);
+      console.log("cerdosIngresos:", cerdosIngresos, "=>", ingresoCerdo);
 
-    // 🔹 Cálculos intermedios
-    const montoCosto = kilos * costoPromedio;
-    const montoCerdo = kilosCerdo * ingresoCerdo;
+      // 🔹 Cálculos intermedios
+      const montoCosto = kilos * costoPromedio;
+      const montoCerdo = kilosCerdo * ingresoCerdo;
 
-    console.log("==================================");
-    console.log("CALCULOS INTERMEDIOS");
+      console.log("==================================");
+      console.log("CALCULOS INTERMEDIOS");
 
-    console.log(
-      "Monto costo:",
-      `${kilos} * ${costoPromedio} =`,
-      montoCosto
-    );
+      console.log(
+        "Monto costo:",
+        `${kilos} * ${costoPromedio} =`,
+        montoCosto
+      );
 
-    console.log(
-      "Monto cerdo:",
-      `${kilosCerdo} * ${ingresoCerdo} =`,
-      montoCerdo
-    );
+      console.log(
+        "Monto cerdo:",
+        `${kilosCerdo} * ${ingresoCerdo} =`,
+        montoCerdo
+      );
 
-    // 🔹 Fórmula detallada
-    console.log("==================================");
-    console.log("FORMULA MG TOTAL");
+      // 🔹 Fórmula detallada
+      console.log("==================================");
+      console.log("FORMULA MG TOTAL");
 
-    console.log("+ ventas:", ventas);
-    console.log("+ movimientos:", movimientos);
-    console.log("- movimientosOtros:", movimientosOtros);
-    console.log("- montoCosto:", montoCosto);
-    console.log("- montoCerdo:", montoCerdo);
+      console.log("+ ventas:", ventas);
+      console.log("+ movimientos:", movimientos);
+      console.log("- movimientosOtros:", movimientosOtros);
+      console.log("- montoCosto:", montoCosto);
+      console.log("- montoCerdo:", montoCerdo);
 
-    const total =
-      ventas +
-      movimientos -
-      movimientosOtros -
-      montoCosto -
-      montoCerdo;
+      const total =
+        ventas +
+        movimientos -
+        movimientosOtros -
+        montoCosto -
+        montoCerdo;
 
-    console.log("==================================");
-    console.log("RESULTADO");
+      console.log("==================================");
+      console.log("RESULTADO");
 
-    console.log(
-      `(${ventas} + ${movimientos} - ${movimientosOtros} - ${montoCosto} - ${montoCerdo})`
-    );
+      console.log(
+        `(${ventas} + ${movimientos} - ${movimientosOtros} - ${montoCosto} - ${montoCerdo})`
+      );
 
-    console.log("MG Total bruto:", total);
+      console.log("MG Total bruto:", total);
 
-    if (!isFinite(total) || isNaN(total)) {
-      console.warn("Resultado inválido detectado.");
+      if (!isFinite(total) || isNaN(total)) {
+        console.warn("Resultado inválido detectado.");
+      }
+
+      console.log("MG Total formateado:", total.toFixed(2));
+
+      setMgtotal(total.toFixed(2));
+
+      console.log("========== FIN CALCULO MG TOTAL ==========");
+    } catch (error) {
+      console.error("Error al calcular mgtotal:", error);
+      alert("Error al calcular mgtotal");
     }
-
-    console.log("MG Total formateado:", total.toFixed(2));
-
-    setMgtotal(total.toFixed(2));
-
-    console.log("========== FIN CALCULO MG TOTAL ==========");
-  } catch (error) {
-    console.error("Error al calcular mgtotal:", error);
-    alert("Error al calcular mgtotal");
-  }
-};
+  };
 
   const handleObtenerMgporkg = () => {
     try {
@@ -1036,100 +1065,100 @@ const handleObtenerMgtotal = () => {
   // };
 
   // Reemplazá COMPLETO este handler
-const handleObtenerIngVendido = () => {
-  try {
-    console.log("========== INICIO CALCULO INGRESO VENDIDO ==========");
+  const handleObtenerIngVendido = () => {
+    try {
+      console.log("========== INICIO CALCULO INGRESO VENDIDO ==========");
 
-    const ventas = parseFloat(montoVentas) || 0;
-    const movimientos = parseFloat(montoMovimientos) || 0;
-    const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
-    const cerdoMb = parseFloat(mbcerdo) || 0;
-    const invFinal = parseFloat(montoInventarioFinal) || 0;
-    const invInicial = parseFloat(montoInventarioInicial) || 0;
-    const kilos = parseFloat(totalKg) || 0;
+      const ventas = parseFloat(montoVentas) || 0;
+      const movimientos = parseFloat(montoMovimientos) || 0;
+      const movimientosOtros = parseFloat(montoMovimientosOtros) || 0;
+      const cerdoMb = parseFloat(mbcerdo) || 0;
+      const invFinal = parseFloat(montoInventarioFinal) || 0;
+      const invInicial = parseFloat(montoInventarioInicial) || 0;
+      const kilos = parseFloat(totalKg) || 0;
 
-    // Logs individuales
-    console.log("montoVentas:", montoVentas, "=>", ventas);
-    console.log("montoMovimientos:", montoMovimientos, "=>", movimientos);
-    console.log("montoMovimientosOtros:", montoMovimientosOtros, "=>", movimientosOtros);
-    console.log("mbcerdo:", mbcerdo, "=>", cerdoMb);
-    console.log("montoInventarioFinal:", montoInventarioFinal, "=>", invFinal);
-    console.log("montoInventarioInicial:", montoInventarioInicial, "=>", invInicial);
-    console.log("totalKg:", totalKg, "=>", kilos);
+      // Logs individuales
+      console.log("montoVentas:", montoVentas, "=>", ventas);
+      console.log("montoMovimientos:", montoMovimientos, "=>", movimientos);
+      console.log("montoMovimientosOtros:", montoMovimientosOtros, "=>", movimientosOtros);
+      console.log("mbcerdo:", mbcerdo, "=>", cerdoMb);
+      console.log("montoInventarioFinal:", montoInventarioFinal, "=>", invFinal);
+      console.log("montoInventarioInicial:", montoInventarioInicial, "=>", invInicial);
+      console.log("totalKg:", totalKg, "=>", kilos);
 
-    // 🔹 Ver detalle de ajustes
-    console.log("Listado ajustes:", ajustes);
+      // 🔹 Ver detalle de ajustes
+      console.log("Listado ajustes:", ajustes);
 
-    const montoAjuste = (ajustes || []).reduce((total, a, index) => {
-      const importe = parseFloat(a.importe) || 0;
+      const montoAjuste = (ajustes || []).reduce((total, a, index) => {
+        const importe = parseFloat(a.importe) || 0;
 
+        console.log(
+          `Ajuste #${index + 1}`,
+          "Objeto:",
+          a,
+          "Importe parseado:",
+          importe
+        );
+
+        return total + importe;
+      }, 0);
+
+      console.log("Monto total ajustes:", montoAjuste);
+
+      if (!kilos || kilos === 0) {
+        console.warn("No hay kilos suficientes para calcular ingreso vendido.");
+        setIngVendido(0);
+        alert("No hay kilos suficientes para calcular ingreso vendido.");
+        return;
+      }
+
+      // 🔹 Mostrar fórmula paso a paso
+      const sumaBase =
+        ventas +
+        movimientos -
+        movimientosOtros -
+        cerdoMb +
+        (invFinal - invInicial);
+
+      console.log("==================================");
+      console.log("CALCULO PASO A PASO");
+      console.log("ventas:", ventas);
+      console.log("+ movimientos:", movimientos);
+      console.log("- movimientosOtros:", movimientosOtros);
+      console.log("- cerdoMb:", cerdoMb);
       console.log(
-        `Ajuste #${index + 1}`,
-        "Objeto:",
-        a,
-        "Importe parseado:",
-        importe
+        "+ diferencia inventario:",
+        `(${invFinal} - ${invInicial}) =`,
+        invFinal - invInicial
       );
+      console.log("+ montoAjuste:", montoAjuste);
 
-      return total + importe;
-    }, 0);
+      console.log("Subtotal sin ajustes:", sumaBase);
 
-    console.log("Monto total ajustes:", montoAjuste);
+      const numerador = sumaBase + montoAjuste;
 
-    if (!kilos || kilos === 0) {
-      console.warn("No hay kilos suficientes para calcular ingreso vendido.");
-      setIngVendido(0);
-      alert("No hay kilos suficientes para calcular ingreso vendido.");
-      return;
+      console.log("Numerador final:", numerador);
+      console.log("Divisor totalKg:", kilos);
+
+      let ingresoVendido = numerador / kilos;
+
+      console.log("Resultado bruto:", ingresoVendido);
+
+      if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
+        console.warn("Resultado inválido detectado. Se fuerza a 0.");
+        ingresoVendido = 0;
+      }
+
+      console.log("Resultado final formateado:", ingresoVendido.toFixed(2));
+
+      setIngVendido(ingresoVendido.toFixed(2));
+
+      console.log("========== FIN CALCULO INGRESO VENDIDO ==========");
+    } catch (error) {
+      console.error("Error al calcular ingreso vendido:", error);
+      alert("Error al calcular ingreso vendido.");
     }
-
-    // 🔹 Mostrar fórmula paso a paso
-    const sumaBase =
-      ventas +
-      movimientos -
-      movimientosOtros -
-      cerdoMb +
-      (invFinal - invInicial);
-
-    console.log("==================================");
-    console.log("CALCULO PASO A PASO");
-    console.log("ventas:", ventas);
-    console.log("+ movimientos:", movimientos);
-    console.log("- movimientosOtros:", movimientosOtros);
-    console.log("- cerdoMb:", cerdoMb);
-    console.log(
-      "+ diferencia inventario:",
-      `(${invFinal} - ${invInicial}) =`,
-      invFinal - invInicial
-    );
-    console.log("+ montoAjuste:", montoAjuste);
-
-    console.log("Subtotal sin ajustes:", sumaBase);
-
-    const numerador = sumaBase + montoAjuste;
-
-    console.log("Numerador final:", numerador);
-    console.log("Divisor totalKg:", kilos);
-
-    let ingresoVendido = numerador / kilos;
-
-    console.log("Resultado bruto:", ingresoVendido);
-
-    if (!isFinite(ingresoVendido) || isNaN(ingresoVendido)) {
-      console.warn("Resultado inválido detectado. Se fuerza a 0.");
-      ingresoVendido = 0;
-    }
-
-    console.log("Resultado final formateado:", ingresoVendido.toFixed(2));
-
-    setIngVendido(ingresoVendido.toFixed(2));
-
-    console.log("========== FIN CALCULO INGRESO VENDIDO ==========");
-  } catch (error) {
-    console.error("Error al calcular ingreso vendido:", error);
-    alert("Error al calcular ingreso vendido.");
-  }
-};
+  };
 
   const handleObtenerDifEsperado = () => {
     try {
@@ -1381,631 +1410,644 @@ const handleObtenerIngVendido = () => {
 
   // setTotalKg(total.toFixed(2));
 
-return (
-  <Container className="vt-page">
-    <h1 className="my-list-title dark-text vt-title">Cálculo de Rendimiento</h1>
+  return (
+    <Container className="vt-page">
+      <h1 className="my-list-title dark-text vt-title">Cálculo de Rendimiento</h1>
 
-    {/* Filtros MES/AÑO */}
-    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-      <div className="d-inline-block w-auto">
-        <label className="vt-label d-block">MES</label>
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="form-control vt-input text-center"
-          disabled={loading}
-        >
-          <option value="">Seleccione el mes</option>
-          <option value="01">Enero</option>
-          <option value="02">Febrero</option>
-          <option value="03">Marzo</option>
-          <option value="04">Abril</option>
-          <option value="05">Mayo</option>
-          <option value="06">Junio</option>
-          <option value="07">Julio</option>
-          <option value="08">Agosto</option>
-          <option value="09">Septiembre</option>
-          <option value="10">Octubre</option>
-          <option value="11">Noviembre</option>
-          <option value="12">Diciembre</option>
-        </select>
-      </div>
+      {/* Filtros MES/AÑO */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">MES</label>
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="form-control vt-input text-center"
+            disabled={loading}
+          >
+            <option value="">Seleccione el mes</option>
+            <option value="01">Enero</option>
+            <option value="02">Febrero</option>
+            <option value="03">Marzo</option>
+            <option value="04">Abril</option>
+            <option value="05">Mayo</option>
+            <option value="06">Junio</option>
+            <option value="07">Julio</option>
+            <option value="08">Agosto</option>
+            <option value="09">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+        </div>
 
-      <div className="d-inline-block w-auto">
-        <label className="vt-label d-block">AÑO</label>
-        <input
-          type="number"
-          placeholder="Año"
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(e.target.value)}
-          className="form-control vt-input text-center"
-          min="2000"
-          max="2050"
-          maxLength="4"
-          disabled={loading}
-        />
-      </div>
-    </div>
-
-    {/* Filtros fechas + sucursal */}
-    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-      <div className="d-inline-block w-auto">
-        <label className="vt-label d-block">DESDE</label>
-        <input
-          type="date"
-          placeholder="Seleccione fecha de inicio"
-          value={startDate}
-          onChange={(e) => handleStartDateChange(e.target.value)}
-          className="form-control vt-input text-center"
-          disabled={loading}
-        />
-      </div>
-
-      <div className="d-inline-block w-auto">
-        <label className="vt-label d-block">HASTA</label>
-        <input
-          type="date"
-          placeholder="Seleccione fecha de fin"
-          value={endDate}
-          onChange={(e) => handleEndDateChange(e.target.value)}
-          className="form-control vt-input text-center"
-          disabled={loading}
-        />
-      </div>
-
-      <div className="d-inline-block w-auto">
-        <label className="vt-label d-block">Sucursal</label>
-        <FormControl
-          as="select"
-          placeholder="Seleccione una sucursal"
-          value={searchSucursal}
-          onChange={(e) => setSearchSucursal(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 260 }}
-          disabled={loading}
-        >
-          <option value="">Seleccione una sucursal</option>
-          {context.sucursalesTabla.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-    </div>
-
-    {/* Tabla de acciones/valores */}
-    <div className="vt-tablewrap table-responsive">
-      <Table striped bordered hover className="mb-2">
-        <thead>
-          <tr>
-            <th>Operaciones</th>
-            <th>Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <Button onClick={() => handleSelectCategories()} disabled={loading} className="vt-btn">
-                Obtener Ventas
-              </Button>
-            </td>
-            <td className="text-end">
-              {montoVentas !== null ? `$${parseInt(montoVentas).toFixed(2)}` : "-"}
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button
-                onClick={() => handleObtenerDatos(`${apiUrl}/obtenermontomovimientosfiltrados`, "movimientos")}
-                disabled={loading}
-                className="vt-btn"
-              >
-                Obtener Movimientos
-              </Button>
-            </td>
-            <td className="text-end">
-              {montoMovimientos !== null ? `$${parseInt(montoMovimientos).toFixed(2)}` : "-"}
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button
-                onClick={() => handleObtenerDatos(`${apiUrl}/movimientos-otro/monto`, "movimientosotros")}
-                disabled={loading}
-                className="vt-btn"
-              >
-                Obtener Movimientos Otros
-              </Button>
-            </td>
-            <td className="text-end">
-              {montoMovimientosOtros !== null ? `$${parseInt(montoMovimientosOtros).toFixed(2)}` : "-"}
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={() => handleObtenerInventario(false)} disabled={loading} className="vt-btn">
-                Obtener Inventario Inicial
-              </Button>
-            </td>
-            <td className="text-end">
-              {montoInventarioInicial !== null ? `$${parseInt(montoInventarioInicial).toFixed(2)}` : "-"}
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={() => handleObtenerInventario(true)} disabled={loading} className="vt-btn">
-                Obtener Inventario Final
-              </Button>
-            </td>
-            <td className="text-end">
-              {montoInventarioFinal !== null ? `$${parseInt(montoInventarioFinal).toFixed(2)}` : "-"}
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={() => setShowIngresosModal(true)} disabled={loading} className="vt-btn">
-                Ingresos Esperados
-              </Button>
-            </td>
-            <td>
-              <Button
-                onClick={handleVerIngresos}
-                disabled={loading || (novillosIngresos === 0 && exportacionIngresos === 0 && cerdosIngresos === 0)}
-                className="vt-btn-secondary"
-              >
-                Ver
-              </Button>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "nt")} disabled={loading} className="vt-btn">
-                Kgs Novillo
-              </Button>
-            </td>
-            <td className="text-end">{kgNovillo !== null ? `${kgNovillo} Kg` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "va")} disabled={loading} className="vt-btn">
-                Kgs Exportacion
-              </Button>
-            </td>
-            <td className="text-end">{kgVaca !== null ? `${kgVaca} Kg` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerCostovacuno} disabled={loading} className="vt-btn">
-                Obtener Costo Vacuno
-              </Button>
-            </td>
-            <td className="text-end">{costovacuno !== null ? `$${costovacuno}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "cerdo")} disabled={loading} className="vt-btn">
-                Kgs Cerdo
-              </Button>
-            </td>
-            <td className="text-end">{kgCerdo !== null ? `${kgCerdo} Kg` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerCostoporcino} disabled={loading} className="vt-btn">
-                Obtener Costo Porcino
-              </Button>
-            </td>
-            <td className="text-end">{costoporcino !== null ? `$${costoporcino}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={() => setShowAjustesModal(true)} disabled={loading} className="vt-btn">
-                Agregar Ajuste
-              </Button>
-            </td>
-            <td>
-              <Button onClick={() => setShowAjustesModal(true)} disabled={loading || ajustes.length === 0} className="vt-btn-secondary">
-                Ver
-              </Button>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerTotalKg} disabled={loading} className="vt-btn">
-                Obtener Total Kg
-              </Button>
-            </td>
-            <td className="text-end">{totalKg !== null ? `${totalKg} Kg` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerCantidadMedias} disabled={loading} className="vt-btn">
-                Obtener Cantidad Medias
-              </Button>
-            </td>
-            <td className="text-end">{cantidadMedias !== "" ? cantidadMedias : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerCostoProm} disabled={loading} className="vt-btn">
-                Obtener Costo Promedio
-              </Button>
-            </td>
-            <td className="text-end">{costoprom !== null ? `$${costoprom}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerMgtotal} disabled={loading} className="vt-btn">
-                Obtener Margen Total
-              </Button>
-            </td>
-            <td className="text-end">{mgtotal !== null ? `$${mgtotal}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerMgporkg} disabled={loading} className="vt-btn">
-                Obtener Margen por Kg
-              </Button>
-            </td>
-            <td className="text-end">{mgporkg !== null ? `$${mgporkg}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerTotalventa} disabled={loading} className="vt-btn">
-                Obtener Total Venta
-              </Button>
-            </td>
-            <td className="text-end">{totalventa !== null ? `$${totalventa}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerPromdiario} disabled={loading} className="vt-btn">
-                Obtener Promedio Diario
-              </Button>
-            </td>
-            <td className="text-end">{promdiario !== null ? `$${promdiario}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerGastos} disabled={loading} className="vt-btn">
-                Obtener Gastos
-              </Button>
-            </td>
-            <td className="text-end">{gastos !== null ? `$${gastos}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerAchuras} disabled={loading} className="vt-btn">
-                Obtener Achuras
-              </Button>
-            </td>
-            <td className="text-end">{achuras !== null ? `$${achuras}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerDifInventario} disabled={loading} className="vt-btn">
-                Obtener Diferencia Inventario
-              </Button>
-            </td>
-            <td className="text-end">{difInventario !== null ? `$${difInventario}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerMbCerdo} disabled={loading} className="vt-btn">
-                MB Cerdo
-              </Button>
-            </td>
-            <td className="text-end">{mbcerdo !== null ? `$${mbcerdo}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>Caja Grande</td>
-            <td>
-              <input
-                type="number"
-                value={cajagrande}
-                onChange={(e) => setCajagrande(e.target.value)}
-                className="form-control vt-input"
-              />
-            </td>
-          </tr>
-
-          <tr>
-            <td>Otros</td>
-            <td>
-              <input
-                type="number"
-                value={otros}
-                onChange={(e) => setOtros(e.target.value)}
-                className="form-control vt-input"
-              />
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerIngEsperado} disabled={loading} className="vt-btn">
-                Obtener Ingreso Esperado
-              </Button>
-            </td>
-            <td className="text-end">{ingEsperado !== null ? `$${ingEsperado}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerIngVendido} disabled={loading} className="vt-btn">
-                Obtener Ingreso Vendido
-              </Button>
-            </td>
-            <td className="text-end">{ingVendido !== null ? `$${ingVendido}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerDifEsperado} disabled={loading} className="vt-btn">
-                Obtener Diferencia Esperado
-              </Button>
-            </td>
-            <td className="text-end">{difEsperado !== null ? `$${difEsperado}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerDifVendido} disabled={loading} className="vt-btn">
-                Obtener Diferencia Vendido
-              </Button>
-            </td>
-            <td className="text-end">{difVendido !== null ? `$${difVendido}` : "-"}</td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerValorRinde} disabled={loading} className="vt-btn">
-                Obtener Valor Rinde
-              </Button>
-            </td>
-            <td className="text-end">{valorRinde !== null ? `${valorRinde}` : "-"}</td>
-          </tr>
-
-          {/* Calcular rinde */}
-          <tr>
-            <td>
-              <Button onClick={handleCalculoRinde} disabled={loading} className="vt-btn">
-                Calcular Rinde
-              </Button>
-            </td>
-            <td className="text-end">
-              {typeof rinde === "number" ? `${rinde.toFixed(2)} %` : "-"}
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <Button onClick={handleObtenerEficiencia} disabled={loading} className="vt-btn">
-                Obtener Eficiencia
-              </Button>
-            </td>
-            <td className="text-end">{eficiencia !== null ? `${eficiencia}` : "-"}</td>
-          </tr>
-        </tbody>
-      </Table>
-    </div>
-
-    {/* Guardar rinde */}
-    <Button
-      onClick={handleGuardarRinde}
-      disabled={loading}
-      variant="success"
-      className="vt-btn mx-auto mt-3 d-block"
-      style={{ width: "150px" }}
-    >
-      Guardar Rinde
-    </Button>
-
-    {/* Modal Inventarios */}
-    <Modal show={showModal} onHide={handleCloseModal} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>
-          Inventarios Sucursal{" "}
-          {
-            context.sucursalesTabla.find(
-              (sucursal) => parseInt(sucursal.id) === parseInt(searchSucursal)
-            )?.nombre
-          }
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <ListGroup>
-          {inventarios.map((inventario) => (
-            <ListGroup.Item
-              key={inventario.id}
-              onClick={() => handleSelectInventario(inventario)}
-              action
-            >
-              Mes: {inventario.mes}, Año: {inventario.anio}
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      </Modal.Body>
-    </Modal>
-
-    {/* Modal Ingresos Esperados */}
-    <Modal show={showIngresosModal} onHide={() => setShowIngresosModal(false)} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>Ingresos Esperados</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div className="mb-3">
-          <label className="vt-label">Novillos:</label>
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">AÑO</label>
           <input
             type="number"
-            value={novillosIngresos}
-            onChange={(e) => handleNovillosChange(e.target.value)}
-            className="form-control vt-input"
+            placeholder="Año"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="form-control vt-input text-center"
+            min="2000"
+            max="2050"
+            maxLength="4"
+            disabled={loading}
           />
         </div>
-        <div className="mb-3">
-          <label className="vt-label">Exportación:</label>
-          <input
-            type="number"
-            value={exportacionIngresos}
-            onChange={(e) => handleExportacionChange(e.target.value)}
-            className="form-control vt-input"
-          />
-        </div>
-        <div className="mb-3">
-          <label className="vt-label">Cerdos:</label>
-          <input
-            type="number"
-            value={cerdosIngresos}
-            onChange={(e) => handleCerdosChange(e.target.value)}
-            className="form-control vt-input"
-          />
-        </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={() => setShowIngresosModal(false)} className="vt-btn-secondary">
-          Cerrar
-        </Button>
-        <Button variant="primary" onClick={handleGuardarIngresos} className="vt-btn">
-          Guardar
-        </Button>
-      </Modal.Footer>
-    </Modal>
+      </div>
 
-    {/* Modal Ver Ingresos */}
-    <Modal show={showVerModal} onHide={handleCloseVerModal} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>Ingresos Esperados</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <div>Novillos: {novillosIngresos}</div>
-        <div>Exportación: {exportacionIngresos}</div>
-        <div>Cerdos: {cerdosIngresos}</div>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={handleCloseVerModal} className="vt-btn-secondary">
-          Cerrar
-        </Button>
-      </Modal.Footer>
-    </Modal>
+      {/* Filtros fechas + sucursal */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">DESDE</label>
+          <input
+            type="date"
+            placeholder="Seleccione fecha de inicio"
+            value={startDate}
+            onChange={(e) => handleStartDateChange(e.target.value)}
+            className="form-control vt-input text-center"
+            disabled={loading}
+          />
+        </div>
 
-    {/* Modal Categorías (excluir) */}
-    <Modal show={showModalCategories} onHide={() => setShowModalCategories(false)} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>Seleccionar Categorías a excluir</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <p className="vt-muted">Presione Ctrl para una selección múltiple</p>
-        <ListGroup>
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">HASTA</label>
+          <input
+            type="date"
+            placeholder="Seleccione fecha de fin"
+            value={endDate}
+            onChange={(e) => handleEndDateChange(e.target.value)}
+            className="form-control vt-input text-center"
+            disabled={loading}
+          />
+        </div>
+
+        <div className="d-inline-block w-auto">
+          <label className="vt-label d-block">Sucursal</label>
           <FormControl
             as="select"
-            multiple
-            value={selectedCategorias}
-            onChange={(e) =>
-              setSelectedCategorias(Array.from(e.target.selectedOptions, (option) => option.value))
-            }
+            placeholder="Seleccione una sucursal"
+            value={searchSucursal}
+            onChange={(e) => setSearchSucursal(e.target.value)}
             className="vt-input"
-            style={{ minHeight: 220 }}
+            style={{ minWidth: 260 }}
+            disabled={loading}
           >
-            {context.subcategoriasTabla.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.descripcion}
+            <option value="">Seleccione una sucursal</option>
+            {context.sucursalesTabla.map((sucursal) => (
+              <option key={sucursal.id} value={sucursal.id}>
+                {sucursal.nombre}
               </option>
             ))}
           </FormControl>
-        </ListGroup>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={() => setShowModalCategories(false)} className="vt-btn-secondary">
-          Cerrar
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() =>
-            handleObtenerDatos(
-              `${apiUrl}/ventas/monto_con_articulo_filtradas`,
-              "ventas",
-              selectedCategorias
-            )
-          }
-          className="vt-btn"
-        >
-          Continuar
-        </Button>
-      </Modal.Footer>
-    </Modal>
+        </div>
+      </div>
 
-    {/* Modal Ajustes */}
-    <Modal show={showAjustesModal} onHide={() => setShowAjustesModal(false)} className="vt-modal">
-      <Modal.Header closeButton>
-        <Modal.Title>Ajustes de Rinde</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <InputGroup>
-          <FormControl
-            placeholder="Descripción"
-            value={nuevoAjuste.descripcion}
-            onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, descripcion: e.target.value })}
-            className="vt-input"
-          />
-          <FormControl
-            placeholder="Importe"
-            value={nuevoAjuste.importe}
-            onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, importe: e.target.value })}
-            className="vt-input"
-          />
-          <Button variant="primary" onClick={handleAddAjuste} className="vt-btn">
-            Agregar
+      {/* Tabla de acciones/valores */}
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th>Operaciones</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <Button onClick={() => handleSelectCategories()} disabled={loading} className="vt-btn">
+                  Obtener Ventas
+                </Button>
+              </td>
+              <td className="text-end">
+                {montoVentas !== null ? `$${parseInt(montoVentas).toFixed(2)}` : "-"}
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button
+                  onClick={() => handleObtenerDatos(`${apiUrl}/obtenermontomovimientosfiltrados`, "movimientos")}
+                  disabled={loading}
+                  className="vt-btn"
+                >
+                  Obtener Movimientos
+                </Button>
+              </td>
+              <td className="text-end">
+                {montoMovimientos !== null ? `$${parseInt(montoMovimientos).toFixed(2)}` : "-"}
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button
+                  onClick={() => handleObtenerDatos(`${apiUrl}/movimientos-otro/monto`, "movimientosotros")}
+                  disabled={loading}
+                  className="vt-btn"
+                >
+                  Obtener Movimientos Otros
+                </Button>
+              </td>
+              <td className="text-end">
+                {montoMovimientosOtros !== null ? `$${parseInt(montoMovimientosOtros).toFixed(2)}` : "-"}
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={() => handleObtenerInventario(false)} disabled={loading} className="vt-btn">
+                  Obtener Inventario Inicial
+                </Button>
+              </td>
+              <td className="text-end">
+                {montoInventarioInicial !== null ? `$${parseInt(montoInventarioInicial).toFixed(2)}` : "-"}
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={() => handleObtenerInventario(true)} disabled={loading} className="vt-btn">
+                  Obtener Inventario Final
+                </Button>
+              </td>
+              <td className="text-end">
+                {montoInventarioFinal !== null ? `$${parseInt(montoInventarioFinal).toFixed(2)}` : "-"}
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={() => setShowIngresosModal(true)} disabled={loading} className="vt-btn">
+                  Ingresos Esperados
+                </Button>
+              </td>
+              <td>
+                <Button
+                  onClick={handleVerIngresos}
+                  disabled={loading || (novillosIngresos === 0 && exportacionIngresos === 0 && cerdosIngresos === 0)}
+                  className="vt-btn-secondary"
+                >
+                  Ver
+                </Button>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "nt")} disabled={loading} className="vt-btn">
+                  Kgs Novillo
+                </Button>
+              </td>
+              <td className="text-end">{kgNovillo !== null ? `${kgNovillo} Kg` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "va")} disabled={loading} className="vt-btn">
+                  Kgs Exportacion
+                </Button>
+              </td>
+              <td className="text-end">{kgVaca !== null ? `${kgVaca} Kg` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerCostovacuno} disabled={loading} className="vt-btn">
+                  Obtener Costo Vacuno
+                </Button>
+              </td>
+              <td className="text-end">{costovacuno !== null ? `$${costovacuno}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={() => handleObtenerKg(`${apiUrl}/productosordenesfiltradas`, "cerdo")} disabled={loading} className="vt-btn">
+                  Kgs Cerdo
+                </Button>
+              </td>
+              <td className="text-end">{kgCerdo !== null ? `${kgCerdo} Kg` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerCostoporcino} disabled={loading} className="vt-btn">
+                  Obtener Costo Porcino
+                </Button>
+              </td>
+              <td className="text-end">{costoporcino !== null ? `$${costoporcino}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={() => setShowAjustesModal(true)} disabled={loading} className="vt-btn">
+                  Agregar Ajuste
+                </Button>
+              </td>
+              <td>
+                <Button onClick={() => setShowAjustesModal(true)} disabled={loading || ajustes.length === 0} className="vt-btn-secondary">
+                  Ver
+                </Button>
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerTotalKg} disabled={loading} className="vt-btn">
+                  Obtener Total Kg
+                </Button>
+              </td>
+              <td className="text-end">{totalKg !== null ? `${totalKg} Kg` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerCantidadMedias} disabled={loading} className="vt-btn">
+                  Obtener Cantidad Medias
+                </Button>
+              </td>
+              <td className="text-end">{cantidadMedias !== "" ? cantidadMedias : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerCostoProm} disabled={loading} className="vt-btn">
+                  Obtener Costo Promedio
+                </Button>
+              </td>
+              <td className="text-end">{costoprom !== null ? `$${costoprom}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerMgtotal} disabled={loading} className="vt-btn">
+                  Obtener Margen Total
+                </Button>
+              </td>
+              <td className="text-end">{mgtotal !== null ? `$${mgtotal}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerMgporkg} disabled={loading} className="vt-btn">
+                  Obtener Margen por Kg
+                </Button>
+              </td>
+              <td className="text-end">{mgporkg !== null ? `$${mgporkg}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerTotalventa} disabled={loading} className="vt-btn">
+                  Obtener Total Venta
+                </Button>
+              </td>
+              <td className="text-end">{totalventa !== null ? `$${totalventa}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerPromdiario} disabled={loading} className="vt-btn">
+                  Obtener Promedio Diario
+                </Button>
+              </td>
+              <td className="text-end">{promdiario !== null ? `$${promdiario}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerGastos} disabled={loading} className="vt-btn">
+                  Obtener Gastos
+                </Button>
+              </td>
+              <td className="text-end">{gastos !== null ? `$${gastos}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerAchuras} disabled={loading} className="vt-btn">
+                  Obtener Achuras
+                </Button>
+              </td>
+              <td className="text-end">{achuras !== null ? `$${achuras}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerDifInventario} disabled={loading} className="vt-btn">
+                  Obtener Diferencia Inventario
+                </Button>
+              </td>
+              <td className="text-end">{difInventario !== null ? `$${difInventario}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerMbCerdo} disabled={loading} className="vt-btn">
+                  MB Cerdo
+                </Button>
+              </td>
+              <td className="text-end">{mbcerdo !== null ? `$${mbcerdo}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>Caja Grande</td>
+              <td>
+                <input
+                  type="number"
+                  value={cajagrande}
+                  onChange={(e) => setCajagrande(e.target.value)}
+                  className="form-control vt-input"
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td>Otros</td>
+              <td>
+                <input
+                  type="number"
+                  value={otros}
+                  onChange={(e) => setOtros(e.target.value)}
+                  className="form-control vt-input"
+                />
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerIngEsperado} disabled={loading} className="vt-btn">
+                  Obtener Ingreso Esperado
+                </Button>
+              </td>
+              <td className="text-end">{ingEsperado !== null ? `$${ingEsperado}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerIngVendido} disabled={loading} className="vt-btn">
+                  Obtener Ingreso Vendido
+                </Button>
+              </td>
+              <td className="text-end">{ingVendido !== null ? `$${ingVendido}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerDifEsperado} disabled={loading} className="vt-btn">
+                  Obtener Diferencia Esperado
+                </Button>
+              </td>
+              <td className="text-end">{difEsperado !== null ? `$${difEsperado}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerDifVendido} disabled={loading} className="vt-btn">
+                  Obtener Diferencia Vendido
+                </Button>
+              </td>
+              <td className="text-end">{difVendido !== null ? `$${difVendido}` : "-"}</td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerValorRinde} disabled={loading} className="vt-btn">
+                  Obtener Valor Rinde
+                </Button>
+              </td>
+              <td className="text-end">{valorRinde !== null ? `${valorRinde}` : "-"}</td>
+            </tr>
+
+            {/* Calcular rinde */}
+            <tr>
+              <td>
+                <Button onClick={handleCalculoRinde} disabled={loading} className="vt-btn">
+                  Calcular Rinde
+                </Button>
+              </td>
+              <td className="text-end">
+                {typeof rinde === "number" ? `${rinde.toFixed(2)} %` : "-"}
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <Button onClick={handleObtenerEficiencia} disabled={loading} className="vt-btn">
+                  Obtener Eficiencia
+                </Button>
+              </td>
+              <td className="text-end">{eficiencia !== null ? `${eficiencia}` : "-"}</td>
+            </tr>
+          </tbody>
+        </Table>
+      </div>
+
+      {/* Guardar rinde */}
+      <Button
+        onClick={handleGuardarRinde}
+        disabled={loading}
+        variant="success"
+        className="vt-btn mx-auto mt-3 d-block"
+        style={{ width: "150px" }}
+      >
+        Guardar Rinde
+      </Button>
+
+      {/* Modal Inventarios */}
+      <Modal show={showModal} onHide={handleCloseModal} className="vt-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Inventarios Sucursal{" "}
+            {
+              context.sucursalesTabla.find(
+                (sucursal) => parseInt(sucursal.id) === parseInt(searchSucursal)
+              )?.nombre
+            }
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ListGroup>
+            {inventarios.map((inventario) => (
+              <ListGroup.Item
+                key={inventario.id}
+                onClick={() => handleSelectInventario(inventario)}
+                action
+              >
+                Mes: {inventario.mes}, Año: {inventario.anio}
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        </Modal.Body>
+      </Modal>
+
+      {/* Modal Ingresos Esperados */}
+      {showIngresosModal && (
+        <Modal show={showIngresosModal} onHide={() => setShowIngresosModal(false)} className="vt-modal">
+          <Modal.Header closeButton>
+            <Modal.Title>Ingresos Esperados</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="mb-3">
+              <label className="vt-label">Novillos:</label>
+              <input
+                type="number"
+                value={novillosIngresos}
+                onChange={(e) => handleNovillosChange(e.target.value)}
+                className="form-control vt-input"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="vt-label">Exportación:</label>
+              <input
+                type="number"
+                value={exportacionIngresos}
+                onChange={(e) => handleExportacionChange(e.target.value)}
+                className="form-control vt-input"
+              />
+            </div>
+            <div className="mb-3">
+              <label className="vt-label">Cerdos:</label>
+              <input
+                type="number"
+                value={cerdosIngresos}
+                onChange={(e) => handleCerdosChange(e.target.value)}
+                className="form-control vt-input"
+              />
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowIngresosModal(false)} className="vt-btn-secondary">
+              Cerrar
+            </Button>
+            <Button variant="primary" onClick={handleGuardarIngresos} className="vt-btn">
+              Guardar
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      )}
+
+      {/* Modal Ver Ingresos */}
+
+      <Modal
+        show={showVerModal}
+        onHide={handleCloseVerModal}
+        className="vt-modal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Ingresos Esperados</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <div>Novillos: {novillosIngresos}</div>
+          <div>Exportación: {exportacionIngresos}</div>
+          <div>Cerdos: {cerdosIngresos}</div>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={handleCloseVerModal}
+            className="vt-btn-secondary"
+          >
+            Cerrar
           </Button>
-        </InputGroup>
-        <ListGroup className="mt-3">
-          {ajustes.map((ajuste, index) => (
-            <ListGroup.Item
-              key={index}
-              className="d-flex justify-content-between align-items-center"
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal Categorías (excluir) */}
+      <Modal show={showModalCategories} onHide={() => setShowModalCategories(false)} className="vt-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>Seleccionar Categorías a excluir</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="vt-muted">Presione Ctrl para una selección múltiple</p>
+          <ListGroup>
+            <FormControl
+              as="select"
+              multiple
+              value={selectedCategorias}
+              onChange={(e) =>
+                setSelectedCategorias(Array.from(e.target.selectedOptions, (option) => option.value))
+              }
+              className="vt-input"
+              style={{ minHeight: 220 }}
             >
-              {`${ajuste.descripcion}: $${ajuste.importe}`}
-              <Button variant="danger" onClick={() => handleEliminarAjuste(index)} className="vt-btn-danger">
-                Eliminar
-              </Button>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={handleCancelarAjustes} className="vt-btn-secondary">
-          Cancelar
-        </Button>
-        <Button variant="primary" onClick={handleGuardarAjustes} className="vt-btn">
-          Guardar Ajustes
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  </Container>
-);
+              {context.subcategoriasTabla.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>
+                  {categoria.descripcion}
+                </option>
+              ))}
+            </FormControl>
+          </ListGroup>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModalCategories(false)} className="vt-btn-secondary">
+            Cerrar
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() =>
+              handleObtenerDatos(
+                `${apiUrl}/ventas/monto_con_articulo_filtradas`,
+                "ventas",
+                selectedCategorias
+              )
+            }
+            className="vt-btn"
+          >
+            Continuar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal Ajustes */}
+      <Modal show={showAjustesModal} onHide={() => setShowAjustesModal(false)} className="vt-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>Ajustes de Rinde</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <InputGroup>
+            <FormControl
+              placeholder="Descripción"
+              value={nuevoAjuste.descripcion}
+              onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, descripcion: e.target.value })}
+              className="vt-input"
+            />
+            <FormControl
+              placeholder="Importe"
+              value={nuevoAjuste.importe}
+              onChange={(e) => setNuevoAjuste({ ...nuevoAjuste, importe: e.target.value })}
+              className="vt-input"
+            />
+            <Button variant="primary" onClick={handleAddAjuste} className="vt-btn">
+              Agregar
+            </Button>
+          </InputGroup>
+          <ListGroup className="mt-3">
+            {ajustes.map((ajuste, index) => (
+              <ListGroup.Item
+                key={index}
+                className="d-flex justify-content-between align-items-center"
+              >
+                {`${ajuste.descripcion}: $${ajuste.importe}`}
+                <Button variant="danger" onClick={() => handleEliminarAjuste(index)} className="vt-btn-danger">
+                  Eliminar
+                </Button>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCancelarAjustes} className="vt-btn-secondary">
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleGuardarAjustes} className="vt-btn">
+            Guardar Ajustes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
+  );
 
 }

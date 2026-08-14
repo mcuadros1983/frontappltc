@@ -1,0 +1,71 @@
+:root {
+  --erp-radius: 10px;
+  --erp-border: #dee2e6;
+  --erp-bg: #f8f9fa;
+  --erp-muted: #6c757d;
+}
+
+.erp-page {
+  padding: 1rem;
+}
+
+.erp-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.erp-page-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.erp-page-subtitle {
+  color: var(--erp-muted);
+  font-size: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.erp-card {
+  border: 0;
+  border-radius: var(--erp-radius);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.erp-card-header {
+  background: #fff;
+  border-bottom: 1px solid var(--erp-border);
+  font-weight: 600;
+}
+
+.erp-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.erp-toolbar{
+
+    margin-bottom:20px;
+
+}
+
+.erp-search{
+
+    min-width:300px;
+
+}
+
+.erp-filter{
+
+    display:flex;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+}
+

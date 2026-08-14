@@ -1,0 +1,10 @@
+export { default as ReporteCard } from "./ReporteCard";
+export { default as ReporteKPIs } from "./ReporteKPIs";
+export { default as ReporteHeader } from "./ReporteHeader";
+export { default as ReporteTable } from "./ReporteTable";
+export { default as ReporteHistorico } from "./ReporteHistorico";
+export { default as ReporteComentarios } from "./ReporteComentarios";
+export { default as ReporteCompetencias } from "./ReporteCompetencias";
+export { default as ReporteResumen } from "./ReporteResumen";
+export { default as ReporteRanking } from "./ReporteRanking";
+export { default as ReporteRadar } from "./ReporteRadar";

@@ -218,6 +218,7 @@ export default function AsignarEmpleadoManager() {
       franco_am: de?.franco_am ?? null,
       franco_pm: de?.franco_pm ?? null,
       telefono: de?.telefono ?? "", // 🔹 acá pasamos el teléfono existente al modal
+      tipo: de?.tipo ?? "VENDEDOR", // 🔹 acá pasamos el tipo existente al modal
     });
     setShowModal(true);
   };
@@ -259,11 +260,10 @@ export default function AsignarEmpleadoManager() {
             <Col xs={12} md={8}>
               <div className="d-flex flex-column">
                 <h4 className="mb-1 fw-semibold">
-                  Asignación de sucursal, jornada y francos
+                  Asignación de datos a empleados
                 </h4>
                 <div className="text-muted small">
-                  Gestioná qué jornada y qué sucursal corresponde a cada
-                  empleado activo.
+                  Gestioná los datos adicionales de cada empleado, como sucursal, jornada, francos y teléfono. Solo se muestran los empleados con estado activo.
                 </div>
               </div>
             </Col>
@@ -335,6 +335,7 @@ export default function AsignarEmpleadoManager() {
                   <th style={{ width: 140 }}>DNI / CUIL</th>
                   <th>Empleado</th>
                   <th style={{ width: 160 }}>Teléfono</th> {/* 🔹 nueva columna */}
+                  <th style={{ width: 160 }}>Tipo</th> {/* 🔹 nueva columna */}
                   <th style={{ width: 180 }}>Sucursal</th>
                   <th style={{ width: 180 }}>Jornada</th>
                   <th style={{ width: 140 }}>Franco AM</th>
@@ -366,6 +367,7 @@ export default function AsignarEmpleadoManager() {
                         <td className="text-muted">{dniEmpleado(emp)}</td>
                         <td className="fw-medium">{nombreEmpleado(emp)}</td>
                         <td>{de?.telefono || "—"}</td> {/* 🔹 muestra teléfono */}
+                        <td>{de?.tipo || "—"}</td> {/* 🔹 muestra tipo */}
                         <td>
                           {de?.sucursal_id
                             ? sucursalNombre(de.sucursal_id)

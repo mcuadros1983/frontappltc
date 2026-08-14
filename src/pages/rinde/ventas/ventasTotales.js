@@ -10,6 +10,7 @@ import {
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
 import "../../../components/css/VentasTotalesSuc.css"; // ⬅️ NUEVO
+import * as XLSX from "xlsx";
 
 export default function VentasTotales() {
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
@@ -26,7 +27,7 @@ export default function VentasTotales() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
-  useEffect(() => {}, [selectedSucursal]);
+  useEffect(() => { }, [selectedSucursal]);
 
   const handleFilter = async () => {
     try {
@@ -112,6 +113,29 @@ export default function VentasTotales() {
 
   const handleSearchClick = () => handleFilter();
 
+  const exportarExcel = () => {
+    const dataToExport = ventasFiltradas.map((venta) => ({
+      Fecha: venta.fecha,
+
+      Monto: Number(venta.monto || 0).toLocaleString("es-ES", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
+
+      Sucursal:
+        context.sucursalesTabla.find(
+          (sucursal) => sucursal.id === parseInt(venta.sucursal_id)
+        )?.nombre || "Desconocido",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(wb, ws, "Ventas Totales");
+
+    XLSX.writeFile(wb, "ventas_totales.xlsx");
+  };
+
   const indexOfLastSell = currentPage * sellsPerPage;
   const indexOfFirstSell = indexOfLastSell - sellsPerPage;
   const currentSells = ventasFiltradas.slice(indexOfFirstSell, indexOfLastSell);
@@ -180,6 +204,16 @@ export default function VentasTotales() {
         <div className="d-inline-block mx-2">
           <Button onClick={handleSearchClick} className="vt-btn">
             Filtrar
+          </Button>
+        </div>
+
+        <div className="d-inline-block">
+          <Button
+            variant="success"
+            onClick={exportarExcel}
+            disabled={ventasFiltradas.length === 0}
+          >
+            Exportar a Excel
           </Button>
         </div>
       </div>

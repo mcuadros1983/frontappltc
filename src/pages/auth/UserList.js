@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useContext } from "react";
 import {
   Container,
   Row,
@@ -9,6 +9,8 @@ import {
   Badge,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import Contexts from "../../context/Contexts";
+import { useSecurity } from "../../security/SecurityContext"; // 👈 NUEVO
 
 export default function BranchList() {
   const [users, setUsers] = useState([]);
@@ -16,6 +18,18 @@ export default function BranchList() {
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const navigate = useNavigate();
+
+  const { sucursales } = useContext(Contexts.DataContext);
+
+  const obtenerNombreSucursal = (sucursalId) => {
+    if (!sucursalId) return "-";
+
+    const sucursal = sucursales.find(
+      (s) => Number(s.id) === Number(sucursalId)
+    );
+
+    return sucursal?.nombre || `ID ${sucursalId}`;
+  };
 
   const loadUsers = useCallback(async () => {
     const res = await fetch(`${apiUrl}/usuarios/`, {
@@ -25,7 +39,7 @@ export default function BranchList() {
     const sortedUsers = data.sort((a, b) => a.id - b.id);
     setUsers(sortedUsers);
     // console.log("storagebranchlist", localStorage.token);
-  },[apiUrl]);
+  }, [apiUrl]);
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -52,87 +66,89 @@ export default function BranchList() {
   }, [loadUsers]);
 
   return (
-  <Container fluid className="mt-3 rpm-page px-3">
-    <Row>
-      <Col>
-        <Card className="rpm-card">
-          <Card.Header className="d-flex justify-content-between align-items-center rpm-header">
-            <strong>Lista de Usuarios</strong>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate("/users/new")}
-              className="rpm-btn"
-            >
-              Nuevo Usuario
-            </Button>
-          </Card.Header>
+    <Container fluid className="mt-3 rpm-page px-3">
+      <Row>
+        <Col>
+          <Card className="rpm-card">
+            <Card.Header className="d-flex justify-content-between align-items-center rpm-header">
+              <strong>Lista de Usuarios</strong>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => navigate("/users/new")}
+                className="rpm-btn"
+              >
+                Nuevo Usuario
+              </Button>
+            </Card.Header>
 
-          <Card.Body className="rpm-body">
-            <div className="table-responsive rpm-tablewrap">
-              <Table bordered hover size="sm" className="rpm-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: 60 }}># ID</th>
-                    <th>Nombre Usuario</th>
-                    <th>Roles</th>
-                    <th>Operaciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.length === 0 ? (
+            <Card.Body className="rpm-body">
+              <div className="table-responsive rpm-tablewrap">
+                <Table bordered hover size="sm" className="rpm-table">
+                  <thead>
                     <tr>
-                      <td colSpan={4} className="text-center text-muted py-4">
-                        Sin usuarios registrados
-                      </td>
+                      <th style={{ width: 60 }}># ID</th>
+                      <th>Nombre Usuario</th>
+                      <th>Roles</th>
+                      <th>Sucursal</th>
+                      <th>Operaciones</th>
                     </tr>
-                  ) : (
-                    users.map((user) => (
-                      <tr key={user.id}>
-                        <td>{user.id}</td>
-                        <td className="fw-medium">{user.usuario}</td>
-                        <td>
-                          {user.roles && user.roles.length > 0
-                            ? user.roles.map((rol) => (
+                  </thead>
+                  <tbody>
+                    {users.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="text-center text-muted py-4">
+                          Sin usuarios registrados
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map((user) => (
+                        <tr key={user.id}>
+                          <td>{user.id}</td>
+                          <td className="fw-medium">{user.usuario}</td>
+                          <td>
+                            {user.roles && user.roles.length > 0
+                              ? user.roles.map((rol) => (
                                 <Badge key={rol.id} bg="secondary" className="me-1 rpm-badge">
                                   {rol.nombre}
                                 </Badge>
                               ))
-                            : "—"}
-                        </td>
-                        <td className="text-center text-nowrap">
-                          <Button
-                            size="sm"
-                            variant="outline-secondary"
-                            className="me-2 rpm-btn-outline"
-                            onClick={() => navigate(`/users/${user.id}/edit`)}
-                          >
-                            Editar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline-danger"
-                            className="rpm-btn-outline"
-                            onClick={() => handleDelete(user.id)}
-                          >
-                            Eliminar
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </Table>
-            </div>
+                              : "—"}
+                          </td>
+                          {obtenerNombreSucursal(user.sucursal_id)}
+                          <td className="text-center text-nowrap">
+                            <Button
+                              size="sm"
+                              variant="outline-secondary"
+                              className="me-2 rpm-btn-outline"
+                              onClick={() => navigate(`/users/${user.id}/edit`)}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline-danger"
+                              className="rpm-btn-outline"
+                              onClick={() => handleDelete(user.id)}
+                            >
+                              Eliminar
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </Table>
+              </div>
 
-            {/* Paginación opcional (si la tenés) */}
-            {/* <div className="d-flex justify-content-between align-items-center rpm-pager mt-3">
+              {/* Paginación opcional (si la tenés) */}
+              {/* <div className="d-flex justify-content-between align-items-center rpm-pager mt-3">
               <div className="text-muted">Total: {users.length} usuarios</div>
             </div> */}
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
-  </Container>
-);
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
+  );
 }
