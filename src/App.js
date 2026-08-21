@@ -409,6 +409,7 @@ import InteligenciaSnapshotsPage
 
 import InteligenciaClimaPage
   from "./pages/inteligencia/clima/InteligenciaClimaPage";
+import PagosProgramadosPage from "./components/tesoreria/PagosProgramadosPage.js";
 
 const PUBLIC_FIDELIZACION_HOSTS = [
   "latradicionsorteos.com",
@@ -1032,6 +1033,8 @@ INTELIGENCIA COMERCIAL
                         {/* Caja Tesoreria */}
                         <Route path="/tesoreria/cajas/apertura" element={<AbrirCaja />} />
                         <Route path="/tesoreria/movimientos-caja-tesoreria" element={<MovimientosCajaTesoreria />} />
+
+                        <Route path="/tesoreria/pagos-programados" element={<PagosProgramadosPage />} />
 
                         {/* Bancos Tesoreria */}
                         <Route path="/tesoreria/movimientos-banco-tesoreria" element={<MovimientosBancoTesoreria />} />

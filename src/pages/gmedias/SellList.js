@@ -1,14 +1,25 @@
 import React, { useContext, useEffect, useState, useCallback } from "react";
 import {
-  Table,
-  Container,
+  Alert,
+  Badge,
   Button,
-  FormControl,
+  Card,
+  Col,
   Dropdown,
+  Form,
+  Row,
+  Spinner,
+  Table,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Contexts from "../../context/Contexts";
-import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import {
+  BsChevronLeft,
+  BsChevronRight,
+  BsDownload,
+  BsPencil,
+  BsTrash,
+} from "react-icons/bs";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
@@ -29,6 +40,8 @@ export default function SellList() {
   const [sortDirection, setSortDirection] = useState("asc");
   // cache: { [sellId]: "bovino" | "porcino" | "Mixta" | "" }
   const [categoriaCache, setCategoriaCache] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Si alguno de los productos de la venta no tiene precio válido, marcamos la venta
   const hasMissingPrice = (sell) => {
@@ -103,25 +116,71 @@ export default function SellList() {
 
 
   const loadSells = useCallback(async () => {
+
     try {
-      const res = await fetch(`${apiUrl}/ventas/`, {
-        credentials: "include",
-      });
-      const data = await res.json();
 
-      // agregamos props derivadas para mostrar en tabla
-      const withDerived = data.map((s) => ({
-        ...s,
-        cantidad_total: calcCantidadItems(s),
-        peso_total: calcPesoTotal(s),
-        // categoria se completa luego vía categoriaCache (endpoint /ventas/:id/productos/)
-      }));
+      setLoading(true);
+      setError("");
 
-      const sortedSells = withDerived.sort((a, b) => b.id - a.id);
-      setSells(sortedSells);
-    } catch (error) {
-      console.error(error);
+      const res =
+        await fetch(
+          `${apiUrl}/ventas/`,
+          {
+            credentials: "include",
+          }
+        );
+
+      if (!res.ok) {
+        throw new Error(
+          `HTTP ${res.status}`
+        );
+      }
+
+      const data =
+        await res.json();
+
+      const rows =
+        Array.isArray(data)
+          ? data
+          : [];
+
+      const withDerived =
+        rows.map(
+          (s) => ({
+            ...s,
+            cantidad_total:
+              calcCantidadItems(s),
+            peso_total:
+              calcPesoTotal(s),
+          })
+        );
+
+      const sortedSells =
+        withDerived.sort(
+          (a, b) =>
+            b.id - a.id
+        );
+
+      setSells(
+        sortedSells
+      );
+
     }
+    catch (error) {
+
+      console.error(error);
+
+      setError(
+        "No se pudieron cargar las ventas."
+      );
+
+    }
+    finally {
+
+      setLoading(false);
+
+    }
+
   }, [apiUrl]);
 
 
@@ -325,7 +384,19 @@ export default function SellList() {
     fetchCategoriasForVisibleSells(currentSells);
   }, [currentSells, fetchCategoriasForVisibleSells]);
 
-  const nextPage = () => setCurrentPage(currentPage + 1);
+  const nextPage = () => {
+
+  if (
+    currentPage <
+    totalPages
+  ) {
+    setCurrentPage(
+      (prev) =>
+        prev + 1
+    );
+  }
+
+};
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
 
 
@@ -390,213 +461,1233 @@ export default function SellList() {
     saveAs(blob, nombreArchivo);
   };
 
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        filteredSells.length /
+        sellsPerPage
+      )
+    );
+
+
+  const totalKg =
+    filteredSells.reduce(
+      (total, sell) =>
+        total +
+        Number(
+          sell.peso_total || 0
+        ),
+      0
+    );
+
+
+  const totalMonto =
+    filteredSells.reduce(
+      (total, sell) => {
+
+        const productos =
+          Array.isArray(
+            sell?.productos
+          )
+            ? sell.productos
+            : [];
+
+        return (
+          total +
+          productos.reduce(
+            (subtotal, p) =>
+              subtotal +
+              (
+                Number(p?.precio) || 0
+              ) *
+              (
+                Number(p?.kg) || 0
+              ),
+            0
+          )
+        );
+
+      },
+      0
+    );
+
+
+  const ventasSinPrecio =
+    filteredSells.filter(
+      hasMissingPrice
+    ).length;
+
+
+  const formatCurrency =
+    (value) =>
+      Number(value || 0)
+        .toLocaleString(
+          "es-AR",
+          {
+            style: "currency",
+            currency: "ARS",
+            minimumFractionDigits: 2,
+          }
+        );
 
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Lista de Ventas</h1>
 
-      <Button variant="success" onClick={exportarExcel} disabled={!filteredSells.length}>
-        Exportar Excel
-      </Button>
+    <div className="container-fluid px-3 px-lg-4 py-3">
 
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
+      {/* =====================================================
+        CABECERA
+    ====================================================== */}
+
+      <div
+        className="
+        d-flex
+        flex-column
+        flex-lg-row
+        justify-content-between
+        align-items-lg-center
+        gap-3
+        mb-4
+      "
+      >
+
+        <div>
+
+          <h2 className="mb-1 fw-semibold">
+            Lista de ventas
+          </h2>
+
+          <div className="text-muted">
+            Consulta y administración de ventas registradas.
+          </div>
+
         </div>
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">HASTA:</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
-        </div>
-      </div>
-
-      <div className="mb-2 small text-muted">
-        <span style={{ backgroundColor: "#ffe5e5", padding: "2px 6px", borderRadius: 4 }}> </span>
-        {" "}Fila en rojo: venta con productos sin precio.
-      </div>
 
 
-      <div className="mb-3">
-        <label className="mr-2">Cliente:</label>
-        <FormControl
-          as="select"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-25"
+        <Button
+
+          variant="outline-success"
+
+          onClick={
+            exportarExcel
+          }
+
+          disabled={
+            filteredSells.length ===
+            0
+          }
+
         >
-          <option value="">Todos los clientes</option>
-          {[...clients]
-            .sort((a, b) => a.nombre.localeCompare(b.nombre))
-            .map((client) => (
-              <option key={client.id} value={client.nombre}>
-                {client.nombre}
-              </option>
-            ))}
-        </FormControl>
+
+          <BsDownload className="me-2" />
+
+          Exportar Excel
+
+        </Button>
+
       </div>
 
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th onClick={() => handleSort("id")} style={{ cursor: "pointer" }}>#</th>
-            <th onClick={() => handleSort("fecha")} style={{ cursor: "pointer" }}>Fecha</th>
-            <th onClick={() => handleSort("Cliente.nombre")} style={{ cursor: "pointer" }}>Cliente</th>
-            <th onClick={() => handleSort("FormaPago.tipo")} style={{ cursor: "pointer" }}>Forma de Pago</th>
 
-            {/* NUEVAS COLUMNAS */}
-            <th onClick={() => handleSort("cantidad_total")} style={{ cursor: "pointer" }}>
-              Cantidad (medias)
-            </th>
-            <th onClick={() => handleSort("peso_total")} style={{ cursor: "pointer" }}>
-              Peso total
-            </th>
-            <th>Categoría</th>
+      {
+        error && (
 
-            <th style={{ cursor: "pointer" }}>Monto</th>
-            <th>Operaciones</th>
-          </tr>
+          <Alert
+            variant="danger"
+            dismissible
+            onClose={() =>
+              setError("")
+            }
+          >
+            {error}
+          </Alert>
 
-        </thead>
-        <tbody>
-          {currentSells.map((sell) => (
-            <tr
-              key={sell.id}
-              style={{
-                cursor: "pointer",
-                backgroundColor: hasMissingPrice(sell) ? "#ffe5e5" : undefined, // rojo suave
-              }}
-              title={hasMissingPrice(sell) ? "Esta venta tiene productos sin precio" : ""}
-              onDoubleClick={() => navigate(`/sells/${sell.id}/products`)}
+        )
+      }
+
+
+      {/* =====================================================
+        INDICADORES
+    ====================================================== */}
+
+      <Row className="g-3 mb-4">
+
+        <Col
+          sm={6}
+          xl={3}
+        >
+
+          <Card className="h-100 border-0 shadow-sm">
+
+            <Card.Body>
+
+              <div className="small text-muted">
+                Ventas encontradas
+              </div>
+
+              <div className="fs-3 fw-semibold">
+                {
+                  filteredSells.length
+                    .toLocaleString(
+                      "es-AR"
+                    )
+                }
+              </div>
+
+            </Card.Body>
+
+          </Card>
+
+        </Col>
+
+
+        <Col
+          sm={6}
+          xl={3}
+        >
+
+          <Card className="h-100 border-0 shadow-sm">
+
+            <Card.Body>
+
+              <div className="small text-muted">
+                Peso total
+              </div>
+
+              <div className="fs-3 fw-semibold">
+
+                {
+                  totalKg.toLocaleString(
+                    "es-AR",
+                    {
+                      maximumFractionDigits: 2,
+                    }
+                  )
+                } kg
+
+              </div>
+
+            </Card.Body>
+
+          </Card>
+
+        </Col>
+
+
+        <Col
+          sm={6}
+          xl={3}
+        >
+
+          <Card className="h-100 border-0 shadow-sm">
+
+            <Card.Body>
+
+              <div className="small text-muted">
+                Monto total
+              </div>
+
+              <div className="fs-4 fw-semibold">
+                {
+                  formatCurrency(
+                    totalMonto
+                  )
+                }
+              </div>
+
+            </Card.Body>
+
+          </Card>
+
+        </Col>
+
+
+        <Col
+          sm={6}
+          xl={3}
+        >
+
+          <Card
+            className={`
+            h-100
+            border-0
+            shadow-sm
+            ${ventasSinPrecio > 0
+                ? "border-start border-danger border-4"
+                : ""
+              }
+          `}
+          >
+
+            <Card.Body>
+
+              <div className="small text-muted">
+                Ventas con precios faltantes
+              </div>
+
+              <div
+                className={`
+                fs-3
+                fw-semibold
+                ${ventasSinPrecio > 0
+                    ? "text-danger"
+                    : ""
+                  }
+              `}
+              >
+                {ventasSinPrecio}
+              </div>
+
+            </Card.Body>
+
+          </Card>
+
+        </Col>
+
+      </Row>
+
+
+      {/* =====================================================
+        FILTROS
+    ====================================================== */}
+
+      <Card className="border-0 shadow-sm mb-4">
+
+        <Card.Header className="bg-white py-3">
+
+          <div className="fw-semibold">
+            Filtros
+          </div>
+
+          <div className="small text-muted">
+            Filtra las ventas por período y cliente.
+          </div>
+
+        </Card.Header>
+
+
+        <Card.Body>
+
+          <Row className="g-3">
+
+            <Col
+              md={4}
+              lg={3}
             >
 
-              <td>{sell.id}</td>
-              <td>{sell.fecha}</td>
-              <td>
-                {editingSellId && editingSellId.id === sell.id && editingSellId.type === "client" ? (
-                  <Dropdown onSelect={handleChangeClient}>
-                    <Dropdown.Toggle variant="success">
-                      {selectedClient?.nombre || "Seleccionar cliente"}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                      {[...clients]
-                        .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                        .map((client) => (
-                          <Dropdown.Item key={client.id} eventKey={client.nombre}>
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Desde
+                </Form.Label>
+
+                <Form.Control
+
+                  type="date"
+
+                  value={
+                    startDate
+                  }
+
+                  onChange={
+                    (e) =>
+                      setStartDate(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col
+              md={4}
+              lg={3}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Hasta
+                </Form.Label>
+
+                <Form.Control
+
+                  type="date"
+
+                  value={
+                    endDate
+                  }
+
+                  onChange={
+                    (e) =>
+                      setEndDate(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col
+              md={4}
+              lg={6}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Cliente
+                </Form.Label>
+
+                <Form.Select
+
+                  value={
+                    searchTerm
+                  }
+
+                  onChange={
+                    (e) =>
+                      setSearchTerm(
+                        e.target.value
+                      )
+                  }
+
+                >
+
+                  <option value="">
+                    Todos los clientes
+                  </option>
+
+                  {
+                    [...clients]
+                      .sort(
+                        (a, b) =>
+                          a.nombre.localeCompare(
+                            b.nombre
+                          )
+                      )
+                      .map(
+                        (client) => (
+
+                          <option
+                            key={
+                              client.id
+                            }
+                            value={
+                              client.nombre
+                            }
+                          >
                             {client.nombre}
-                          </Dropdown.Item>
-                        ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                ) : sell.Cliente ? (
-                  sell.Cliente.nombre
-                ) : (
-                  "Cliente Desconocido"
-                )}
-              </td>
-              <td>
-                {editingSellId && editingSellId.id === sell.id && editingSellId.type === "paymentMethod" ? (
-                  <Dropdown onSelect={handleChangePaymentMethod}>
-                    <Dropdown.Toggle variant="success">
-                      {selectedPaymentMethod?.tipo || "Seleccionar forma de pago"}
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                      {[...paymentMethods]
-                        .sort((a, b) => a.tipo.localeCompare(b.tipo))
-                        .map((method) => (
-                          <Dropdown.Item key={method.id} eventKey={method.tipo}>
-                            {method.tipo}
-                          </Dropdown.Item>
-                        ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                ) : sell.FormaPago ? (
-                  sell.FormaPago.tipo
-                ) : (
-                  "Forma de pago desconocida"
-                )}
-              </td>
+                          </option>
 
-              <td>{sell.cantidad_total ?? 0}</td>
-              <td>{(sell.peso_total ?? 0).toFixed(2)}</td>
-              <td>{categoriaCache[sell.id] ?? ""}</td>
+                        )
+                      )
+                  }
+
+                </Form.Select>
+
+              </Form.Group>
+
+            </Col>
+
+          </Row>
+
+        </Card.Body>
+
+      </Card>
 
 
-              <td>
-                {sell.productos
-                  .reduce((total, p) => total + p.precio * p.kg, 0)
-                  .toLocaleString("es-AR", {
-                    style: "currency",
-                    currency: "ARS",
-                    minimumFractionDigits: 2,
-                  })}
-              </td>
-              <td className="text-center">
-                <div className="d-flex justify-content-center align-items-center gap-2 flex-wrap">
-                  {editingSellId && editingSellId.id === sell.id ? (
-                    <>
-                      <Button variant="primary" onClick={handleSaveEdit} size="sm">
-                        Guardar
-                      </Button>
-                      <Button variant="secondary" onClick={handleCancelEdit} size="sm">
-                        Cancelar
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleEditClient(sell.id)}
-                      >
-                        Editar Cliente
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleEditPaymentMethod(sell.id)}
-                      >
-                        Editar FPago
-                      </Button>
-                    </>
-                  )}
+      {/* =====================================================
+        ALERTA PRECIOS
+    ====================================================== */}
 
-                  {context.user?.usuario === "admin" && (
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleDelete(sell.id)}
-                    >
-                      Eliminar
-                    </Button>
-                  )}
-                </div>
-              </td>
+      {
+        ventasSinPrecio > 0 && (
 
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+          <Alert
+            variant="warning"
+            className="
+            d-flex
+            align-items-center
+            gap-2
+            mb-4
+          "
+          >
 
-      <div className="d-flex justify-content-between">
-        <Button onClick={prevPage} disabled={currentPage === 1}><BsChevronLeft /></Button>
-        <span>Página {currentPage} de {Math.ceil(filteredSells.length / sellsPerPage)}</span>
-        <Button
-          onClick={nextPage}
-          disabled={currentPage === Math.ceil(filteredSells.length / sellsPerPage)}
+            <Badge bg="danger">
+              {ventasSinPrecio}
+            </Badge>
+
+            <span>
+              Hay ventas con uno o más productos sin precio válido.
+              Estas filas aparecen resaltadas.
+            </span>
+
+          </Alert>
+
+        )
+      }
+
+
+      {/* =====================================================
+        TABLA
+    ====================================================== */}
+
+      <Card className="border-0 shadow-sm">
+
+        <Card.Header
+          className="
+          bg-white
+          py-3
+          d-flex
+          justify-content-between
+          align-items-center
+          flex-wrap
+          gap-2
+        "
         >
-          <BsChevronRight />
-        </Button>
-      </div>
-    </Container>
+
+          <div>
+
+            <div className="fw-semibold">
+              Ventas
+            </div>
+
+            <div className="small text-muted">
+              Mostrando {currentSells.length} de{" "}
+              {filteredSells.length} registros.
+              Doble clic sobre una fila para abrir sus productos.
+            </div>
+
+          </div>
+
+
+          {
+            loading && (
+
+              <div className="small text-muted">
+
+                <Spinner
+                  animation="border"
+                  size="sm"
+                  className="me-2"
+                />
+
+                Cargando...
+
+              </div>
+
+            )
+          }
+
+        </Card.Header>
+
+
+        <Card.Body className="p-0">
+
+          <div className="table-responsive">
+
+            <Table
+              hover
+              size="sm"
+              className="mb-0 align-middle"
+            >
+
+              <thead className="table-light">
+
+                <tr>
+
+                  <th
+                    className="ps-3"
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort(
+                        "id"
+                      )
+                    }
+                  >
+                    ID
+                  </th>
+
+
+                  <th
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort(
+                        "fecha"
+                      )
+                    }
+                  >
+                    Fecha
+                  </th>
+
+
+                  <th
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort(
+                        "Cliente.nombre"
+                      )
+                    }
+                  >
+                    Cliente
+                  </th>
+
+
+                  <th
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort(
+                        "FormaPago.tipo"
+                      )
+                    }
+                  >
+                    Forma de pago
+                  </th>
+
+
+                  <th
+                    className="text-end"
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort(
+                        "cantidad_total"
+                      )
+                    }
+                  >
+                    Medias
+                  </th>
+
+
+                  <th
+                    className="text-end"
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort(
+                        "peso_total"
+                      )
+                    }
+                  >
+                    Peso
+                  </th>
+
+
+                  <th>
+                    Categoría
+                  </th>
+
+
+                  <th className="text-end">
+                    Monto
+                  </th>
+
+
+                  <th className="text-end pe-3">
+                    Operaciones
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody>
+
+                {
+                  currentSells.length ===
+                    0 &&
+                    !loading
+                    ? (
+
+                      <tr>
+
+                        <td
+                          colSpan={9}
+                          className="
+                          text-center
+                          text-muted
+                          py-5
+                        "
+                        >
+                          No hay ventas para mostrar.
+                        </td>
+
+                      </tr>
+
+                    )
+                    : currentSells.map(
+                      (sell) => {
+
+                        const missingPrice =
+                          hasMissingPrice(
+                            sell
+                          );
+
+
+                        const monto =
+                          Array.isArray(
+                            sell?.productos
+                          )
+                            ? sell.productos.reduce(
+                              (
+                                total,
+                                p
+                              ) =>
+                                total +
+                                (
+                                  Number(
+                                    p?.precio
+                                  ) || 0
+                                ) *
+                                (
+                                  Number(
+                                    p?.kg
+                                  ) || 0
+                                ),
+                              0
+                            )
+                            : 0;
+
+
+                        return (
+
+                          <tr
+
+                            key={
+                              sell.id
+                            }
+
+                            className={
+                              missingPrice
+                                ? "table-danger"
+                                : ""
+                            }
+
+                            style={{
+                              cursor: "pointer",
+                            }}
+
+                            title={
+                              missingPrice
+                                ? "Esta venta tiene productos sin precio"
+                                : "Doble clic para ver productos"
+                            }
+
+                            onDoubleClick={
+                              () =>
+                                navigate(
+                                  `/sells/${sell.id}/products`
+                                )
+                            }
+
+                          >
+
+                            <td className="ps-3 text-muted">
+                              {sell.id}
+                            </td>
+
+
+                            <td className="text-nowrap">
+                              {
+                                sell.fecha ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td>
+
+                              {
+                                editingSellId &&
+                                  editingSellId.id ===
+                                  sell.id &&
+                                  editingSellId.type ===
+                                  "client"
+                                  ? (
+
+                                    <Dropdown
+                                      onSelect={
+                                        handleChangeClient
+                                      }
+                                    >
+
+                                      <Dropdown.Toggle
+                                        size="sm"
+                                        variant="outline-primary"
+                                      >
+
+                                        {
+                                          selectedClient?.nombre ||
+                                          "Seleccionar cliente"
+                                        }
+
+                                      </Dropdown.Toggle>
+
+
+                                      <Dropdown.Menu>
+
+                                        {
+                                          [...clients]
+                                            .sort(
+                                              (a, b) =>
+                                                a.nombre.localeCompare(
+                                                  b.nombre
+                                                )
+                                            )
+                                            .map(
+                                              (client) => (
+
+                                                <Dropdown.Item
+
+                                                  key={
+                                                    client.id
+                                                  }
+
+                                                  eventKey={
+                                                    client.nombre
+                                                  }
+
+                                                >
+                                                  {client.nombre}
+                                                </Dropdown.Item>
+
+                                              )
+                                            )
+                                        }
+
+                                      </Dropdown.Menu>
+
+                                    </Dropdown>
+
+                                  )
+                                  : (
+                                    sell?.Cliente?.nombre ||
+                                    "Cliente desconocido"
+                                  )
+                              }
+
+                            </td>
+
+
+                            <td>
+
+                              {
+                                editingSellId &&
+                                  editingSellId.id ===
+                                  sell.id &&
+                                  editingSellId.type ===
+                                  "paymentMethod"
+                                  ? (
+
+                                    <Dropdown
+                                      onSelect={
+                                        handleChangePaymentMethod
+                                      }
+                                    >
+
+                                      <Dropdown.Toggle
+                                        size="sm"
+                                        variant="outline-primary"
+                                      >
+
+                                        {
+                                          selectedPaymentMethod?.tipo ||
+                                          "Seleccionar forma de pago"
+                                        }
+
+                                      </Dropdown.Toggle>
+
+
+                                      <Dropdown.Menu>
+
+                                        {
+                                          [...paymentMethods]
+                                            .sort(
+                                              (a, b) =>
+                                                a.tipo.localeCompare(
+                                                  b.tipo
+                                                )
+                                            )
+                                            .map(
+                                              (method) => (
+
+                                                <Dropdown.Item
+
+                                                  key={
+                                                    method.id
+                                                  }
+
+                                                  eventKey={
+                                                    method.tipo
+                                                  }
+
+                                                >
+                                                  {method.tipo}
+                                                </Dropdown.Item>
+
+                                              )
+                                            )
+                                        }
+
+                                      </Dropdown.Menu>
+
+                                    </Dropdown>
+
+                                  )
+                                  : (
+
+                                    <Badge
+                                      bg="light"
+                                      text="dark"
+                                      className="border fw-normal"
+                                    >
+
+                                      {
+                                        sell?.FormaPago?.tipo ||
+                                        "Sin forma de pago"
+                                      }
+
+                                    </Badge>
+
+                                  )
+                              }
+
+                            </td>
+
+
+                            <td className="text-end fw-semibold">
+                              {
+                                sell.cantidad_total ??
+                                0
+                              }
+                            </td>
+
+
+                            <td className="text-end text-nowrap">
+                              {
+                                Number(
+                                  sell.peso_total ??
+                                  0
+                                ).toLocaleString(
+                                  "es-AR",
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  }
+                                )
+                              } kg
+                            </td>
+
+
+                            <td>
+
+                              {
+                                categoriaCache[
+                                  sell.id
+                                ]
+                                  ? (
+
+                                    <Badge
+                                      bg="secondary"
+                                    >
+                                      {
+                                        categoriaCache[
+                                        sell.id
+                                        ]
+                                      }
+                                    </Badge>
+
+                                  )
+                                  : "—"
+                              }
+
+                            </td>
+
+
+                            <td className="text-end fw-semibold text-nowrap">
+
+                              {
+                                formatCurrency(
+                                  monto
+                                )
+                              }
+
+                              {
+                                missingPrice && (
+
+                                  <div className="small text-danger">
+                                    Precio incompleto
+                                  </div>
+
+                                )
+                              }
+
+                            </td>
+
+
+                            <td className="text-end pe-3">
+
+                              <div
+                                className="
+                                d-flex
+                                justify-content-end
+                                gap-2
+                                flex-nowrap
+                              "
+                              >
+
+                                {
+                                  editingSellId &&
+                                    editingSellId.id ===
+                                    sell.id
+                                    ? (
+
+                                      <>
+
+                                        <Button
+
+                                          variant="primary"
+
+                                          size="sm"
+
+                                          onClick={
+                                            handleSaveEdit
+                                          }
+
+                                        >
+                                          Guardar
+                                        </Button>
+
+
+                                        <Button
+
+                                          variant="outline-secondary"
+
+                                          size="sm"
+
+                                          onClick={
+                                            handleCancelEdit
+                                          }
+
+                                        >
+                                          Cancelar
+                                        </Button>
+
+                                      </>
+
+                                    )
+                                    : (
+
+                                      <>
+
+                                        <Button
+
+                                          variant="outline-primary"
+
+                                          size="sm"
+
+                                          title="Editar cliente"
+
+                                          onClick={
+                                            () =>
+                                              handleEditClient(
+                                                sell.id
+                                              )
+                                          }
+
+                                        >
+                                          <BsPencil />
+                                        </Button>
+
+
+                                        <Button
+
+                                          variant="outline-secondary"
+
+                                          size="sm"
+
+                                          title="Editar forma de pago"
+
+                                          onClick={
+                                            () =>
+                                              handleEditPaymentMethod(
+                                                sell.id
+                                              )
+                                          }
+
+                                        >
+                                          FP
+                                        </Button>
+
+                                      </>
+
+                                    )
+                                }
+
+
+                                {
+                                  context.user?.usuario ===
+                                  "admin" && (
+
+                                    <Button
+
+                                      variant="outline-danger"
+
+                                      size="sm"
+
+                                      title="Eliminar venta"
+
+                                      onClick={
+                                        () =>
+                                          handleDelete(
+                                            sell.id
+                                          )
+                                      }
+
+                                    >
+                                      <BsTrash />
+                                    </Button>
+
+                                  )
+                                }
+
+                              </div>
+
+                            </td>
+
+                          </tr>
+
+                        );
+
+                      }
+                    )
+                }
+
+              </tbody>
+
+            </Table>
+
+          </div>
+
+        </Card.Body>
+
+
+        {/* =====================================================
+          PAGINACIÓN
+      ====================================================== */}
+
+        <Card.Footer className="bg-white py-3">
+
+          <div
+            className="
+            d-flex
+            justify-content-between
+            align-items-center
+            flex-wrap
+            gap-3
+          "
+          >
+
+            <div className="small text-muted">
+
+              Registros {
+                filteredSells.length ===
+                  0
+                  ? 0
+                  : indexOfFirstSell +
+                  1
+              }–{
+                Math.min(
+                  indexOfLastSell,
+                  filteredSells.length
+                )
+              } de {
+                filteredSells.length
+              }
+
+            </div>
+
+
+            <div
+              className="
+              d-flex
+              align-items-center
+              gap-2
+            "
+            >
+
+              <Button
+
+                variant="outline-secondary"
+
+                size="sm"
+
+                onClick={
+                  prevPage
+                }
+
+                disabled={
+                  currentPage ===
+                  1
+                }
+
+              >
+                <BsChevronLeft />
+              </Button>
+
+
+              <span className="small fw-semibold px-2">
+                Página {currentPage} de {totalPages}
+              </span>
+
+
+              <Button
+
+                variant="outline-secondary"
+
+                size="sm"
+
+                onClick={
+                  nextPage
+                }
+
+                disabled={
+                  currentPage >=
+                  totalPages
+                }
+
+              >
+                <BsChevronRight />
+              </Button>
+
+            </div>
+
+          </div>
+
+        </Card.Footer>
+
+      </Card>
+
+    </div>
+
   );
 }

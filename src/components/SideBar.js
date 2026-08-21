@@ -2081,6 +2081,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                             Situación Financiera
                           </Link>
                         )}
+                        {/* {can("facturacion:compras.situacionFinanciera.view") && (
+                          <Link to="/tesoreria/pagos-programados" className="nav-link" onClick={handleLinkClick}>
+                            Pagos Programados
+                          </Link>
+                        )} */}
                       </div>
                     </Collapse>
                   </>

@@ -85,16 +85,10 @@ export const inteligenciaClimaApi = {
         ),
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | OBTENER REGISTRO
-    |--------------------------------------------------------------------------
-    */
-
-    obtener: async (id) =>
+    obtenerPorFecha: async (fecha) =>
         unwrap(
             await api.get(
-                `/inteligencia/clima/${id}`
+                `/inteligencia/clima/${fecha}`
             )
         ),
 

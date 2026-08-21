@@ -1,7 +1,6 @@
 import { useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { Card, Row, Col, Form, Button, Table, Spinner, Alert, Badge, Pagination, InputGroup } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
-import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -258,12 +257,6 @@ export default function SitFinanciera() {
   const [items, setItems] = useState([]); // normalizados combinados
   const [accionandoId, setAccionandoId] =
     useState(null);
-  const [showNuevoPagoProgramado, setShowNuevoPagoProgramado] =
-    useState(false);
-  const [
-    mostrarInstancias,
-    setMostrarInstancias,
-  ] = useState(true);
   // -------- Paginación --------
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -645,10 +638,7 @@ export default function SitFinanciera() {
 
 
       let merged = [
-        ...(mostrarInstancias
-          ? instancias
-          : []),
-
+        ...instancias,
         ...cargos,
         ...echeqs,
         ...programados,
@@ -675,7 +665,7 @@ export default function SitFinanciera() {
     } finally {
       setLoading(false);
     }
-  }, [mostrarInstancias, empresaId, proveedorId, categoriaId, sucursalId, modoRango, dias, desde, hasta, q, empNameById, provNameById, catNameById, sucNameById, fpById, bancoById]);
+  }, [empresaId, proveedorId, categoriaId, sucursalId, modoRango, dias, desde, hasta, q, empNameById, provNameById, catNameById, sucNameById, fpById, bancoById]);
 
   useEffect(() => {
     cargar();
@@ -1073,451 +1063,390 @@ export default function SitFinanciera() {
     (row.comprobanteegreso_id ? (compNroById.get(row.comprobanteegreso_id) || "-") : "-");
 
   return (
-    <>
-      <Card className="shadow-sm">
-        <Card.Header>
-          <Row className="g-2 align-items-end">
-            <Col sm={12} md={3}>
-              <Form.Group>
-                <Form.Label>Empresa</Form.Label>
-                <Form.Select
-                  value={empresaId || ""}
-                  onChange={(e) => setEmpresaId(e.target.value)}
-                  className="form-control form-control-sm my-input"
-                >
-                  <option value="">Todas</option>
-                  {(empresasTabla || []).map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.nombrecorto || emp.descripcion || emp.nombre || `Empresa ${emp.id}`}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-
-            <Col sm={6} md={3}>
-              <Form.Group>
-                <Form.Label>Proveedor</Form.Label>
-                <Form.Select
-                  value={proveedorId || ""}
-                  onChange={(e) => setProveedorId(e.target.value)}
-                  className="form-control form-control-sm my-input"
-                >
-                  <option value="">Todos</option>
-                  {(proveedoresTabla || []).map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-
-            <Col sm={6} md={3}>
-              <Form.Group>
-                <Form.Label>Categoría</Form.Label>
-                <Form.Select
-                  value={categoriaId || ""}
-                  onChange={(e) => setCategoriaId(e.target.value)}
-                  className="form-control form-control-sm my-input"
-                >
-                  <option value="">Todas</option>
-                  {(categoriasEgreso || []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-
-            <Col sm={6} md={3}>
-              <Form.Group>
-                <Form.Label>Sucursal</Form.Label>
-                <Form.Select
-                  value={sucursalId || ""}
-                  onChange={(e) => setSucursalId(e.target.value)}
-                  className="form-control form-control-sm my-input"
-                >
-                  <option value="">Todas</option>
-                  {(sucursalesTabla || []).map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nombre || s.descripcion || `Sucursal ${s.id}`}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-
-            <Col sm={12}>
-              <Form.Check
-                inline
-                type="radio"
-                id="rango-prox"
-                name="rangoOpt"
-                label="Próximos X días"
-                checked={modoRango === "prox"}
-                onChange={() => setModoRango("prox")}
-              />
-              <Form.Check
-                inline
-                type="radio"
-                id="rango-fechas"
-                name="rangoOpt"
-                label="Entre fechas"
-                checked={modoRango === "rango"}
-                onChange={() => setModoRango("rango")}
-              />
-            </Col>
-
-            {modoRango === "prox" ? (
-              <Col sm={6} md={2}>
-                <Form.Group>
-                  <Form.Label>Días</Form.Label>
-                  <Form.Control
-                    type="number"
-                    min={0}
-                    value={dias}
-                    onChange={(e) => setDias(Number(e.target.value || 0))}
-                  />
-                </Form.Group>
-              </Col>
-            ) : (
-              <>
-                <Col sm={6} md={2}>
-                  <Form.Group>
-                    <Form.Label>Desde</Form.Label>
-                    <Form.Control type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
-                  </Form.Group>
-                </Col>
-                <Col sm={6} md={2}>
-                  <Form.Group>
-                    <Form.Label>Hasta</Form.Label>
-                    <Form.Control type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
-                  </Form.Group>
-                </Col>
-              </>
-            )}
-
-            <Col sm={12} md={4}>
-              <Form.Label>Buscar</Form.Label>
-              <InputGroup>
-                <Form.Control
-                  placeholder="Descripción, proveedor, categoría…"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                />
-                <Button variant="outline-primary" onClick={cargar} className="mx-2">
-                  Buscar
-                </Button>
-              </InputGroup>
-            </Col>
-
-            <Col sm={12} md="auto" className="d-flex align-items-end">
-              <Form.Label className="me-2">Por página</Form.Label>
+    <Card className="shadow-sm">
+      <Card.Header>
+        <Row className="g-2 align-items-end">
+          <Col sm={12} md={3}>
+            <Form.Group>
+              <Form.Label>Empresa</Form.Label>
               <Form.Select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
-                style={{ width: 90 }}
-                className="form-control form-control-sm my-input mx-2"
+                value={empresaId || ""}
+                onChange={(e) => setEmpresaId(e.target.value)}
+                className="form-control form-control-sm my-input"
               >
-                {[10, 20, 30, 50, 100].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
+                <option value="">Todas</option>
+                {(empresasTabla || []).map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.nombrecorto || emp.descripcion || emp.nombre || `Empresa ${emp.id}`}
                   </option>
                 ))}
               </Form.Select>
-            </Col>
+            </Form.Group>
+          </Col>
 
-            <Col
-              sm={12}
-              md="auto"
-              className="d-flex align-items-end"
-            >
-              <Form.Check
-                type="checkbox"
-                id="mostrar-instancias"
-                label="Instancias"
-                checked={mostrarInstancias}
-                onChange={(e) =>
-                  setMostrarInstancias(
-                    e.target.checked
-                  )
-                }
-              />
-            </Col>
-
-            <Col sm={12} md="auto" className="text-end">
-              <Button
-                variant="success"
-                onClick={() =>
-                  setShowNuevoPagoProgramado(true)
-                }
+          <Col sm={6} md={3}>
+            <Form.Group>
+              <Form.Label>Proveedor</Form.Label>
+              <Form.Select
+                value={proveedorId || ""}
+                onChange={(e) => setProveedorId(e.target.value)}
+                className="form-control form-control-sm my-input"
               >
-                + Nuevo pago programado
-              </Button>
+                <option value="">Todos</option>
+                {(proveedoresTabla || []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+
+          <Col sm={6} md={3}>
+            <Form.Group>
+              <Form.Label>Categoría</Form.Label>
+              <Form.Select
+                value={categoriaId || ""}
+                onChange={(e) => setCategoriaId(e.target.value)}
+                className="form-control form-control-sm my-input"
+              >
+                <option value="">Todas</option>
+                {(categoriasEgreso || []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nombre}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+
+          <Col sm={6} md={3}>
+            <Form.Group>
+              <Form.Label>Sucursal</Form.Label>
+              <Form.Select
+                value={sucursalId || ""}
+                onChange={(e) => setSucursalId(e.target.value)}
+                className="form-control form-control-sm my-input"
+              >
+                <option value="">Todas</option>
+                {(sucursalesTabla || []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nombre || s.descripcion || `Sucursal ${s.id}`}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+
+          <Col sm={12}>
+            <Form.Check
+              inline
+              type="radio"
+              id="rango-prox"
+              name="rangoOpt"
+              label="Próximos X días"
+              checked={modoRango === "prox"}
+              onChange={() => setModoRango("prox")}
+            />
+            <Form.Check
+              inline
+              type="radio"
+              id="rango-fechas"
+              name="rangoOpt"
+              label="Entre fechas"
+              checked={modoRango === "rango"}
+              onChange={() => setModoRango("rango")}
+            />
+          </Col>
+
+          {modoRango === "prox" ? (
+            <Col sm={6} md={2}>
+              <Form.Group>
+                <Form.Label>Días</Form.Label>
+                <Form.Control
+                  type="number"
+                  min={0}
+                  value={dias}
+                  onChange={(e) => setDias(Number(e.target.value || 0))}
+                />
+              </Form.Group>
             </Col>
+          ) : (
+            <>
+              <Col sm={6} md={2}>
+                <Form.Group>
+                  <Form.Label>Desde</Form.Label>
+                  <Form.Control type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+                </Form.Group>
+              </Col>
+              <Col sm={6} md={2}>
+                <Form.Group>
+                  <Form.Label>Hasta</Form.Label>
+                  <Form.Control type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+                </Form.Group>
+              </Col>
+            </>
+          )}
 
-            <Col sm={12} md="auto" className="text-end">
-              <Button variant="outline-secondary" onClick={cargar} disabled={loading}>
-                {loading ? <Spinner size="sm" animation="border" /> : "Actualizar"}
+          <Col sm={12} md={4}>
+            <Form.Label>Buscar</Form.Label>
+            <InputGroup>
+              <Form.Control
+                placeholder="Descripción, proveedor, categoría…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+              <Button variant="outline-primary" onClick={cargar} className="mx-2">
+                Buscar
               </Button>
-            </Col>
-          </Row>
-        </Card.Header>
+            </InputGroup>
+          </Col>
 
-        <Card.Body>
-          {err && <Alert variant="danger" className="mb-3">{err}</Alert>}
+          <Col sm={12} md="auto" className="d-flex align-items-end">
+            <Form.Label className="me-2">Por página</Form.Label>
+            <Form.Select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              style={{ width: 90 }}
+              className="form-control form-control-sm my-input mx-2"
+            >
+              {[10, 20, 30, 50, 100].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </Form.Select>
+          </Col>
 
-          <div className="table-responsive">
-            <Table hover bordered size="sm" className="align-middle">
-              <thead>
+          <Col sm={12} md="auto" className="text-end">
+            <Button variant="outline-secondary" onClick={cargar} disabled={loading}>
+              {loading ? <Spinner size="sm" animation="border" /> : "Actualizar"}
+            </Button>
+          </Col>
+        </Row>
+      </Card.Header>
+
+      <Card.Body>
+        {err && <Alert variant="danger" className="mb-3">{err}</Alert>}
+
+        <div className="table-responsive">
+          <Table hover bordered size="sm" className="align-middle">
+            <thead>
+              <tr>
+                <SortableTh colKey="id">#</SortableTh>
+                <SortableTh colKey="tipo">Tipo</SortableTh>
+                <SortableTh colKey="empresa_nombre">Empresa</SortableTh>
+                <SortableTh colKey="comprobante_nro">Comprobante</SortableTh>
+                <SortableTh colKey="descripcion">Descripción</SortableTh>
+                <SortableTh colKey="proveedor_nombre">Proveedor</SortableTh>
+                <SortableTh colKey="categoria_nombre">Categoría</SortableTh>
+                <SortableTh colKey="sucursal_nombre">Sucursal</SortableTh>
+                <SortableTh colKey="fecha_vencimiento">Vencimiento</SortableTh>
+                <SortableTh colKey="monto_base" center>Monto</SortableTh>
+                <SortableTh colKey="estado">Estado</SortableTh>
+                <SortableTh colKey="formapago_futuro_desc">FP Acordada</SortableTh>
+                <th className="text-center">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && (
                 <tr>
-                  <SortableTh colKey="id">#</SortableTh>
-                  <SortableTh colKey="tipo">Tipo</SortableTh>
-                  <SortableTh colKey="empresa_nombre">Empresa</SortableTh>
-                  <SortableTh colKey="comprobante_nro">Comprobante</SortableTh>
-                  <SortableTh colKey="descripcion">Descripción</SortableTh>
-                  <SortableTh colKey="proveedor_nombre">Proveedor</SortableTh>
-                  <SortableTh colKey="categoria_nombre">Categoría</SortableTh>
-                  <SortableTh colKey="sucursal_nombre">Sucursal</SortableTh>
-                  <SortableTh colKey="fecha_vencimiento">Vencimiento</SortableTh>
-                  <SortableTh colKey="monto_base" center>Monto</SortableTh>
-                  <SortableTh colKey="estado">Estado</SortableTh>
-                  <SortableTh colKey="formapago_futuro_desc">FP Acordada</SortableTh>
-                  <th className="text-center">
-                    Acciones
-                  </th>
+                  <td colSpan={13} className="text-center text-muted">
+                    <Spinner size="sm" animation="border" className="me-2" />
+                    Cargando…
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {loading && (
-                  <tr>
-                    <td colSpan={13} className="text-center text-muted">
-                      <Spinner size="sm" animation="border" className="me-2" />
-                      Cargando…
+              )}
+              {!loading && pageItems.length === 0 && (
+                <tr>
+                  <td colSpan={12} className="text-center text-muted">Sin resultados</td>
+                </tr>
+              )}
+              {!loading &&
+                pageItems.map((row) => (
+                  <tr key={row.key}>
+                    <td>{row.id}</td>
+                    <td>
+                      {row.tipo === "ctacte"
+                        ? "Cta Cte"
+                        : row.tipo === "echeq"
+                          ? "eCheq"
+                          : row.tipo === "programado"
+                            ? (
+                              row.pago_programado_tipo === "anticipo"
+                                ? "Anticipo programado"
+                                : "Egreso programado"
+                            )
+                            : "Instancia"}
+                    </td>
+                    <td>{row.empresa_nombre || "-"}</td>
+                    <td>{compNroView(row)}</td>
+                    <td>{row.descripcion || "-"}</td>
+                    <td>{row.proveedor_nombre || "-"}</td>
+                    <td>{row.categoria_nombre || "-"}</td>
+                    <td>{row.sucursal_nombre || "-"}</td>
+                    <td>{row.fecha_vencimiento || "-"}</td>
+                    <td className="text-end">${toMoney(row.monto_base)}</td>
+                    <td><EstadoBadge estado={row.estado} diasRest={row.dias_restantes} /></td>
+                    <td>{row.formapago_futuro_desc || "-"}</td>
+                    <td className="text-center">
+
+                      {/* ================================= */}
+                      {/* PAGOS PROGRAMADOS                 */}
+                      {/* ================================= */}
+
+                      {row.tipo === "programado" && (
+
+                        <div className="d-flex justify-content-center gap-1">
+
+                          <Button
+                            size="sm"
+                            variant="success"
+                            disabled={
+                              accionandoId === row.key
+                            }
+                            onClick={() =>
+                              handleAcreditarProgramado(
+                                row
+                              )
+                            }
+                          >
+                            {accionandoId === row.key
+                              ? (
+                                <Spinner
+                                  size="sm"
+                                  animation="border"
+                                />
+                              )
+                              : "Acreditar"}
+                          </Button>
+
+
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            disabled={
+                              accionandoId === row.key
+                            }
+                            onClick={() =>
+                              handleEliminarProgramado(
+                                row
+                              )
+                            }
+                          >
+                            Eliminar
+                          </Button>
+
+                        </div>
+
+                      )}
+
+
+                      {/* ================================= */}
+                      {/* ECHEQS                            */}
+                      {/* ================================= */}
+
+                      {row.tipo === "echeq" && (
+
+                        <div className="d-flex justify-content-center gap-1">
+
+                          <Button
+                            size="sm"
+                            variant="success"
+                            disabled={
+                              accionandoId === row.key
+                            }
+                            onClick={() =>
+                              handleAcreditarEcheq(
+                                row
+                              )
+                            }
+                          >
+                            {accionandoId === row.key
+                              ? (
+                                <Spinner
+                                  size="sm"
+                                  animation="border"
+                                />
+                              )
+                              : "Acreditar"}
+                          </Button>
+
+
+                          <Button
+                            size="sm"
+                            variant="outline-danger"
+                            disabled={
+                              accionandoId === row.key
+                            }
+                            onClick={() =>
+                              handleEliminarEcheq(
+                                row
+                              )
+                            }
+                          >
+                            Eliminar
+                          </Button>
+
+                        </div>
+
+                      )}
+
+
+                      {/* ================================= */}
+                      {/* RESTO DE LOS TIPOS                */}
+                      {/* ================================= */}
+
+                      {row.tipo !== "programado" &&
+                        row.tipo !== "echeq" && (
+                          "-"
+                        )}
+
                     </td>
                   </tr>
-                )}
-                {!loading && pageItems.length === 0 && (
-                  <tr>
-                    <td colSpan={12} className="text-center text-muted">Sin resultados</td>
-                  </tr>
-                )}
-                {!loading &&
-                  pageItems.map((row) => (
-                    <tr key={row.key}>
-                      <td>{row.id}</td>
-                      <td>
-                        {row.tipo === "ctacte"
-                          ? "Cta Cte"
-                          : row.tipo === "echeq"
-                            ? "eCheq"
-                            : row.tipo === "programado"
-                              ? (
-                                row.pago_programado_tipo === "anticipo"
-                                  ? "Anticipo programado"
-                                  : "Egreso programado"
-                              )
-                              : "Instancia"}
-                      </td>
-                      <td>{row.empresa_nombre || "-"}</td>
-                      <td>{compNroView(row)}</td>
-                      <td>{row.descripcion || "-"}</td>
-                      <td>{row.proveedor_nombre || "-"}</td>
-                      <td>{row.categoria_nombre || "-"}</td>
-                      <td>{row.sucursal_nombre || "-"}</td>
-                      <td>{row.fecha_vencimiento || "-"}</td>
-                      <td className="text-end">${toMoney(row.monto_base)}</td>
-                      <td><EstadoBadge estado={row.estado} diasRest={row.dias_restantes} /></td>
-                      <td>{row.formapago_futuro_desc || "-"}</td>
-                      <td className="text-center">
+                ))}
+            </tbody>
+            {items.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={9}><strong>Total (filtrado)</strong></td>
+                  <td className="text-end"><strong>${toMoney(totalPendiente)}</strong></td>
+                  <td colSpan={3} />
+                </tr>
+              </tfoot>
+            )}
+          </Table>
+        </div>
 
-                        {/* ================================= */}
-                        {/* PAGOS PROGRAMADOS                 */}
-                        {/* ================================= */}
-
-                        {row.tipo === "programado" && (
-
-                          <div className="d-flex justify-content-center gap-1">
-
-                            <Button
-                              size="sm"
-                              variant="success"
-                              disabled={
-                                accionandoId === row.key
-                              }
-                              onClick={() =>
-                                handleAcreditarProgramado(
-                                  row
-                                )
-                              }
-                            >
-                              {accionandoId === row.key
-                                ? (
-                                  <Spinner
-                                    size="sm"
-                                    animation="border"
-                                  />
-                                )
-                                : "Acreditar"}
-                            </Button>
-
-
-                            <Button
-                              size="sm"
-                              variant="outline-danger"
-                              disabled={
-                                accionandoId === row.key
-                              }
-                              onClick={() =>
-                                handleEliminarProgramado(
-                                  row
-                                )
-                              }
-                            >
-                              Eliminar
-                            </Button>
-
-                          </div>
-
-                        )}
-
-
-                        {/* ================================= */}
-                        {/* ECHEQS                            */}
-                        {/* ================================= */}
-
-                        {row.tipo === "echeq" && (
-
-                          <div className="d-flex justify-content-center gap-1">
-
-                            <Button
-                              size="sm"
-                              variant="success"
-                              disabled={
-                                accionandoId === row.key
-                              }
-                              onClick={() =>
-                                handleAcreditarEcheq(
-                                  row
-                                )
-                              }
-                            >
-                              {accionandoId === row.key
-                                ? (
-                                  <Spinner
-                                    size="sm"
-                                    animation="border"
-                                  />
-                                )
-                                : "Acreditar"}
-                            </Button>
-
-
-                            <Button
-                              size="sm"
-                              variant="outline-danger"
-                              disabled={
-                                accionandoId === row.key
-                              }
-                              onClick={() =>
-                                handleEliminarEcheq(
-                                  row
-                                )
-                              }
-                            >
-                              Eliminar
-                            </Button>
-
-                          </div>
-
-                        )}
-
-
-                        {/* ================================= */}
-                        {/* RESTO DE LOS TIPOS                */}
-                        {/* ================================= */}
-
-                        {row.tipo !== "programado" &&
-                          row.tipo !== "echeq" && (
-                            "-"
-                          )}
-
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-              {items.length > 0 && (
-                <tfoot>
-                  <tr>
-                    <td colSpan={9}><strong>Total (filtrado)</strong></td>
-                    <td className="text-end"><strong>${toMoney(totalPendiente)}</strong></td>
-                    <td colSpan={3} />
-                  </tr>
-                </tfoot>
-              )}
-            </Table>
+        {/* Paginación */}
+        <div className="d-flex justify-content-between align-items-center mt-2">
+          <div className="text-muted" style={{ fontSize: 13 }}>
+            {items.length > 0
+              ? (
+                <>
+                  Mostrando <strong>{start + 1}</strong>–<strong>{Math.min(start + pageSize, items.length)}</strong> de <strong>{items.length}</strong>
+                </>
+              )
+              : "Sin resultados"}
           </div>
 
-          {/* Paginación */}
-          <div className="d-flex justify-content-between align-items-center mt-2">
-            <div className="text-muted" style={{ fontSize: 13 }}>
-              {items.length > 0
-                ? (
-                  <>
-                    Mostrando <strong>{start + 1}</strong>–<strong>{Math.min(start + pageSize, items.length)}</strong> de <strong>{items.length}</strong>
-                  </>
-                )
-                : "Sin resultados"}
-            </div>
-
-            <Pagination className="mb-0">
-              <Pagination.First disabled={page === 1} onClick={() => setPage(1)} />
-              <Pagination.Prev disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))} />
-              <Pagination.Item active>{page}</Pagination.Item>
-              <Pagination.Next
-                disabled={page === totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              />
-              <Pagination.Last disabled={page === totalPages} onClick={() => setPage(totalPages)} />
-            </Pagination>
-          </div>
-        </Card.Body>
-      </Card>
-
-
-      <NuevoPagoProgramado
-        show={
-          showNuevoPagoProgramado
-        }
-
-        onHide={() =>
-          setShowNuevoPagoProgramado(false)
-        }
-
-        onCreated={async () => {
-
-          /*
-           * Cerramos el modal.
-           */
-          setShowNuevoPagoProgramado(false);
-
-
-          /*
-           * Volvemos a consultar SitFinanciera.
-           *
-           * El nuevo pago aparecerá automáticamente
-           * dentro de los pagos programados pendientes.
-           */
-          await cargar();
-
-        }}
-      />
-
-    </>
+          <Pagination className="mb-0">
+            <Pagination.First disabled={page === 1} onClick={() => setPage(1)} />
+            <Pagination.Prev disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))} />
+            <Pagination.Item active>{page}</Pagination.Item>
+            <Pagination.Next
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            />
+            <Pagination.Last disabled={page === totalPages} onClick={() => setPage(totalPages)} />
+          </Pagination>
+        </div>
+      </Card.Body>
+    </Card>
   );
 }

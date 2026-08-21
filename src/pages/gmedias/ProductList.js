@@ -1,7 +1,24 @@
 import { useEffect, useState, useCallback } from "react";
-import { Table, Container, Button, FormControl } from "react-bootstrap";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Col,
+  Form,
+  Row,
+  Spinner,
+  Table,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import {
+  BsChevronLeft,
+  BsChevronRight,
+  BsDownload,
+  BsPencil,
+  BsSearch,
+  BsTrash,
+} from "react-icons/bs";
 import * as XLSX from "xlsx"; // Importar la biblioteca xlsx
 
 export default function ProductList() {
@@ -24,6 +41,7 @@ export default function ProductList() {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState("asc");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
@@ -319,316 +337,1385 @@ export default function ProductList() {
     return date.toISOString().split("T")[0];
   };
 
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      filteredProducts.length /
+      productsPerPage
+    )
+  );
+
+
+  const totalKg =
+    filteredProducts.reduce(
+      (total, product) => {
+
+        const kg =
+          Number(product.kg);
+
+        return (
+          total +
+          (
+            Number.isFinite(kg)
+              ? kg
+              : 0
+          )
+        );
+
+      },
+      0
+    );
+
+
+  const formatNumber = (value) => {
+
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return "—";
+    }
+
+    const numero =
+      Number(value);
+
+    if (!Number.isFinite(numero)) {
+      return value;
+    }
+
+    return numero.toLocaleString(
+      "es-AR",
+      {
+        maximumFractionDigits: 2,
+      }
+    );
+
+  };
+
   return (
-    <Container>
-      <h1 className="my-list-title dark-text">Lista de Productos</h1>
-      {/* Botón para exportar a Excel */}
-      <div className="mb-3">
-        <Button onClick={handleExportToExcel} variant="success">
-          Exportar a Excel
-        </Button>
-      </div>
-      <div className="mb-3">
-        <div className="d-inline-block w-auto">
-          <label className="mr-2">DESDE: </label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
+
+    <div className="container-fluid px-3 px-lg-4 py-3">
+
+      {/* =====================================================
+        CABECERA
+    ====================================================== */}
+
+      <div
+        className="
+        d-flex
+        flex-column
+        flex-lg-row
+        justify-content-between
+        align-items-lg-center
+        gap-3
+        mb-4
+      "
+      >
+
+        <div>
+
+          <h2 className="mb-1 fw-semibold">
+            Lista de productos
+          </h2>
+
+          <div className="text-muted">
+            Consulta, filtro y control de medias y productos.
+          </div>
+
         </div>
 
-        <div className="d-inline-block w-auto ml-2">
-          <label className="ml-2 mr-2">HASTA:</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="form-control rounded-0 border-transparent text-center"
-          />
-        </div>
 
-        <Button onClick={loadProductsByDate} variant="primary" className="ml-3">
-          Buscar
-        </Button>
-
-        <Button onClick={loadAllProducts} variant="secondary" className="ml-2">
-          Listar
-        </Button>
-      </div>
-      <div className="mb-3 d-flex justify-content-center align-items-center">
-        <FormControl
-          type="text"
-          placeholder="Código de barras"
-          className="mr-2"
-          value={searchBarra}
-          onChange={(e) => setSearchBarra(e.target.value)}
-        />
-
-        <FormControl
-          type="text"
-          placeholder="Número de media"
-          className="mr-2"
-          value={searchMedia}
-          onChange={(e) => setSearchMedia(e.target.value)}
-        />
-
-        <FormControl
-          type="text"
-          placeholder="Peso"
-          className="mr-2"
-          value={searchPeso}
-          onChange={(e) => setSearchPeso(e.target.value)}
-        />
-
-        <FormControl
-          type="text"
-          placeholder="Tropa"
-          className="mr-2"
-          value={searchTropa}
-          onChange={(e) => setSearchTropa(e.target.value)}
-        />
-
-        <FormControl
-          type="text"
-          placeholder="Categoria"
-          className="mr-2"
-          value={searchCategoria}
-          onChange={(e) => setSearchCategoria(e.target.value)}
-        />
-      </div>
-      <div className="mb-3 d-flex align-items-center">
-        <div
-          style={{
-            minWidth: "200px",
-            maxWidth: "300px",
-            overflowY: "auto",
-            maxHeight: "150px",
-          }}
-        >
-          <FormControl
-            as="select"
-            multiple
-            value={selectedBranches}
-            onChange={(e) => {
-              const options = Array.from(
-                e.target.selectedOptions,
-                (option) => option.value
-              );
-              setSelectedBranches(options);
-            }}
-            className="form-control"
-            style={{
-              width: "100%",
-              whiteSpace: "nowrap",
-              textOverflow: "ellipsis",
-              overflowX: "hidden",
-            }}
-          >
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>
-                {branch.nombre}
-              </option>
-            ))}
-          </FormControl>
-        </div>
         <Button
-          variant="secondary"
-          onClick={() => setSelectedBranches([])} // Limpiar la selección
-          className="ml-2"
-        >
-          Limpiar Selección
-        </Button>
-      </div>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th
-              onClick={() => handleSort("fecha")}
-              style={{ cursor: "pointer" }}
-            >
-              Fecha
-            </th>
-            <th
-              onClick={() => handleSort("categoria_producto")}
-              style={{ cursor: "pointer" }}
-            >
-              Categoria
-            </th>
-            <th
-              onClick={() => handleSort("subcategoria")}
-              style={{ cursor: "pointer" }}
-            >
-              Subcategoria
-            </th>
-            <th
-              onClick={() => handleSort("num_media")}
-              style={{ cursor: "pointer" }}
-            >
-              Numero de Media
-            </th>
-            <th
-              onClick={() => handleSort("garron")}
-              style={{ cursor: "pointer" }}
-            >
-              Garron
-            </th>
-            <th
-              onClick={() => handleSort("precio")}
-              style={{ cursor: "pointer" }}
-            >
-              Precio
-            </th>
-            <th
-              onClick={() => handleSort("costo")}
-              style={{ cursor: "pointer" }}
-            >
-              Costo
-            </th>
-            <th onClick={() => handleSort("kg")} style={{ cursor: "pointer" }}>
-              Peso
-            </th>
-            <th
-              onClick={() => handleSort("tropa")}
-              style={{ cursor: "pointer" }}
-            >
-              Tropa
-            </th>
-            <th
-              onClick={() => handleSort("sucursal")}
-              style={{ cursor: "pointer" }}
-            >
-              Sucursal
-            </th>
-            <th
-              onClick={() => handleSort("cliente")}
-              style={{ cursor: "pointer" }}
-            >
-              Cliente
-            </th>
-            <th
-              onClick={() => handleSort("ingreso_id")}
-              style={{ cursor: "pointer" }}
-            >
-              Ingreso ID
-            </th>
-            <th>Orden</th>
-            <th>Venta</th>
-            {/* <th>Mov</th> */}
-            <th>ID</th> {/* Nueva columna */}
-            <th>Operaciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currentProducts.map((product, index) => {
-            // Evaluar si el número de media es correlativo
-            const previousMedia =
-              index > 0
-                ? parseInt(currentProducts[index - 1].num_media, 10)
-                : null;
-            const currentMedia = parseInt(product.num_media, 10);
-            const isCorrelative =
-              previousMedia !== null &&
-              !isNaN(previousMedia) &&
-              !isNaN(currentMedia) &&
-              currentMedia === previousMedia + 1;
-
-            return (
-              <tr key={product.id}>
-                <td>{product.id}</td>
-                <td>{product.fecha}</td>
-                
-                <td>{product.categoria_producto}</td>
-                <td>{product.subcategoria}</td> 
-                <td>{product.num_media}</td>
-                <td>{product.garron}</td>
-                <td>{product.precio}</td>
-                <td>{product.costo}</td>
-                <td>{product.kg}</td>
-                <td>{product.tropa}</td>
-                <td>
-                  {branches.find((branch) => branch.id === product.sucursal_id)
-                    ?.nombre || "Sucursal Desconocida"}
-                </td>
-                <td>
-                  {customers.find(
-                    (customer) => customer.id === product.cliente_id
-                  )?.nombre || "Cliente Desconocido"}
-                </td>
-                <td>{product.ingreso_id || ""}</td>
-                <td>{product.orden_id || ""}</td>
-                <td>{product.venta_id || ""}</td>
-                {/* <td>{formatDate(product.createdAt)}</td> */}
-                <td>{isCorrelative ? "" : "X"}</td> {/* Columna ID */}
-                <td className="text-center">
-                  <div className="d-flex justify-content-center align-items-center">
-                    <Button
-                      variant="danger"
-                      onClick={() => handleDelete(product.id)}
-                      className="mx-2"
-                    >
-                      Eliminar
-                    </Button>
-                    <Button
-                      color="inherit"
-                      onClick={() => navigate(`/products/${product.id}/edit`)}
-                    >
-                      Editar
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </Table>
-      
-      <div className="d-flex justify-content-center align-items-center">
-        <Button onClick={prevPage} disabled={currentPage === 1}>
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(filteredProducts.length / productsPerPage)}
-        </span>
-        <Button
-          onClick={nextPage}
+          variant="outline-success"
+          onClick={handleExportToExcel}
           disabled={
-            currentPage === Math.ceil(filteredProducts.length / productsPerPage)
+            filteredProducts.length === 0
           }
         >
-          <BsChevronRight />
+
+          <BsDownload className="me-2" />
+
+          Exportar a Excel
+
         </Button>
+
       </div>
-      <div style={{ maxWidth: "25%", marginTop: "20px" }}>
-        {/* Añade un estilo inline para limitar el ancho de la tabla */}
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>Categoría</th>
-              <th>Cantidad</th>
-              <th>Kg</th>
-              <th>Costo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(categorySummary).map((category) => (
-              <tr key={category}>
-                <td>{category}</td>
-                <td>{categorySummary[category].cantidad}</td>
-                <td>{categorySummary[category].pesoTotal}</td>
-                <td>
-                  {categorySummary[category].costoTotal !== 0
-                    ? categorySummary[category].costoTotal
-                    : "N/A"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
-    </Container>
-  )
+
+
+      {
+        error && (
+
+          <Alert
+            variant="danger"
+            dismissible
+            onClose={() =>
+              setError("")
+            }
+          >
+            {error}
+          </Alert>
+
+        )
+      }
+
+
+      {/* =====================================================
+        INDICADORES
+    ====================================================== */}
+
+      <Row className="g-3 mb-4">
+
+        <Col
+          sm={6}
+          xl={3}
+        >
+
+          <Card className="h-100 border-0 shadow-sm">
+
+            <Card.Body>
+
+              <div className="small text-muted">
+                Productos encontrados
+              </div>
+
+              <div className="fs-3 fw-semibold">
+
+                {
+                  filteredProducts.length
+                    .toLocaleString(
+                      "es-AR"
+                    )
+                }
+
+              </div>
+
+            </Card.Body>
+
+          </Card>
+
+        </Col>
+
+
+        <Col
+          sm={6}
+          xl={3}
+        >
+
+          <Card className="h-100 border-0 shadow-sm">
+
+            <Card.Body>
+
+              <div className="small text-muted">
+                Peso total
+              </div>
+
+              <div className="fs-3 fw-semibold">
+
+                {
+                  totalKg.toLocaleString(
+                    "es-AR",
+                    {
+                      maximumFractionDigits: 2,
+                    }
+                  )
+                } kg
+
+              </div>
+
+            </Card.Body>
+
+          </Card>
+
+        </Col>
+
+
+        <Col
+          sm={6}
+          xl={3}
+        >
+
+          <Card className="h-100 border-0 shadow-sm">
+
+            <Card.Body>
+
+              <div className="small text-muted">
+                Categorías
+              </div>
+
+              <div className="fs-3 fw-semibold">
+
+                {
+                  Object.keys(
+                    categorySummary
+                  ).length
+                }
+
+              </div>
+
+            </Card.Body>
+
+          </Card>
+
+        </Col>
+
+
+        <Col
+          sm={6}
+          xl={3}
+        >
+
+          <Card className="h-100 border-0 shadow-sm">
+
+            <Card.Body>
+
+              <div className="small text-muted">
+                Página
+              </div>
+
+              <div className="fs-3 fw-semibold">
+                {currentPage} / {totalPages}
+              </div>
+
+            </Card.Body>
+
+          </Card>
+
+        </Col>
+
+      </Row>
+
+
+      {/* =====================================================
+        FILTROS
+    ====================================================== */}
+
+      <Card className="border-0 shadow-sm mb-4">
+
+        <Card.Header className="bg-white py-3">
+
+          <div className="fw-semibold">
+            Filtros de búsqueda
+          </div>
+
+          <div className="small text-muted">
+            Filtra los productos por período, media, tropa,
+            peso, categoría o sucursal.
+          </div>
+
+        </Card.Header>
+
+
+        <Card.Body>
+
+          <Row className="g-3 mb-3">
+
+            <Col
+              md={3}
+              lg={2}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Desde
+                </Form.Label>
+
+                <Form.Control
+
+                  type="date"
+
+                  value={
+                    startDate
+                  }
+
+                  onChange={
+                    (e) =>
+                      setStartDate(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col
+              md={3}
+              lg={2}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Hasta
+                </Form.Label>
+
+                <Form.Control
+
+                  type="date"
+
+                  value={
+                    endDate
+                  }
+
+                  onChange={
+                    (e) =>
+                      setEndDate(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col
+              md={6}
+              lg={8}
+              className="
+              d-flex
+              align-items-end
+              gap-2
+              flex-wrap
+            "
+            >
+
+              <Button
+
+                variant="primary"
+
+                onClick={
+                  loadProductsByDate
+                }
+
+                disabled={
+                  loading
+                }
+
+              >
+
+                <BsSearch className="me-2" />
+
+                Buscar período
+
+              </Button>
+
+
+              <Button
+
+                variant="outline-secondary"
+
+                onClick={
+                  loadAllProducts
+                }
+
+                disabled={
+                  loading
+                }
+
+              >
+                Listar todos
+              </Button>
+
+            </Col>
+
+          </Row>
+
+
+          <Row className="g-3">
+
+            <Col
+              md={6}
+              xl={3}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Código de barras
+                </Form.Label>
+
+                <Form.Control
+
+                  type="text"
+
+                  placeholder="Buscar código..."
+
+                  value={
+                    searchBarra
+                  }
+
+                  onChange={
+                    (e) =>
+                      setSearchBarra(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col
+              md={6}
+              xl={2}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Número de media
+                </Form.Label>
+
+                <Form.Control
+
+                  type="text"
+
+                  placeholder="Media..."
+
+                  value={
+                    searchMedia
+                  }
+
+                  onChange={
+                    (e) =>
+                      setSearchMedia(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col
+              md={4}
+              xl={2}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Peso
+                </Form.Label>
+
+                <Form.Control
+
+                  type="text"
+
+                  placeholder="Kg..."
+
+                  value={
+                    searchPeso
+                  }
+
+                  onChange={
+                    (e) =>
+                      setSearchPeso(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col
+              md={4}
+              xl={2}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Tropa
+                </Form.Label>
+
+                <Form.Control
+
+                  type="text"
+
+                  placeholder="Tropa..."
+
+                  value={
+                    searchTropa
+                  }
+
+                  onChange={
+                    (e) =>
+                      setSearchTropa(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col
+              md={4}
+              xl={3}
+            >
+
+              <Form.Group>
+
+                <Form.Label className="small text-muted">
+                  Categoría
+                </Form.Label>
+
+                <Form.Control
+
+                  type="text"
+
+                  placeholder="Categoría..."
+
+                  value={
+                    searchCategoria
+                  }
+
+                  onChange={
+                    (e) =>
+                      setSearchCategoria(
+                        e.target.value
+                      )
+                  }
+
+                />
+
+              </Form.Group>
+
+            </Col>
+
+
+            <Col xs={12}>
+
+              <Form.Group>
+
+                <div
+                  className="
+                  d-flex
+                  justify-content-between
+                  align-items-center
+                  mb-2
+                "
+                >
+
+                  <Form.Label className="small text-muted mb-0">
+                    Sucursales
+                  </Form.Label>
+
+
+                  {
+                    selectedBranches.length > 0 && (
+
+                      <Button
+
+                        variant="link"
+
+                        size="sm"
+
+                        className="
+                        text-decoration-none
+                        p-0
+                      "
+
+                        onClick={() =>
+                          setSelectedBranches([])
+                        }
+
+                      >
+                        Limpiar selección
+                      </Button>
+
+                    )
+                  }
+
+                </div>
+
+
+                <Form.Select
+
+                  multiple
+
+                  value={
+                    selectedBranches
+                  }
+
+                  onChange={
+                    (e) => {
+
+                      const options =
+                        Array.from(
+                          e.target.selectedOptions,
+                          (option) =>
+                            option.value
+                        );
+
+                      setSelectedBranches(
+                        options
+                      );
+
+                    }
+                  }
+
+                  style={{
+                    minHeight: "110px",
+                  }}
+
+                >
+
+                  {
+                    branches.map(
+                      (branch) => (
+
+                        <option
+
+                          key={
+                            branch.id
+                          }
+
+                          value={
+                            branch.id
+                          }
+
+                        >
+                          {branch.nombre}
+                        </option>
+
+                      )
+                    )
+                  }
+
+                </Form.Select>
+
+
+                <Form.Text muted>
+                  Ctrl + clic para seleccionar varias sucursales.
+                </Form.Text>
+
+              </Form.Group>
+
+            </Col>
+
+          </Row>
+
+        </Card.Body>
+
+      </Card>
+
+
+      {/* =====================================================
+        PRODUCTOS
+    ====================================================== */}
+
+      <Card className="border-0 shadow-sm mb-4">
+
+        <Card.Header
+          className="
+          bg-white
+          py-3
+          d-flex
+          justify-content-between
+          align-items-center
+          flex-wrap
+          gap-2
+        "
+        >
+
+          <div>
+
+            <div className="fw-semibold">
+              Productos
+            </div>
+
+            <div className="small text-muted">
+              Mostrando {currentProducts.length} de{" "}
+              {filteredProducts.length} registros.
+            </div>
+
+          </div>
+
+
+          {
+            loading && (
+
+              <div className="small text-muted">
+
+                <Spinner
+                  animation="border"
+                  size="sm"
+                  className="me-2"
+                />
+
+                Cargando...
+
+              </div>
+
+            )
+          }
+
+        </Card.Header>
+
+
+        <Card.Body className="p-0">
+
+          <div className="table-responsive">
+
+            <Table
+
+              hover
+
+              size="sm"
+
+              className="
+              mb-0
+              align-middle
+            "
+
+            >
+
+              <thead className="table-light">
+
+                <tr>
+
+                  <th className="ps-3">
+                    ID
+                  </th>
+
+                  <th
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort("fecha")
+                    }
+                  >
+                    Fecha
+                  </th>
+
+                  <th
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort(
+                        "categoria_producto"
+                      )
+                    }
+                  >
+                    Categoría
+                  </th>
+
+                  <th>
+                    Subcategoría
+                  </th>
+
+                  <th
+                    style={{
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      handleSort(
+                        "num_media"
+                      )
+                    }
+                  >
+                    Nº Media
+                  </th>
+
+                  <th>
+                    Garrón
+                  </th>
+
+                  <th className="text-end">
+                    Precio
+                  </th>
+
+                  <th className="text-end">
+                    Costo
+                  </th>
+
+                  <th className="text-end">
+                    Peso
+                  </th>
+
+                  <th>
+                    Tropa
+                  </th>
+
+                  <th>
+                    Sucursal
+                  </th>
+
+                  <th>
+                    Cliente
+                  </th>
+
+                  <th>
+                    Ingreso
+                  </th>
+
+                  <th>
+                    Orden
+                  </th>
+
+                  <th>
+                    Venta
+                  </th>
+
+                  <th className="text-center">
+                    Secuencia
+                  </th>
+
+                  <th className="text-end pe-3">
+                    Operaciones
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody>
+
+                {
+                  currentProducts.length === 0 &&
+                    !loading
+                    ? (
+
+                      <tr>
+
+                        <td
+                          colSpan={17}
+                          className="
+                          text-center
+                          text-muted
+                          py-5
+                        "
+                        >
+                          No hay productos para mostrar.
+                        </td>
+
+                      </tr>
+
+                    )
+                    : currentProducts.map(
+                      (
+                        product,
+                        index
+                      ) => {
+
+                        const previousMedia =
+                          index > 0
+                            ? parseInt(
+                              currentProducts[
+                                index - 1
+                              ].num_media,
+                              10
+                            )
+                            : null;
+
+
+                        const currentMedia =
+                          parseInt(
+                            product.num_media,
+                            10
+                          );
+
+
+                        const isCorrelative =
+                          previousMedia !== null &&
+                          !isNaN(previousMedia) &&
+                          !isNaN(currentMedia) &&
+                          currentMedia ===
+                          previousMedia + 1;
+
+
+                        return (
+
+                          <tr
+                            key={
+                              product.id
+                            }
+                          >
+
+                            <td className="ps-3 text-muted">
+                              {product.id}
+                            </td>
+
+
+                            <td className="text-nowrap">
+                              {
+                                product.fecha ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td>
+
+                              <Badge
+                                bg="light"
+                                text="dark"
+                                className="
+                                border
+                                fw-normal
+                              "
+                              >
+                                {
+                                  product.categoria_producto ||
+                                  "Sin categoría"
+                                }
+                              </Badge>
+
+                            </td>
+
+
+                            <td>
+                              {
+                                product.subcategoria ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td className="fw-semibold">
+                              {
+                                product.num_media ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td>
+                              {
+                                product.garron ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td className="text-end">
+                              {
+                                formatNumber(
+                                  product.precio
+                                )
+                              }
+                            </td>
+
+
+                            <td className="text-end">
+                              {
+                                formatNumber(
+                                  product.costo
+                                )
+                              }
+                            </td>
+
+
+                            <td className="text-end text-nowrap">
+                              {
+                                formatNumber(
+                                  product.kg
+                                )
+                              }
+                            </td>
+
+
+                            <td>
+                              {
+                                product.tropa ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td>
+
+                              {
+                                branches.find(
+                                  (branch) =>
+                                    branch.id ===
+                                    product.sucursal_id
+                                )?.nombre ||
+                                "Sucursal desconocida"
+                              }
+
+                            </td>
+
+
+                            <td>
+
+                              {
+                                customers.find(
+                                  (customer) =>
+                                    customer.id ===
+                                    product.cliente_id
+                                )?.nombre ||
+                                "Cliente desconocido"
+                              }
+
+                            </td>
+
+
+                            <td>
+                              {
+                                product.ingreso_id ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td>
+                              {
+                                product.orden_id ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td>
+                              {
+                                product.venta_id ||
+                                "—"
+                              }
+                            </td>
+
+
+                            <td className="text-center">
+
+                              {
+                                isCorrelative
+                                  ? (
+
+                                    <Badge bg="success">
+                                      OK
+                                    </Badge>
+
+                                  )
+                                  : (
+
+                                    <Badge
+                                      bg="warning"
+                                      text="dark"
+                                    >
+                                      Revisar
+                                    </Badge>
+
+                                  )
+                              }
+
+                            </td>
+
+
+                            <td className="text-end pe-3">
+
+                              <div
+                                className="
+                                d-flex
+                                justify-content-end
+                                gap-2
+                                flex-nowrap
+                              "
+                              >
+
+                                <Button
+
+                                  variant="outline-primary"
+
+                                  size="sm"
+
+                                  title="Editar"
+
+                                  onClick={() =>
+                                    navigate(
+                                      `/products/${product.id}/edit`
+                                    )
+                                  }
+
+                                >
+                                  <BsPencil />
+                                </Button>
+
+
+                                <Button
+
+                                  variant="outline-danger"
+
+                                  size="sm"
+
+                                  title="Eliminar"
+
+                                  onClick={() =>
+                                    handleDelete(
+                                      product.id
+                                    )
+                                  }
+
+                                >
+                                  <BsTrash />
+                                </Button>
+
+                              </div>
+
+                            </td>
+
+                          </tr>
+
+                        );
+
+                      }
+                    )
+                }
+
+              </tbody>
+
+            </Table>
+
+          </div>
+
+        </Card.Body>
+
+
+        <Card.Footer className="bg-white py-3">
+
+          <div
+            className="
+            d-flex
+            justify-content-between
+            align-items-center
+            flex-wrap
+            gap-3
+          "
+          >
+
+            <div className="small text-muted">
+
+              {
+                filteredProducts.length
+              } registros encontrados
+
+            </div>
+
+
+            <div
+              className="
+              d-flex
+              align-items-center
+              gap-2
+            "
+            >
+
+              <Button
+
+                variant="outline-secondary"
+
+                size="sm"
+
+                onClick={
+                  prevPage
+                }
+
+                disabled={
+                  currentPage === 1
+                }
+
+              >
+                <BsChevronLeft />
+              </Button>
+
+
+              <span className="small fw-semibold px-2">
+
+                Página {currentPage} de {totalPages}
+
+              </span>
+
+
+              <Button
+
+                variant="outline-secondary"
+
+                size="sm"
+
+                onClick={
+                  nextPage
+                }
+
+                disabled={
+                  currentPage >=
+                  totalPages
+                }
+
+              >
+                <BsChevronRight />
+              </Button>
+
+            </div>
+
+          </div>
+
+        </Card.Footer>
+
+      </Card>
+
+
+      {/* =====================================================
+        RESUMEN
+    ====================================================== */}
+
+      <Card className="border-0 shadow-sm">
+
+        <Card.Header className="bg-white py-3">
+
+          <div className="fw-semibold">
+            Resumen por categoría
+          </div>
+
+          <div className="small text-muted">
+            Totales calculados sobre los productos actualmente filtrados.
+          </div>
+
+        </Card.Header>
+
+
+        <Card.Body className="p-0">
+
+          <div className="table-responsive">
+
+            <Table
+              hover
+              size="sm"
+              className="mb-0 align-middle"
+            >
+
+              <thead className="table-light">
+
+                <tr>
+
+                  <th className="ps-3">
+                    Categoría
+                  </th>
+
+                  <th className="text-end">
+                    Cantidad
+                  </th>
+
+                  <th className="text-end">
+                    Kg
+                  </th>
+
+                  <th className="text-end pe-3">
+                    Costo total
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody>
+
+                {
+                  Object.keys(
+                    categorySummary
+                  ).map(
+                    (category) => (
+
+                      <tr
+                        key={
+                          category
+                        }
+                      >
+
+                        <td className="ps-3 fw-semibold">
+                          {category}
+                        </td>
+
+                        <td className="text-end">
+
+                          {
+                            categorySummary[
+                              category
+                            ].cantidad
+                          }
+
+                        </td>
+
+                        <td className="text-end">
+
+                          {
+                            categorySummary[
+                              category
+                            ].pesoTotal
+                              .toLocaleString(
+                                "es-AR",
+                                {
+                                  maximumFractionDigits:
+                                    2,
+                                }
+                              )
+                          }
+
+                        </td>
+
+                        <td className="text-end pe-3">
+
+                          {
+                            categorySummary[
+                              category
+                            ].costoTotal !== 0
+                              ? categorySummary[
+                                category
+                              ].costoTotal
+                                .toLocaleString(
+                                  "es-AR",
+                                  {
+                                    maximumFractionDigits:
+                                      2,
+                                  }
+                                )
+                              : "N/A"
+                          }
+
+                        </td>
+
+                      </tr>
+
+                    )
+                  )
+                }
+
+              </tbody>
+
+            </Table>
+
+          </div>
+
+        </Card.Body>
+
+      </Card>
+
+    </div>
+
+  );
 }

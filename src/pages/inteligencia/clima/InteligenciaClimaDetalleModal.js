@@ -80,8 +80,8 @@ const InteligenciaClimaDetalleModal = ({
 
                     const data =
                         await inteligenciaClimaApi
-                            .obtener(
-                                registro.id
+                            .obtenerPorFecha(
+                                registro.fecha
                             );
 
 
@@ -120,7 +120,7 @@ const InteligenciaClimaDetalleModal = ({
 
     }, [
         show,
-        registro?.id,
+        registro?.fecha,
     ]);
 
 
@@ -492,10 +492,9 @@ const TarjetaDato = ({
 
     <div
         className={
-            `border rounded p-3 h-100 ${
-                destacado
-                    ? "shadow-sm"
-                    : ""
+            `border rounded p-3 h-100 ${destacado
+                ? "shadow-sm"
+                : ""
             }`
         }
     >
@@ -722,7 +721,7 @@ const obtenerDescripcionClima =
 
         return (
             descripciones[
-                Number(codigo)
+            Number(codigo)
             ] ||
             `Código ${codigo}`
         );
