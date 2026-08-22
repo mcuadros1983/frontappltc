@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { Card, Row, Col, Form, Button, Table, Spinner, Alert, Badge, Pagination, InputGroup } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
+import NuevoMovimientoCheques from "../tesoreria//NuevoMovimientoCheques";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -246,6 +247,10 @@ export default function SitFinanciera() {
   const [proveedorId, setProveedorId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [sucursalId, setSucursalId] = useState("");
+  const [
+    fpAcordadaFiltro,
+    setFpAcordadaFiltro,
+  ] = useState("");
   const [modoRango, setModoRango] = useState("prox"); // prox | rango
   const [dias, setDias] = useState(7);
   const [desde, setDesde] = useState("");
@@ -260,6 +265,10 @@ export default function SitFinanciera() {
     useState(null);
   const [showNuevoPagoProgramado, setShowNuevoPagoProgramado] =
     useState(false);
+  const [
+    showNuevoMovimientoCheques,
+    setShowNuevoMovimientoCheques,
+  ] = useState(false);
   const [
     mostrarInstancias,
     setMostrarInstancias,
@@ -349,7 +358,11 @@ export default function SitFinanciera() {
       estado: it.estado || "pendiente",
       dias_restantes: typeof it.dias_restantes === "number" ? it.dias_restantes : daysDiffFromToday(it.fecha_vencimiento),
       descripcion: it.descripcion || "-",
-      formapago_futuro_desc: "",
+      formapago_id:
+        it.formapago_id ?? null,
+
+      formapago_futuro_desc:
+        fpById.get(Number(it.formapago_id))?.descripcion || "",
       comprobanteegreso_id: it.comprobanteegreso_id ?? null, // <-- clave
       comprobante_nro: null, // lo resolvemos por id
       key: `inst-${it.id}`,
@@ -457,9 +470,9 @@ export default function SitFinanciera() {
 
       const medioDesc =
         p.medio === "caja"
-          ? "Caja"
+          ? "EFECTIVO"
           : p.medio === "banco"
-            ? "Transferencia / Banco"
+            ? "TRANSFERENCIA"
             : p.medio || "";
 
       return {
@@ -502,10 +515,12 @@ export default function SitFinanciera() {
         descripcion:
           p.descripcion || `Pago programado #${p.id}`,
 
+        // formapago_futuro_desc:
+        //   p.formapago_id
+        //     ? fpDesc(p.formapago_id)
+        //     : medioDesc,
         formapago_futuro_desc:
-          p.formapago_id
-            ? fpDesc(p.formapago_id)
-            : medioDesc,
+          medioDesc,
 
         comprobanteegreso_id:
           p.comprobanteegreso_id ?? null,
@@ -537,44 +552,148 @@ export default function SitFinanciera() {
       };
     });
 
+  const opcionesFpAcordada = useMemo(() => {
+    const opciones = new Set();
+
+    // Formas de pago del maestro
+    for (const fp of fpById.values()) {
+      if (fp?.descripcion) {
+        opciones.add(
+          String(fp.descripcion).trim()
+        );
+      }
+    }
+
+    // Medios utilizados por pagos programados
+    opciones.add("EFECTIVO");
+    opciones.add("TRANSFERENCIA");
+
+    return Array.from(opciones)
+      .filter(Boolean)
+      .sort((a, b) =>
+        a.localeCompare(b)
+      );
+  }, [fpById]);
+
   // -------- Carga combinada --------
   const cargar = useCallback(async () => {
+
     setLoading(true);
     setErr(null);
+
     try {
+
+      // ==========================================
+      // CUENTA CORRIENTE
+      // ==========================================
+
       const pCta = {
-        empresa_id: empresaId || undefined,
-        proveedor_id: proveedorId || undefined,
+        empresa_id:
+          empresaId || undefined,
+
+        proveedor_id:
+          proveedorId || undefined,
       };
+
+
+      // ==========================================
+      // INSTANCIAS
+      // ==========================================
 
       const pInst = {
-        empresa_id: empresaId || undefined,
-        proveedor_id: proveedorId || undefined,
-        categoria_id: categoriaId || undefined,
-        sucursal_id: sucursalId || undefined,
+        empresa_id:
+          empresaId || undefined,
+
+        proveedor_id:
+          proveedorId || undefined,
+
+        categoria_id:
+          categoriaId || undefined,
+
+        sucursal_id:
+          sucursalId || undefined,
       };
+
+
       if (modoRango === "prox") {
-        pInst.dias = dias || 7;
+
+        pInst.dias =
+          Number(dias) || 7;
+
       } else {
-        if (desde) pInst.desde = desde;
-        if (hasta) pInst.hasta = hasta;
+
+        if (desde) {
+          pInst.desde =
+            desde;
+        }
+
+        if (hasta) {
+          pInst.hasta =
+            hasta;
+        }
       }
 
+
+      // ==========================================
+      // ECHEQS
+      // ==========================================
+
       const pEch = {
-        empresa_id: empresaId || undefined,
-        por: "vencimiento",
+        empresa_id:
+          empresaId || undefined,
+
+        por:
+          "vencimiento",
       };
+
+
       if (modoRango === "prox") {
-        const today = new Date();
-        const to = new Date(today);
-        to.setDate(today.getDate() + (dias || 0));
-        pEch.fecha_desde = iso(today);
-        pEch.fecha_hasta = iso(to);
+
+        const today =
+          new Date();
+
+        const to =
+          new Date(today);
+
+        to.setDate(
+          today.getDate() +
+          (Number(dias) || 7)
+        );
+
+
+        /*
+         * SIN fecha_desde:
+         *
+         * incluye eCheqs vencidos anteriores
+         * que continúan pendientes.
+         */
+
+        pEch.fecha_hasta =
+          iso(to);
+
       } else {
-        if (desde) pEch.fecha_desde = desde;
-        if (hasta) pEch.fecha_hasta = hasta;
+
+        if (desde) {
+          pEch.fecha_desde =
+            desde;
+        }
+
+        if (hasta) {
+          pEch.fecha_hasta =
+            hasta;
+        }
       }
-      if (proveedorId) pEch.proveedor_id = proveedorId;
+
+
+      if (proveedorId) {
+        pEch.proveedor_id =
+          proveedorId;
+      }
+
+
+      // ==========================================
+      // PAGOS PROGRAMADOS
+      // ==========================================
 
       const pProg = {
         empresa_id:
@@ -589,6 +708,7 @@ export default function SitFinanciera() {
 
 
       if (modoRango === "prox") {
+
         const today =
           new Date();
 
@@ -597,11 +717,16 @@ export default function SitFinanciera() {
 
         to.setDate(
           today.getDate() +
-          (dias || 0)
+          (Number(dias) || 7)
         );
 
-        pProg.desde =
-          iso(today);
+
+        /*
+         * SIN desde:
+         *
+         * incluye pagos programados anteriores
+         * que todavía están pendientes.
+         */
 
         pProg.hasta =
           iso(to);
@@ -619,32 +744,60 @@ export default function SitFinanciera() {
         }
       }
 
+
+      // ==========================================
+      // CONSULTAS
+      // ==========================================
+
       const [
         rawInst,
         rawCta,
         rawEch,
         rawProg,
       ] = await Promise.all([
-        listarVencimientos(pInst),
-        listarCargosAbiertos(pCta),
-        listarEcheqsPendientes(pEch),
-        listarPagosProgramados(pProg),
+
+        listarVencimientos(
+          pInst
+        ),
+
+        listarCargosAbiertos(
+          pCta
+        ),
+
+        listarEcheqsPendientes(
+          pEch
+        ),
+
+        listarPagosProgramados(
+          pProg
+        ),
+
       ]);
 
+
       const instancias =
-        normalizeInstancias(rawInst);
+        normalizeInstancias(
+          rawInst
+        );
 
       const cargos =
-        normalizeCargos(rawCta);
+        normalizeCargos(
+          rawCta
+        );
 
       const echeqs =
-        normalizeEcheqs(rawEch);
+        normalizeEcheqs(
+          rawEch
+        );
 
       const programados =
-        normalizePagosProgramados(rawProg);
+        normalizePagosProgramados(
+          rawProg
+        );
 
 
       let merged = [
+
         ...(mostrarInstancias
           ? instancias
           : []),
@@ -652,30 +805,108 @@ export default function SitFinanciera() {
         ...cargos,
         ...echeqs,
         ...programados,
+
       ];
 
-      if (q && q.trim() !== "") {
-        const s = q.trim().toLowerCase();
+      // ==========================================
+      // FILTRO FP ACORDADA
+      // ==========================================
+
+      if (fpAcordadaFiltro) {
         merged = merged.filter(
           (it) =>
-            (it.descripcion || "").toLowerCase().includes(s) ||
-            (it.proveedor_nombre || "").toLowerCase().includes(s) ||
-            (it.categoria_nombre || "").toLowerCase().includes(s)
+            String(
+              it.formapago_futuro_desc || ""
+            )
+              .trim()
+              .toLowerCase() ===
+            String(fpAcordadaFiltro)
+              .trim()
+              .toLowerCase()
         );
       }
 
-      // Orden default por fecha asc
-      merged.sort((a, b) => String(a.fecha_vencimiento).localeCompare(String(b.fecha_vencimiento)));
+      if (
+        q &&
+        q.trim() !== ""
+      ) {
 
-      setItems(merged);
+        const s =
+          q
+            .trim()
+            .toLowerCase();
+
+        merged =
+          merged.filter(
+            (it) =>
+              (it.descripcion || "")
+                .toLowerCase()
+                .includes(s) ||
+
+              (it.proveedor_nombre || "")
+                .toLowerCase()
+                .includes(s) ||
+
+              (it.categoria_nombre || "")
+                .toLowerCase()
+                .includes(s)
+          );
+      }
+
+
+      // Orden por vencimiento
+      merged.sort(
+        (a, b) =>
+          String(
+            a.fecha_vencimiento
+          ).localeCompare(
+            String(
+              b.fecha_vencimiento
+            )
+          )
+      );
+
+
+      setItems(
+        merged
+      );
+
       setPage(1);
+
     } catch (e) {
-      setErr(e.message || "Error cargando situación financiera");
+
+      setErr(
+        e.message ||
+        "Error cargando situación financiera"
+      );
+
       setItems([]);
+
     } finally {
+
       setLoading(false);
+
     }
-  }, [mostrarInstancias, empresaId, proveedorId, categoriaId, sucursalId, modoRango, dias, desde, hasta, q, empNameById, provNameById, catNameById, sucNameById, fpById, bancoById]);
+
+  }, [
+    mostrarInstancias,
+    empresaId,
+    proveedorId,
+    categoriaId,
+    sucursalId,
+    modoRango,
+    dias,
+    desde,
+    hasta,
+    q,
+    empNameById,
+    provNameById,
+    catNameById,
+    sucNameById,
+    fpById,
+    bancoById,
+    fpAcordadaFiltro
+  ]);
 
   useEffect(() => {
     cargar();
@@ -1131,7 +1362,7 @@ export default function SitFinanciera() {
               </Form.Group>
             </Col>
 
-            <Col sm={6} md={3}>
+            {/* <Col sm={6} md={3}>
               <Form.Group>
                 <Form.Label>Sucursal</Form.Label>
                 <Form.Select
@@ -1145,6 +1376,38 @@ export default function SitFinanciera() {
                       {s.nombre || s.descripcion || `Sucursal ${s.id}`}
                     </option>
                   ))}
+                </Form.Select>
+              </Form.Group>
+            </Col> */}
+
+            <Col sm={12} md={3} lg={2}>
+              <Form.Group>
+                <Form.Label>
+                  FP Acordada
+                </Form.Label>
+
+                <Form.Select
+                  value={fpAcordadaFiltro}
+                  onChange={(e) =>
+                    setFpAcordadaFiltro(
+                      e.target.value
+                    )
+                  }
+                >
+                  <option value="">
+                    Todas
+                  </option>
+
+                  {opcionesFpAcordada.map(
+                    (fp) => (
+                      <option
+                        key={fp}
+                        value={fp}
+                      >
+                        {fp}
+                      </option>
+                    )
+                  )}
                 </Form.Select>
               </Form.Group>
             </Col>
@@ -1258,6 +1521,16 @@ export default function SitFinanciera() {
                 }
               >
                 + Nuevo pago programado
+              </Button>
+
+              <Button
+                variant="primary"
+                className="ms-2"
+                onClick={() =>
+                  setShowNuevoMovimientoCheques(true)
+                }
+              >
+                + Nuevo eCheq
               </Button>
             </Col>
 
@@ -1512,6 +1785,31 @@ export default function SitFinanciera() {
            *
            * El nuevo pago aparecerá automáticamente
            * dentro de los pagos programados pendientes.
+           */
+          await cargar();
+
+        }}
+      />
+
+      <NuevoMovimientoCheques
+        show={
+          showNuevoMovimientoCheques
+        }
+
+        onHide={() =>
+          setShowNuevoMovimientoCheques(false)
+        }
+
+        onCreated={async () => {
+
+          setShowNuevoMovimientoCheques(
+            false
+          );
+
+          /*
+           * Recargar Situación Financiera para que
+           * el nuevo eCheq aparezca inmediatamente
+           * en la lista de obligaciones.
            */
           await cargar();
 
