@@ -324,28 +324,185 @@ export default function SitFinanciera() {
 
   const fpDesc = (id) => (id ? (fpById.get(Number(id))?.descripcion || `FP #${id}`) : "");
 
+  // // -------- Normalizadores --------
+  // const normalizeInstancias = (arr = []) =>
+  //   arr.map((it) => ({
+  //     tipo: "instancia",
+  //     id: it.id,
+  //     empresa_id: it.empresa_id ?? null,
+  //     empresa_nombre: empNameById.get(Number(it.empresa_id)) || "",
+  //     proveedor_id: it.proveedor_id ?? null,
+  //     proveedor_nombre: it.proveedor_nombre || provNameById.get(Number(it.proveedor_id)) || "",
+  //     categoria_id: it.categoriaegreso_id ?? null,
+  //     categoria_nombre: it.categoria_nombre || catNameById.get(Number(it.categoriaegreso_id)) || "",
+  //     sucursal_id: it.sucursal_id ?? null,
+  //     sucursal_nombre: sucNameById.get(Number(it.sucursal_id)) || "",
+  //     fecha_vencimiento: it.fecha_vencimiento || "",
+  //     monto_base: Number(it.monto_base ?? it.monto_real ?? it.monto_estimado ?? 0),
+  //     estado: it.estado || "pendiente",
+  //     dias_restantes: typeof it.dias_restantes === "number" ? it.dias_restantes : daysDiffFromToday(it.fecha_vencimiento),
+  //     descripcion: it.descripcion || "-",
+  //     formapago_futuro_desc: "",
+  //     comprobanteegreso_id: it.comprobanteegreso_id ?? null, // <-- clave
+  //     comprobante_nro: null, // lo resolvemos por id
+  //     key: `inst-${it.id}`,
+  //   }));
+
   // -------- Normalizadores --------
   const normalizeInstancias = (arr = []) =>
     arr.map((it) => ({
       tipo: "instancia",
+
       id: it.id,
-      empresa_id: it.empresa_id ?? null,
-      empresa_nombre: empNameById.get(Number(it.empresa_id)) || "",
-      proveedor_id: it.proveedor_id ?? null,
-      proveedor_nombre: it.proveedor_nombre || provNameById.get(Number(it.proveedor_id)) || "",
-      categoria_id: it.categoriaegreso_id ?? null,
-      categoria_nombre: it.categoria_nombre || catNameById.get(Number(it.categoriaegreso_id)) || "",
-      sucursal_id: it.sucursal_id ?? null,
-      sucursal_nombre: sucNameById.get(Number(it.sucursal_id)) || "",
-      fecha_vencimiento: it.fecha_vencimiento || "",
-      monto_base: Number(it.monto_base ?? it.monto_real ?? it.monto_estimado ?? 0),
-      estado: it.estado || "pendiente",
-      dias_restantes: typeof it.dias_restantes === "number" ? it.dias_restantes : daysDiffFromToday(it.fecha_vencimiento),
-      descripcion: it.descripcion || "-",
-      formapago_futuro_desc: "",
-      comprobanteegreso_id: it.comprobanteegreso_id ?? null, // <-- clave
-      comprobante_nro: null, // lo resolvemos por id
-      key: `inst-${it.id}`,
+
+      // ==========================================
+      // INSTANCIA / PLANTILLA
+      // ==========================================
+
+      gastoestimado_id:
+        it.gastoestimado_id ?? null,
+
+      periodo:
+        it.periodo ||
+        String(it.fecha_vencimiento || "").slice(0, 7),
+
+      // ==========================================
+      // EMPRESA
+      // ==========================================
+
+      empresa_id:
+        it.empresa_id ?? null,
+
+      empresa_nombre:
+        empNameById.get(
+          Number(it.empresa_id)
+        ) || "",
+
+      // ==========================================
+      // PROVEEDOR
+      // ==========================================
+
+      proveedor_id:
+        it.proveedor_id ?? null,
+
+      proveedor_nombre:
+        it.proveedor_nombre ||
+        provNameById.get(
+          Number(it.proveedor_id)
+        ) ||
+        "",
+
+      // ==========================================
+      // CATEGORÍA
+      // ==========================================
+
+      categoria_id:
+        it.categoriaegreso_id ?? null,
+
+      categoria_nombre:
+        it.categoria_nombre ||
+        catNameById.get(
+          Number(it.categoriaegreso_id)
+        ) ||
+        "",
+
+      // ==========================================
+      // SUCURSAL
+      // ==========================================
+
+      sucursal_id:
+        it.sucursal_id ?? null,
+
+      sucursal_nombre:
+        sucNameById.get(
+          Number(it.sucursal_id)
+        ) || "",
+
+      // ==========================================
+      // FECHAS
+      // ==========================================
+
+      fecha_vencimiento:
+        it.fecha_vencimiento || "",
+
+      // ==========================================
+      // IMPORTES
+      // ==========================================
+
+      monto_base:
+        Number(
+          it.monto_base ??
+          it.monto_real ??
+          it.monto_estimado ??
+          0
+        ),
+
+      monto_estimado:
+        Number(
+          it.monto_estimado ?? 0
+        ),
+
+      monto_real:
+        it.monto_real != null
+          ? Number(it.monto_real)
+          : null,
+
+      monto_pagado:
+        Number(
+          it.monto_pagado ?? 0
+        ),
+
+      // ==========================================
+      // ESTADO
+      // ==========================================
+
+      estado:
+        it.estado || "pendiente",
+
+      dias_restantes:
+        typeof it.dias_restantes === "number"
+          ? it.dias_restantes
+          : daysDiffFromToday(
+            it.fecha_vencimiento
+          ),
+
+      // ==========================================
+      // DATOS DEL GASTO
+      // ==========================================
+
+      descripcion:
+        it.descripcion || "-",
+
+      tipocomprobante_id:
+        it.tipocomprobante_id ?? null,
+
+      formapago_id:
+        it.formapago_id ?? null,
+
+      formapago_futuro_desc:
+        fpById.get(
+          Number(it.formapago_id)
+        )?.descripcion || "",
+
+      observaciones:
+        it.observaciones || "",
+
+      // ==========================================
+      // COMPROBANTE
+      // ==========================================
+
+      comprobanteegreso_id:
+        it.comprobanteegreso_id ?? null,
+
+      comprobante_nro:
+        null,
+
+      // ==========================================
+      // REACT
+      // ==========================================
+
+      key:
+        `inst-${it.id}`,
     }));
 
   const normalizeCargos = (arr = []) =>

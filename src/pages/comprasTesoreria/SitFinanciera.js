@@ -3,6 +3,10 @@ import { Card, Row, Col, Form, Button, Table, Spinner, Alert, Badge, Pagination,
 import Contexts from "../../context/Contexts";
 import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
 import NuevoMovimientoCheques from "../tesoreria//NuevoMovimientoCheques";
+import AplicarInstanciaGasto
+  from "../../components/tesoreria/AplicarInstanciaGasto";
+import EditarInstanciaGasto
+  from "../../components/tesoreria/EditarInstanciaGasto";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -274,6 +278,26 @@ export default function SitFinanciera() {
     setMostrarInstancias,
   ] = useState(true);
   // -------- Paginación --------
+  const [
+    showAplicarInstancia,
+    setShowAplicarInstancia,
+  ] = useState(false);
+
+  const [
+    instanciaAplicar,
+    setInstanciaAplicar,
+  ] = useState(null);
+  const [
+    showEditarInstancia,
+    setShowEditarInstancia,
+  ] = useState(false);
+
+
+  const [
+    instanciaEditar,
+    setInstanciaEditar,
+  ] = useState(null);
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -358,11 +382,20 @@ export default function SitFinanciera() {
       estado: it.estado || "pendiente",
       dias_restantes: typeof it.dias_restantes === "number" ? it.dias_restantes : daysDiffFromToday(it.fecha_vencimiento),
       descripcion: it.descripcion || "-",
+      monto_pagado:
+        Number(it.monto_pagado || 0),
+
+      proyecto_id:
+        it.proyecto_id ?? null,
+
+      imputacioncontable_id:
+        it.imputacioncontable_id ?? null,
       formapago_id:
         it.formapago_id ?? null,
 
       formapago_futuro_desc:
         fpById.get(Number(it.formapago_id))?.descripcion || "",
+
       comprobanteegreso_id: it.comprobanteegreso_id ?? null, // <-- clave
       comprobante_nro: null, // lo resolvemos por id
       key: `inst-${it.id}`,
@@ -1712,13 +1745,65 @@ export default function SitFinanciera() {
 
 
                         {/* ================================= */}
+                        {/* INSTANCIAS                        */}
+                        {/* ================================= */}
+
+                        {row.tipo === "instancia" && (
+
+                          <div className="d-flex justify-content-center gap-1">
+
+                            <Button
+                              size="sm"
+                              variant="success"
+                              onClick={() => {
+
+                                setInstanciaAplicar(
+                                  row
+                                );
+
+                                setShowAplicarInstancia(
+                                  true
+                                );
+                              }}
+                            >
+                              Aplicar
+                            </Button>
+
+
+                            <Button
+                              size="sm"
+                              variant="outline-primary"
+                              onClick={() => {
+
+                                setInstanciaEditar(
+                                  row
+                                );
+
+                                setShowEditarInstancia(
+                                  true
+                                );
+                              }}
+                            >
+                              Editar
+                            </Button>
+
+                          </div>
+
+                        )}
+
+
+                        {/* ================================= */}
                         {/* RESTO DE LOS TIPOS                */}
                         {/* ================================= */}
 
                         {row.tipo !== "programado" &&
-                          row.tipo !== "echeq" && (
+                          row.tipo !== "echeq" &&
+                          row.tipo !== "instancia" && (
                             "-"
                           )}
+
+
+
 
                       </td>
                     </tr>
@@ -1815,7 +1900,83 @@ export default function SitFinanciera() {
 
         }}
       />
+      <AplicarInstanciaGasto
 
+        show={
+          showAplicarInstancia
+        }
+
+        instancia={
+          instanciaAplicar
+        }
+
+        onHide={() => {
+
+          setShowAplicarInstancia(
+            false
+          );
+
+          setInstanciaAplicar(
+            null
+          );
+
+        }}
+
+        onApplied={async () => {
+
+          setShowAplicarInstancia(
+            false
+          );
+
+          setInstanciaAplicar(
+            null
+          );
+
+          await cargar();
+
+        }}
+
+      />
+
+      <EditarInstanciaGasto
+
+        show={
+          showEditarInstancia
+        }
+
+        instancia={
+          instanciaEditar
+        }
+
+        onHide={() => {
+
+          setShowEditarInstancia(
+            false
+          );
+
+          setInstanciaEditar(
+            null
+          );
+
+        }}
+
+        onUpdated={async () => {
+
+          setShowEditarInstancia(
+            false
+          );
+
+          setInstanciaEditar(
+            null
+          );
+
+          await cargar();
+
+        }}
+
+      />
     </>
   );
+
+
 }
