@@ -75,10 +75,12 @@ export default function ProveedorList() {
     if (!q) return source;
     return source.filter((p) => {
       const n = (p.nombre || "").toLowerCase().includes(q);
+      const c = (p.cuit || "").toLowerCase().includes(q);
       const d = (p.direccion || "").toLowerCase().includes(q);
       const t = (p.telefono || "").toLowerCase().includes(q);
       const e = (p.email || "").toLowerCase().includes(q);
-      return n || d || t || e;
+
+      return n || c || d || t || e;
     });
   }, [source, busqueda]);
 
@@ -244,7 +246,7 @@ export default function ProveedorList() {
           <InputGroup>
             <InputGroup.Text className="d-none d-md-flex">Buscar</InputGroup.Text>
             <Form.Control
-              placeholder="Nombre, dirección, teléfono o email…"
+              placeholder="Nombre, CUIT, dirección, teléfono o email…"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
@@ -266,6 +268,7 @@ export default function ProveedorList() {
           <tr>
             <th style={{ width: 80 }}>#</th>
             <th>Nombre</th>
+            <th>CUIT</th>
             <th>Dirección</th>
             <th>Teléfono</th>
             <th>Email</th>
@@ -275,7 +278,7 @@ export default function ProveedorList() {
         <tbody>
           {loadingTabla ? (
             <tr>
-              <td colSpan={6} className="text-center">
+              <td colSpan={7} className="text-center">
                 <Spinner animation="border" size="sm" className="me-2" /> Cargando…
               </td>
             </tr>
@@ -285,6 +288,7 @@ export default function ProveedorList() {
                 <tr key={p.id}>
                   <td>{p.id}</td>
                   <td>{p.nombre}</td>
+                  <td>{p.cuit || "—"}</td>
                   <td>{p.direccion || "—"}</td>
                   <td>{p.telefono || "—"}</td>
                   <td>{p.email || "—"}</td>
@@ -311,7 +315,7 @@ export default function ProveedorList() {
               ))}
               {filtrados.length === 0 && !loadingTabla && (
                 <tr>
-                  <td colSpan={6} className="text-center text-muted">
+                  <td colSpan={7} className="text-center text-muted">
                     Sin resultados
                   </td>
                 </tr>
