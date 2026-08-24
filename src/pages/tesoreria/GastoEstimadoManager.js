@@ -51,9 +51,47 @@ async function listarPlantillas(params = {}) {
   return { items: data.items || [], total: Number(data.total || (data.items || []).length) };
 }
 
+// async function borrarPlantilla(id) {
+//   const r = await fetch(`${apiUrl}/gasto-estimado/${id}`, { method: "DELETE", credentials: "include" });
+//   if (!r.ok) throw new Error("No se pudo eliminar la plantilla");
+// }
+
 async function borrarPlantilla(id) {
-  const r = await fetch(`${apiUrl}/gasto-estimado/${id}`, { method: "DELETE", credentials: "include" });
-  if (!r.ok) throw new Error("No se pudo eliminar la plantilla");
+
+  const r = await fetch(
+    `${apiUrl}/gasto-estimado/${id}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+    }
+  );
+
+  const data =
+    await r
+      .json()
+      .catch(() => ({}));
+
+
+  console.log(
+    "DELETE gasto estimado:",
+    {
+      status: r.status,
+      ok: r.ok,
+      data,
+    }
+  );
+
+
+  if (!r.ok) {
+
+    throw new Error(
+      data?.error ||
+      "No se pudo eliminar la plantilla"
+    );
+  }
+
+
+  return data;
 }
 
 function ActivoBadge({ activo }) {
@@ -143,8 +181,8 @@ export default function GastoEstimadoManager() {
       // Filtro client-side adicional por q si backend no lo soporta
       const filtered = q
         ? items.filter(it =>
-            (it.descripcion || "").toLowerCase().includes(q.toLowerCase()) ||
-            String(it.proveedor_nombre || it.Proveedor?.nombre || "").toLowerCase().includes(q.toLowerCase()))
+          (it.descripcion || "").toLowerCase().includes(q.toLowerCase()) ||
+          String(it.proveedor_nombre || it.Proveedor?.nombre || "").toLowerCase().includes(q.toLowerCase()))
         : items;
 
       setTotal(filtered.length);
@@ -171,12 +209,12 @@ export default function GastoEstimadoManager() {
   const onNew = () => { setEditItem(null); setShowModal(true); };
   const onEdit = (it) => { setEditItem(it); setShowModal(true); };
   const onDelete = async (it) => {
-    if (!window.confirm(`¿Eliminar la plantilla "${it.descripcion}"?`)) return;
+    if (!window.confirm(`¿Desactivar la plantilla "${it.descripcion}"?`)) return;
     try {
       await borrarPlantilla(it.id);
       cargar();
     } catch (e) {
-      alert(e.message || "No se pudo eliminar");
+      alert(e.message || "No se pudo desactivar");
     }
   };
 
@@ -339,7 +377,7 @@ export default function GastoEstimadoManager() {
                             <td><ActivoBadge activo={it.activo !== false} /></td>
                             <td className="text-nowrap">
                               <Button size="sm" variant="outline-primary" className="me-1" onClick={() => onEdit(it)}>Editar</Button>
-                              <Button size="sm" variant="outline-danger" onClick={() => onDelete(it)} className="mx-2">Eliminar</Button>
+                              <Button size="sm" variant="outline-danger" onClick={() => onDelete(it)} className="mx-2">Desactivar</Button>
                             </td>
                           </tr>
                         ))}
