@@ -37,6 +37,7 @@ export default function ProveedorList() {
   const [direccion, setDireccion] = useState("");
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
+  const [cuit, setCuit] = useState("");
   const [formError, setFormError] = useState("");
   const [formMsg, setFormMsg] = useState(null);
 
@@ -48,12 +49,13 @@ export default function ProveedorList() {
       const res = await fetch(`${apiUrl}/proveedores`, { credentials: "include" });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      if (typeof setProveedoresTabla === "function") {
-        const ordenados = (Array.isArray(data) ? data : [])
-          .slice()
-          .sort((a, b) => a.id - b.id);
-        setProveedoresTabla(ordenados);
-      }
+      // if (typeof setProveedoresTabla === "function") {
+      //   const ordenados = (Array.isArray(data) ? data : [])
+      //     .slice()
+      //     .sort((a, b) => a.id - b.id);
+      //   setProveedoresTabla(ordenados);
+      // }
+      setProveedoresTabla(data);
     } catch {
       setError("Error al cargar proveedores");
     } finally {
@@ -87,6 +89,7 @@ export default function ProveedorList() {
     setTelefono("");
     setEmail("");
     setFormError("");
+    setCuit("");
     setFormMsg(null);
   };
 
@@ -104,6 +107,7 @@ export default function ProveedorList() {
     setDireccion(item.direccion || "");
     setTelefono(item.telefono || "");
     setEmail(item.email || "");
+    setCuit(item.cuit || "");
     setFormError("");
     setFormMsg(null);
     setShowModal(true);
@@ -138,6 +142,7 @@ export default function ProveedorList() {
         direccion: direccion?.trim() || "",
         telefono: telefono?.trim() || "",
         email: email?.trim() || "",
+        cuit: cuit?.trim() || null,
       };
 
       const url = editing
@@ -157,7 +162,7 @@ export default function ProveedorList() {
         let msg = "No se pudo guardar";
         try {
           msg = JSON.parse(raw)?.error || msg;
-        } catch {}
+        } catch { }
         throw new Error(msg);
       }
 
@@ -165,7 +170,7 @@ export default function ProveedorList() {
       if (raw) {
         try {
           saved = JSON.parse(raw);
-        } catch {}
+        } catch { }
       }
 
       const finalItem = saved || { id: editing ? editId : undefined, ...payload };
@@ -365,6 +370,20 @@ export default function ProveedorList() {
                       onChange={(e) => setDireccion(e.target.value)}
                       disabled={saving}
                       placeholder="Dirección del proveedor"
+                      className="my-input"
+                    />
+                  </Col>
+
+                  <Col md={12}>
+                    <Form.Label>CUIT</Form.Label>
+
+                    <Form.Control
+                      value={cuit}
+                      onChange={(e) =>
+                        setCuit(e.target.value)
+                      }
+                      disabled={saving}
+                      placeholder="Ej: 30-12345678-9"
                       className="my-input"
                     />
                   </Col>
