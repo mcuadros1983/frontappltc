@@ -1,4 +1,11 @@
-import { useContext, useEffect, useMemo, useState, useCallback } from "react";
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef
+} from "react";
 import { Card, Row, Col, Form, Button, Table, Spinner, Alert, Badge, Pagination, InputGroup } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
@@ -269,6 +276,7 @@ export default function SitFinanciera() {
     programadoAcreditar,
     setProgramadoAcreditar,
   ] = useState(null);
+  const cargaSeq = useRef(0);
   const [err, setErr] = useState(null);
   const [items, setItems] = useState([]); // normalizados combinados
   const [accionandoId, setAccionandoId] =
@@ -617,6 +625,16 @@ export default function SitFinanciera() {
   // -------- Carga combinada --------
   const cargar = useCallback(async () => {
 
+    /*
+     * Cada carga recibe un número.
+     *
+     * Si mientras esta consulta está esperando al backend
+     * comienza una carga nueva, esta carga anterior ya no
+     * podrá modificar items.
+     */
+    const miCarga =
+      ++cargaSeq.current;
+
     setLoading(true);
     setErr(null);
 
@@ -906,6 +924,19 @@ export default function SitFinanciera() {
       );
 
 
+      /*
+       * Si mientras esperábamos las respuestas
+       * comenzó una carga más nueva, descartamos
+       * los resultados de esta carga anterior.
+       */
+      if (
+        miCarga !==
+        cargaSeq.current
+      ) {
+        return;
+      }
+
+
       setItems(
         merged
       );
@@ -914,16 +945,35 @@ export default function SitFinanciera() {
 
     } catch (e) {
 
-      setErr(
-        e.message ||
-        "Error cargando situación financiera"
-      );
+      /*
+       * Sólo la carga más reciente puede
+       * modificar el estado de la pantalla.
+       */
+      if (
+        miCarga ===
+        cargaSeq.current
+      ) {
 
-      setItems([]);
+        setErr(
+          e.message ||
+          "Error cargando situación financiera"
+        );
+
+        setItems([]);
+      }
 
     } finally {
 
-      setLoading(false);
+      /*
+       * Una carga anterior tampoco debe apagar
+       * el spinner de una carga más nueva.
+       */
+      if (
+        miCarga ===
+        cargaSeq.current
+      ) {
+        setLoading(false);
+      }
 
     }
 
