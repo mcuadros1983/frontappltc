@@ -1896,7 +1896,7 @@ export default function SitFinanciera() {
                                 );
                               }}
                             >
-                              Aplicar
+                              Acreditar
                             </Button>
 
 
