@@ -135,6 +135,10 @@ export default function AplicarInstanciaGasto({
     setCancelarRenovacion,
   ] = useState(false);
 
+  const [
+    aplicarVariasFacturas,
+    setAplicarVariasFacturas,
+  ] = useState(false);
 
   const [
     saving,
@@ -226,7 +230,7 @@ export default function AplicarInstanciaGasto({
           (b) =>
             !empresaId ||
             Number(b.empresa_id) ===
-              Number(empresaId)
+            Number(empresaId)
         ),
       [
         bancosTabla,
@@ -247,7 +251,7 @@ export default function AplicarInstanciaGasto({
             !empresaId ||
             !c.empresa_id ||
             Number(c.empresa_id) ===
-              Number(empresaId)
+            Number(empresaId)
         ),
       [
         cajasTesoreria,
@@ -301,8 +305,8 @@ export default function AplicarInstanciaGasto({
       setProyectoId(
         instancia.proyecto_id
           ? String(
-              instancia.proyecto_id
-            )
+            instancia.proyecto_id
+          )
           : ""
       );
 
@@ -461,7 +465,7 @@ export default function AplicarInstanciaGasto({
     if (
       saldoInstancia > 0 &&
       N(monto) >
-        saldoInstancia
+      saldoInstancia
     ) {
 
       throw new Error(
@@ -541,6 +545,9 @@ export default function AplicarInstanciaGasto({
         instancia.descripcion ||
         `Pago instancia #${instancia.id}`,
 
+      generar_abono_ctacte:
+        aplicarVariasFacturas,
+
       proyecto_id:
         proyectoId
           ? Number(proyectoId)
@@ -552,8 +559,8 @@ export default function AplicarInstanciaGasto({
       imputacioncontable_id:
         instancia.imputacioncontable_id
           ? Number(
-              instancia.imputacioncontable_id
-            )
+            instancia.imputacioncontable_id
+          )
           : null,
 
       observaciones:
@@ -772,7 +779,7 @@ export default function AplicarInstanciaGasto({
 
         const {
           json:
-            movimientoResponse,
+          movimientoResponse,
 
           formapagoId,
 
@@ -1337,6 +1344,27 @@ export default function AplicarInstanciaGasto({
 
               </Col>
 
+              <Col md={12}>
+                <Form.Check
+                  type="checkbox"
+                  id="aplicar-varias-facturas-instancia"
+                  label="Este pago se aplicará a varias facturas"
+                  checked={aplicarVariasFacturas}
+                  disabled={saving}
+                  onChange={(e) =>
+                    setAplicarVariasFacturas(
+                      e.target.checked
+                    )
+                  }
+                />
+
+                {aplicarVariasFacturas && (
+                  <Form.Text muted>
+                    Se generará un abono en la cuenta corriente del proveedor
+                    para poder distribuir este pago entre varias facturas.
+                  </Form.Text>
+                )}
+              </Col>
 
               <Col md={12}>
 

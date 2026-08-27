@@ -2,6 +2,8 @@ import { useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { Card, Row, Col, Form, Button, Table, Spinner, Alert, Badge, Pagination, InputGroup } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
+import AcreditarPagoProgramadoModal
+  from "./AcreditarPagoProgramadoModal";
 import NuevoMovimientoCheques from "../tesoreria//NuevoMovimientoCheques";
 import AplicarInstanciaGasto
   from "../../components/tesoreria/AplicarInstanciaGasto";
@@ -263,6 +265,10 @@ export default function SitFinanciera() {
 
   // -------- Data combinada --------
   const [loading, setLoading] = useState(false);
+  const [
+    programadoAcreditar,
+    setProgramadoAcreditar,
+  ] = useState(null);
   const [err, setErr] = useState(null);
   const [items, setItems] = useState([]); // normalizados combinados
   const [accionandoId, setAccionandoId] =
@@ -1077,20 +1083,111 @@ export default function SitFinanciera() {
     );
   };
 
+  // const handleAcreditarProgramado =
+  //   async (row) => {
+
+  //     const confirmar =
+  //       window.confirm(
+  //         `¿Acreditar el pago programado "${row.descripcion}" por $${toMoney(row.monto_base)}?`
+  //       );
+
+  //     if (!confirmar) {
+  //       return;
+  //     }
+
+
+  //     try {
+  //       setAccionandoId(
+  //         row.key
+  //       );
+
+  //       setErr(null);
+
+
+  //       const body = {
+  //         fecha_acreditacion:
+  //           iso(new Date()),
+  //       };
+
+
+  //       /*
+  //        * Normalmente banco_id/caja_id ya quedaron
+  //        * prefijados al crear el compromiso.
+  //        *
+  //        * Los enviamos igualmente para conservar
+  //        * explícitamente la selección.
+  //        */
+  //       if (
+  //         row.medio === "banco" &&
+  //         row.banco_id
+  //       ) {
+  //         body.banco_id =
+  //           row.banco_id;
+  //       }
+
+
+  //       if (
+  //         row.medio === "caja" &&
+  //         row.caja_id
+  //       ) {
+  //         body.caja_id =
+  //           row.caja_id;
+  //       }
+
+
+  //       await acreditarPagoProgramadoApi(
+  //         row.id,
+  //         body
+  //       );
+
+
+  //       /*
+  //        * MUY IMPORTANTE:
+  //        *
+  //        * No modificamos items manualmente.
+  //        * Volvemos a consultar todo al backend.
+  //        *
+  //        * Como ahora estado = acreditado,
+  //        * GET /pagos-programados?estado=pendiente
+  //        * ya no lo devolverá.
+  //        */
+  //       await cargar();
+
+  //     } catch (e) {
+
+  //       setErr(
+  //         e.message ||
+  //         "No se pudo acreditar el pago programado"
+  //       );
+
+  //     } finally {
+
+  //       setAccionandoId(
+  //         null
+  //       );
+  //     }
+  //   };
+
   const handleAcreditarProgramado =
-    async (row) => {
+    (row) => {
 
-      const confirmar =
-        window.confirm(
-          `¿Acreditar el pago programado "${row.descripcion}" por $${toMoney(row.monto_base)}?`
-        );
+      setProgramadoAcreditar(row);
+    };
 
-      if (!confirmar) {
+  const confirmarAcreditacionProgramado =
+    async ({
+      generar_abono_ctacte,
+    }) => {
+
+      const row =
+        programadoAcreditar;
+
+      if (!row) {
         return;
       }
 
-
       try {
+
         setAccionandoId(
           row.key
         );
@@ -1099,33 +1196,26 @@ export default function SitFinanciera() {
 
 
         const body = {
+
           fecha_acreditacion:
             iso(new Date()),
+
+          generar_abono_ctacte:
+            Boolean(
+              generar_abono_ctacte
+            ),
         };
 
 
-        /*
-         * Normalmente banco_id/caja_id ya quedaron
-         * prefijados al crear el compromiso.
-         *
-         * Los enviamos igualmente para conservar
-         * explícitamente la selección.
-         */
-        if (
-          row.medio === "banco" &&
-          row.banco_id
-        ) {
+        if (row.banco_id) {
           body.banco_id =
-            row.banco_id;
+            Number(row.banco_id);
         }
 
 
-        if (
-          row.medio === "caja" &&
-          row.caja_id
-        ) {
+        if (row.caja_id) {
           body.caja_id =
-            row.caja_id;
+            Number(row.caja_id);
         }
 
 
@@ -1135,16 +1225,8 @@ export default function SitFinanciera() {
         );
 
 
-        /*
-         * MUY IMPORTANTE:
-         *
-         * No modificamos items manualmente.
-         * Volvemos a consultar todo al backend.
-         *
-         * Como ahora estado = acreditado,
-         * GET /pagos-programados?estado=pendiente
-         * ya no lo devolverá.
-         */
+        setProgramadoAcreditar(null);
+
         await cargar();
 
       } catch (e) {
@@ -1156,9 +1238,7 @@ export default function SitFinanciera() {
 
       } finally {
 
-        setAccionandoId(
-          null
-        );
+        setAccionandoId(null);
       }
     };
 
@@ -1974,6 +2054,23 @@ export default function SitFinanciera() {
 
         }}
 
+      />
+
+      <AcreditarPagoProgramadoModal
+        show={
+          Boolean(
+            programadoAcreditar
+          )
+        }
+        row={
+          programadoAcreditar
+        }
+        onHide={() =>
+          setProgramadoAcreditar(null)
+        }
+        onConfirm={
+          confirmarAcreditacionProgramado
+        }
       />
     </>
   );
