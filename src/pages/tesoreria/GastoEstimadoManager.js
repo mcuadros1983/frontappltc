@@ -94,10 +94,10 @@ async function borrarPlantilla(id) {
   return data;
 }
 
-function ActivoBadge({ activo }) {
-  const variant = activo ? "success" : "secondary";
-  return <Badge bg={variant}>{activo ? "Activo" : "Inactivo"}</Badge>;
-}
+// function ActivoBadge({ activo }) {
+//   const variant = activo ? "success" : "secondary";
+//   return <Badge bg={variant}>{activo ? "Activo" : "Inactivo"}</Badge>;
+// }
 
 function RequiereFacturaBadge({ requiere }) {
   const variant = requiere ? "info" : "secondary";
@@ -115,7 +115,7 @@ export default function GastoEstimadoManager() {
   const [categoriaId, setCategoriaId] = useState("");
   const [sucursalId, setSucursalId] = useState("");
   const [periodicidad, setPeriodicidad] = useState("");
-  const [activo, setActivo] = useState(""); // "", "true", "false"
+  const [activo, setActivo] = useState("true"); // "", "true", "false"
   const [q, setQ] = useState("");
 
   // data
@@ -208,15 +208,15 @@ export default function GastoEstimadoManager() {
 
   const onNew = () => { setEditItem(null); setShowModal(true); };
   const onEdit = (it) => { setEditItem(it); setShowModal(true); };
-  const onDelete = async (it) => {
-    if (!window.confirm(`¿Desactivar la plantilla "${it.descripcion}"?`)) return;
-    try {
-      await borrarPlantilla(it.id);
-      cargar();
-    } catch (e) {
-      alert(e.message || "No se pudo desactivar");
-    }
-  };
+  // const onDelete = async (it) => {
+  //   if (!window.confirm(`¿Desactivar la plantilla "${it.descripcion}"?`)) return;
+  //   try {
+  //     await borrarPlantilla(it.id);
+  //     cargar();
+  //   } catch (e) {
+  //     alert(e.message || "No se pudo desactivar");
+  //   }
+  // };
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -354,13 +354,13 @@ export default function GastoEstimadoManager() {
                           <th>Día venc.</th>
                           <th className="text-end">Monto estimado</th>
                           <th>Req. factura</th>
-                          <th>Estado</th>
+                          {/* <th>Estado</th> */}
                           <th>Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
                         {items.length === 0 && (
-                          <tr><td colSpan={12} className="text-center text-muted">Sin resultados</td></tr>
+                          <tr><td colSpan={11} className="text-center text-muted">Sin resultados</td></tr>
                         )}
                         {items.map((it) => (
                           <tr key={it.id}>
@@ -374,10 +374,10 @@ export default function GastoEstimadoManager() {
                             <td>{it.dia_vencimiento_default ?? "-"}</td>
                             <td className="text-end">${toMoney(it.monto_estimado_default)}</td>
                             <td><RequiereFacturaBadge requiere={Boolean(it.requiere_factura)} /></td>
-                            <td><ActivoBadge activo={it.activo !== false} /></td>
+                            {/* <td><ActivoBadge activo={it.activo !== false} /></td> */}
                             <td className="text-nowrap">
                               <Button size="sm" variant="outline-primary" className="me-1" onClick={() => onEdit(it)}>Editar</Button>
-                              <Button size="sm" variant="outline-danger" onClick={() => onDelete(it)} className="mx-2">Desactivar</Button>
+                              {/* <Button size="sm" variant="outline-danger" onClick={() => onDelete(it)} className="mx-2">Desactivar</Button> */}
                             </td>
                           </tr>
                         ))}

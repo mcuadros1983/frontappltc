@@ -161,7 +161,7 @@ export default function NuevoPagoProgramado({
         (b) =>
           !b.empresa_id ||
           Number(b.empresa_id) ===
-            Number(empresa_id)
+          Number(empresa_id)
       );
 
     }, [
@@ -343,8 +343,8 @@ export default function NuevoPagoProgramado({
     setImputacionId(
       categoria?.imputacioncontable_id
         ? String(
-            categoria.imputacioncontable_id
-          )
+          categoria.imputacioncontable_id
+        )
         : ""
     );
 
@@ -511,15 +511,15 @@ export default function NuevoPagoProgramado({
           imputacioncontable_id:
             imputacionId
               ? Number(
-                  imputacionId
-                )
+                imputacionId
+              )
               : null,
 
           proyecto_id:
             proyectoId
               ? Number(
-                  proyectoId
-                )
+                proyectoId
+              )
               : null,
 
           idempotencyKey:
@@ -901,7 +901,6 @@ export default function NuevoPagoProgramado({
 
           )}
 
-
           {medio === "caja" && (
 
             <Alert
@@ -909,12 +908,12 @@ export default function NuevoPagoProgramado({
               className="py-2"
             >
               El pago se programará para realizarse por
-              <strong> Caja</strong>. La caja concreta podrá
-              definirse al momento de acreditar el pago.
+              <strong> Caja</strong>. Al momento de acreditarlo,
+              se utilizará automáticamente la caja que se
+              encuentre abierta.
             </Alert>
 
           )}
-
 
           {/* ==================================================
               PROVEEDOR + PROYECTO
@@ -1059,7 +1058,7 @@ export default function NuevoPagoProgramado({
 
             </Col>
 
-{/* 
+            {/* 
             <Col md={6}>
 
               <Form.Label>

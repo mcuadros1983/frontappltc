@@ -68,7 +68,7 @@ export default function AplicarInstanciaGasto({
 
   const {
     empresaSeleccionada,
-    cajasTesoreria = [],
+    cajaAbierta,
     bancosTabla = [],
     formasPagoTesoreria = [],
     categoriasEgreso = [],
@@ -243,21 +243,21 @@ export default function AplicarInstanciaGasto({
   // CAJAS DE LA EMPRESA
   // ======================================================
 
-  const cajasEmpresa =
-    useMemo(
-      () =>
-        (cajasTesoreria || []).filter(
-          (c) =>
-            !empresaId ||
-            !c.empresa_id ||
-            Number(c.empresa_id) ===
-            Number(empresaId)
-        ),
-      [
-        cajasTesoreria,
-        empresaId,
-      ]
-    );
+  // const cajasEmpresa =
+  //   useMemo(
+  //     () =>
+  //       (cajasTesoreria || []).filter(
+  //         (c) =>
+  //           !empresaId ||
+  //           !c.empresa_id ||
+  //           Number(c.empresa_id) ===
+  //           Number(empresaId)
+  //       ),
+  //     [
+  //       cajasTesoreria,
+  //       empresaId,
+  //     ]
+  //   );
 
 
   // ======================================================
@@ -364,29 +364,29 @@ export default function AplicarInstanciaGasto({
   // AUTOPRESELECCIONAR CAJA/BANCO SI HAY UNO SOLO
   // ======================================================
 
-  useEffect(
-    () => {
+  // useEffect(
+  //   () => {
 
-      if (
-        medio === "caja" &&
-        !cajaId &&
-        cajasEmpresa.length === 1
-      ) {
+  //     if (
+  //       medio === "caja" &&
+  //       !cajaId &&
+  //       cajasEmpresa.length === 1
+  //     ) {
 
-        setCajaId(
-          String(
-            cajasEmpresa[0].id
-          )
-        );
-      }
+  //       setCajaId(
+  //         String(
+  //           cajasEmpresa[0].id
+  //         )
+  //       );
+  //     }
 
-    },
-    [
-      medio,
-      cajaId,
-      cajasEmpresa,
-    ]
-  );
+  //   },
+  //   [
+  //     medio,
+  //     cajaId,
+  //     cajasEmpresa,
+  //   ]
+  // );
 
 
   useEffect(
@@ -478,11 +478,14 @@ export default function AplicarInstanciaGasto({
 
     if (
       medio === "caja" &&
-      !cajaId
+      (
+        !cajaAbierta?.caja?.id ||
+        cajaAbierta?.abierta !== true
+      )
     ) {
 
       throw new Error(
-        "Debe seleccionar una caja"
+        "No hay una caja abierta disponible para registrar el pago"
       );
     }
 
@@ -583,13 +586,14 @@ export default function AplicarInstanciaGasto({
     ) {
 
       egreso.caja_id =
-        Number(cajaId);
+        Number(
+          cajaAbierta.caja.id
+        );
 
       url =
         `${apiUrl}/movimientos-caja-tesoreria/egresos-independientes`;
 
     } else {
-
       egreso.banco_id =
         Number(bancoId);
 
@@ -1098,45 +1102,31 @@ export default function AplicarInstanciaGasto({
                       Caja
                     </Form.Label>
 
-                    <Form.Select
-                      value={cajaId}
-                      disabled={saving}
-                      onChange={(e) =>
-                        setCajaId(
-                          e.target.value
-                        )
+                    <Form.Control
+                      value={
+                        cajaAbierta?.caja?.id
+                          ? `Caja abierta #${cajaAbierta.caja.id}`
+                          : "No hay caja abierta"
                       }
-                    >
+                      disabled
+                    />
 
-                      <option value="">
-                        Seleccionar...
-                      </option>
+                    {cajaAbierta?.caja?.id && (
 
-                      {cajasEmpresa.map(
-                        (c) => (
+                      <Form.Text muted>
+                        Saldo actual: $
+                        {toMoney(
+                          cajaAbierta.saldo
+                        )}
+                      </Form.Text>
 
-                          <option
-                            key={c.id}
-                            value={c.id}
-                          >
-                            {
-                              c.descripcion ||
-                              c.nombre ||
-                              `Caja ${c.id}`
-                            }
-                          </option>
-
-                        )
-                      )}
-
-                    </Form.Select>
+                    )}
 
                   </Form.Group>
 
                 </Col>
 
               )}
-
 
               {/* ===================================== */}
               {/* BANCO                                 */}

@@ -11,6 +11,8 @@ import Contexts from "../../context/Contexts";
 import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
 import AcreditarPagoProgramadoModal
   from "./AcreditarPagoProgramadoModal";
+
+import EditarPagoProgramadoModal from "./EditarPagoProgramadoModal";
 import NuevoMovimientoCheques from "../tesoreria//NuevoMovimientoCheques";
 import AplicarInstanciaGasto
   from "../../components/tesoreria/AplicarInstanciaGasto";
@@ -218,6 +220,49 @@ async function eliminarPagoProgramadoApi(id) {
   return json;
 }
 
+async function actualizarPagoProgramadoApi(
+  id,
+  body = {}
+) {
+
+  const r = await fetch(
+    `${apiUrl}/pagos-programados/${id}`,
+    {
+      method: "PUT",
+
+      credentials:
+        "include",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+
+      body:
+        JSON.stringify(
+          body
+        ),
+    }
+  );
+
+
+  const json =
+    await r
+      .json()
+      .catch(() => ({}));
+
+
+  if (!r.ok) {
+    throw new Error(
+      json?.error ||
+      "No se pudo actualizar el pago programado"
+    );
+  }
+
+
+  return json;
+}
+
 // -------- Helper nrocomprobante por id --------
 async function fetchComprobanteNro(id) {
   // 1) intento con /detalle
@@ -264,6 +309,11 @@ export default function SitFinanciera() {
     fpAcordadaFiltro,
     setFpAcordadaFiltro,
   ] = useState("");
+
+  const [
+    tipoFiltro,
+    setTipoFiltro,
+  ] = useState("");
   const [modoRango, setModoRango] = useState("prox"); // prox | rango
   const [dias, setDias] = useState(7);
   const [desde, setDesde] = useState("");
@@ -275,6 +325,10 @@ export default function SitFinanciera() {
   const [
     programadoAcreditar,
     setProgramadoAcreditar,
+  ] = useState(null);
+  const [
+    programadoEditar,
+    setProgramadoEditar
   ] = useState(null);
   const cargaSeq = useRef(0);
   const [err, setErr] = useState(null);
@@ -499,83 +553,189 @@ export default function SitFinanciera() {
 
   const normalizePagosProgramados = (arr = []) =>
     arr.map((p) => {
+
       const proveedor_nombre =
-        provNameById.get(Number(p.proveedor_id)) ||
-        (p.proveedor_id
-          ? `Prov. ${p.proveedor_id}`
-          : "");
+        provNameById.get(
+          Number(
+            p.proveedor_id
+          )
+        ) ||
+        (
+          p.proveedor_id
+            ? `Prov. ${p.proveedor_id}`
+            : ""
+        );
+
 
       const categoria_nombre =
-        catNameById.get(Number(p.categoriaegreso_id)) ||
+        catNameById.get(
+          Number(
+            p.categoriaegreso_id
+          )
+        ) ||
         "";
 
+
       const fechaVenc =
-        p.fecha_programada || "";
+        p.fecha_programada ||
+        "";
+
 
       const diasRest =
-        daysDiffFromToday(fechaVenc);
+        daysDiffFromToday(
+          fechaVenc
+        );
+
 
       const medioDesc =
         p.medio === "caja"
           ? "EFECTIVO"
           : p.medio === "banco"
             ? "TRANSFERENCIA"
-            : p.medio || "";
+            : p.medio ||
+            "";
+
+
+      /*
+       * Si existe una forma de pago concreta,
+       * mostramos su descripción.
+       *
+       * Si no existe, usamos como respaldo
+       * la descripción general del medio.
+       */
+      const formaPagoDesc =
+        p.formapago_id
+          ? (
+            fpDesc(
+              p.formapago_id
+            ) ||
+            medioDesc
+          )
+          : medioDesc;
+
 
       return {
-        tipo: "programado",
 
-        id: p.id,
+        // ================================================
+        // IDENTIFICACIÓN DEL ITEM
+        // ================================================
+
+        tipo:
+          "programado",
+
+        id:
+          p.id,
+
+        key:
+          `programado-${p.id}`,
+
+
+        // ================================================
+        // EMPRESA
+        // ================================================
 
         empresa_id:
-          p.empresa_id ?? null,
+          p.empresa_id ??
+          null,
 
         empresa_nombre:
-          empNameById.get(Number(p.empresa_id)) || "",
+          empNameById.get(
+            Number(
+              p.empresa_id
+            )
+          ) ||
+          "",
+
+
+        // ================================================
+        // PROVEEDOR
+        // ================================================
 
         proveedor_id:
-          p.proveedor_id ?? null,
+          p.proveedor_id ??
+          null,
 
         proveedor_nombre,
 
+
+        // ================================================
+        // CATEGORÍA / IMPUTACIÓN
+        // ================================================
+
         categoria_id:
-          p.categoriaegreso_id ?? null,
+          p.categoriaegreso_id ??
+          null,
 
         categoria_nombre,
 
-        sucursal_id: null,
+        imputacioncontable_id:
+          p.imputacioncontable_id ??
+          null,
 
-        sucursal_nombre: "",
+
+        // ================================================
+        // SUCURSAL
+        // ================================================
+
+        sucursal_id:
+          null,
+
+        sucursal_nombre:
+          "",
+
+
+        // ================================================
+        // FECHAS
+        // ================================================
 
         fecha_vencimiento:
           fechaVenc,
 
+        fecha_programada:
+          p.fecha_programada ||
+          "",
+
+
+        // ================================================
+        // MONTO
+        // ================================================
+
         monto_base:
-          Number(p.monto || 0),
+          Number(
+            p.monto ||
+            0
+          ),
+
+
+        // ================================================
+        // ESTADO
+        // ================================================
 
         estado:
-          p.estado || "pendiente",
+          p.estado ||
+          "pendiente",
 
         dias_restantes:
           diasRest,
 
+
+        // ================================================
+        // DESCRIPCIÓN / OBSERVACIONES
+        // ================================================
+
         descripcion:
-          p.descripcion || `Pago programado #${p.id}`,
+          p.descripcion ||
+          `Pago programado #${p.id}`,
 
-        // formapago_futuro_desc:
-        //   p.formapago_id
-        //     ? fpDesc(p.formapago_id)
-        //     : medioDesc,
-        formapago_futuro_desc:
-          medioDesc,
+        observaciones:
+          p.observaciones ||
+          "",
 
-        comprobanteegreso_id:
-          p.comprobanteegreso_id ?? null,
 
-        comprobante_nro:
-          null,
+        // ================================================
+        // DATOS PROPIOS DEL PAGO PROGRAMADO
+        // ================================================
 
-        // Datos propios
         pago_programado_tipo:
           p.tipo,
 
@@ -583,19 +743,35 @@ export default function SitFinanciera() {
           p.medio,
 
         formapago_id:
-          p.formapago_id ?? null,
+          p.formapago_id ??
+          null,
+
+        formapago_futuro_desc:
+          formaPagoDesc,
 
         banco_id:
-          p.banco_id ?? null,
+          p.banco_id ??
+          null,
 
         caja_id:
-          p.caja_id ?? null,
+          p.caja_id ??
+          null,
 
-        fecha_programada:
-          p.fecha_programada,
+        proyecto_id:
+          p.proyecto_id ??
+          null,
 
-        key:
-          `programado-${p.id}`,
+
+        // ================================================
+        // COMPROBANTE
+        // ================================================
+
+        comprobanteegreso_id:
+          p.comprobanteegreso_id ??
+          null,
+
+        comprobante_nro:
+          null,
       };
     });
 
@@ -869,6 +1045,27 @@ export default function SitFinanciera() {
       // FILTRO FP ACORDADA
       // ==========================================
 
+      // ==========================================
+      // FILTRO TIPO
+      // ==========================================
+
+      if (tipoFiltro) {
+
+        merged = merged.filter(
+          (it) =>
+            String(
+              it.tipo || ""
+            )
+              .trim()
+              .toLowerCase() ===
+            String(
+              tipoFiltro
+            )
+              .trim()
+              .toLowerCase()
+        );
+      }
+
       if (fpAcordadaFiltro) {
         merged = merged.filter(
           (it) =>
@@ -994,7 +1191,8 @@ export default function SitFinanciera() {
     sucNameById,
     fpById,
     bancoById,
-    fpAcordadaFiltro
+    fpAcordadaFiltro,
+    tipoFiltro,
   ]);
 
   useEffect(() => {
@@ -1133,108 +1331,31 @@ export default function SitFinanciera() {
     );
   };
 
-  // const handleAcreditarProgramado =
-  //   async (row) => {
-
-  //     const confirmar =
-  //       window.confirm(
-  //         `¿Acreditar el pago programado "${row.descripcion}" por $${toMoney(row.monto_base)}?`
-  //       );
-
-  //     if (!confirmar) {
-  //       return;
-  //     }
-
-
-  //     try {
-  //       setAccionandoId(
-  //         row.key
-  //       );
-
-  //       setErr(null);
-
-
-  //       const body = {
-  //         fecha_acreditacion:
-  //           iso(new Date()),
-  //       };
-
-
-  //       /*
-  //        * Normalmente banco_id/caja_id ya quedaron
-  //        * prefijados al crear el compromiso.
-  //        *
-  //        * Los enviamos igualmente para conservar
-  //        * explícitamente la selección.
-  //        */
-  //       if (
-  //         row.medio === "banco" &&
-  //         row.banco_id
-  //       ) {
-  //         body.banco_id =
-  //           row.banco_id;
-  //       }
-
-
-  //       if (
-  //         row.medio === "caja" &&
-  //         row.caja_id
-  //       ) {
-  //         body.caja_id =
-  //           row.caja_id;
-  //       }
-
-
-  //       await acreditarPagoProgramadoApi(
-  //         row.id,
-  //         body
-  //       );
-
-
-  //       /*
-  //        * MUY IMPORTANTE:
-  //        *
-  //        * No modificamos items manualmente.
-  //        * Volvemos a consultar todo al backend.
-  //        *
-  //        * Como ahora estado = acreditado,
-  //        * GET /pagos-programados?estado=pendiente
-  //        * ya no lo devolverá.
-  //        */
-  //       await cargar();
-
-  //     } catch (e) {
-
-  //       setErr(
-  //         e.message ||
-  //         "No se pudo acreditar el pago programado"
-  //       );
-
-  //     } finally {
-
-  //       setAccionandoId(
-  //         null
-  //       );
-  //     }
-  //   };
-
   const handleAcreditarProgramado =
     (row) => {
 
       setProgramadoAcreditar(row);
     };
 
-  const confirmarAcreditacionProgramado =
-    async ({
-      generar_abono_ctacte,
-    }) => {
+  const handleEditarProgramado =
+    (row) => {
+
+      setProgramadoEditar(
+        row
+      );
+    };
+
+  const confirmarEdicionProgramado =
+    async (datos = {}) => {
 
       const row =
-        programadoAcreditar;
+        programadoEditar;
+
 
       if (!row) {
         return;
       }
+
 
       try {
 
@@ -1242,13 +1363,196 @@ export default function SitFinanciera() {
           row.key
         );
 
-        setErr(null);
+        setErr(
+          null
+        );
 
 
         const body = {
 
+          fecha_programada:
+            datos.fecha_programada,
+
+          medio:
+            datos.medio,
+
+          formapago_id:
+            datos.formapago_id
+              ? Number(
+                datos.formapago_id
+              )
+              : null,
+
+          caja_id:
+            datos.medio === "caja"
+              ? Number(
+                datos.caja_id
+              )
+              : null,
+
+          banco_id:
+            datos.medio === "banco"
+              ? Number(
+                datos.banco_id
+              )
+              : null,
+
+          monto:
+            Number(
+              datos.monto
+            ),
+
+          descripcion:
+            datos.descripcion,
+
+          observaciones:
+            datos.observaciones ||
+            null,
+
+          categoriaegreso_id:
+            datos.categoriaegreso_id
+              ? Number(
+                datos.categoriaegreso_id
+              )
+              : null,
+
+          proyecto_id:
+            datos.proyecto_id
+              ? Number(
+                datos.proyecto_id
+              )
+              : null,
+        };
+
+
+        await actualizarPagoProgramadoApi(
+          row.id,
+          body
+        );
+
+
+        setProgramadoEditar(
+          null
+        );
+
+
+        await cargar();
+
+
+      } catch (e) {
+
+        setErr(
+          e.message ||
+          "No se pudo actualizar el pago programado"
+        );
+
+        /*
+         * Igual que en Acreditar:
+         * permitimos que el modal también
+         * reciba el error.
+         */
+        throw e;
+
+
+      } finally {
+
+        setAccionandoId(
+          null
+        );
+      }
+    };
+
+  const confirmarAcreditacionProgramado =
+    async (datos = {}) => {
+
+      const row =
+        programadoAcreditar;
+
+
+      if (!row) {
+        return;
+      }
+
+
+      try {
+
+        setAccionandoId(
+          row.key
+        );
+
+        setErr(
+          null
+        );
+
+
+        // ================================================
+        // DATOS RECIBIDOS DESDE EL MODAL
+        // ================================================
+
+        const {
+
+          fecha_acreditacion,
+
+          medio,
+
+          caja_id,
+
+          banco_id,
+
+          monto,
+          formapago_id,
+
+          descripcion,
+
+          observaciones,
+
+          proyecto_id,
+
+          generar_abono_ctacte,
+
+        } = datos;
+
+
+        // ================================================
+        // BODY PARA EL BACKEND
+        // ================================================
+
+        const body = {
+
           fecha_acreditacion:
+            fecha_acreditacion ||
             iso(new Date()),
+
+          medio:
+            medio ||
+            row.medio,
+
+          formapago_id:
+            formapago_id
+              ? Number(
+                formapago_id
+              )
+              : null,
+
+          monto:
+            Number(
+              monto ??
+              row.monto_base
+            ),
+
+          descripcion:
+            descripcion ??
+            row.descripcion,
+
+          observaciones:
+            observaciones ??
+            row.observaciones ??
+            null,
+
+          proyecto_id:
+            proyecto_id ??
+            row.proyecto_id ??
+            null,
 
           generar_abono_ctacte:
             Boolean(
@@ -1257,17 +1561,75 @@ export default function SitFinanciera() {
         };
 
 
-        if (row.banco_id) {
+        // ================================================
+        // BANCO / CAJA
+        // ================================================
+
+        if (
+          body.medio === "banco"
+        ) {
+
           body.banco_id =
-            Number(row.banco_id);
-        }
+            banco_id
+              ? Number(
+                banco_id
+              )
+              : null;
 
-
-        if (row.caja_id) {
           body.caja_id =
-            Number(row.caja_id);
+            null;
+
+        } else if (
+          body.medio === "caja"
+        ) {
+
+          body.caja_id =
+            caja_id
+              ? Number(
+                caja_id
+              )
+              : null;
+
+          body.banco_id =
+            null;
         }
 
+
+        // ================================================
+        // DEBUG TEMPORAL
+        // ================================================
+
+        console.log(
+          "======================================"
+        );
+
+        console.log(
+          "ACREDITAR PAGO PROGRAMADO"
+        );
+
+        console.log(
+          "Row original:",
+          row
+        );
+
+        console.log(
+          "Datos recibidos modal:",
+          datos
+        );
+
+        console.log(
+          "Body enviado backend:",
+          body
+        );
+
+        console.log(
+          "======================================"
+        );
+
+
+        // ================================================
+        // ACREDITAR
+        // ================================================
 
         await acreditarPagoProgramadoApi(
           row.id,
@@ -1275,20 +1637,55 @@ export default function SitFinanciera() {
         );
 
 
-        setProgramadoAcreditar(null);
+        // ================================================
+        // CERRAR MODAL
+        // ================================================
+
+        setProgramadoAcreditar(
+          null
+        );
+
+
+        // ================================================
+        // RECARGAR SITUACIÓN FINANCIERA
+        // ================================================
 
         await cargar();
 
+
       } catch (e) {
+
+        console.error(
+          "Error acreditando pago programado:",
+          e
+        );
+
 
         setErr(
           e.message ||
           "No se pudo acreditar el pago programado"
         );
 
+
+        /*
+         * IMPORTANTE:
+         * relanzamos el error.
+         *
+         * El modal hace:
+         *
+         * await onConfirm(payload)
+         *
+         * por lo tanto necesita recibir el error para
+         * mantener abierto el modal y mostrarlo allí.
+         */
+        throw e;
+
+
       } finally {
 
-        setAccionandoId(null);
+        setAccionandoId(
+          null
+        );
       }
     };
 
@@ -1466,85 +1863,216 @@ export default function SitFinanciera() {
     row.comprobante_nro ||
     (row.comprobanteegreso_id ? (compNroById.get(row.comprobanteegreso_id) || "-") : "-");
 
+  const BotonNoHabilitado = ({
+    children,
+  }) => (
+
+    <span
+      title="Función no habilitada"
+      style={{
+        cursor: "not-allowed",
+        display: "inline-block",
+      }}
+    >
+
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled
+        style={{
+          pointerEvents: "none",
+          opacity: 0.55,
+        }}
+      >
+        {children}
+      </Button>
+
+    </span>
+  );
+
   return (
     <>
       <Card className="shadow-sm">
         <Card.Header>
           <Row className="g-2 align-items-end">
-            <Col sm={12} md={3}>
+
+            {/* ================================================== */}
+            {/* EMPRESA                                            */}
+            {/* ================================================== */}
+
+            <Col sm={12} md={6} lg>
               <Form.Group>
-                <Form.Label>Empresa</Form.Label>
+
+                <Form.Label>
+                  Empresa
+                </Form.Label>
+
                 <Form.Select
                   value={empresaId || ""}
-                  onChange={(e) => setEmpresaId(e.target.value)}
+                  onChange={(e) =>
+                    setEmpresaId(
+                      e.target.value
+                    )
+                  }
                   className="form-control form-control-sm my-input"
                 >
-                  <option value="">Todas</option>
-                  {(empresasTabla || []).map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.nombrecorto || emp.descripcion || emp.nombre || `Empresa ${emp.id}`}
-                    </option>
-                  ))}
+                  <option value="">
+                    Todas
+                  </option>
+
+                  {(empresasTabla || []).map(
+                    (emp) => (
+                      <option
+                        key={emp.id}
+                        value={emp.id}
+                      >
+                        {
+                          emp.nombrecorto ||
+                          emp.descripcion ||
+                          emp.nombre ||
+                          `Empresa ${emp.id}`
+                        }
+                      </option>
+                    )
+                  )}
                 </Form.Select>
+
               </Form.Group>
             </Col>
 
-            <Col sm={6} md={3}>
+
+            {/* ================================================== */}
+            {/* PROVEEDOR                                          */}
+            {/* ================================================== */}
+
+            <Col sm={12} md={6} lg>
               <Form.Group>
-                <Form.Label>Proveedor</Form.Label>
+
+                <Form.Label>
+                  Proveedor
+                </Form.Label>
+
                 <Form.Select
                   value={proveedorId || ""}
-                  onChange={(e) => setProveedorId(e.target.value)}
+                  onChange={(e) =>
+                    setProveedorId(
+                      e.target.value
+                    )
+                  }
                   className="form-control form-control-sm my-input"
                 >
-                  <option value="">Todos</option>
-                  {(proveedoresTabla || []).map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre}
-                    </option>
-                  ))}
+                  <option value="">
+                    Todos
+                  </option>
+
+                  {(proveedoresTabla || []).map(
+                    (p) => (
+                      <option
+                        key={p.id}
+                        value={p.id}
+                      >
+                        {p.nombre}
+                      </option>
+                    )
+                  )}
                 </Form.Select>
+
               </Form.Group>
             </Col>
 
-            <Col sm={6} md={3}>
+
+            {/* ================================================== */}
+            {/* CATEGORÍA                                          */}
+            {/* ================================================== */}
+
+            <Col sm={12} md={6} lg>
               <Form.Group>
-                <Form.Label>Categoría</Form.Label>
+
+                <Form.Label>
+                  Categoría
+                </Form.Label>
+
                 <Form.Select
                   value={categoriaId || ""}
-                  onChange={(e) => setCategoriaId(e.target.value)}
+                  onChange={(e) =>
+                    setCategoriaId(
+                      e.target.value
+                    )
+                  }
                   className="form-control form-control-sm my-input"
                 >
-                  <option value="">Todas</option>
-                  {(categoriasEgreso || []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nombre}
-                    </option>
-                  ))}
+                  <option value="">
+                    Todas
+                  </option>
+
+                  {(categoriasEgreso || []).map(
+                    (c) => (
+                      <option
+                        key={c.id}
+                        value={c.id}
+                      >
+                        {c.nombre}
+                      </option>
+                    )
+                  )}
                 </Form.Select>
+
               </Form.Group>
             </Col>
 
-            {/* <Col sm={6} md={3}>
+
+            {/* ================================================== */}
+            {/* TIPO                                               */}
+            {/* ================================================== */}
+
+            <Col sm={12} md={6} lg>
               <Form.Group>
-                <Form.Label>Sucursal</Form.Label>
+
+                <Form.Label>
+                  Tipo
+                </Form.Label>
+
                 <Form.Select
-                  value={sucursalId || ""}
-                  onChange={(e) => setSucursalId(e.target.value)}
+                  value={tipoFiltro}
+                  onChange={(e) =>
+                    setTipoFiltro(
+                      e.target.value
+                    )
+                  }
                   className="form-control form-control-sm my-input"
                 >
-                  <option value="">Todas</option>
-                  {(sucursalesTabla || []).map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nombre || s.descripcion || `Sucursal ${s.id}`}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col> */}
+                  <option value="">
+                    Todos
+                  </option>
 
-            <Col sm={12} md={3} lg={2}>
+                  <option value="instancia">
+                    Gasto estimado
+                  </option>
+
+                  <option value="ctacte">
+                    Cuenta corriente
+                  </option>
+
+                  <option value="echeq">
+                    eCheq
+                  </option>
+
+                  <option value="programado">
+                    Pago programado
+                  </option>
+                </Form.Select>
+
+              </Form.Group>
+            </Col>
+
+
+            {/* ================================================== */}
+            {/* FP ACORDADA                                        */}
+            {/* ================================================== */}
+
+            <Col sm={12} md={6} lg>
               <Form.Group>
+
                 <Form.Label>
                   FP Acordada
                 </Form.Label>
@@ -1556,6 +2084,7 @@ export default function SitFinanciera() {
                       e.target.value
                     )
                   }
+                  className="form-control form-control-sm my-input"
                 >
                   <option value="">
                     Todas
@@ -1572,115 +2101,257 @@ export default function SitFinanciera() {
                     )
                   )}
                 </Form.Select>
+
               </Form.Group>
             </Col>
 
+
+            {/* ================================================== */}
+            {/* TIPO DE RANGO                                      */}
+            {/* ================================================== */}
+
             <Col sm={12}>
+
               <Form.Check
                 inline
                 type="radio"
                 id="rango-prox"
                 name="rangoOpt"
                 label="Próximos X días"
-                checked={modoRango === "prox"}
-                onChange={() => setModoRango("prox")}
+                checked={
+                  modoRango === "prox"
+                }
+                onChange={() =>
+                  setModoRango("prox")
+                }
               />
+
               <Form.Check
                 inline
                 type="radio"
                 id="rango-fechas"
                 name="rangoOpt"
                 label="Entre fechas"
-                checked={modoRango === "rango"}
-                onChange={() => setModoRango("rango")}
+                checked={
+                  modoRango === "rango"
+                }
+                onChange={() =>
+                  setModoRango("rango")
+                }
               />
+
             </Col>
 
+
+            {/* ================================================== */}
+            {/* RANGO DE FECHAS                                    */}
+            {/* ================================================== */}
+
             {modoRango === "prox" ? (
+
               <Col sm={6} md={2}>
+
                 <Form.Group>
-                  <Form.Label>Días</Form.Label>
+
+                  <Form.Label>
+                    Días
+                  </Form.Label>
+
                   <Form.Control
                     type="number"
                     min={0}
                     value={dias}
-                    onChange={(e) => setDias(Number(e.target.value || 0))}
+                    onChange={(e) =>
+                      setDias(
+                        Number(
+                          e.target.value || 0
+                        )
+                      )
+                    }
                   />
+
                 </Form.Group>
+
               </Col>
+
             ) : (
+
               <>
+
                 <Col sm={6} md={2}>
+
                   <Form.Group>
-                    <Form.Label>Desde</Form.Label>
-                    <Form.Control type="date" value={desde} onChange={(e) => setDesde(e.target.value)} />
+
+                    <Form.Label>
+                      Desde
+                    </Form.Label>
+
+                    <Form.Control
+                      type="date"
+                      value={desde}
+                      onChange={(e) =>
+                        setDesde(
+                          e.target.value
+                        )
+                      }
+                    />
+
                   </Form.Group>
+
                 </Col>
+
+
                 <Col sm={6} md={2}>
+
                   <Form.Group>
-                    <Form.Label>Hasta</Form.Label>
-                    <Form.Control type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} />
+
+                    <Form.Label>
+                      Hasta
+                    </Form.Label>
+
+                    <Form.Control
+                      type="date"
+                      value={hasta}
+                      onChange={(e) =>
+                        setHasta(
+                          e.target.value
+                        )
+                      }
+                    />
+
                   </Form.Group>
+
                 </Col>
+
               </>
+
             )}
 
+
+            {/* ================================================== */}
+            {/* BUSCAR                                             */}
+            {/* ================================================== */}
+
             <Col sm={12} md={4}>
-              <Form.Label>Buscar</Form.Label>
+
+              <Form.Label>
+                Buscar
+              </Form.Label>
+
               <InputGroup>
+
                 <Form.Control
                   placeholder="Descripción, proveedor, categoría…"
                   value={q}
-                  onChange={(e) => setQ(e.target.value)}
+                  onChange={(e) =>
+                    setQ(
+                      e.target.value
+                    )
+                  }
                 />
-                <Button variant="outline-primary" onClick={cargar} className="mx-2">
+
+                <Button
+                  variant="outline-primary"
+                  onClick={cargar}
+                  className="mx-2"
+                >
                   Buscar
                 </Button>
+
               </InputGroup>
+
             </Col>
 
-            <Col sm={12} md="auto" className="d-flex align-items-end">
-              <Form.Label className="me-2">Por página</Form.Label>
-              <Form.Select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
-                style={{ width: 90 }}
-                className="form-control form-control-sm my-input mx-2"
-              >
-                {[10, 20, 30, 50, 100].map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </Form.Select>
-            </Col>
+
+            {/* ================================================== */}
+            {/* POR PÁGINA                                         */}
+            {/* ================================================== */}
 
             <Col
               sm={12}
               md="auto"
               className="d-flex align-items-end"
             >
+
+              <Form.Label className="me-2">
+                Por página
+              </Form.Label>
+
+              <Form.Select
+                value={pageSize}
+                onChange={(e) => {
+
+                  setPageSize(
+                    Number(
+                      e.target.value
+                    )
+                  );
+
+                  setPage(1);
+                }}
+                style={{
+                  width: 90,
+                }}
+                className="form-control form-control-sm my-input mx-2"
+              >
+                {[10, 20, 30, 50, 100].map(
+                  (n) => (
+                    <option
+                      key={n}
+                      value={n}
+                    >
+                      {n}
+                    </option>
+                  )
+                )}
+              </Form.Select>
+
+            </Col>
+
+
+            {/* ================================================== */}
+            {/* MOSTRAR INSTANCIAS                                 */}
+            {/* ================================================== */}
+
+            <Col
+              sm={12}
+              md="auto"
+              className="d-flex align-items-end"
+            >
+
               <Form.Check
                 type="checkbox"
                 id="mostrar-instancias"
                 label="Instancias"
-                checked={mostrarInstancias}
+                checked={
+                  mostrarInstancias
+                }
                 onChange={(e) =>
                   setMostrarInstancias(
                     e.target.checked
                   )
                 }
               />
+
             </Col>
 
-            <Col sm={12} md="auto" className="text-end">
+
+            {/* ================================================== */}
+            {/* NUEVO PAGO / ECHEQ                                 */}
+            {/* ================================================== */}
+
+            <Col
+              sm={12}
+              md="auto"
+              className="text-end"
+            >
+
               <Button
                 variant="success"
                 onClick={() =>
-                  setShowNuevoPagoProgramado(true)
+                  setShowNuevoPagoProgramado(
+                    true
+                  )
                 }
               >
                 + Nuevo pago programado
@@ -1690,18 +2361,46 @@ export default function SitFinanciera() {
                 variant="primary"
                 className="ms-2"
                 onClick={() =>
-                  setShowNuevoMovimientoCheques(true)
+                  setShowNuevoMovimientoCheques(
+                    true
+                  )
                 }
               >
                 + Nuevo eCheq
               </Button>
+
             </Col>
 
-            <Col sm={12} md="auto" className="text-end">
-              <Button variant="outline-secondary" onClick={cargar} disabled={loading}>
-                {loading ? <Spinner size="sm" animation="border" /> : "Actualizar"}
+
+            {/* ================================================== */}
+            {/* ACTUALIZAR                                         */}
+            {/* ================================================== */}
+
+            <Col
+              sm={12}
+              md="auto"
+              className="text-end"
+            >
+
+              <Button
+                variant="outline-secondary"
+                onClick={cargar}
+                disabled={loading}
+              >
+                {
+                  loading
+                    ? (
+                      <Spinner
+                        size="sm"
+                        animation="border"
+                      />
+                    )
+                    : "Actualizar"
+                }
               </Button>
+
             </Col>
+
           </Row>
         </Card.Header>
 
@@ -1805,6 +2504,22 @@ export default function SitFinanciera() {
 
                             <Button
                               size="sm"
+                              variant="outline-primary"
+                              disabled={
+                                accionandoId === row.key
+                              }
+                              onClick={() =>
+                                handleEditarProgramado(
+                                  row
+                                )
+                              }
+                            >
+                              Editar
+                            </Button>
+
+
+                            <Button
+                              size="sm"
                               variant="outline-danger"
                               disabled={
                                 accionandoId === row.key
@@ -1854,6 +2569,11 @@ export default function SitFinanciera() {
                             </Button>
 
 
+                            <BotonNoHabilitado>
+                              Editar
+                            </BotonNoHabilitado>
+
+
                             <Button
                               size="sm"
                               variant="outline-danger"
@@ -1875,7 +2595,7 @@ export default function SitFinanciera() {
 
 
                         {/* ================================= */}
-                        {/* INSTANCIAS                        */}
+                        {/* INSTANCIAS / ESTIMACIONES         */}
                         {/* ================================= */}
 
                         {row.tipo === "instancia" && (
@@ -1917,23 +2637,41 @@ export default function SitFinanciera() {
                               Editar
                             </Button>
 
+
+                            <BotonNoHabilitado>
+                              Eliminar
+                            </BotonNoHabilitado>
+
                           </div>
 
                         )}
 
 
                         {/* ================================= */}
-                        {/* RESTO DE LOS TIPOS                */}
+                        {/* CUENTA CORRIENTE / OTROS          */}
                         {/* ================================= */}
 
                         {row.tipo !== "programado" &&
                           row.tipo !== "echeq" &&
                           row.tipo !== "instancia" && (
-                            "-"
+
+                            <div className="d-flex justify-content-center gap-1">
+
+                              <BotonNoHabilitado>
+                                Acreditar
+                              </BotonNoHabilitado>
+
+                              <BotonNoHabilitado>
+                                Editar
+                              </BotonNoHabilitado>
+
+                              <BotonNoHabilitado>
+                                Eliminar
+                              </BotonNoHabilitado>
+
+                            </div>
+
                           )}
-
-
-
 
                       </td>
                     </tr>
@@ -2104,6 +2842,25 @@ export default function SitFinanciera() {
 
         }}
 
+      />
+
+      <EditarPagoProgramadoModal
+        show={
+          Boolean(
+            programadoEditar
+          )
+        }
+        row={
+          programadoEditar
+        }
+        onHide={() =>
+          setProgramadoEditar(
+            null
+          )
+        }
+        onConfirm={
+          confirmarEdicionProgramado
+        }
       />
 
       <AcreditarPagoProgramadoModal
