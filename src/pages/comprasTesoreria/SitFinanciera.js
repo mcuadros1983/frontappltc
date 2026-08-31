@@ -18,6 +18,8 @@ import AplicarInstanciaGasto
   from "../../components/tesoreria/AplicarInstanciaGasto";
 import EditarInstanciaGasto
   from "../../components/tesoreria/EditarInstanciaGasto";
+import EditarEcheqModal
+  from "./EditarEcheqModal";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -383,6 +385,17 @@ export default function SitFinanciera() {
       return m;
     });
   }, []);
+
+  const [
+    echeqEditar,
+    setEcheqEditar,
+  ] = useState(null);
+
+
+  const [
+    showEditarEcheq,
+    setShowEditarEcheq,
+  ] = useState(false);
 
   // Si cambia empresa en el contexto, reflejar en filtro
   useEffect(() => {
@@ -1342,6 +1355,18 @@ export default function SitFinanciera() {
 
       setProgramadoEditar(
         row
+      );
+    };
+
+  const handleEditarEcheq =
+    (row) => {
+
+      setEcheqEditar(
+        row
+      );
+
+      setShowEditarEcheq(
+        true
       );
     };
 
@@ -2567,13 +2592,26 @@ export default function SitFinanciera() {
                                 )
                                 : "Acreditar"}
                             </Button>
-
+                            {/* 
 
                             <BotonNoHabilitado>
                               Editar
-                            </BotonNoHabilitado>
+                            </BotonNoHabilitado> */}
 
-
+                            <Button
+                              size="sm"
+                              variant="outline-primary"
+                              disabled={
+                                accionandoId === row.key
+                              }
+                              onClick={() =>
+                                handleEditarEcheq(
+                                  row
+                                )
+                              }
+                            >
+                              Editar
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline-danger"
@@ -2588,6 +2626,7 @@ export default function SitFinanciera() {
                             >
                               Eliminar
                             </Button>
+
 
                           </div>
 
@@ -2878,6 +2917,39 @@ export default function SitFinanciera() {
         onConfirm={
           confirmarAcreditacionProgramado
         }
+
+
+      />
+
+      <EditarEcheqModal
+        show={
+          showEditarEcheq
+        }
+        row={
+          echeqEditar
+        }
+        onHide={() => {
+
+          setShowEditarEcheq(
+            false
+          );
+
+          setEcheqEditar(
+            null
+          );
+        }}
+        onUpdated={async () => {
+
+          setShowEditarEcheq(
+            false
+          );
+
+          setEcheqEditar(
+            null
+          );
+
+          await cargar();
+        }}
       />
     </>
   );

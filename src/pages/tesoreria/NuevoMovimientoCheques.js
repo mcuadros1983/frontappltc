@@ -446,7 +446,7 @@ export default function NuevoMovimientoCheques({ show, onHide, onCreated }) {
           {/* 4) Número + Importe */}
           <Row className="mb-3">
             <Col md={6}>
-              <Form.Label>Número eCheq</Form.Label>
+              <Form.Label>Número eCheq / Descripción</Form.Label>
               <Form.Control
                 placeholder="(Opcional)"
                 value={numero_echeq}

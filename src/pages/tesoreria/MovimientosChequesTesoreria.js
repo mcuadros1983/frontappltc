@@ -4,6 +4,7 @@ import { Table, Container, Button, Form, Row, Col, Alert, Spinner, Badge } from 
 import Contexts from "../../context/Contexts";
 import NuevoMovimientoCheques from "./NuevoMovimientoCheques";
 import OrdenPagoDetalleModal from "../comprasTesoreria/OrdenPagoDetalleModal.js";
+import EditarEcheqModal from "./EditarEcheqModal";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -57,6 +58,10 @@ export default function MovimientosChequesTesoreria() {
   const [showDetalleOP, setShowDetalleOP] = useState(false);
   const [movSeleccionado, setMovSeleccionado] = useState(null);
 
+  // Edición eCheq
+  const [showEditarEcheq, setShowEditarEcheq] = useState(false);
+  const [echeqEditar, setEcheqEditar] = useState(null);
+
   // Cat/Proy helpers
   const categorias = useMemo(
     () => (categoriasEgresoTabla?.length ? categoriasEgresoTabla : categoriasEgreso) || [],
@@ -97,10 +102,10 @@ export default function MovimientosChequesTesoreria() {
   }, [bancosTabla, empresa_id]);
 
   const fmtMoney = (n) =>
-  `$${Number(n || 0).toLocaleString("es-AR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+    `$${Number(n || 0).toLocaleString("es-AR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   const buildQS = (params = {}) => {
     const qs = new URLSearchParams();
@@ -258,6 +263,11 @@ export default function MovimientosChequesTesoreria() {
   const onNuevoCreated = () => {
     loadItems();
     setShowNuevo(false);
+  };
+
+  const handleEditarEcheq = (echeq) => {
+    setEcheqEditar(echeq);
+    setShowEditarEcheq(true);
   };
 
   return (
@@ -431,58 +441,99 @@ export default function MovimientosChequesTesoreria() {
                 {m.anulado ? <span className="ms-1 badge bg-dark">anulado</span> : null}
               </td>
               <td className="text-end">{fmtMoney(m.importe)}</td>
+
               <td className="text-nowrap">
+
                 {/* Acciones según estado */}
+
                 {!m.anulado && m.estado !== "acreditado" && (
+
                   <>
+
                     <Button
                       size="sm"
                       variant="outline-success"
                       className="mx-1"
-                      onClick={() => {
-                        const def = new Date().toISOString().slice(0, 10);
-                        const fecha_acreditacion = prompt("Fecha de acreditación (YYYY-MM-DD):", def) || "";
-                        if (!fecha_acreditacion) return;
-                        doAccion(m.id, "acreditar", { fecha_acreditacion });
+                      onClick={(e) => {
+
+                        e.stopPropagation();
+
+                        const def =
+                          new Date()
+                            .toISOString()
+                            .slice(0, 10);
+
+                        const fecha_acreditacion =
+                          prompt(
+                            "Fecha de acreditación (YYYY-MM-DD):",
+                            def
+                          ) || "";
+
+                        if (!fecha_acreditacion) {
+                          return;
+                        }
+
+                        doAccion(
+                          m.id,
+                          "acreditar",
+                          {
+                            fecha_acreditacion,
+                          }
+                        );
                       }}
                     >
                       Acreditar
                     </Button>
 
-                    {/* 
+
                     <Button
                       size="sm"
-                      variant="outline-danger"
+                      variant="outline-primary"
                       className="mx-1"
-                      onClick={() => {
-                        const motivo = prompt("Motivo del rechazo (opcional):") || "";
-                        doAccion(m.id, "rechazar", { motivo });
+                      onClick={(e) => {
+
+                        e.stopPropagation();
+
+                        handleEditarEcheq(
+                          m
+                        );
                       }}
                     >
-                      Rechazar
+                      Editar
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline-dark"
-                      className="mx-1"
-                      onClick={() => doAccion(m.id, "anular")}
-                    >
-                      Anular
-                    </Button>*/}
+
+
                     <Button
                       size="sm"
                       variant="outline-secondary"
                       className="mx-1"
-                      onClick={() => doEliminar(m.id)}
+                      onClick={(e) => {
+
+                        e.stopPropagation();
+
+                        doEliminar(
+                          m.id
+                        );
+                      }}
                     >
                       Eliminar
                     </Button>
+
                   </>
+
                 )}
+
+
                 {(m.anulado || m.estado === "acreditado") && (
-                  <span className="text-muted small">Sin acciones</span>
+
+                  <span className="text-muted small">
+                    Sin acciones
+                  </span>
+
                 )}
+
               </td>
+
             </tr>
           ))}
 
@@ -508,6 +559,22 @@ export default function MovimientosChequesTesoreria() {
         show={showNuevo}
         onHide={() => setShowNuevo(false)}
         onCreated={onNuevoCreated}
+      />
+
+      {/* Editar eCheq */}
+      <EditarEcheqModal
+        show={showEditarEcheq}
+        row={echeqEditar}
+        onHide={() => {
+          setShowEditarEcheq(false);
+          setEcheqEditar(null);
+        }}
+        onUpdated={async () => {
+          setShowEditarEcheq(false);
+          setEcheqEditar(null);
+
+          await loadItems();
+        }}
       />
 
       {/* Detalle OP (si existe) */}
