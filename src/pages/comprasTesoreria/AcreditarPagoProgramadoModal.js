@@ -177,20 +177,29 @@ export default function AcreditarPagoProgramadoModal({
   // BANCOS EMPRESA
   // ======================================================
 
-  const bancosEmpresa =
-    useMemo(
-      () =>
-        (bancosTabla || []).filter(
-          (b) =>
-            !empresaId ||
-            Number(b.empresa_id) ===
-            Number(empresaId)
-        ),
-      [
-        bancosTabla,
-        empresaId,
-      ]
-    );
+  // const bancosEmpresa =
+  //   useMemo(
+  //     () =>
+  //       (bancosTabla || []).filter(
+  //         (b) =>
+  //           !empresaId ||
+  //           Number(b.empresa_id) ===
+  //           Number(empresaId)
+  //       ),
+  //     [
+  //       bancosTabla,
+  //       empresaId,
+  //     ]
+  //   );
+
+  const bancosDisponibles =
+    useMemo(() => {
+
+      return bancosTabla || [];
+
+    }, [
+      bancosTabla,
+    ]);
 
 
   // ======================================================
@@ -345,12 +354,12 @@ export default function AcreditarPagoProgramadoModal({
       if (
         medio === "banco" &&
         !bancoId &&
-        bancosEmpresa.length === 1
+        bancosDisponibles.length === 1
       ) {
 
         setBancoId(
           String(
-            bancosEmpresa[0].id
+            bancosDisponibles[0].id
           )
         );
       }
@@ -359,7 +368,7 @@ export default function AcreditarPagoProgramadoModal({
     [
       medio,
       bancoId,
-      bancosEmpresa,
+      bancosDisponibles,
     ]
   );
 
@@ -835,7 +844,7 @@ export default function AcreditarPagoProgramadoModal({
               </div>
 
             </Form.Group>
-{/* 
+            {/* 
             <Form.Group
               className="mb-3"
             >
@@ -971,7 +980,7 @@ export default function AcreditarPagoProgramadoModal({
                       </option>
 
 
-                      {bancosEmpresa.map(
+                      {bancosDisponibles.map(
                         (b) => (
 
                           <option

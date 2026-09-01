@@ -116,6 +116,11 @@ export default function EditarEcheqModal({
 
 
   const [
+    bancoId,
+    setBancoId,
+  ] = useState("");
+
+  const [
     importe,
     setImporte,
   ] = useState("");
@@ -236,8 +241,8 @@ export default function EditarEcheqModal({
           setCategoriaId(
             json.categoriaegreso_id
               ? String(
-                  json.categoriaegreso_id
-                )
+                json.categoriaegreso_id
+              )
               : ""
           );
 
@@ -245,8 +250,16 @@ export default function EditarEcheqModal({
           setProyectoId(
             json.proyecto_id
               ? String(
-                  json.proyecto_id
-                )
+                json.proyecto_id
+              )
+              : ""
+          );
+
+          setBancoId(
+            json.banco_id
+              ? String(
+                json.banco_id
+              )
               : ""
           );
 
@@ -254,8 +267,8 @@ export default function EditarEcheqModal({
           setProveedorId(
             json.proveedor_id
               ? String(
-                  json.proveedor_id
-                )
+                json.proveedor_id
+              )
               : ""
           );
 
@@ -324,36 +337,36 @@ export default function EditarEcheqModal({
   // BANCO
   // ======================================================
 
-  const bancoNombre =
-    useMemo(() => {
+  // const bancoNombre =
+  //   useMemo(() => {
 
-      if (!echeq?.banco_id) {
-        return "";
-      }
-
-
-      const banco =
-        (bancosTabla || [])
-          .find(
-            (b) =>
-              Number(b.id) ===
-              Number(
-                echeq.banco_id
-              )
-          );
+  //     if (!echeq?.banco_id) {
+  //       return "";
+  //     }
 
 
-      return (
-        banco?.descripcion ||
-        banco?.nombre ||
-        banco?.alias ||
-        `Banco ${echeq.banco_id}`
-      );
+  //     const banco =
+  //       (bancosTabla || [])
+  //         .find(
+  //           (b) =>
+  //             Number(b.id) ===
+  //             Number(
+  //               echeq.banco_id
+  //             )
+  //         );
 
-    }, [
-      bancosTabla,
-      echeq,
-    ]);
+
+  //     return (
+  //       banco?.descripcion ||
+  //       banco?.nombre ||
+  //       banco?.alias ||
+  //       `Banco ${echeq.banco_id}`
+  //     );
+
+  //   }, [
+  //     bancosTabla,
+  //     echeq,
+  //   ]);
 
 
   // ======================================================
@@ -396,6 +409,11 @@ export default function EditarEcheqModal({
       );
     }
 
+    if (!bancoId) {
+      throw new Error(
+        "Debe seleccionar un banco"
+      );
+    }
 
     if (!categoriaId) {
       throw new Error(
@@ -453,6 +471,11 @@ export default function EditarEcheqModal({
             numeroEcheq.trim() ||
             null,
 
+          banco_id:
+            Number(
+              bancoId
+            ),
+
           categoriaegreso_id:
             Number(
               categoriaId
@@ -461,8 +484,8 @@ export default function EditarEcheqModal({
           proyecto_id:
             proyectoId
               ? Number(
-                  proyectoId
-                )
+                proyectoId
+              )
               : null,
         };
 
@@ -476,8 +499,8 @@ export default function EditarEcheqModal({
           payload.proveedor_id =
             proveedorId
               ? Number(
-                  proveedorId
-                )
+                proveedorId
+              )
               : null;
 
           payload.importe =
@@ -758,12 +781,48 @@ export default function EditarEcheqModal({
                     Banco
                   </Form.Label>
 
-                  <Form.Control
+                  <Form.Select
                     value={
-                      bancoNombre
+                      bancoId
                     }
-                    disabled
-                  />
+                    disabled={
+                      saving
+                    }
+                    onChange={(e) =>
+                      setBancoId(
+                        e.target.value
+                      )
+                    }
+                  >
+
+                    <option value="">
+                      Seleccionar...
+                    </option>
+
+
+                    {(bancosTabla || []).map(
+                      (b) => (
+
+                        <option
+                          key={
+                            b.id
+                          }
+                          value={
+                            b.id
+                          }
+                        >
+                          {
+                            b.nombre ||
+                            b.descripcion ||
+                            b.alias ||
+                            `Banco ${b.id}`
+                          }
+                        </option>
+
+                      )
+                    )}
+
+                  </Form.Select>
 
                 </Form.Group>
 
