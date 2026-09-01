@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Contexts from "./Contexts";
-import { useSecurity } from "../security/SecurityContext";
 
 export default function DataContextProvider({ children }) {
-
-  const {
-    user,
-    loading: securityLoading,
-  } = useSecurity();
-
   // Objetos/piezas únicas
   const [data, setData] = useState(null);
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null); // null = todas
@@ -73,19 +66,7 @@ export default function DataContextProvider({ children }) {
   };
 
   useEffect(() => {
-
-    if (securityLoading) {
-      return;
-    }
-
-    if (!user) {
-      return;
-    }
-
-
     let cancelled = false;
-
-
     const fetchData = async () => {
       // Sucursales
       const dataSucursales = await fetchJsonSafe(`${apiUrl}/sucursales`);
@@ -211,17 +192,9 @@ export default function DataContextProvider({ children }) {
     };
 
     fetchData();
+    return () => { cancelled = true; };
+  }, [apiUrl]);
 
-    return () => {
-      cancelled = true;
-    };
-
-  }, [
-    apiUrl,
-    user?.id,
-    securityLoading,
-  ]);
-  
   return (
     <Contexts.DataContext.Provider
       value={{

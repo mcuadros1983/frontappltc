@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import ProductList from "./pages/gmedias/ProductList";
 import ProductUpdate from "./pages/gmedias/ProductUpdate";
 import ProductUpdateTropa from "./pages/gmedias/ProductUpdateTropa.js";
@@ -174,7 +175,7 @@ import AdicionalVariableManager from "./pages/sueldosTesoreria/AdicionalVariable
 import AdicionalVariableTipoManager from "./pages/sueldosTesoreria/AdicionalVariableTipoManager.js";
 import AdicionalVariableImportManager from "./pages/sueldosTesoreria/AdicionalVariableImportManager.js";
 import RecibosImportManager from "./pages/sueldosTesoreria/RecibosImportManager.js";
-import ValesAdelantosImportManager from "./pages/sueldosTesoreria/ValesAdelantosImportManager.js";
+// import ValesAdelantosImportManager from "./pages/sueldosTesoreria/ValesAdelantosImportManager.js";
 import AdicionalVariableList from "./pages/sueldosTesoreria/AdicionalVariableList.js";
 import LiquidacionMensualManager from "./pages/sueldosTesoreria/LiquidacionMensualManager.js";
 import AsignarTelefono from "./pages/sueldosTesoreria/AsignarTelefonoManager.js";
@@ -260,7 +261,174 @@ import PremiosComercioList from "./pages/fidelizacion/admin/PremiosComercioList"
 import PremioComercioForm from "./pages/fidelizacion/admin/PremioComercioForm";
 import CanjesComerciosList from "./pages/fidelizacion/admin/CanjesComerciosList";
 import AlertasFraudeList from "./pages/fidelizacion/admin/AlertasFraudeList";
+import CuponesClienteList from "./pages/fidelizacion/admin/CuponesClienteList";
+import CanjesCuponesList from "./pages/fidelizacion/admin/CanjesCuponesList";
+import ClientesFidelizacionList from "./pages/fidelizacion/admin/ClientesFidelizacionList";
+import ProduccionLoteList from "./pages/fabrica/ProduccionLoteList";
+import ProduccionLoteForm from "./pages/fabrica/ProduccionLoteForm";
+import StockFabrica from "./pages/fabrica/StockFabrica";
+import StockFabricaDetalle from "./pages/fabrica/StockFabricaDetalle";
+import TransferenciaFabricaList from "./pages/fabrica/TransferenciaFabricaList";
+import TransferenciaFabricaForm from "./pages/fabrica/TransferenciaFabricaForm";
+import InspeccionesList from "./pages/inspecciones/inspeccionesList";
+import InspeccionForm from "./pages/inspecciones/inspeccionForm";
+import InspeccionDetalle from "./pages/inspecciones/inspeccionDetalle";
 
+import DashboardInspecciones from "./pages/inspecciones/dashboardInspecciones";
+
+import PlantillasList from "./pages/inspecciones/plantillasList";
+import PlantillaForm from "./pages/inspecciones/plantillaForm";
+
+import NotificacionesBell
+  from "./pages/inspecciones/notificacionesBell";
+
+import NotificacionesPage
+  from "./pages/inspecciones/notificacionesPage";
+
+import NotificationPage
+  from "./pages/notification/NotificacionesPage";
+
+import SchedulerPage
+  from "./pages/scheduler/SchedulerPage";
+
+
+import GestionDashboardPage from "./pages/gestion/GestionDashboardPage";
+import GestionKanbanPage from "./pages/gestion/GestionKanbanPage";
+import GestionTasksPage from "./pages/gestion/GestionTasksPage";
+import GestionProjectsPage from "./pages/gestion/GestionProjectsPage";
+import GestionCalendarPage from "./pages/gestion/GestionCalendarPage";
+import GestionSupervisorDashboardPage from "./pages/gestion/GestionSupervisorDashboardPage";
+import GestionReportesPage from "./pages/gestion/GestionReportesPage";
+import ConfiguracionPage
+  from "./pages/evaluacion/ConfiguracionPage";
+
+import PlantillaDetallePage
+  from "./pages/evaluacion/PlantillaDetallePage";
+
+
+// import FormularioEvaluacionPage
+//   from "./pages/evaluacion/FormularioEvaluacionPage";
+
+
+import EvaluacionesPage
+  from "./pages/evaluacion/EvaluacionesPage";
+
+import EvaluacionFormPage
+  from "./pages/evaluacion/EvaluacionFormPage";
+
+import ResultadoEvaluacionPage
+  from "./pages/evaluacion/ResultadoEvaluacionPage";
+
+import MisEvaluacionesPage
+  from "./pages/evaluacion/MisEvaluacionesPage";
+
+import DashboardEvaluacionPage
+  from "./pages/evaluacion/DashboardPage";
+
+import ReportesEvaluacionPage
+  from "./pages/evaluacion/ReportesPage";
+
+// import ComunicacionesPage
+//   from "./pages/evaluacion/ComunicacionesPage";
+
+import MetasPage
+  from "./pages/evaluacion/MetasPage";
+
+import AvisosPage
+  from "./pages/evaluacion/AvisosPage";
+
+import PublicEvaluacionPage from "./pages/evaluacion/PublicEvaluacionPage";
+
+// import MetasPage
+//     from "./pages/evaluacion/MetasPage";
+
+import MetaFormPage
+  from "./pages/evaluacion/MetaFormPage";
+
+import MetaDetallePage
+  from "./pages/evaluacion/MetaDetallePage";
+
+import ReporteEmpleadoPage from "./pages/evaluacion/reportes/ReporteEmpleadoPage";
+import ReporteSupervisorPage from "./pages/evaluacion/reportes/ReporteSupervisorPage.jsx";
+import ReporteMysteryPage from "./pages/evaluacion/reportes/ReporteMysteryPage.jsx";
+
+import MotorConceptosPage
+  from "./pages/MotorConceptos/MotorConceptosPage";
+
+import MotorConceptoLegajoPage
+  from "./pages/MotorConceptos/MotorConceptoLegajoPage";
+
+// MotorConceptoLegajoPage
+
+import MotorConceptoEditorPage
+  from "./pages/MotorConceptos/MotorConceptoEditorPage";
+
+import RegistroConceptoListPage
+  from "./pages/MotorConceptos/RegistroConceptoListPage";
+
+import RegistroConceptoEditorPage
+  from "./pages/MotorConceptos/RegistroConceptoEditorPage.jsx";
+
+import RegistroConceptoHistorialPage
+  from "./pages/MotorConceptos/RegistroConceptoHistorialPage";
+
+import MotorConceptoDocumentosFaltantesPage from "./pages/MotorConceptos/MotorConceptoDocumentosFaltantesPage";
+
+
+import RegistroConceptoReportePage
+  from "./pages/MotorConceptos/RegistroConceptoReportePage";
+
+import EntidadDocumentoRegistroPage
+  from "./pages/MotorConceptos/EntidadDocumentoRegistroPage";
+
+
+import EntidadDocumentalPage
+  from "./pages/MotorConceptos/EntidadDocumentalPage";
+
+import EmpleadoDocumentalListPage
+  from "./pages/MotorConceptos/EmpleadoDocumentalListPage";
+
+import EmpresaDocumentalListPage
+  from "./pages/MotorConceptos/EmpresaDocumentalListPage";
+
+import SucursalDocumentalListPage
+  from "./pages/MotorConceptos/SucursalDocumentalListPage";
+
+/*=====================================================
+INTELIGENCIA COMERCIAL
+======================================================*/
+
+import InteligenciaDashboardPage
+  from "./pages/inteligencia/InteligenciaDashboardPage";
+
+import InteligenciaEventosPage
+  from "./pages/inteligencia/eventos/InteligenciaEventosPage";
+
+import InteligenciaSnapshotsPage
+  from "./pages/inteligencia/snapshots/InteligenciaSnapshotsPage";
+
+import InteligenciaClimaPage
+  from "./pages/inteligencia/clima/InteligenciaClimaPage";
+import PagosProgramadosPage from "./components/tesoreria/PagosProgramadosPage.js";
+
+const PUBLIC_FIDELIZACION_HOSTS = [
+  "latradicionsorteos.com",
+  "www.latradicionsorteos.com",
+];
+
+const HomeRedirect = () => {
+  const host = window.location.hostname;
+
+  if (PUBLIC_FIDELIZACION_HOSTS.includes(host)) {
+    return <Navigate to="/comercio/login" replace />;
+  }
+
+  return (
+    <PublicOnlyRoute>
+      <LoginForm />
+    </PublicOnlyRoute>
+  );
+};
 
 // Simple 403 page 
 function Forbidden403() {
@@ -270,6 +438,29 @@ function Forbidden403() {
 export default function App() {
   const context = useContext(Contexts.UserContext);
 
+  useEffect(() => {
+    const host = window.location.hostname;
+
+    const esSorteos =
+      host === "latradicionsorteos.com" ||
+      host === "www.latradicionsorteos.com";
+
+    document.title = esSorteos
+      ? "Sorteos La Tradición"
+      : "Sistema de Gestión - LTC";
+
+    const favicon = document.querySelector("link[rel='icon']");
+
+    if (favicon) {
+      favicon.href = esSorteos ? "/ltc.png" : "/ltc.png";
+    }
+  }, []);
+
+  // ValesAdelantosImportManager
+
+  // console.log("ValesAdelantosImportManager", typeof ValesAdelantosImportManager);
+
+
   return (
     <>
       <SecurityProvider>
@@ -278,8 +469,30 @@ export default function App() {
             <Routes>
 
               {/* Público (redirige si ya hay user) */}
-              <Route
+              {/* <Route
                 index
+                element={
+                  <PublicOnlyRoute>
+                    <LoginForm />
+                  </PublicOnlyRoute>
+                }
+              /> */}
+
+              {/* Público */}
+              {/* <Route index element={<LoginForm />} />
+              <Route path="/login" element={<LoginForm />} />
+              <Route path="/403" element={<Forbidden403 />} /> */}
+              <Route
+                path="/evaluacion/form/:token"
+                element={<PublicEvaluacionPage />}
+              />
+
+              {/* Inicio según dominio */}
+              <Route index element={<HomeRedirect />} />
+
+              {/* Público administración */}
+              <Route
+                path="/login"
                 element={
                   <PublicOnlyRoute>
                     <LoginForm />
@@ -287,11 +500,7 @@ export default function App() {
                 }
               />
 
-              {/* Público */}
-              <Route index element={<LoginForm />} />
-              <Route path="/login" element={<LoginForm />} />
               <Route path="/403" element={<Forbidden403 />} />
-
 
               {/* <Route element={<ProtectedRoute isAllowed={!!context.user} />}> */}
 
@@ -357,6 +566,344 @@ export default function App() {
                         <Route path="/banks" element={<BancoList />} />
                         <Route path="/banks/new" element={<BancoForm />} />
                         <Route path="/banks/:id/edit" element={<BancoForm />} />
+
+                        {/* INSPECCIONES */}
+
+                        <Route
+                          path="/inspecciones"
+                          element={<InspeccionesList />}
+                        />
+
+                        <Route
+                          path="/inspecciones/dashboard"
+                          element={<DashboardInspecciones />}
+                        />
+
+                        <Route
+                          path="/inspecciones/nueva"
+                          element={<InspeccionForm />}
+                        />
+
+                        <Route
+                          path="/inspecciones/:id"
+                          element={<InspeccionDetalle />}
+                        />
+
+                        <Route
+                          path="/motor-conceptos"
+                          element={
+                            <MotorConceptosPage />
+                          }
+                        />
+
+                        <Route
+                          path="/motor-conceptos/legajo/:entidadTipoId/:entidadId"
+                          element={<MotorConceptoLegajoPage />}
+                        />
+
+                        <Route
+                          path="/motor-conceptos/:id"
+                          element={
+                            <MotorConceptoEditorPage />
+                          }
+                        />
+
+                        <Route
+                          path="/motor-conceptos/registros"
+                          element={
+
+                            <RegistroConceptoListPage />
+
+                          }
+                        />
+
+                        <Route
+                          path="/motor-conceptos/registros/:registroId"
+                          element={
+
+                            <RegistroConceptoEditorPage />
+
+                          }
+                        />
+
+
+                        <Route
+                          path="/motor-conceptos/documentacion/entidad/nuevo"
+                          element={
+                            <EntidadDocumentoRegistroPage />
+                          }
+                        />
+
+                        <Route
+                          path="/motor-conceptos/documentacion/entidad"
+                          element={<EntidadDocumentalPage />}
+                        />
+
+                        <Route
+                          path="/motor-conceptos/documentacion/empleados"
+                          element={<EmpleadoDocumentalListPage />}
+                        />
+
+                        <Route
+                          path="/motor-conceptos/documentacion/empresas"
+                          element={<EmpresaDocumentalListPage />}
+                        />
+
+                        <Route
+                          path="/motor-conceptos/documentacion/sucursales"
+                          element={<SucursalDocumentalListPage />}
+                        />
+                        <Route
+                          path="/motor-conceptos/reportes/registros"
+                          element={
+                            <RegistroConceptoReportePage />
+                          }
+                        />
+
+                        <Route
+                          path="/motor-conceptos/registros/:registroId/historial"
+                          element={
+
+                            <RegistroConceptoHistorialPage />
+
+                          }
+                        />
+
+                        <Route
+                          path="/motor-conceptos/documentos-faltantes/:entidadTipoId/:entidadId"
+                          element={
+                            <MotorConceptoDocumentosFaltantesPage />
+
+                          }
+                        />
+
+                        {/* PLANTILLAS */}
+
+                        <Route
+                          path="/inspecciones/plantillas"
+                          element={<PlantillasList />}
+                        />
+
+                        <Route
+                          path="/inspecciones/plantillas/nueva"
+                          element={<PlantillaForm />}
+                        />
+
+                        <Route
+                          path="/inspecciones/plantillas/:id"
+                          element={<PlantillaForm />}
+                        />
+
+                        {/* NOTIFICACIONES */}
+
+                        <Route
+                          path="/inspecciones/notificaciones"
+                          element={
+                            <NotificacionesPage />
+                          }
+                        />
+
+                        {/* EVALUACIONES */}
+
+                        <Route
+                          path="/evaluacion/reportes/empleado/"
+                          element={<ReporteEmpleadoPage />}
+                        />
+
+                        <Route
+                          path="/evaluacion/reportes/supervisor/"
+                          element={<ReporteSupervisorPage />}
+                        />
+
+                        <Route
+                          path="/evaluacion/reportes/mystery/"
+                          element={<ReporteMysteryPage />}
+                        />
+                        <Route
+
+                          path="/evaluacion/configuracion"
+
+                          element={<ConfiguracionPage />}
+
+                        />
+
+                        <Route
+
+                          path="/evaluacion/plantillas/:id/detalle"
+
+                          element={<PlantillaDetallePage />}
+
+                        />
+
+                        {/*=====================================================
+NOTIFICACIONES
+======================================================*/}
+
+                        <Route
+
+                          path="/notification"
+
+                          element={<NotificationPage />}
+
+                        />
+
+                        {/*=====================================================
+SCHEDULER
+======================================================*/}
+
+                        <Route
+
+                          path="/scheduler"
+
+                          element={<SchedulerPage />}
+
+                        />
+
+                        {/*==========================
+EVALUACIONES
+===========================*/}
+
+                        <Route
+
+                          path="/evaluaciones"
+
+                          element={<EvaluacionesPage />}
+
+                        />
+
+                        <Route
+
+                          path="/evaluaciones/:id"
+
+                          element={<EvaluacionFormPage />}
+
+                        />
+
+                        <Route
+
+                          path="/evaluacion/:id/resultado"
+
+                          element={<ResultadoEvaluacionPage />}
+
+                        />
+
+
+                        <Route
+
+                          path="/evaluacion/avisos"
+
+                          element={<AvisosPage />}
+
+                        />
+
+                        <Route
+
+                          path="/mis-evaluaciones"
+
+                          element={<MisEvaluacionesPage />}
+
+                        />
+
+                        {/* <Route
+
+                          path="/evaluaciones/:id/formulario"
+
+                          element={<FormularioEvaluacionPage />}
+
+                        /> */}
+
+                        {/* <Route
+
+                          path="/evaluaciones/:id/resultado"
+
+                          element={<ResultadoEvaluacionPage />}
+
+                        /> */}
+
+                        <Route
+
+                          path="/evaluacion/dashboard"
+
+                          element={<DashboardEvaluacionPage />}
+
+                        />
+
+                        <Route
+
+                          path="/evaluacion/reportes"
+
+                          element={<ReportesEvaluacionPage />}
+
+                        />
+
+                        {/* <Route
+
+                          path="/evaluacion/comunicaciones"
+
+                          element={<ComunicacionesPage />}
+
+                        /> */}
+
+                        <Route
+
+                          path="/evaluacion/metas"
+
+                          element={<MetasPage />}
+
+                        />
+
+
+                        <Route
+                          path="/evaluacion/metas/nuevo"
+                          element={<MetaFormPage />}
+                        />
+
+                        <Route
+                          path="/evaluacion/metas/:id"
+                          element={<MetaFormPage />}
+                        />
+
+                        <Route
+                          path="/evaluacion/metas/:id/detalle"
+                          element={<MetaDetallePage />} />
+
+                        {/*=====================================================
+INTELIGENCIA COMERCIAL
+======================================================*/}
+
+                        <Route
+                          path="/inteligencia"
+                          element={<InteligenciaDashboardPage />}
+                        />
+
+                        <Route
+                          path="/inteligencia/dashboard"
+                          element={<InteligenciaDashboardPage />}
+                        />
+
+                        <Route
+                          path="/inteligencia/eventos"
+                          element={<InteligenciaEventosPage />}
+                        />
+
+                        <Route
+                          path="/inteligencia/snapshots"
+                          element={<InteligenciaSnapshotsPage />}
+                        />
+
+                        <Route
+                          path="/inteligencia/clima"
+                          element={<InteligenciaClimaPage />}
+                        />
+
+                        <Route path="/gestion" element={<GestionDashboardPage />} />
+                        <Route path="/gestion/kanban" element={<GestionKanbanPage />} />
+                        <Route path="/gestion/tareas" element={<GestionTasksPage />} />
+                        <Route path="/gestion/proyectos" element={<GestionProjectsPage />} />
+                        <Route path="/gestion/calendario" element={<GestionCalendarPage />} />
+                        <Route path="/gestion/supervisor" element={<GestionSupervisorDashboardPage />} />
+                        <Route path="/gestion/reportes" element={<GestionReportesPage />} />
+
 
                         <Route path="/promociones" element={<PromocionList />} />
                         <Route path="/promociones/new" element={<PromocionForm />} />
@@ -487,6 +1034,8 @@ export default function App() {
                         <Route path="/tesoreria/cajas/apertura" element={<AbrirCaja />} />
                         <Route path="/tesoreria/movimientos-caja-tesoreria" element={<MovimientosCajaTesoreria />} />
 
+                        <Route path="/tesoreria/pagos-programados" element={<PagosProgramadosPage />} />
+
                         {/* Bancos Tesoreria */}
                         <Route path="/tesoreria/movimientos-banco-tesoreria" element={<MovimientosBancoTesoreria />} />
                         <Route path="/tesoreria/movimientos-banco-tesoreria-excel" element={<NuevoMovimientoBancoExcel />} />
@@ -545,7 +1094,8 @@ export default function App() {
                         <Route path="/sueldostesoreria/listaradicionalesvariables" element={<AdicionalVariableList />} />
                         <Route path="/sueldostesoreria/recibosimportmanager" element={<RecibosImportManager />} />
                         <Route path="/sueldostesoreria/liquidacionmensual" element={<LiquidacionMensualManager />} />
-                        <Route path="/sueldostesoreria/importarvalesyadelantos" element={<ValesAdelantosImportManager />} />
+                        {/* <Route path="/sueldostesoreria/importarvalesyadelantos" element={<ValesAdelantosImportManager />} /> */}
+
                         <Route path="/sueldostesoreria/asignartelefono" element={<AsignarTelefono />} />
                         <Route path="/sueldostesoreria/asignardatosempleado" element={<AsignarDatosEmpleado />} />
 
@@ -603,6 +1153,45 @@ export default function App() {
                           path="/stock/products"
                           element={<StockProductsList />}
                         />
+
+                        <Route
+                          path="/fabrica/stock"
+                          element={<StockFabrica />}
+                        />
+
+                        <Route
+                          path="/fabrica/stock/detalle/:codigobarra"
+                          element={<StockFabricaDetalle />}
+                        />
+
+                        <Route
+                          path="/fabrica/transferencias"
+                          element={<TransferenciaFabricaList />}
+                        />
+
+                        <Route
+                          path="/fabrica/transferir"
+                          element={<TransferenciaFabricaForm />}
+                        />
+
+                        <Route
+                          path="/fabrica/produccion-lotes"
+                          element={<ProduccionLoteList />}
+                        />
+
+                        <Route
+                          path="/fabrica/produccion-lotes/nuevo"
+                          element={<ProduccionLoteForm />}
+                        />
+
+                        <Route
+                          path="/fabrica/produccion-lotes/editar/:id"
+                          element={<ProduccionLoteForm />}
+                        />
+
+
+
+
                         <Route path="/stock/central" element={<StockCentralList />} />
                         <Route path="/orders" element={<OrderList />} />
                         <Route path="/orders/new" element={<OrderForm />} />
@@ -836,6 +1425,9 @@ export default function App() {
                         <Route path="/fidelizacion/premios-clientes/nuevo" element={<PremioClienteForm />} />
                         <Route path="/fidelizacion/premios-clientes/:id/editar" element={<PremioClienteForm />} />
 
+                        <Route path="/fidelizacion/cupones" element={<CuponesClienteList />} />
+                        <Route path="/fidelizacion/canjes-cupones" element={<CanjesCuponesList />} />
+                        <Route path="/fidelizacion/clientes" element={<ClientesFidelizacionList />} />
                         <Route path="/fidelizacion/validar-cupon" element={<ValidarCupon />} />
                         <Route path="/fidelizacion/puntos-comercio" element={<PuntosComercioView />} />
 
