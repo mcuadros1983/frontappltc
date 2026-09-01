@@ -450,6 +450,12 @@ export default function SitFinanciera() {
     arr.map((it) => ({
       tipo: "instancia",
       id: it.id,
+
+      // Plantilla GastoEstimado a la que
+      // pertenece esta instancia.
+      gastoestimado_id:
+        it.gastoestimado_id ?? null,
+
       empresa_id: it.empresa_id ?? null,
       empresa_nombre: empNameById.get(Number(it.empresa_id)) || "",
       proveedor_id: it.proveedor_id ?? null,
@@ -1884,6 +1890,125 @@ export default function SitFinanciera() {
       }
     };
 
+  // ======================================================
+  // DESACTIVAR GASTO ESTIMADO DESDE UNA INSTANCIA
+  // ======================================================
+
+  const handleEliminarInstancia =
+    async (row) => {
+
+      const gastoEstimadoId =
+        row?.gastoestimado_id;
+
+
+      if (!gastoEstimadoId) {
+
+        setErr(
+          "No se pudo identificar el gasto estimado asociado a esta instancia."
+        );
+
+        return;
+      }
+
+
+      const confirmar =
+        window.confirm(
+          "Se desactivará el gasto estimado y se eliminarán todas las instancias pendientes sin pagos asociadas a este gasto.\n\n" +
+          "Las instancias con pagos realizados conservarán su historial.\n\n" +
+          "¿Desea continuar?"
+        );
+
+
+      if (!confirmar) {
+        return;
+      }
+
+
+      try {
+
+        setAccionandoId(
+          row.key
+        );
+
+        setErr(
+          null
+        );
+
+
+        const r =
+          await fetch(
+            `${apiUrl}/gasto-estimado/${gastoEstimadoId}`,
+            {
+              method:
+                "PUT",
+
+              credentials:
+                "include",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify({
+                  activo:
+                    false,
+                }),
+            }
+          );
+
+
+        const json =
+          await r
+            .json()
+            .catch(
+              () => ({})
+            );
+
+
+        if (!r.ok) {
+
+          throw new Error(
+            json?.error ||
+            "No se pudo desactivar el gasto estimado"
+          );
+        }
+
+
+        /*
+         * No quitamos filas manualmente.
+         *
+         * Volvemos a consultar el backend.
+         * Las instancias anuladas dejarán de
+         * aparecer automáticamente.
+         */
+
+        await cargar();
+
+
+      } catch (e) {
+
+        console.error(
+          "handleEliminarInstancia",
+          e
+        );
+
+
+        setErr(
+          e.message ||
+          "No se pudo desactivar el gasto estimado"
+        );
+
+
+      } finally {
+
+        setAccionandoId(
+          null
+        );
+      }
+    };
+
   const compNroView = (row) =>
     row.comprobante_nro ||
     (row.comprobanteegreso_id ? (compNroById.get(row.comprobanteegreso_id) || "-") : "-");
@@ -2677,9 +2802,27 @@ export default function SitFinanciera() {
                             </Button>
 
 
-                            <BotonNoHabilitado>
-                              Eliminar
-                            </BotonNoHabilitado>
+                            <Button
+                              size="sm"
+                              variant="outline-danger"
+                              disabled={
+                                accionandoId === row.key
+                              }
+                              onClick={() =>
+                                handleEliminarInstancia(
+                                  row
+                                )
+                              }
+                            >
+                              {accionandoId === row.key
+                                ? (
+                                  <Spinner
+                                    size="sm"
+                                    animation="border"
+                                  />
+                                )
+                                : "Eliminar"}
+                            </Button>
 
                           </div>
 
