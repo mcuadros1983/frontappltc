@@ -222,20 +222,30 @@ export default function EditarPagoProgramadoModal({
     // BANCOS EMPRESA
     // ======================================================
 
-    const bancosEmpresa =
-        useMemo(
-            () =>
-                (bancosTabla || []).filter(
-                    (b) =>
-                        !empresaId ||
-                        Number(b.empresa_id) ===
-                        Number(empresaId)
-                ),
-            [
-                bancosTabla,
-                empresaId,
-            ]
-        );
+    // const bancosEmpresa =
+    //     useMemo(
+    //         () =>
+    //             (bancosTabla || []).filter(
+    //                 (b) =>
+    //                     !empresaId ||
+    //                     Number(b.empresa_id) ===
+    //                     Number(empresaId)
+    //             ),
+    //         [
+    //             bancosTabla,
+    //             empresaId,
+    //         ]
+    //     );
+
+    const bancosDisponibles =
+        useMemo(() => {
+
+            return bancosTabla || [];
+
+        }, [
+            bancosTabla,
+        ]);
+
 
     // ======================================================
     // PRECARGAR PAGO PROGRAMADO
@@ -360,12 +370,12 @@ export default function EditarPagoProgramadoModal({
             if (
                 medio === "banco" &&
                 !bancoId &&
-                bancosEmpresa.length === 1
+                bancosDisponibles.length === 1
             ) {
 
                 setBancoId(
                     String(
-                        bancosEmpresa[0].id
+                        bancosDisponibles[0].id
                     )
                 );
             }
@@ -374,7 +384,7 @@ export default function EditarPagoProgramadoModal({
         [
             medio,
             bancoId,
-            bancosEmpresa,
+            bancosDisponibles,
         ]
     );
 
@@ -1029,7 +1039,7 @@ export default function EditarPagoProgramadoModal({
                                             </option>
 
 
-                                            {bancosEmpresa.map(
+                                            {bancosDisponibles.map(
                                                 (b) => (
 
                                                     <option

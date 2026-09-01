@@ -150,25 +150,37 @@ export default function NuevoPagoProgramado({
   // BANCOS DE LA EMPRESA
   // ==========================================================
 
-  const bancosEmpresa =
+  // const bancosEmpresa =
+  //   useMemo(() => {
+
+  //     if (!empresa_id) {
+  //       return [];
+  //     }
+
+  //     return (bancosTabla || []).filter(
+  //       (b) =>
+  //         !b.empresa_id ||
+  //         Number(b.empresa_id) ===
+  //         Number(empresa_id)
+  //     );
+
+  //   }, [
+  //     bancosTabla,
+  //     empresa_id,
+  //   ]);
+
+  // ==========================================================
+  // TODOS LOS BANCOS DISPONIBLES
+  // ==========================================================
+
+  const bancosDisponibles =
     useMemo(() => {
 
-      if (!empresa_id) {
-        return [];
-      }
-
-      return (bancosTabla || []).filter(
-        (b) =>
-          !b.empresa_id ||
-          Number(b.empresa_id) ===
-          Number(empresa_id)
-      );
+      return bancosTabla || [];
 
     }, [
       bancosTabla,
-      empresa_id,
     ]);
-
 
   // ==========================================================
   // FORMA DE PAGO SUGERIDA
@@ -835,7 +847,7 @@ export default function NuevoPagoProgramado({
                     Seleccione…
                   </option>
 
-                  {bancosEmpresa.map(
+                  {bancosDisponibles.map(
                     (b) => (
 
                       <option
