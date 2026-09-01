@@ -62,7 +62,7 @@ export default function EditarPagoProgramadoModal({
 
     const {
         empresaSeleccionada,
-        cajasTesoreria = [],
+        cajaAbierta,
         bancosTabla = [],
         formasPagoTesoreria = [],
         proyectosTabla = [],
@@ -87,16 +87,10 @@ export default function EditarPagoProgramadoModal({
     ] = useState("caja");
 
 
-    const [
-        formaPagoId,
-        setFormaPagoId,
-    ] = useState("");
-
-
-    const [
-        cajaId,
-        setCajaId,
-    ] = useState("");
+    // const [
+    //     formaPagoId,
+    //     setFormaPagoId,
+    // ] = useState("");
 
 
     const [
@@ -161,6 +155,68 @@ export default function EditarPagoProgramadoModal({
         row?.pago_programado_tipo ===
         "anticipo";
 
+    // ======================================================
+    // FORMAS DE PAGO SEGÚN MEDIO
+    // ======================================================
+
+    const formaPagoEfectivo =
+        useMemo(
+            () =>
+                (formasPagoTesoreria || []).find(
+                    (fp) => {
+
+                        const texto =
+                            String(
+                                fp.descripcion ||
+                                fp.nombre ||
+                                ""
+                            )
+                                .trim()
+                                .toLowerCase();
+
+                        return (
+                            texto.includes("efectivo") ||
+                            texto.includes("caja")
+                        );
+                    }
+                ) || null,
+            [
+                formasPagoTesoreria,
+            ]
+        );
+
+
+    const formaPagoTransferencia =
+        useMemo(
+            () =>
+                (formasPagoTesoreria || []).find(
+                    (fp) => {
+
+                        const texto =
+                            String(
+                                fp.descripcion ||
+                                fp.nombre ||
+                                ""
+                            )
+                                .trim()
+                                .toLowerCase();
+
+                        return (
+                            texto.includes("transferencia") ||
+                            texto.includes("banco")
+                        );
+                    }
+                ) || null,
+            [
+                formasPagoTesoreria,
+            ]
+        );
+
+
+    const formaPagoSeleccionada =
+        medio === "caja"
+            ? formaPagoEfectivo
+            : formaPagoTransferencia;
 
     // ======================================================
     // BANCOS EMPRESA
@@ -180,28 +236,6 @@ export default function EditarPagoProgramadoModal({
                 empresaId,
             ]
         );
-
-
-    // ======================================================
-    // CAJAS EMPRESA
-    // ======================================================
-
-    //   const cajasEmpresa =
-    //     useMemo(
-    //       () =>
-    //         (cajasTesoreria || []).filter(
-    //           (c) =>
-    //             !empresaId ||
-    //             !c.empresa_id ||
-    //             Number(c.empresa_id) ===
-    //             Number(empresaId)
-    //         ),
-    //       [
-    //         cajasTesoreria,
-    //         empresaId,
-    //       ]
-    //     );
-
 
     // ======================================================
     // PRECARGAR PAGO PROGRAMADO
@@ -266,13 +300,13 @@ export default function EditarPagoProgramadoModal({
             );
 
 
-            setFormaPagoId(
-                row.formapago_id
-                    ? String(
-                        row.formapago_id
-                    )
-                    : ""
-            );
+            // setFormaPagoId(
+            //     row.formapago_id
+            //         ? String(
+            //             row.formapago_id
+            //         )
+            //         : ""
+            // );
 
 
             setBancoId(
@@ -345,33 +379,6 @@ export default function EditarPagoProgramadoModal({
     );
 
 
-    // ======================================================
-    // AUTOSELECCIONAR CAJA SI HAY UNA SOLA
-    // ======================================================
-
-    //   useEffect(
-    //     () => {
-
-    //       if (
-    //         medio === "caja" &&
-    //         !cajaId &&
-    //         cajasEmpresa.length === 1
-    //       ) {
-
-    //         setCajaId(
-    //           String(
-    //             cajasEmpresa[0].id
-    //           )
-    //         );
-    //       }
-
-    //     },
-    //     [
-    //       medio,
-    //       cajaId,
-    //       cajasEmpresa,
-    //     ]
-    //   );
 
 
     // ======================================================
@@ -418,7 +425,6 @@ export default function EditarPagoProgramadoModal({
             );
         }
 
-
         if (
             !["caja", "banco"].includes(
                 medio
@@ -430,21 +436,28 @@ export default function EditarPagoProgramadoModal({
         }
 
 
-        if (!formaPagoId) {
+        if (
+            !formaPagoSeleccionada?.id
+        ) {
             throw new Error(
-                "Debe seleccionar una forma de pago"
+                medio === "caja"
+                    ? "No se encontró la forma de pago Efectivo"
+                    : "No se encontró la forma de pago Transferencia"
             );
         }
 
 
-        // if (
-        //   medio === "caja" &&
-        //   !cajaId
-        // ) {
-        //   throw new Error(
-        //     "Debe seleccionar una caja"
-        //   );
-        // }
+        if (
+            medio === "caja" &&
+            (
+                cajaAbierta?.abierta !== true ||
+                !cajaAbierta?.caja?.id
+            )
+        ) {
+            throw new Error(
+                "No hay una caja abierta disponible"
+            );
+        }
 
 
         if (
@@ -483,10 +496,15 @@ export default function EditarPagoProgramadoModal({
 
                     formapago_id:
                         Number(
-                            formaPagoId
+                            formaPagoSeleccionada.id
                         ),
+
                     caja_id:
-                        null,
+                        medio === "caja"
+                            ? Number(
+                                cajaAbierta.caja.id
+                            )
+                            : null,
 
                     banco_id:
                         medio === "banco"
@@ -941,66 +959,8 @@ export default function EditarPagoProgramadoModal({
 
                             </Col>
 
-
-                            {/* FORMA DE PAGO */}
-{/* 
-                            <Col md={6}>
-
-                                <Form.Group>
-
-                                    <Form.Label>
-                                        Forma de pago
-                                    </Form.Label>
-
-                                    <Form.Select
-                                        value={
-                                            formaPagoId
-                                        }
-                                        disabled={
-                                            saving
-                                        }
-                                        onChange={(e) =>
-                                            setFormaPagoId(
-                                                e.target.value
-                                            )
-                                        }
-                                    >
-
-                                        <option value="">
-                                            Seleccionar...
-                                        </option>
-
-
-                                        {(formasPagoTesoreria || []).map(
-                                            (fp) => (
-
-                                                <option
-                                                    key={
-                                                        fp.id
-                                                    }
-                                                    value={
-                                                        fp.id
-                                                    }
-                                                >
-                                                    {
-                                                        fp.descripcion ||
-                                                        fp.nombre ||
-                                                        `Forma de pago ${fp.id}`
-                                                    }
-                                                </option>
-
-                                            )
-                                        )}
-
-                                    </Form.Select>
-
-                                </Form.Group>
-
-                            </Col> */}
-
-
                             {/* CAJA */}
-                            {/* 
+
                             {medio === "caja" && (
 
                                 <Col md={6}>
@@ -1011,68 +971,28 @@ export default function EditarPagoProgramadoModal({
                                             Caja
                                         </Form.Label>
 
-                                        <Form.Select
+                                        <Form.Control
                                             value={
-                                                cajaId
+                                                cajaAbierta?.caja?.id
+                                                    ? `Caja abierta #${cajaAbierta.caja.id}`
+                                                    : "No hay caja abierta"
                                             }
-                                            disabled={
-                                                saving
-                                            }
-                                            onChange={(e) =>
-                                                setCajaId(
-                                                    e.target.value
-                                                )
-                                            }
-                                        >
-
-                                            <option value="">
-                                                Seleccionar...
-                                            </option>
+                                            disabled
+                                        />
 
 
-                                            {cajasEmpresa.map(
-                                                (c) => (
+                                        {cajaAbierta?.caja?.id && (
 
-                                                    <option
-                                                        key={
-                                                            c.id
-                                                        }
-                                                        value={
-                                                            c.id
-                                                        }
-                                                    >
-                                                        {
-                                                            c.descripcion ||
-                                                            c.nombre ||
-                                                            `Caja ${c.id}`
-                                                        }
-                                                    </option>
+                                            <Form.Text muted>
+                                                Saldo actual: $
+                                                {toMoney(
+                                                    cajaAbierta.saldo
+                                                )}
+                                            </Form.Text>
 
-                                                )
-                                            )}
-
-                                        </Form.Select>
+                                        )}
 
                                     </Form.Group>
-
-                                </Col>
-
-                            )} */}
-
-                            {/* CAJA */}
-
-                            {medio === "caja" && (
-
-                                <Col md={6}>
-
-                                    <Alert
-                                        variant="light"
-                                        className="mb-0"
-                                    >
-                                        Al acreditar el pago se utilizará
-                                        automáticamente la caja que se encuentre
-                                        abierta en ese momento.
-                                    </Alert>
 
                                 </Col>
 
