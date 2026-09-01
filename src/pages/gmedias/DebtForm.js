@@ -197,21 +197,45 @@ export default function DebtForm() {
           />
         </Form.Group>
 
-        {context.user && context.user.usuario === "admin" && (
-          <>
-            <Button
-              variant="primary"
-              type="submit"
-              disabled={loading}
-              style={{ position: "relative", marginRight: "10px" }}
-            >
-              {loading ? <Spinner animation="border" size="sm" role="status" aria-hidden="true" /> : "Editar"}
-            </Button>
+        <Button
+          variant="primary"
+          type="submit"
+          disabled={loading}
+          style={{
+            position: "relative",
+            marginRight: "10px",
+          }}
+        >
+          {loading ? (
+            <Spinner
+              animation="border"
+              size="sm"
+              role="status"
+              aria-hidden="true"
+            />
+          ) : (
+            editing ? "Editar" : "Guardar"
+          )}
+        </Button>
 
-            <Button variant="danger" type="button" onClick={handleDelete} disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" role="status" aria-hidden="true" /> : "Eliminar"}
-            </Button>
-          </>
+        {editing && (
+          <Button
+            variant="danger"
+            type="button"
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            {loading ? (
+              <Spinner
+                animation="border"
+                size="sm"
+                role="status"
+                aria-hidden="true"
+              />
+            ) : (
+              "Eliminar"
+            )}
+          </Button>
         )}
       </Form>
     </Container>
