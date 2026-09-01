@@ -749,7 +749,7 @@ export default function EditarEcheqModal({
                 <Form.Group>
 
                   <Form.Label>
-                    Número de eCheq
+                    Número de eCheq / Descripción
                   </Form.Label>
 
                   <Form.Control
