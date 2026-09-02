@@ -451,6 +451,11 @@ export default function SitFinanciera() {
       tipo: "instancia",
       id: it.id,
 
+      // Origen de la instancia:
+      // "generado" | "importado"
+      created_from:
+        it.created_from || null,
+
       // Plantilla GastoEstimado a la que
       // pertenece esta instancia.
       gastoestimado_id:
@@ -462,10 +467,19 @@ export default function SitFinanciera() {
       proveedor_nombre: it.proveedor_nombre || provNameById.get(Number(it.proveedor_id)) || "",
       categoria_id: it.categoriaegreso_id ?? null,
       categoria_nombre: it.categoria_nombre || catNameById.get(Number(it.categoriaegreso_id)) || "",
+      categoriaegreso_id:
+        it.categoriaegreso_id ?? null,
       sucursal_id: it.sucursal_id ?? null,
       sucursal_nombre: sucNameById.get(Number(it.sucursal_id)) || "",
       fecha_vencimiento: it.fecha_vencimiento || "",
       monto_base: Number(it.monto_base ?? it.monto_real ?? it.monto_estimado ?? 0),
+      monto_estimado:
+        Number(
+          it.monto_estimado ??
+          it.monto_base ??
+          it.monto_real ??
+          0
+        ),
       estado: it.estado || "pendiente",
       dias_restantes: typeof it.dias_restantes === "number" ? it.dias_restantes : daysDiffFromToday(it.fecha_vencimiento),
       descripcion: it.descripcion || "-",
@@ -954,10 +968,12 @@ export default function SitFinanciera() {
         proveedor_id:
           proveedorId || undefined,
 
+        categoriaegreso_id:
+          categoriaId || undefined,
+
         estado:
           "pendiente",
       };
-
 
       if (modoRango === "prox") {
 
@@ -1026,6 +1042,20 @@ export default function SitFinanciera() {
 
       ]);
 
+      console.log(
+        "RAW INSTANCIAS:",
+        rawInst
+      );
+
+      console.log(
+        "CREATED_FROM RECIBIDOS:",
+        rawInst.map((it) => ({
+          id: it.id,
+          descripcion: it.descripcion,
+          created_from: it.created_from,
+          gastoestimado_id: it.gastoestimado_id,
+        }))
+      );
 
       const instancias =
         normalizeInstancias(
@@ -1063,6 +1093,77 @@ export default function SitFinanciera() {
       // ==========================================
       // FILTRO FP ACORDADA
       // ==========================================
+
+      // ==========================================
+      // FILTRO PROVEEDOR
+      // ==========================================
+
+      if (proveedorId) {
+
+        merged = merged.filter(
+          (it) =>
+            Number(it.proveedor_id) ===
+            Number(proveedorId)
+        );
+      }
+
+
+      // ==========================================
+      // FILTRO CATEGORÍA
+      // ==========================================
+
+      if (categoriaId) {
+
+        merged = merged.filter(
+          (it) =>
+            Number(it.categoria_id) ===
+            Number(categoriaId)
+        );
+      }
+
+
+      // ==========================================
+      // FILTRO TIPO
+      // ==========================================
+
+      if (tipoFiltro) {
+
+        merged = merged.filter(
+          (it) =>
+            String(
+              it.tipo || ""
+            )
+              .trim()
+              .toLowerCase() ===
+            String(
+              tipoFiltro
+            )
+              .trim()
+              .toLowerCase()
+        );
+      }
+
+
+      // ==========================================
+      // FILTRO FP ACORDADA
+      // ==========================================
+
+      if (fpAcordadaFiltro) {
+
+        merged = merged.filter(
+          (it) =>
+            String(
+              it.formapago_futuro_desc || ""
+            )
+              .trim()
+              .toLowerCase() ===
+            String(
+              fpAcordadaFiltro
+            )
+              .trim()
+              .toLowerCase()
+        );
+      }
 
       // ==========================================
       // FILTRO TIPO
@@ -1891,11 +1992,131 @@ export default function SitFinanciera() {
     };
 
   // ======================================================
-  // DESACTIVAR GASTO ESTIMADO DESDE UNA INSTANCIA
+  // ELIMINAR / DESACTIVAR INSTANCIA DE GASTO
   // ======================================================
 
   const handleEliminarInstancia =
+
+
     async (row) => {
+
+      console.log(
+        "ELIMINAR INSTANCIA:",
+        row
+      );
+
+      console.log(
+        "created_from:",
+        row?.created_from
+      );
+
+      const esImportado =
+        String(
+          row?.created_from || ""
+        )
+          .trim()
+          .toLowerCase() === "importado";
+
+
+      // ==================================================
+      // 1) INSTANCIA IMPORTADA
+      //
+      // Se elimina/anula únicamente ESTA instancia.
+      // No se toca ningún GastoEstimado ni otras instancias.
+      // ==================================================
+
+      if (esImportado) {
+
+        const confirmar =
+          window.confirm(
+            "Este fue un gasto importado.\n\n" +
+            "Su eliminación no afectará a los demás gastos importados de su clase.\n\n" +
+            "¿Desea eliminar esta instancia?"
+          );
+
+
+        if (!confirmar) {
+          return;
+        }
+
+
+        try {
+
+          setAccionandoId(
+            row.key
+          );
+
+          setErr(null);
+
+
+          const r =
+            await fetch(
+              `${apiUrl}/gasto-estimado/instancias/${row.id}`,
+              {
+                method: "DELETE",
+
+                credentials:
+                  "include",
+              }
+            );
+
+
+          const json =
+            await r
+              .json()
+              .catch(() => ({}));
+
+
+          if (!r.ok) {
+
+            throw new Error(
+              json?.error ||
+              "No se pudo eliminar la instancia importada"
+            );
+          }
+
+
+          /*
+           * Recargamos desde backend.
+           *
+           * La instancia anulada dejará de aparecer,
+           * sin afectar otros gastos importados.
+           */
+          await cargar();
+
+
+        } catch (e) {
+
+          console.error(
+            "handleEliminarInstancia importada:",
+            e
+          );
+
+
+          setErr(
+            e.message ||
+            "No se pudo eliminar la instancia importada"
+          );
+
+
+        } finally {
+
+          setAccionandoId(
+            null
+          );
+        }
+
+
+        return;
+      }
+
+
+      // ==================================================
+      // 2) INSTANCIA GENERADA
+      //
+      // Conservamos EXACTAMENTE la lógica actual:
+      // se desactiva el GastoEstimado padre.
+      // ==================================================
 
       const gastoEstimadoId =
         row?.gastoestimado_id;
@@ -1930,17 +2151,14 @@ export default function SitFinanciera() {
           row.key
         );
 
-        setErr(
-          null
-        );
+        setErr(null);
 
 
         const r =
           await fetch(
             `${apiUrl}/gasto-estimado/${gastoEstimadoId}`,
             {
-              method:
-                "PUT",
+              method: "PUT",
 
               credentials:
                 "include",
@@ -1952,8 +2170,7 @@ export default function SitFinanciera() {
 
               body:
                 JSON.stringify({
-                  activo:
-                    false,
+                  activo: false,
                 }),
             }
           );
@@ -1962,9 +2179,7 @@ export default function SitFinanciera() {
         const json =
           await r
             .json()
-            .catch(
-              () => ({})
-            );
+            .catch(() => ({}));
 
 
         if (!r.ok) {
@@ -1976,21 +2191,13 @@ export default function SitFinanciera() {
         }
 
 
-        /*
-         * No quitamos filas manualmente.
-         *
-         * Volvemos a consultar el backend.
-         * Las instancias anuladas dejarán de
-         * aparecer automáticamente.
-         */
-
         await cargar();
 
 
       } catch (e) {
 
         console.error(
-          "handleEliminarInstancia",
+          "handleEliminarInstancia generado:",
           e
         );
 
@@ -2996,6 +3203,14 @@ export default function SitFinanciera() {
 
         instancia={
           instanciaEditar
+        }
+
+        proveedores={
+          proveedoresTabla
+        }
+
+        categorias={
+          categoriasEgreso
         }
 
         onHide={() => {

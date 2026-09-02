@@ -82,7 +82,16 @@ export default function EditarInstanciaGasto({
   onHide,
   onUpdated,
   instancia,
+  proveedores = [],
+  categorias = [],
 }) {
+
+  const esImportado =
+    String(
+      instancia?.created_from || ""
+    )
+      .trim()
+      .toLowerCase() === "importado";
 
   const [
     periodo,
@@ -107,7 +116,28 @@ export default function EditarInstanciaGasto({
     setError,
   ] = useState(null);
 
+  const [
+    descripcion,
+    setDescripcion,
+  ] = useState("");
 
+
+  const [
+    proveedorId,
+    setProveedorId,
+  ] = useState("");
+
+
+  const [
+    categoriaId,
+    setCategoriaId,
+  ] = useState("");
+
+
+  const [
+    montoEstimado,
+    setMontoEstimado,
+  ] = useState("");
   // ====================================================
   // PRECARGAR
   // ====================================================
@@ -139,6 +169,36 @@ export default function EditarInstanciaGasto({
 
       setFechaVencimiento(
         instancia.fecha_vencimiento ||
+        ""
+      );
+
+      setDescripcion(
+        instancia.descripcion ||
+        ""
+      );
+
+
+      setProveedorId(
+        instancia.proveedor_id
+          ? String(
+            instancia.proveedor_id
+          )
+          : ""
+      );
+
+
+      setCategoriaId(
+        instancia.categoriaegreso_id
+          ? String(
+            instancia.categoriaegreso_id
+          )
+          : ""
+      );
+
+
+      setMontoEstimado(
+        instancia.monto_estimado ??
+        instancia.monto_base ??
         ""
       );
 
@@ -207,6 +267,36 @@ export default function EditarInstanciaGasto({
 
         setSaving(true);
 
+        const body =
+          esImportado
+            ? {
+              periodo,
+
+              fecha_vencimiento:
+                fechaVencimiento,
+
+              descripcion:
+                descripcion.trim(),
+
+              proveedor_id:
+                proveedorId
+                  ? Number(proveedorId)
+                  : null,
+
+              categoriaegreso_id:
+                categoriaId
+                  ? Number(categoriaId)
+                  : null,
+
+              monto_estimado:
+                Number(montoEstimado),
+            }
+            : {
+              periodo,
+
+              fecha_vencimiento:
+                fechaVencimiento,
+            };
 
         const response =
           await fetch(
@@ -224,11 +314,7 @@ export default function EditarInstanciaGasto({
               },
 
               body:
-                JSON.stringify({
-                  periodo,
-                  fecha_vencimiento:
-                    fechaVencimiento,
-                }),
+                JSON.stringify(body),
             }
           );
 
@@ -324,10 +410,19 @@ export default function EditarInstanciaGasto({
 
               <Form.Control
                 value={
-                  instancia.descripcion ||
-                  ""
+                  esImportado
+                    ? descripcion
+                    : instancia.descripcion || ""
                 }
-                disabled
+                disabled={
+                  saving ||
+                  !esImportado
+                }
+                onChange={(e) =>
+                  setDescripcion(
+                    e.target.value
+                  )
+                }
               />
 
             </Form.Group>
@@ -339,16 +434,156 @@ export default function EditarInstanciaGasto({
                 Proveedor
               </Form.Label>
 
-              <Form.Control
-                value={
-                  instancia.proveedor_nombre ||
-                  ""
-                }
-                disabled
-              />
+
+              {esImportado ? (
+
+                <Form.Select
+                  value={proveedorId}
+                  disabled={saving}
+                  onChange={(e) =>
+                    setProveedorId(
+                      e.target.value
+                    )
+                  }
+                >
+
+                  <option value="">
+                    Sin proveedor
+                  </option>
+
+
+                  {(proveedores || []).map(
+                    (p) => (
+
+                      <option
+                        key={p.id}
+                        value={p.id}
+                      >
+                        {
+                          p.nombre ||
+                          p.razonsocial ||
+                          p.descripcion ||
+                          `Proveedor ${p.id}`
+                        }
+                      </option>
+
+                    )
+                  )}
+
+                </Form.Select>
+
+              ) : (
+
+                <Form.Control
+                  value={
+                    instancia.proveedor_nombre ||
+                    ""
+                  }
+                  disabled
+                />
+
+              )}
 
             </Form.Group>
 
+            {esImportado && (
+
+              <Row className="g-3 mb-3">
+
+                <Col md={6}>
+
+                  <Form.Group>
+
+                    <Form.Label>
+                      Categoría
+                    </Form.Label>
+
+                    <Form.Select
+                      value={categoriaId}
+                      disabled={saving}
+                      onChange={(e) =>
+                        setCategoriaId(
+                          e.target.value
+                        )
+                      }
+                    >
+
+                      <option value="">
+                        Sin categoría
+                      </option>
+
+
+                      {(categorias || []).map(
+                        (c) => (
+
+                          <option
+                            key={c.id}
+                            value={c.id}
+                          >
+                            {
+                              c.nombre ||
+                              c.descripcion ||
+                              `Categoría ${c.id}`
+                            }
+                          </option>
+
+                        )
+                      )}
+
+                    </Form.Select>
+
+                  </Form.Group>
+
+                </Col>
+
+
+                <Col md={6}>
+
+                  <Form.Group>
+
+                    <Form.Label>
+                      Monto
+                    </Form.Label>
+
+                    <Form.Control
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={
+                        montoEstimado
+                      }
+                      disabled={
+                        saving
+                      }
+                      onChange={(e) =>
+                        setMontoEstimado(
+                          e.target.value
+                        )
+                      }
+                    />
+
+                  </Form.Group>
+
+                </Col>
+
+              </Row>
+
+            )}
+
+            {esImportado && (
+
+              <Alert
+                variant="info"
+                className="mb-3"
+              >
+                Este gasto fue importado.
+                Los cambios realizados aquí
+                afectarán únicamente a esta
+                instancia y no a otros gastos
+                importados de su clase.
+              </Alert>
+
+            )}
 
             <Row className="g-3">
 
