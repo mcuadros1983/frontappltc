@@ -72,11 +72,36 @@ export default function Vales() {
         const clientes = datos.map((vale) => parseInt(vale.cliente_id));
         const clientesUnicos = [...new Set(clientes)];
 
-        const clientesFiltrados = contexto.clientesTabla.filter((cliente) =>
-          clientesUnicos.includes(cliente.id)
-        );
+        const clientesFiltrados =
+          contexto.clientesTabla
+            .filter(
+              (cliente) =>
+                clientesUnicos.includes(
+                  parseInt(cliente.id)
+                )
+            )
+            .sort(
+              (a, b) => {
 
-        setClientesFiltrados(clientesFiltrados);
+                const nombreA =
+                  `${a.apellido || ""} ${a.nombre || ""}`;
+
+                const nombreB =
+                  `${b.apellido || ""} ${b.nombre || ""}`;
+
+                return nombreA.localeCompare(
+                  nombreB,
+                  "es",
+                  {
+                    sensitivity: "base",
+                  }
+                );
+              }
+            );
+
+        setClientesFiltrados(
+          clientesFiltrados
+        );
       } else {
         throw new Error("Error al obtener los vales");
       }
@@ -129,6 +154,13 @@ export default function Vales() {
   const indiceUltimoVale = paginaActual * valesPorPagina;
   const indicePrimerVale = indiceUltimoVale - valesPorPagina;
   const valesActuales = vales.slice(indicePrimerVale, indiceUltimoVale);
+  const subtotalVales =
+    vales.reduce(
+      (total, vale) =>
+        total +
+        (Number(vale.importecupon) || 0),
+      0
+    );
 
   const paginaSiguiente = () => {
     if (paginaActual < Math.ceil(vales.length / valesPorPagina)) {
@@ -169,158 +201,181 @@ export default function Vales() {
     XLSX.writeFile(wb, "vales.xlsx");
   };
 
- return (
-  <Container className="vt-page">
-    <h1 className="my-list-title dark-text vt-title">Vales</h1>
+  return (
+    <Container className="vt-page">
+      <h1 className="my-list-title dark-text vt-title">Vales</h1>
 
-    {/* Filtros */}
-    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-      <div className="d-inline-block w-auto mx-2">
-        <label className="mr-2">DESDE:</label>
-        <input
-          type="date"
-          value={fechaDesde}
-          onChange={(e) => setFechaDesde(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
+      {/* Filtros */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto mx-2">
+          <label className="mr-2">DESDE:</label>
+          <input
+            type="date"
+            value={fechaDesde}
+            onChange={(e) => setFechaDesde(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block w-auto mx-2">
+          <label className="ml-2 mr-2">HASTA:</label>
+          <input
+            type="date"
+            value={fechaHasta}
+            onChange={(e) => setFechaHasta(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block">
+          <label className="d-block">Sucursal</label>
+          <FormControl
+            as="select"
+            value={buscarSucursal}
+            onChange={(e) => setBuscarSucursal(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 240 }}
+          >
+            <option value="">Seleccione una sucursal</option>
+            {contexto.sucursalesTabla.map((sucursal) => (
+              <option key={sucursal.id} value={sucursal.id}>
+                {sucursal.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block">
+          <label className="d-block">Empleado</label>
+          <FormControl
+            as="select"
+            value={clienteSeleccionado}
+            onChange={(e) => setClienteSeleccionado(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 280 }}
+          >
+            <option value="">Seleccione un cliente</option>
+            {clientesFiltrados.map((cliente) => (
+              <option
+                key={cliente.id}
+                value={cliente.id}
+              >
+                {cliente.apellido}{" "}
+                {cliente.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block mx-2">
+          <Button onClick={manejarBusqueda} className="vt-btn">Filtrar</Button>
+        </div>
+
+        <div className="d-inline-block">
+          <Button onClick={exportarExcel} disabled={vales.length === 0} className="vt-btn-out">
+            Exportar a Excel
+          </Button>
+        </div>
       </div>
 
-      <div className="d-inline-block w-auto mx-2">
-        <label className="ml-2 mr-2">HASTA:</label>
-        <input
-          type="date"
-          value={fechaHasta}
-          onChange={(e) => setFechaHasta(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
-      </div>
-
-      <div className="d-inline-block">
-        <label className="d-block">Sucursal</label>
+      {/* Selector de tamaño de página */}
+      <div className="mb-2">
+        <label className="me-2">Por página</label>
         <FormControl
           as="select"
-          value={buscarSucursal}
-          onChange={(e) => setBuscarSucursal(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 240 }}
+          value={valesPorPagina}
+          onChange={(e) => setValesPorPagina(parseInt(e.target.value))}
+          className="vt-input d-inline-block"
+          style={{ width: 120 }}
         >
-          <option value="">Seleccione una sucursal</option>
-          {contexto.sucursalesTabla.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </option>
-          ))}
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
         </FormControl>
       </div>
 
-      <div className="d-inline-block">
-        <label className="d-block">Cliente</label>
-        <FormControl
-          as="select"
-          value={clienteSeleccionado}
-          onChange={(e) => setClienteSeleccionado(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 280 }}
+      {/* Tabla */}
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th onClick={() => manejarOrden("fecha")} className="vt-th-sort">
+                Fecha
+              </th>
+              <th onClick={() => manejarOrden("importecupon")} className="vt-th-sort text-end">
+                Importe
+              </th>
+              <th onClick={() => manejarOrden("sucursal_id")} className="vt-th-sort">
+                Sucursal
+              </th>
+              <th onClick={() => manejarOrden("cliente_id")} className="vt-th-sort">
+                Cliente
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {valesActuales.map((vale) => {
+              const sucursalNombre =
+                contexto.sucursalesTabla.find((s) => s.id === parseInt(vale.sucursal_id))?.nombre ||
+                "Desconocido";
+
+              const clienteNombre = contexto.clientesTabla.find(
+                (c) => c.id === parseInt(vale.cliente_id)
+              );
+              const clienteCompleto = clienteNombre
+                ? `${clienteNombre.nombre} ${clienteNombre.apellido}`
+                : "Desconocido";
+
+              return (
+                <tr key={vale.id}>
+                  <td>{vale.fecha}</td>
+                  <td className="text-end">{vale.importecupon}</td>
+                  <td>{sucursalNombre}</td>
+                  <td>{clienteCompleto}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </div>
+
+      <div
+        className="d-flex justify-content-end align-items-center mb-3"
+      >
+        <div
+          className="fw-bold fs-5"
         >
-          <option value="">Seleccione un cliente</option>
-          {clientesFiltrados.map((cliente) => (
-            <option key={cliente.id} value={cliente.id}>
-              {cliente.nombre} {cliente.apellido}
-            </option>
-          ))}
-        </FormControl>
+          Subtotal:{" "}
+          {subtotalVales.toLocaleString(
+            "es-AR",
+            {
+              style: "currency",
+              currency: "ARS",
+            }
+          )}
+        </div>
       </div>
 
-      <div className="d-inline-block mx-2">
-        <Button onClick={manejarBusqueda} className="vt-btn">Filtrar</Button>
-      </div>
+      {/* Paginación */}
 
-      <div className="d-inline-block">
-        <Button onClick={exportarExcel} disabled={vales.length === 0} className="vt-btn-out">
-          Exportar a Excel
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vt-pager">
+        <Button onClick={paginaAnterior} disabled={paginaActual === 1} variant="light">
+          <BsChevronLeft />
+        </Button>
+        <span className="mx-2">
+          Página {paginaActual} de {Math.ceil(vales.length / valesPorPagina)}
+        </span>
+        <Button
+          onClick={paginaSiguiente}
+          disabled={paginaActual === Math.ceil(vales.length / valesPorPagina)}
+          variant="light"
+        >
+          <BsChevronRight />
         </Button>
       </div>
-    </div>
-
-    {/* Selector de tamaño de página */}
-    <div className="mb-2">
-      <label className="me-2">Por página</label>
-      <FormControl
-        as="select"
-        value={valesPorPagina}
-        onChange={(e) => setValesPorPagina(parseInt(e.target.value))}
-        className="vt-input d-inline-block"
-        style={{ width: 120 }}
-      >
-        <option value={10}>10</option>
-        <option value={20}>20</option>
-        <option value={50}>50</option>
-      </FormControl>
-    </div>
-
-    {/* Tabla */}
-    <div className="vt-tablewrap table-responsive">
-      <Table striped bordered hover className="mb-2">
-        <thead>
-          <tr>
-            <th onClick={() => manejarOrden("fecha")} className="vt-th-sort">
-              Fecha
-            </th>
-            <th onClick={() => manejarOrden("importecupon")} className="vt-th-sort text-end">
-              Importe
-            </th>
-            <th onClick={() => manejarOrden("sucursal_id")} className="vt-th-sort">
-              Sucursal
-            </th>
-            <th onClick={() => manejarOrden("cliente_id")} className="vt-th-sort">
-              Cliente
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {valesActuales.map((vale) => {
-            const sucursalNombre =
-              contexto.sucursalesTabla.find((s) => s.id === parseInt(vale.sucursal_id))?.nombre ||
-              "Desconocido";
-
-            const clienteNombre = contexto.clientesTabla.find(
-              (c) => c.id === parseInt(vale.cliente_id)
-            );
-            const clienteCompleto = clienteNombre
-              ? `${clienteNombre.nombre} ${clienteNombre.apellido}`
-              : "Desconocido";
-
-            return (
-              <tr key={vale.id}>
-                <td>{vale.fecha}</td>
-                <td className="text-end">{vale.importecupon}</td>
-                <td>{sucursalNombre}</td>
-                <td>{clienteCompleto}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </Table>
-    </div>
-
-    {/* Paginación */}
-    <div className="d-flex justify-content-center align-items-center vt-pager">
-      <Button onClick={paginaAnterior} disabled={paginaActual === 1} variant="light">
-        <BsChevronLeft />
-      </Button>
-      <span className="mx-2">
-        Página {paginaActual} de {Math.ceil(vales.length / valesPorPagina)}
-      </span>
-      <Button
-        onClick={paginaSiguiente}
-        disabled={paginaActual === Math.ceil(vales.length / valesPorPagina)}
-        variant="light"
-      >
-        <BsChevronRight />
-      </Button>
-    </div>
-  </Container>
-);
+    </Container>
+  );
 
 }
 
