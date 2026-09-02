@@ -149,6 +149,14 @@ export default function Retiros() {
   const indexOfFirstRetiro = indexOfLastRetiro - retirosPerPage;
   const currentRetiros = retiros.slice(indexOfFirstRetiro, indexOfLastRetiro);
 
+  const subtotalRetiros =
+    retiros.reduce(
+      (total, retiro) =>
+        total +
+        (Number(retiro.importe) || 0),
+      0
+    );
+
   const nextPage = () => {
     if (currentPage < Math.ceil(retiros.length / retirosPerPage)) {
       setCurrentPage(currentPage + 1);
@@ -266,6 +274,23 @@ export default function Retiros() {
             ))}
           </tbody>
         </Table>
+      </div>
+
+      {/* SUBTOTAL DE LOS REGISTROS FILTRADOS */}
+      <div
+        className="d-flex justify-content-end align-items-center mb-3"
+      >
+        <div className="fw-bold fs-5">
+          Subtotal filtrado:{" "}
+
+          {subtotalRetiros.toLocaleString(
+            "es-AR",
+            {
+              style: "currency",
+              currency: "ARS",
+            }
+          )}
+        </div>
       </div>
 
       {/* Paginación */}

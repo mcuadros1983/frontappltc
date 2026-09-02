@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext,useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { Container, Table, Button, FormControl } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../context/Contexts";
@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 
 export default function Gastos() {
   const [gastos, setGastos] = useState([]);
+  const [gastosOriginales, setGastosOriginales] = useState([]);
   const [searchSucursal, setSearchSucursal] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -21,52 +22,65 @@ export default function Gastos() {
   const apiUrl = process.env.REACT_APP_API_URL;
 
   const exportarExcel = () => {
-  const datosParaExportar = gastos.map((gasto) => {
-    const sucursalNombre = context.sucursalesTabla.find(
-      (sucursal) => sucursal.id === parseInt(gasto.sucursal_id)
-    )?.nombre || "Desconocido";
+    const datosParaExportar = gastos.map((gasto) => {
+      const sucursalNombre = context.sucursalesTabla.find(
+        (sucursal) => sucursal.id === parseInt(gasto.sucursal_id)
+      )?.nombre || "Desconocido";
 
-    const tipoGastoDescripcion = context.tipoDeGastoTabla.find(
-      (tipo) => tipo.id === parseInt(gasto.tipodegasto_id)
-    )?.descripcion || "Desconocido";
+      const tipoGastoDescripcion = context.tipoDeGastoTabla.find(
+        (tipo) => tipo.id === parseInt(gasto.tipodegasto_id)
+      )?.descripcion || "Desconocido";
 
-    return {
-      Fecha: gasto.fecha,
-      Importe: gasto.importe,
-      Sucursal: sucursalNombre,
-      Descripción: gasto.descripcion,
-      "Tipo de Gasto": tipoGastoDescripcion,
-    };
-  });
+      return {
+        Fecha: gasto.fecha,
+        Importe: gasto.importe,
+        Sucursal: sucursalNombre,
+        Descripción: gasto.descripcion,
+        "Tipo de Gasto": tipoGastoDescripcion,
+      };
+    });
 
-  const ws = XLSX.utils.json_to_sheet(datosParaExportar);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Gastos");
-  XLSX.writeFile(wb, "gastos.xlsx");
-};
+    const ws = XLSX.utils.json_to_sheet(datosParaExportar);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Gastos");
+    XLSX.writeFile(wb, "gastos.xlsx");
+  };
 
 
   const handleTipoGastoFilter = useCallback(() => {
-    if (gastos.length > 0) {
-      let filteredGastos = gastos;
 
-      if (selectedTipoGasto) {
-        filteredGastos = filteredGastos.filter(
-          (gasto) => gasto.tipodegasto_id === parseInt(selectedTipoGasto)
+    let filteredGastos = [
+      ...gastosOriginales
+    ];
+
+    if (selectedTipoGasto) {
+
+      filteredGastos =
+        filteredGastos.filter(
+          (gasto) =>
+            parseInt(gasto.tipodegasto_id) ===
+            parseInt(selectedTipoGasto)
         );
-      }
 
-      setGastos(filteredGastos);
-      setCurrentPage(1);
     }
-  }, [gastos, selectedTipoGasto]); // Include all relevant dependencies
+
+    setGastos(
+      filteredGastos
+    );
+
+    setCurrentPage(1);
+
+  }, [
+    gastosOriginales,
+    selectedTipoGasto
+  ]);
 
   useEffect(() => {
     handleTipoGastoFilter();
-  }, [selectedTipoGasto, handleTipoGastoFilter]); // Include handleTipoGastoFilter in the dependency array
+  }, [handleTipoGastoFilter]);
 
 
- const handleFilter = async () => {
+  const handleFilter = async () => {
     try {
       // Validación de fechas
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
@@ -97,8 +111,16 @@ export default function Gastos() {
           return;
         }
         // console.log("data", data);
-        setGastos(data);
-        setCurrentPage(1); // Reiniciar a la primera página después de cada búsqueda
+        setGastosOriginales(
+          data
+        );
+
+        setGastos(
+          data
+        );
+
+        setCurrentPage(1);
+
         setSelectedTipoGasto("");
       } else {
         throw new Error("Error al obtener los gastos");
@@ -152,6 +174,14 @@ export default function Gastos() {
   const indexOfFirstGasto = indexOfLastGasto - gastosPerPage;
   const currentGastos = gastos.slice(indexOfFirstGasto, indexOfLastGasto);
 
+  const subtotalGastos =
+    gastos.reduce(
+      (total, gasto) =>
+        total +
+        (Number(gasto.importe) || 0),
+      0
+    );
+
   // const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const nextPage = () => {
@@ -167,143 +197,160 @@ export default function Gastos() {
   };
 
   return (
-  <Container className="vt-page">
-    <h1 className="my-list-title dark-text vt-title">Gastos</h1>
+    <Container className="vt-page">
+      <h1 className="my-list-title dark-text vt-title">Gastos</h1>
 
-    {/* Filtros */}
-    <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-      <div className="d-inline-block w-auto mx-2">
-        <label className="mr-2">DESDE:</label>
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
+      {/* Filtros */}
+      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
+        <div className="d-inline-block w-auto mx-2">
+          <label className="mr-2">DESDE:</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block w-auto mx-2">
+          <label className="ml-2 mr-2">HASTA:</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="form-control rounded-0 text-center vt-input"
+          />
+        </div>
+
+        <div className="d-inline-block">
+          <label className="d-block">Sucursal</label>
+          <FormControl
+            as="select"
+            value={searchSucursal}
+            onChange={(e) => setSearchSucursal(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 240 }}
+          >
+            <option value="">Seleccione una sucursal</option>
+            {context.sucursalesTabla.map((sucursal) => (
+              <option key={sucursal.id} value={sucursal.id}>
+                {sucursal.nombre}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block ml-2">
+          <label className="d-block">Tipo de gasto</label>
+          <FormControl
+            as="select"
+            value={selectedTipoGasto}
+            onChange={(e) => setSelectedTipoGasto(e.target.value)}
+            className="vt-input"
+            style={{ minWidth: 240 }}
+          >
+            <option value="">Seleccione un tipo de gasto</option>
+            {context.tipoDeGastoTabla.map((tipo) => (
+              <option key={tipo.id} value={tipo.id}>
+                {tipo.descripcion}
+              </option>
+            ))}
+          </FormControl>
+        </div>
+
+        <div className="d-inline-block mx-2">
+          <Button onClick={handleSearchClick} className="vt-btn me-2">
+            Filtrar
+          </Button>
+          <Button
+            onClick={exportarExcel}
+            disabled={gastos.length === 0}
+            className="vt-btn-secondary ml-2"
+          >
+            Exportar a Excel
+          </Button>
+        </div>
       </div>
 
-      <div className="d-inline-block w-auto mx-2">
-        <label className="ml-2 mr-2">HASTA:</label>
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-          className="form-control rounded-0 text-center vt-input"
-        />
-      </div>
-
-      <div className="d-inline-block">
-        <label className="d-block">Sucursal</label>
-        <FormControl
-          as="select"
-          value={searchSucursal}
-          onChange={(e) => setSearchSucursal(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 240 }}
-        >
-          <option value="">Seleccione una sucursal</option>
-          {context.sucursalesTabla.map((sucursal) => (
-            <option key={sucursal.id} value={sucursal.id}>
-              {sucursal.nombre}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-
-      <div className="d-inline-block ml-2">
-        <label className="d-block">Tipo de gasto</label>
-        <FormControl
-          as="select"
-          value={selectedTipoGasto}
-          onChange={(e) => setSelectedTipoGasto(e.target.value)}
-          className="vt-input"
-          style={{ minWidth: 240 }}
-        >
-          <option value="">Seleccione un tipo de gasto</option>
-          {context.tipoDeGastoTabla.map((tipo) => (
-            <option key={tipo.id} value={tipo.id}>
-              {tipo.descripcion}
-            </option>
-          ))}
-        </FormControl>
-      </div>
-
-      <div className="d-inline-block mx-2">
-        <Button onClick={handleSearchClick} className="vt-btn me-2">
-          Filtrar
-        </Button>
-        <Button
-          onClick={exportarExcel}
-          disabled={gastos.length === 0}
-          className="vt-btn-secondary ml-2"
-        >
-          Exportar a Excel
-        </Button>
-      </div>
-    </div>
-
-    {/* Tabla */}
-    <div className="vt-tablewrap table-responsive">
-      <Table striped bordered hover className="mb-2">
-        <thead>
-          <tr>
-            <th onClick={() => handleSort("fecha")} className="vt-th-sort">
-              Fecha
-            </th>
-            <th onClick={() => handleSort("importe")} className="vt-th-sort text-end">
-              Importe
-            </th>
-            <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">
-              Sucursal
-            </th>
-            <th onClick={() => handleSort("descripcion")} className="vt-th-sort">
-              Descripción
-            </th>
-            <th onClick={() => handleSort("tipodegasto_id")} className="vt-th-sort">
-              Tipo de Gasto
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {currentGastos.map((gasto) => (
-            <tr key={gasto.id}>
-              <td>{gasto.fecha}</td>
-              <td className="text-end">{gasto.importe}</td>
-              <td>
-                {context.sucursalesTabla.find(
-                  (sucursal) => sucursal.id === parseInt(gasto.sucursal_id)
-                )?.nombre || "Desconocido"}
-              </td>
-              <td>{gasto.descripcion}</td>
-              <td>
-                {context.tipoDeGastoTabla.find(
-                  (tipo) => tipo.id === parseInt(gasto.tipodegasto_id)
-                )?.descripcion || "Desconocido"}
-              </td>
+      {/* Tabla */}
+      <div className="vt-tablewrap table-responsive">
+        <Table striped bordered hover className="mb-2">
+          <thead>
+            <tr>
+              <th onClick={() => handleSort("fecha")} className="vt-th-sort">
+                Fecha
+              </th>
+              <th onClick={() => handleSort("importe")} className="vt-th-sort text-end">
+                Importe
+              </th>
+              <th onClick={() => handleSort("sucursal_id")} className="vt-th-sort">
+                Sucursal
+              </th>
+              <th onClick={() => handleSort("descripcion")} className="vt-th-sort">
+                Descripción
+              </th>
+              <th onClick={() => handleSort("tipodegasto_id")} className="vt-th-sort">
+                Tipo de Gasto
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
-    </div>
+          </thead>
 
-    {/* Paginación */}
-    <div className="d-flex justify-content-center align-items-center vt-pager">
-      <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
-        <BsChevronLeft />
-      </Button>
-      <span className="mx-2">
-        Página {currentPage} de {Math.ceil(gastos.length / gastosPerPage)}
-      </span>
-      <Button
-        onClick={nextPage}
-        disabled={currentPage === Math.ceil(gastos.length / gastosPerPage)}
-        variant="light"
+          <tbody>
+            {currentGastos.map((gasto) => (
+              <tr key={gasto.id}>
+                <td>{gasto.fecha}</td>
+                <td className="text-end">{gasto.importe}</td>
+                <td>
+                  {context.sucursalesTabla.find(
+                    (sucursal) => sucursal.id === parseInt(gasto.sucursal_id)
+                  )?.nombre || "Desconocido"}
+                </td>
+                <td>{gasto.descripcion}</td>
+                <td>
+                  {context.tipoDeGastoTabla.find(
+                    (tipo) => tipo.id === parseInt(gasto.tipodegasto_id)
+                  )?.descripcion || "Desconocido"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+
+      {/* SUBTOTAL DE LOS REGISTROS FILTRADOS */}
+      <div
+        className="d-flex justify-content-end align-items-center mb-3"
       >
-        <BsChevronRight />
-      </Button>
-    </div>
-  </Container>
-);
+        <div className="fw-bold fs-5">
+          Subtotal:{" "}
+
+          {subtotalGastos.toLocaleString(
+            "es-AR",
+            {
+              style: "currency",
+              currency: "ARS",
+            }
+          )}
+        </div>
+      </div>
+
+      {/* Paginación */}
+      <div className="d-flex justify-content-center align-items-center vt-pager">
+        <Button onClick={prevPage} disabled={currentPage === 1} variant="light">
+          <BsChevronLeft />
+        </Button>
+        <span className="mx-2">
+          Página {currentPage} de {Math.ceil(gastos.length / gastosPerPage)}
+        </span>
+        <Button
+          onClick={nextPage}
+          disabled={currentPage === Math.ceil(gastos.length / gastosPerPage)}
+          variant="light"
+        >
+          <BsChevronRight />
+        </Button>
+      </div>
+    </Container>
+  );
 
 }
