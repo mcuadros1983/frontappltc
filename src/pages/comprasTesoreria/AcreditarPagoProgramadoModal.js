@@ -81,6 +81,10 @@ export default function AcreditarPagoProgramadoModal({
     cajaAbierta
   );
 
+  console.log(
+    "FORMAS PAGO TESORERIA:",
+    formasPagoTesoreria
+  );
 
   // ======================================================
   // ESTADOS
@@ -172,6 +176,30 @@ export default function AcreditarPagoProgramadoModal({
     row?.pago_programado_tipo ===
     "anticipo";
 
+  const formaPagoAutomatica =
+    useMemo(() => {
+
+      const descripcionBuscada =
+        medio === "caja"
+          ? "EFECTIVO"
+          : "TRANSFERENCIA";
+
+      return (
+        formasPagoTesoreria || []
+      ).find(
+        (fp) =>
+          String(
+            fp.descripcion || ""
+          )
+            .trim()
+            .toUpperCase() ===
+          descripcionBuscada
+      ) || null;
+
+    }, [
+      formasPagoTesoreria,
+      medio,
+    ]);
 
   // ======================================================
   // BANCOS EMPRESA
@@ -479,12 +507,20 @@ export default function AcreditarPagoProgramadoModal({
       );
     }
 
-    if (!formaPagoId) {
+    if (!formaPagoAutomatica?.id) {
 
       throw new Error(
-        "Debe seleccionar una forma de pago"
+        medio === "caja"
+          ? "No se encontró la forma de pago Efectivo"
+          : "No se encontró la forma de pago Transferencia"
       );
     }
+    // if (!formaPagoId) {
+
+    //   throw new Error(
+    //     "Debe seleccionar una forma de pago"
+    //   );
+    // }
 
   };
 
@@ -514,7 +550,7 @@ export default function AcreditarPagoProgramadoModal({
 
           formapago_id:
             Number(
-              formaPagoId
+              formaPagoAutomatica.id
             ),
 
           caja_id:
