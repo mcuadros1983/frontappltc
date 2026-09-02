@@ -86,128 +86,366 @@ export default function DataContextProvider({ children }) {
     let cancelled = false;
 
 
+    // const fetchData = async () => {
+    //   // Sucursales
+    //   const dataSucursales = await fetchJsonSafe(`${apiUrl}/sucursales`);
+    //   if (!cancelled) {
+    //     const arr = toArray(dataSucursales);
+    //     arr.sort((a, b) => Number(a.id) - Number(b.id));
+    //     setSucursales(arr);
+    //   }
+
+    //   // Clientes
+    //   const dataClientes = await fetchJsonSafe(`${apiUrl}/clientes`);
+    //   if (!cancelled) {
+    //     console.log("datosclientes", dataClientes);
+    //     setClientes(toArray(dataClientes));
+    //   }
+
+    //   // Formas de pago
+    //   const dataFormasPago = await fetchJsonSafe(`${apiUrl}/formas-pago`);
+    //   if (!cancelled) setFormasPago(toArray(dataFormasPago));
+
+    //   // Tablas varias
+    //   const dataClientesTabla = await fetchJsonSafe(`${apiUrl}/obtenerclientestabla`);
+    //   if (!cancelled) setClientesTabla(toArray(dataClientesTabla));
+
+    //   const dataSucursalesTabla = await fetchJsonSafe(`${apiUrl}/obtenersucursales`);
+    //   if (!cancelled) setSucursalesTabla(toArray(dataSucursalesTabla));
+
+    //   const dataArticulosTabla = await fetchJsonSafe(`${apiUrl}/obtenerarticulos`);
+    //   if (!cancelled) setArticulosTabla(toArray(dataArticulosTabla));
+
+    //   const dataTipoDeIngresoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipoingreso`);
+    //   if (!cancelled) setTipoDeIngresoTabla(toArray(dataTipoDeIngresoTabla));
+
+    //   const dataTipoDeGastoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipogasto`);
+    //   if (!cancelled) {
+    //     const arr = toArray(dataTipoDeGastoTabla);
+    //     arr.sort((a, b) => String(a.descripcion || "").localeCompare(String(b.descripcion || "")));
+    //     setTipoDeGastoTabla(arr);
+    //   }
+
+    //   const dataPlanTarjetaTabla = await fetchJsonSafe(`${apiUrl}/obtenerplantarjeta`);
+    //   if (!cancelled) setPlanTarjetaTabla(toArray(dataPlanTarjetaTabla));
+
+    //   const dataTarjetaTesoreriaTabla = await fetchJsonSafe(`${apiUrl}/tarjetas-comunes`);
+    //   if (!cancelled) setTarjetasTesoreriaTabla(toArray(dataTarjetaTesoreriaTabla));
+
+    //   const dataTarjetaDeCreditoTabla = await fetchJsonSafe(`${apiUrl}/obtenertarjetadecredito`);
+    //   if (!cancelled) setTarjetaDeCreditoTabla(toArray(dataTarjetaDeCreditoTabla));
+
+    //   const dataEmpleadosTabla = await fetchJsonSafe(`${apiUrl}/obtenerempleados`);
+
+    //   if (!cancelled) {
+    //     const empleadosActivos = toArray(dataEmpleadosTabla).filter(
+    //       (emp) => emp.empleado.fechabaja === null
+    //     );
+
+    //     setEmpleados(empleadosActivos);
+    //   }
+
+    //   const dataUsuariosTabla = await fetchJsonSafe(`${apiUrl}/obtenerusuario`);
+    //   if (!cancelled) setUsuariosTabla(toArray(dataUsuariosTabla));
+
+    //   const dataUsuariosSistema = await fetchJsonSafe(`${apiUrl}/usuarios`);
+    //   if (!cancelled) setUsuariosSistema(toArray(dataUsuariosSistema));
+
+    //   const dataSubcategoriasTabla = await fetchJsonSafe(`${apiUrl}/obtenersubcategorias`);
+    //   if (!cancelled) setSubcategoriasTabla(toArray(dataSubcategoriasTabla));
+
+    //   const dataTiposTarjeta = await fetchJsonSafe(`${apiUrl}/tipos-tarjeta`);
+    //   if (!cancelled) setTiposTarjetaTabla(toArray(dataTiposTarjeta));
+
+    //   const dataMarcasTarjeta = await fetchJsonSafe(`${apiUrl}/marcas-tarjeta`);
+    //   if (!cancelled) setMarcasTarjetaTabla(toArray(dataMarcasTarjeta));
+
+    //   const dataEmpresas = await fetchJsonSafe(`${apiUrl}/empresas`);
+    //   if (!cancelled) setEmpresasTabla(toArray(dataEmpresas));
+
+    //   const dataBancos = await fetchJsonSafe(`${apiUrl}/bancos`);
+    //   if (!cancelled) setBancosTabla(toArray(dataBancos));
+
+    //   const dataRubros = await fetchJsonSafe(`${apiUrl}/conciliacion-rubros`);
+    //   if (!cancelled) setRubrosTabla(toArray(dataRubros));
+
+    //   const dataFormasPagoTes = await fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`);
+    //   if (!cancelled) setFormasPagoTesoreria(toArray(dataFormasPagoTes));
+
+    //   const dataFrigorifico = await fetchJsonSafe(`${apiUrl}/frigorificos`);
+    //   if (!cancelled) setFrigorificoTabla(toArray(dataFrigorifico));
+
+    //   const dataImputacionContable = await fetchJsonSafe(`${apiUrl}/imputaciones-contables`);
+    //   if (!cancelled) setImputacionContableTabla(toArray(dataImputacionContable));
+
+    //   const dataProyectos = await fetchJsonSafe(`${apiUrl}/proyectos`);
+    //   if (!cancelled) setProyectosTabla(toArray(dataProyectos));
+
+    //   const dataPlanTarjetasTes = await fetchJsonSafe(`${apiUrl}/tarjeta-planes`);
+    //   if (!cancelled) setPlanTarjetaTesoreriaTabla(toArray(dataPlanTarjetasTes));
+
+    //   const dataTiposComprobantes = await fetchJsonSafe(`${apiUrl}/tipos-comprobantes`);
+    //   if (!cancelled) setTiposComprobanteTabla(toArray(dataTiposComprobantes));
+
+    //   const dataProveedores = await fetchJsonSafe(`${apiUrl}/proveedores`);
+    //   if (!cancelled) setProveedoresTabla(toArray(dataProveedores));
+
+    //   const dataPtosVenta = await fetchJsonSafe(`${apiUrl}/ptos-venta`);
+    //   if (!cancelled) setPtosVentaTabla(toArray(dataPtosVenta));
+
+    //   const dataLibrosIva = await fetchJsonSafe(`${apiUrl}/librosiva`);
+    //   if (!cancelled) setLibrosIvaTabla(toArray(dataLibrosIva));
+
+    //   const dataCategoriaAnimal = await fetchJsonSafe(`${apiUrl}/categorias-animales`);
+    //   if (!cancelled) setCategoriaAnimalTabla(toArray(dataCategoriaAnimal));
+
+    //   const dataCategoriasEgreso = await fetchJsonSafe(`${apiUrl}/categorias-egreso`);
+    //   if (!cancelled) setCategoriasEgreso(toArray(dataCategoriasEgreso));
+
+    //   const dataCategoriasIngreso = await fetchJsonSafe(`${apiUrl}/categorias-ingreso`);
+    //   if (!cancelled) setCategoriasIngreso(toArray(dataCategoriasIngreso));
+
+    //   // Caja abierta (puede no existir; no lo fuerzo a objeto)
+    //   const dataCajaAbierta = await fetchJsonSafe(`${apiUrl}/caja-tesoreria/actual`);
+    //   if (!cancelled) setCajaAbierta(dataCajaAbierta || null);
+    // };
+
     const fetchData = async () => {
-      // Sucursales
-      const dataSucursales = await fetchJsonSafe(`${apiUrl}/sucursales`);
-      if (!cancelled) {
-        const arr = toArray(dataSucursales);
-        arr.sort((a, b) => Number(a.id) - Number(b.id));
-        setSucursales(arr);
+
+      const [
+        dataSucursales,
+        dataClientes,
+        dataFormasPago,
+        dataClientesTabla,
+        dataSucursalesTabla,
+        dataArticulosTabla,
+        dataTipoDeIngresoTabla,
+        dataTipoDeGastoTabla,
+        dataPlanTarjetaTabla,
+        dataTarjetaTesoreriaTabla,
+        dataTarjetaDeCreditoTabla,
+        dataEmpleadosTabla,
+        dataUsuariosTabla,
+        dataUsuariosSistema,
+        dataSubcategoriasTabla,
+        dataTiposTarjeta,
+        dataMarcasTarjeta,
+        dataEmpresas,
+        dataBancos,
+        dataRubros,
+        dataFormasPagoTes,
+        dataFrigorifico,
+        dataImputacionContable,
+        dataProyectos,
+        dataPlanTarjetasTes,
+        dataTiposComprobantes,
+        dataProveedores,
+        dataPtosVenta,
+        dataLibrosIva,
+        dataCategoriaAnimal,
+        dataCategoriasEgreso,
+        dataCategoriasIngreso,
+        dataCajaAbierta,
+      ] = await Promise.all([
+        fetchJsonSafe(`${apiUrl}/sucursales`),
+        fetchJsonSafe(`${apiUrl}/clientes`),
+        fetchJsonSafe(`${apiUrl}/formas-pago`),
+        fetchJsonSafe(`${apiUrl}/obtenerclientestabla`),
+        fetchJsonSafe(`${apiUrl}/obtenersucursales`),
+        fetchJsonSafe(`${apiUrl}/obtenerarticulos`),
+        fetchJsonSafe(`${apiUrl}/obtenertipoingreso`),
+        fetchJsonSafe(`${apiUrl}/obtenertipogasto`),
+        fetchJsonSafe(`${apiUrl}/obtenerplantarjeta`),
+        fetchJsonSafe(`${apiUrl}/tarjetas-comunes`),
+        fetchJsonSafe(`${apiUrl}/obtenertarjetadecredito`),
+        fetchJsonSafe(`${apiUrl}/obtenerempleados`),
+        fetchJsonSafe(`${apiUrl}/obtenerusuario`),
+        fetchJsonSafe(`${apiUrl}/usuarios`),
+        fetchJsonSafe(`${apiUrl}/obtenersubcategorias`),
+        fetchJsonSafe(`${apiUrl}/tipos-tarjeta`),
+        fetchJsonSafe(`${apiUrl}/marcas-tarjeta`),
+        fetchJsonSafe(`${apiUrl}/empresas`),
+        fetchJsonSafe(`${apiUrl}/bancos`),
+        fetchJsonSafe(`${apiUrl}/conciliacion-rubros`),
+        fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`),
+        fetchJsonSafe(`${apiUrl}/frigorificos`),
+        fetchJsonSafe(`${apiUrl}/imputaciones-contables`),
+        fetchJsonSafe(`${apiUrl}/proyectos`),
+        fetchJsonSafe(`${apiUrl}/tarjeta-planes`),
+        fetchJsonSafe(`${apiUrl}/tipos-comprobantes`),
+        fetchJsonSafe(`${apiUrl}/proveedores`),
+        fetchJsonSafe(`${apiUrl}/ptos-venta`),
+        fetchJsonSafe(`${apiUrl}/librosiva`),
+        fetchJsonSafe(`${apiUrl}/categorias-animales`),
+        fetchJsonSafe(`${apiUrl}/categorias-egreso`),
+        fetchJsonSafe(`${apiUrl}/categorias-ingreso`),
+        fetchJsonSafe(`${apiUrl}/caja-tesoreria/actual`),
+      ]);
+
+      if (cancelled) {
+        return;
       }
 
-      // Clientes
-      const dataClientes = await fetchJsonSafe(`${apiUrl}/clientes`);
-      if (!cancelled) {
-        console.log("datosclientes", dataClientes);
-        setClientes(toArray(dataClientes));
-      }
+      const sucursalesArr =
+        toArray(dataSucursales);
 
-      // Formas de pago
-      const dataFormasPago = await fetchJsonSafe(`${apiUrl}/formas-pago`);
-      if (!cancelled) setFormasPago(toArray(dataFormasPago));
+      sucursalesArr.sort(
+        (a, b) =>
+          Number(a.id) -
+          Number(b.id)
+      );
 
-      // Tablas varias
-      const dataClientesTabla = await fetchJsonSafe(`${apiUrl}/obtenerclientestabla`);
-      if (!cancelled) setClientesTabla(toArray(dataClientesTabla));
+      setSucursales(sucursalesArr);
 
-      const dataSucursalesTabla = await fetchJsonSafe(`${apiUrl}/obtenersucursales`);
-      if (!cancelled) setSucursalesTabla(toArray(dataSucursalesTabla));
+      setClientes(
+        toArray(dataClientes)
+      );
 
-      const dataArticulosTabla = await fetchJsonSafe(`${apiUrl}/obtenerarticulos`);
-      if (!cancelled) setArticulosTabla(toArray(dataArticulosTabla));
+      setFormasPago(
+        toArray(dataFormasPago)
+      );
 
-      const dataTipoDeIngresoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipoingreso`);
-      if (!cancelled) setTipoDeIngresoTabla(toArray(dataTipoDeIngresoTabla));
+      setClientesTabla(
+        toArray(dataClientesTabla)
+      );
 
-      const dataTipoDeGastoTabla = await fetchJsonSafe(`${apiUrl}/obtenertipogasto`);
-      if (!cancelled) {
-        const arr = toArray(dataTipoDeGastoTabla);
-        arr.sort((a, b) => String(a.descripcion || "").localeCompare(String(b.descripcion || "")));
-        setTipoDeGastoTabla(arr);
-      }
+      setSucursalesTabla(
+        toArray(dataSucursalesTabla)
+      );
 
-      const dataPlanTarjetaTabla = await fetchJsonSafe(`${apiUrl}/obtenerplantarjeta`);
-      if (!cancelled) setPlanTarjetaTabla(toArray(dataPlanTarjetaTabla));
+      setArticulosTabla(
+        toArray(dataArticulosTabla)
+      );
 
-      const dataTarjetaTesoreriaTabla = await fetchJsonSafe(`${apiUrl}/tarjetas-comunes`);
-      if (!cancelled) setTarjetasTesoreriaTabla(toArray(dataTarjetaTesoreriaTabla));
+      setTipoDeIngresoTabla(
+        toArray(dataTipoDeIngresoTabla)
+      );
 
-      const dataTarjetaDeCreditoTabla = await fetchJsonSafe(`${apiUrl}/obtenertarjetadecredito`);
-      if (!cancelled) setTarjetaDeCreditoTabla(toArray(dataTarjetaDeCreditoTabla));
+      const gastosArr =
+        toArray(dataTipoDeGastoTabla);
 
-      const dataEmpleadosTabla = await fetchJsonSafe(`${apiUrl}/obtenerempleados`);
+      gastosArr.sort(
+        (a, b) =>
+          String(
+            a.descripcion || ""
+          ).localeCompare(
+            String(
+              b.descripcion || ""
+            )
+          )
+      );
 
-      if (!cancelled) {
-        const empleadosActivos = toArray(dataEmpleadosTabla).filter(
-          (emp) => emp.empleado.fechabaja === null
-        );
+      setTipoDeGastoTabla(
+        gastosArr
+      );
 
-        setEmpleados(empleadosActivos);
-      }
+      setPlanTarjetaTabla(
+        toArray(dataPlanTarjetaTabla)
+      );
 
-      const dataUsuariosTabla = await fetchJsonSafe(`${apiUrl}/obtenerusuario`);
-      if (!cancelled) setUsuariosTabla(toArray(dataUsuariosTabla));
+      setTarjetasTesoreriaTabla(
+        toArray(dataTarjetaTesoreriaTabla)
+      );
 
-      const dataUsuariosSistema = await fetchJsonSafe(`${apiUrl}/usuarios`);
-      if (!cancelled) setUsuariosSistema(toArray(dataUsuariosSistema));
+      setTarjetaDeCreditoTabla(
+        toArray(dataTarjetaDeCreditoTabla)
+      );
 
-      const dataSubcategoriasTabla = await fetchJsonSafe(`${apiUrl}/obtenersubcategorias`);
-      if (!cancelled) setSubcategoriasTabla(toArray(dataSubcategoriasTabla));
+      const empleadosActivos =
+        toArray(dataEmpleadosTabla)
+          .filter(
+            (emp) =>
+              emp.empleado?.fechabaja ===
+              null
+          );
 
-      const dataTiposTarjeta = await fetchJsonSafe(`${apiUrl}/tipos-tarjeta`);
-      if (!cancelled) setTiposTarjetaTabla(toArray(dataTiposTarjeta));
+      setEmpleados(
+        empleadosActivos
+      );
 
-      const dataMarcasTarjeta = await fetchJsonSafe(`${apiUrl}/marcas-tarjeta`);
-      if (!cancelled) setMarcasTarjetaTabla(toArray(dataMarcasTarjeta));
+      setUsuariosTabla(
+        toArray(dataUsuariosTabla)
+      );
 
-      const dataEmpresas = await fetchJsonSafe(`${apiUrl}/empresas`);
-      if (!cancelled) setEmpresasTabla(toArray(dataEmpresas));
+      setUsuariosSistema(
+        toArray(dataUsuariosSistema)
+      );
 
-      const dataBancos = await fetchJsonSafe(`${apiUrl}/bancos`);
-      if (!cancelled) setBancosTabla(toArray(dataBancos));
+      setSubcategoriasTabla(
+        toArray(dataSubcategoriasTabla)
+      );
 
-      const dataRubros = await fetchJsonSafe(`${apiUrl}/conciliacion-rubros`);
-      if (!cancelled) setRubrosTabla(toArray(dataRubros));
+      setTiposTarjetaTabla(
+        toArray(dataTiposTarjeta)
+      );
 
-      const dataFormasPagoTes = await fetchJsonSafe(`${apiUrl}/formas-pago-tesoreria`);
-      if (!cancelled) setFormasPagoTesoreria(toArray(dataFormasPagoTes));
+      setMarcasTarjetaTabla(
+        toArray(dataMarcasTarjeta)
+      );
 
-      const dataFrigorifico = await fetchJsonSafe(`${apiUrl}/frigorificos`);
-      if (!cancelled) setFrigorificoTabla(toArray(dataFrigorifico));
+      setEmpresasTabla(
+        toArray(dataEmpresas)
+      );
 
-      const dataImputacionContable = await fetchJsonSafe(`${apiUrl}/imputaciones-contables`);
-      if (!cancelled) setImputacionContableTabla(toArray(dataImputacionContable));
+      setBancosTabla(
+        toArray(dataBancos)
+      );
 
-      const dataProyectos = await fetchJsonSafe(`${apiUrl}/proyectos`);
-      if (!cancelled) setProyectosTabla(toArray(dataProyectos));
+      setRubrosTabla(
+        toArray(dataRubros)
+      );
 
-      const dataPlanTarjetasTes = await fetchJsonSafe(`${apiUrl}/tarjeta-planes`);
-      if (!cancelled) setPlanTarjetaTesoreriaTabla(toArray(dataPlanTarjetasTes));
+      setFormasPagoTesoreria(
+        toArray(dataFormasPagoTes)
+      );
 
-      const dataTiposComprobantes = await fetchJsonSafe(`${apiUrl}/tipos-comprobantes`);
-      if (!cancelled) setTiposComprobanteTabla(toArray(dataTiposComprobantes));
+      setFrigorificoTabla(
+        toArray(dataFrigorifico)
+      );
 
-      const dataProveedores = await fetchJsonSafe(`${apiUrl}/proveedores`);
-      if (!cancelled) setProveedoresTabla(toArray(dataProveedores));
+      setImputacionContableTabla(
+        toArray(dataImputacionContable)
+      );
 
-      const dataPtosVenta = await fetchJsonSafe(`${apiUrl}/ptos-venta`);
-      if (!cancelled) setPtosVentaTabla(toArray(dataPtosVenta));
+      setProyectosTabla(
+        toArray(dataProyectos)
+      );
 
-      const dataLibrosIva = await fetchJsonSafe(`${apiUrl}/librosiva`);
-      if (!cancelled) setLibrosIvaTabla(toArray(dataLibrosIva));
+      setPlanTarjetaTesoreriaTabla(
+        toArray(dataPlanTarjetasTes)
+      );
 
-      const dataCategoriaAnimal = await fetchJsonSafe(`${apiUrl}/categorias-animales`);
-      if (!cancelled) setCategoriaAnimalTabla(toArray(dataCategoriaAnimal));
+      setTiposComprobanteTabla(
+        toArray(dataTiposComprobantes)
+      );
 
-      const dataCategoriasEgreso = await fetchJsonSafe(`${apiUrl}/categorias-egreso`);
-      if (!cancelled) setCategoriasEgreso(toArray(dataCategoriasEgreso));
+      setProveedoresTabla(
+        toArray(dataProveedores)
+      );
 
-      const dataCategoriasIngreso = await fetchJsonSafe(`${apiUrl}/categorias-ingreso`);
-      if (!cancelled) setCategoriasIngreso(toArray(dataCategoriasIngreso));
+      setPtosVentaTabla(
+        toArray(dataPtosVenta)
+      );
 
-      // Caja abierta (puede no existir; no lo fuerzo a objeto)
-      const dataCajaAbierta = await fetchJsonSafe(`${apiUrl}/caja-tesoreria/actual`);
-      if (!cancelled) setCajaAbierta(dataCajaAbierta || null);
+      setLibrosIvaTabla(
+        toArray(dataLibrosIva)
+      );
+
+      setCategoriaAnimalTabla(
+        toArray(dataCategoriaAnimal)
+      );
+
+      setCategoriasEgreso(
+        toArray(dataCategoriasEgreso)
+      );
+
+      setCategoriasIngreso(
+        toArray(dataCategoriasIngreso)
+      );
+
+      setCajaAbierta(
+        dataCajaAbierta || null
+      );
     };
 
     fetchData();
@@ -221,7 +459,7 @@ export default function DataContextProvider({ children }) {
     user?.id,
     securityLoading,
   ]);
-  
+
   return (
     <Contexts.DataContext.Provider
       value={{
