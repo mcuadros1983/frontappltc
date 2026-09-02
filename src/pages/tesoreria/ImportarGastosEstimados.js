@@ -853,7 +853,7 @@ export default function ImportarGastosEstimadosUnicos() {
                 <Button
 
                   variant=
-                    "outline-secondary"
+                  "outline-secondary"
 
                   onClick={
                     descargarPlantillaXLSX
@@ -985,6 +985,12 @@ export default function ImportarGastosEstimadosUnicos() {
 
                 <code>
                   monto
+                </code>,
+
+                {" "}
+
+                <code>
+                  forma_pago
                 </code>.
 
                 <br />
@@ -1053,11 +1059,9 @@ export default function ImportarGastosEstimadosUnicos() {
                     <Form.Text
                       className="text-muted"
                     >
-
                       Usá el template descargado:
                       incluye listas desplegables de
-                      proveedores y categorías.
-
+                      proveedores, categorías y formas de pago.
                     </Form.Text>
 
                   </Col>

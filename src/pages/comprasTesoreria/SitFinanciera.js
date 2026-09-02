@@ -2771,7 +2771,7 @@ export default function SitFinanciera() {
                   <SortableTh colKey="id">#</SortableTh>
                   <SortableTh colKey="tipo">Tipo</SortableTh>
                   <SortableTh colKey="empresa_nombre">Empresa</SortableTh>
-                  <SortableTh colKey="comprobante_nro">Comprobante</SortableTh>
+                  {/* <SortableTh colKey="comprobante_nro">Comprobante</SortableTh> */}
                   <SortableTh colKey="descripcion">Descripción</SortableTh>
                   <SortableTh colKey="proveedor_nombre">Proveedor</SortableTh>
                   <SortableTh colKey="categoria_nombre">Categoría</SortableTh>
@@ -2817,7 +2817,7 @@ export default function SitFinanciera() {
                               : "Instancia"}
                       </td>
                       <td>{row.empresa_nombre || "-"}</td>
-                      <td>{compNroView(row)}</td>
+                      {/* <td>{compNroView(row)}</td> */}
                       <td>{row.descripcion || "-"}</td>
                       <td>{row.proveedor_nombre || "-"}</td>
                       <td>{row.categoria_nombre || "-"}</td>

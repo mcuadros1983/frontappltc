@@ -176,7 +176,10 @@ export default function AplicarInstanciaGasto({
   const saldoInstancia =
     N(instancia?.monto_base);
 
-
+  const esGastoImportado =
+    String(
+      instancia?.created_from || ""
+    ).toLowerCase() === "importado";
   // ======================================================
   // FORMA DE PAGO CAJA
   // ======================================================
@@ -734,7 +737,9 @@ export default function AplicarInstanciaGasto({
                   null,
 
                 cancelar_renovacion:
-                  cancelarRenovacion,
+                  esGastoImportado
+                    ? false
+                    : cancelarRenovacion,
               }),
           }
         );
@@ -883,6 +888,18 @@ export default function AplicarInstanciaGasto({
 
         <Modal.Title>
           Aplicar gasto mensual
+
+          {esGastoImportado && (
+            <span
+              className="badge bg-info text-dark ms-2"
+              style={{
+                fontSize: "0.7em",
+                verticalAlign: "middle",
+              }}
+            >
+              Gasto importado
+            </span>
+          )}
         </Modal.Title>
 
       </Modal.Header>
@@ -1356,24 +1373,28 @@ export default function AplicarInstanciaGasto({
                 )}
               </Col>
 
-              <Col md={12}>
+              {!esGastoImportado && (
 
-                <Form.Check
-                  type="checkbox"
-                  id="cancelar-renovacion-instancia"
-                  label="Cancelar renovación del gasto mensual"
-                  checked={
-                    cancelarRenovacion
-                  }
-                  disabled={saving}
-                  onChange={(e) =>
-                    setCancelarRenovacion(
-                      e.target.checked
-                    )
-                  }
-                />
+                <Col md={12}>
 
-              </Col>
+                  <Form.Check
+                    type="checkbox"
+                    id="cancelar-renovacion-instancia"
+                    label="Cancelar renovación del gasto mensual"
+                    checked={
+                      cancelarRenovacion
+                    }
+                    disabled={saving}
+                    onChange={(e) =>
+                      setCancelarRenovacion(
+                        e.target.checked
+                      )
+                    }
+                  />
+
+                </Col>
+
+              )}
 
             </Row>
 
