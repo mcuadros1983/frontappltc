@@ -427,29 +427,84 @@ export default function FacturacionTesoreriaList() {
   }, [loadComprobantes]);
 
   // Abrir modal de edición
-  const handleDoubleClick = (comprobante) => {
-    if (!empresaSeleccionada) {
-      alert("Debe seleccionar una empresa para editar comprobantes.");
+const handleDoubleClick = async (comprobante) => {
+
+  if (!empresaSeleccionada) {
+    alert(
+      "Debe seleccionar una empresa para editar comprobantes."
+    );
+    return;
+  }
+
+  try {
+
+    /*
+     * Primero consultamos el detalle.
+     * NO abrimos el modal todavía.
+     */
+    const res = await fetch(
+      `${apiUrl}/comprobantes-egreso/${comprobante.id}/detalle`,
+      {
+        credentials: "include",
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        data?.error ||
+        "No se pudo obtener el detalle del comprobante"
+      );
+    }
+
+    /*
+     * ============================================================
+     * REGLA DE EDICIÓN
+     * ============================================================
+     *
+     * El backend determina si el comprobante puede modificarse.
+     * Sólo los comprobantes cuya situación financiera permitida
+     * sea Cuenta Corriente podrán abrir el modal de edición.
+     * ============================================================
+     */
+
+    if (data.puede_editar !== true) {
+
+      alert(
+        data.motivo_no_editar ||
+        "Este comprobante no puede modificarse porque posee una forma de pago distinta de Cuenta Corriente."
+      );
+
+      setSelectedComprobante(null);
+      setShowModal(false);
+
       return;
     }
 
-    setSelectedComprobante(comprobante);
+    /*
+     * El backend confirmó que puede editarse.
+     */
 
-    const id = comprobante?.cliente_id;
-    if (id) {
-      const cached = clientesCache[Number(id)];
-      setClienteQueryEdit(cached ? clienteLabel(cached) : `ID ${id}`);
-      if (!cached) fetchClienteById(id);
-    } else {
-      setClienteQueryEdit("");
-    }
-
-    setClienteResultadosEdit([]);
-    setClienteErrorEdit("");
-    setClienteLoadingEdit(false);
+    setSelectedComprobante(
+      data.comprobante || comprobante
+    );
 
     setShowModal(true);
-  };
+
+  } catch (err) {
+
+    console.error(
+      "❌ Error al verificar edición del comprobante:",
+      err
+    );
+
+    alert(
+      err.message ||
+      "No se pudo verificar si el comprobante puede modificarse."
+    );
+  }
+};
 
   const handleCloseModal = () => {
     setSelectedComprobante(null);

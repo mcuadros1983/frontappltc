@@ -77,6 +77,19 @@ export default function ComprobantesEgresoList() {
   const round2 = (n) => Math.round((Number(n || 0) + Number.EPSILON) * 100) / 100;
   const toNum = (v) => Number(v || 0);
 
+  const calcularTotalFiscal = (comp) =>
+    round2(
+      toNum(comp?.neto) +
+      toNum(comp?.iva105) +
+      toNum(comp?.iva21) +
+      toNum(comp?.iva_especial) +
+      toNum(comp?.percepcion_iva) +
+      toNum(comp?.percepcion_ganancias) +
+      toNum(comp?.percepcion_iibb) +
+      toNum(comp?.impuestos_internos) +
+      toNum(comp?.exento_no_gravado)
+    );
+
   const dataContext = useContext(Contexts.DataContext);
   const {
     cajaAbierta,
@@ -98,6 +111,8 @@ export default function ComprobantesEgresoList() {
   const [comprobantes, setComprobantes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedComprobante, setSelectedComprobante] = useState(null);
+  const [puedeEditarComprobante, setPuedeEditarComprobante] = useState(false);
+  const [motivoNoEditar, setMotivoNoEditar] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pagosComprobante, setPagosComprobante] = useState([]);
   const [loadingPagos, setLoadingPagos] = useState(false);
@@ -160,10 +175,23 @@ export default function ComprobantesEgresoList() {
 
   const makeInitialNuevo = () => ({
     nrocomprobante: "",
+
+    neto: 0,
     iva105: 0,
     iva21: 0,
-    neto: 0,
+
+    iva_especial: 0,
+    iva_especial_porcentaje: "",
+
+    percepcion_iva: 0,
+    percepcion_ganancias: 0,
+    percepcion_iibb: 0,
+
+    impuestos_internos: 0,
+    exento_no_gravado: 0,
+
     total: 0,
+
     tipocomprobante_id: "",
     ptoventa_id: "",
     libroiva_id: "",
@@ -172,7 +200,6 @@ export default function ComprobantesEgresoList() {
     fechavencimiento: hoy,
     imputacioncontable_id: "",
     observaciones: "",
-    // ctacteproveedor_id: "",
     formapago_id: "",
     estadopago: "impaga",
     conFactura: true,
@@ -185,6 +212,7 @@ export default function ComprobantesEgresoList() {
     empresa_id: "",
     categoriaegreso_id: "",
   });
+
 
   const resetCreateForm = () => {
     setPagos([]);
@@ -338,32 +366,60 @@ export default function ComprobantesEgresoList() {
     return (t?.descripcion || "").toUpperCase() === "LCD";
   }, [tiposComprobanteTabla, selectedComprobante?.tipocomprobante_id]);
 
-  // === Auto TOTAL (creación): total = neto + iva105 + iva21 - retención
+  // === Auto TOTAL fiscal (creación)
   useEffect(() => {
     setNuevoComprobante((prev) => {
       if (!prev) return prev;
-      const newTotal = round2(
-        toNum(prev.neto) + toNum(prev.iva105) + toNum(prev.iva21) - toNum(prev.retencion)
-      );
-      return prev.total === newTotal ? prev : { ...prev, total: newTotal };
-    });
-  }, [nuevoComprobante.neto, nuevoComprobante.iva105, nuevoComprobante.iva21, nuevoComprobante.retencion]);
 
-  // === Auto TOTAL (edición)
+      const newTotal =
+        calcularTotalFiscal(prev);
+
+      return Number(prev.total) === newTotal
+        ? prev
+        : {
+          ...prev,
+          total: newTotal,
+        };
+    });
+  }, [
+    nuevoComprobante.neto,
+    nuevoComprobante.iva105,
+    nuevoComprobante.iva21,
+    nuevoComprobante.iva_especial,
+    nuevoComprobante.percepcion_iva,
+    nuevoComprobante.percepcion_ganancias,
+    nuevoComprobante.percepcion_iibb,
+    nuevoComprobante.impuestos_internos,
+    nuevoComprobante.exento_no_gravado,
+  ]);
+
+  // === Auto TOTAL fiscal (edición)
   useEffect(() => {
     if (!selectedComprobante) return;
+
     setSelectedComprobante((prev) => {
       if (!prev) return prev;
-      const newTotal = round2(
-        toNum(prev.neto) + toNum(prev.iva105) + toNum(prev.iva21) - toNum(prev.retencion)
-      );
-      return prev.total === newTotal ? prev : { ...prev, total: newTotal };
+
+      const newTotal =
+        calcularTotalFiscal(prev);
+
+      return Number(prev.total) === newTotal
+        ? prev
+        : {
+          ...prev,
+          total: newTotal,
+        };
     });
   }, [
     selectedComprobante?.neto,
     selectedComprobante?.iva105,
     selectedComprobante?.iva21,
-    selectedComprobante?.retencion,
+    selectedComprobante?.iva_especial,
+    selectedComprobante?.percepcion_iva,
+    selectedComprobante?.percepcion_ganancias,
+    selectedComprobante?.percepcion_iibb,
+    selectedComprobante?.impuestos_internos,
+    selectedComprobante?.exento_no_gravado,
   ]);
 
   // === Diferencia Efectivo: si no es LCD → 0 y readonly; si es LCD → auto (montoreal - total)
@@ -406,6 +462,46 @@ export default function ComprobantesEgresoList() {
     setNuevoComprobante((p) => ({ ...p, iva21: round2(base * 0.21) }));
   };
 
+  const calcIVAEspecialCreate = () => {
+    const base =
+      toNum(nuevoComprobante.neto);
+
+    const porcentaje =
+      toNum(
+        nuevoComprobante.iva_especial_porcentaje
+      );
+
+    setNuevoComprobante((prev) => ({
+      ...prev,
+
+      iva_especial:
+        round2(
+          base * porcentaje / 100
+        ),
+    }));
+  };
+
+  const calcIVAEspecialEdit = () => {
+    if (!selectedComprobante) return;
+
+    const base =
+      toNum(selectedComprobante.neto);
+
+    const porcentaje =
+      toNum(
+        selectedComprobante.iva_especial_porcentaje
+      );
+
+    setSelectedComprobante((prev) => ({
+      ...prev,
+
+      iva_especial:
+        round2(
+          base * porcentaje / 100
+        ),
+    }));
+  };
+
   // === IVA quick calc (edición)
   const calcIVA105Edit = () => {
     if (!selectedComprobante) return;
@@ -420,29 +516,97 @@ export default function ComprobantesEgresoList() {
 
   // === Edición
   const handleDoubleClick = async (comprobante) => {
+
+    console.log("========================================");
+    console.log("🟡 ABRIENDO COMPROBANTE");
+    console.log("ID:", comprobante?.id);
+    console.log("========================================");
+
     if (!empresaSeleccionada) {
-      alert("Debe seleccionar una empresa para editar comprobantes.");
+      alert("Debe seleccionar una empresa.");
       return;
     }
-    setSelectedComprobante(comprobante);
-    setShowModal(true);
-    setPagosComprobante([]);
-    setLoadingPagos(true);
-    try {
-      const res = await fetch(`${apiUrl}/comprobantes-egreso/${comprobante.id}/detalle`, {
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "No se pudo obtener el detalle");
-      console.log("datapagos", data)
 
-      // actualizar el comprobante por si trae campos más frescos (ej: ordenpago_id)
-      setSelectedComprobante(data.comprobante || comprobante);
-      setPagosComprobante(Array.isArray(data.pagos) ? data.pagos : []);
+    setLoadingPagos(true);
+    setPagosComprobante([]);
+
+    try {
+
+      const res = await fetch(
+        `${apiUrl}/comprobantes-egreso/${comprobante.id}/detalle`,
+        {
+          credentials: "include",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+          "No se pudo obtener el detalle del comprobante"
+        );
+      }
+
+      console.log("🟢 DETALLE COMPROBANTE:", data);
+      console.log("🟢 puede_editar:", data?.puede_editar);
+      console.log("🟢 motivo:", data?.motivo_no_editar);
+
+      /*
+       * Guardamos si el comprobante puede editarse.
+       */
+      const puedeEditar =
+        data?.puede_editar === true;
+
+      setPuedeEditarComprobante(
+        puedeEditar
+      );
+
+      setMotivoNoEditar(
+        puedeEditar
+          ? ""
+          : (
+            data?.motivo_no_editar ||
+            "Este comprobante no puede ser editado porque cuenta con una forma de pago aplicada."
+          )
+      );
+
+      setSelectedComprobante(
+        data?.comprobante || comprobante
+      );
+
+      setPagosComprobante(
+        Array.isArray(data?.pagos)
+          ? data.pagos
+          : []
+      );
+
+      /*
+       * Ahora SIEMPRE abrimos el modal.
+       */
+      setShowModal(true);
+
     } catch (err) {
-      console.error("❌ Error al cargar detalle:", err);
+
+      console.error(
+        "❌ Error al cargar comprobante:",
+        err
+      );
+
+      alert(
+        err.message ||
+        "No se pudo cargar el comprobante."
+      );
+
+      setSelectedComprobante(null);
+      setPuedeEditarComprobante(false);
+      setMotivoNoEditar("");
+      setShowModal(false);
+
     } finally {
+
       setLoadingPagos(false);
+
     }
   };
 
@@ -462,9 +626,28 @@ export default function ComprobantesEgresoList() {
     })();
   }, [showModal, selectedComprobante?.proveedor_id, selectedComprobante?.hacienda_id, empresaSeleccionada?.id, checkHaciendaDisponibles]);
 
+  const CAMPOS_NUMERICOS_COMPROBANTE = [
+    "neto",
+    "iva105",
+    "iva21",
+    "iva_especial",
+    "iva_especial_porcentaje",
+    "percepcion_iva",
+    "percepcion_ganancias",
+    "percepcion_iibb",
+    "impuestos_internos",
+    "exento_no_gravado",
+    "total",
+    "montoreal",
+    "diferenciaefectivo",
+    "retencion",
+  ];
 
   const handleCloseModal = () => {
     setSelectedComprobante(null);
+    setPagosComprobante([]);
+    setPuedeEditarComprobante(false);
+    setMotivoNoEditar("");
     setShowModal(false);
   };
 
@@ -476,7 +659,7 @@ export default function ComprobantesEgresoList() {
         type === "checkbox"
           ? checked
           : name.endsWith("_id") ||
-            ["neto", "iva105", "iva21", "total", "montoreal", "diferenciaefectivo", "retencion"].includes(name)
+            CAMPOS_NUMERICOS_COMPROBANTE.includes(name)
             ? value === ""
               ? ""
               : value
@@ -486,7 +669,23 @@ export default function ComprobantesEgresoList() {
 
   const handleGuardarCambios = async () => {
     try {
-      const faltanEdit = validarObligatorios(selectedComprobante, ["observaciones", "hacienda_id"]);
+      const faltanEdit = validarObligatorios(
+        selectedComprobante,
+        [
+          "observaciones",
+          "hacienda_id",
+
+          "iva_especial",
+          "iva_especial_porcentaje",
+          "percepcion_iva",
+          "percepcion_ganancias",
+          "percepcion_iibb",
+          "impuestos_internos",
+          "exento_no_gravado",
+        ]
+      );
+
+
       if (faltanEdit.length) {
         alert("Faltan completar campos obligatorios: " + faltanEdit.join(", "));
         return;
@@ -542,20 +741,21 @@ export default function ComprobantesEgresoList() {
   // === Creación
   const handleNuevoChange = (e) => {
     const { name, value, type, checked } = e.target;
+
     setNuevoComprobante((prev) => ({
       ...prev,
+
       [name]:
         type === "checkbox"
           ? checked
           : name.endsWith("_id") ||
-            ["neto", "iva105", "iva21", "total", "montoreal", "diferenciaefectivo", "retencion"].includes(name)
+            CAMPOS_NUMERICOS_COMPROBANTE.includes(name)
             ? value === ""
               ? ""
               : value
             : value,
     }));
   };
-
   const getImputacionFromCategoria = (categoriaId) => {
     const cat = categoriasEgreso?.find((c) => Number(c.id) === Number(categoriaId));
     return cat?.imputacioncontable_id ?? null;
@@ -665,14 +865,66 @@ export default function ComprobantesEgresoList() {
 
       // Armamos el encabezado SIN formapago_id de entrada
       const comprobanteBase = {
-        nrocomprobante: nuevoComprobante.nrocomprobante,
-        iva105: Number(nuevoComprobante.iva105 || 0),
-        iva21: Number(nuevoComprobante.iva21 || 0),
-        neto: Number(nuevoComprobante.neto || 0),
-        total: Number(nuevoComprobante.total || 0),
-        tipocomprobante_id: nuevoComprobante.tipocomprobante_id
-          ? Number(nuevoComprobante.tipocomprobante_id)
-          : null,
+        nrocomprobante:
+          nuevoComprobante.nrocomprobante,
+
+        neto:
+          Number(nuevoComprobante.neto || 0),
+
+        iva105:
+          Number(nuevoComprobante.iva105 || 0),
+
+        iva21:
+          Number(nuevoComprobante.iva21 || 0),
+
+        iva_especial:
+          Number(
+            nuevoComprobante.iva_especial || 0
+          ),
+
+        iva_especial_porcentaje:
+          nuevoComprobante.iva_especial_porcentaje === "" ||
+            nuevoComprobante.iva_especial_porcentaje == null
+            ? null
+            : Number(
+              nuevoComprobante.iva_especial_porcentaje
+            ),
+
+        percepcion_iva:
+          Number(
+            nuevoComprobante.percepcion_iva || 0
+          ),
+
+        percepcion_ganancias:
+          Number(
+            nuevoComprobante.percepcion_ganancias || 0
+          ),
+
+        percepcion_iibb:
+          Number(
+            nuevoComprobante.percepcion_iibb || 0
+          ),
+
+        impuestos_internos:
+          Number(
+            nuevoComprobante.impuestos_internos || 0
+          ),
+
+        exento_no_gravado:
+          Number(
+            nuevoComprobante.exento_no_gravado || 0
+          ),
+
+        total:
+          Number(nuevoComprobante.total || 0),
+
+        tipocomprobante_id:
+          nuevoComprobante.tipocomprobante_id
+            ? Number(nuevoComprobante.tipocomprobante_id)
+            : null,
+
+        // ... acá continúa exactamente
+        // el resto que ya tenés
         ptoventa_id: nuevoComprobante.ptoventa_id ? Number(nuevoComprobante.ptoventa_id) : null,
         libroiva_id: nuevoComprobante.libroiva_id ? Number(nuevoComprobante.libroiva_id) : null,
         proveedor_id: nuevoComprobante.proveedor_id ? Number(nuevoComprobante.proveedor_id) : null,
@@ -785,7 +1037,12 @@ export default function ComprobantesEgresoList() {
 
       console.log("emitir comprobante payload:", JSON.parse(JSON.stringify(payload)));
 
-      const EXC_OPTIONALES = ["observaciones", "hacienda_id"];
+      const EXC_OPTIONALES = [
+        "observaciones",
+        "hacienda_id",
+        "iva_especial_porcentaje",
+      ];
+
       const faltanHeader = validarObligatorios(payload.comprobante, EXC_OPTIONALES);
       if (faltanHeader.length) {
         alert("Faltan completar campos obligatorios: " + faltanHeader.join(", "));
@@ -1140,295 +1397,430 @@ export default function ComprobantesEgresoList() {
         </Modal.Header>
         <Modal.Body>
           {selectedComprobante && (
-            <Form>
-              <div className="row">
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Letra</Form.Label>
-                  <Form.Control
-                    name="letra"
-                    value={selectedComprobante.letra || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>N° Comprobante</Form.Label>
-                  <Form.Control
-                    name="nrocomprobante"
-                    value={selectedComprobante.nrocomprobante || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Proveedor</Form.Label>
-                  <Form.Select
-                    name="proveedor_id"
-                    value={selectedComprobante.proveedor_id || ""}
-                    onChange={handleChange}
-                    className="form-control my-input"
-                  >
-                    <option value="">Seleccione...</option>
-                    {proveedoresTabla.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nombre}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-
-                <Form.Group className="mb-3 col-md-6">
-                  <Form.Label>Categoría de Egreso (encabezado)</Form.Label>
-                  <Form.Select
-                    name="categoriaegreso_id"
-                    value={selectedComprobante.categoriaegreso_id || ""}
-                    onChange={handleChange}
-                    className="form-control my-input"
-                  >
-                    <option value="">Seleccione...</option>
-                    {categoriasEgreso.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.nombre}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  <small className="text-muted">
-                    Si no elegís categoría en un pago, se usará esta para derivar la imputación
-                    contable.
-                  </small>
-                </Form.Group>
-
-                <Form.Group className="mb-3 col-md-6">
-                  <Form.Label>Imputación Contable (encabezado)</Form.Label>
-                  <Form.Select
-                    name="imputacioncontable_id"
-                    value={selectedComprobante.imputacioncontable_id || ""}
-                    onChange={handleChange}
-                    className="form-control my-input"
-                  >
-                    <option value="">Seleccione...</option>
-                    {imputacionContableTabla.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.descripcion}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-
-                <Form.Group className="mb-3 col-md-6">
-                  <Form.Label>Empresa</Form.Label>
-                  <Form.Control
-                    value={
-                      empresaSeleccionada?.nombre ||
-                      empresasById[selectedComprobante?.empresa_id] ||
-                      selectedComprobante?.empresa_id ||
-                      ""
-                    }
-                    readOnly
-                    plaintext
-                  />
-                </Form.Group>
-              </div>
-
-              <div className="row">
-                <Form.Group className="mb-3 col-md-3">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <Form.Label className="mb-0">Neto</Form.Label>
+            <>
+              {!puedeEditarComprobante && (
+                <div className="alert alert-warning mb-3">
+                  <strong>Comprobante sólo para consulta.</strong>
+                  <div>
+                    Este comprobante no puede ser editado porque cuenta con una forma de pago aplicada.
                   </div>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="neto"
-                    value={selectedComprobante.neto || 0}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
+                </div>
+              )}
 
-                <Form.Group className="mb-3 col-md-3">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <Form.Label className="mb-0">IVA 10.5%</Form.Label>
-                    <Button size="sm" variant="outline-secondary" onClick={calcIVA105Edit}>
-                      calc
-                    </Button>
+              <Form>
+                <fieldset disabled={!puedeEditarComprobante}>
+                  <div className="row">
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Letra</Form.Label>
+                      <Form.Control
+                        name="letra"
+                        value={selectedComprobante.letra || ""}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>N° Comprobante</Form.Label>
+                      <Form.Control
+                        name="nrocomprobante"
+                        value={selectedComprobante.nrocomprobante || ""}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Proveedor</Form.Label>
+                      <Form.Select
+                        name="proveedor_id"
+                        value={selectedComprobante.proveedor_id || ""}
+                        className="form-control my-input"
+                        disabled
+                      >
+                        <option value="">Seleccione...</option>
+                        {proveedoresTabla.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.nombre}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+
+                    <Form.Group className="mb-3 col-md-6">
+                      <Form.Label>Categoría de Egreso (encabezado)</Form.Label>
+                      <Form.Select
+                        name="categoriaegreso_id"
+                        value={selectedComprobante.categoriaegreso_id || ""}
+
+                        className="form-control my-input"
+                      >
+                        <option value="">Seleccione...</option>
+                        {categoriasEgreso.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.nombre}
+                          </option>
+                        ))}
+                      </Form.Select>
+                      <small className="text-muted">
+                        Si no elegís categoría en un pago, se usará esta para derivar la imputación
+                        contable.
+                      </small>
+                    </Form.Group>
+
+                    <Form.Group className="mb-3 col-md-6">
+                      <Form.Label>Imputación Contable (encabezado)</Form.Label>
+                      <Form.Select
+                        name="imputacioncontable_id"
+                        value={selectedComprobante.imputacioncontable_id || ""}
+
+                        className="form-control my-input"
+                      >
+                        <option value="">Seleccione...</option>
+                        {imputacionContableTabla.map((i) => (
+                          <option key={i.id} value={i.id}>
+                            {i.descripcion}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+
+                    <Form.Group className="mb-3 col-md-6">
+                      <Form.Label>Empresa</Form.Label>
+                      <Form.Control
+                        value={
+                          empresaSeleccionada?.nombre ||
+                          empresasById[selectedComprobante?.empresa_id] ||
+                          selectedComprobante?.empresa_id ||
+                          ""
+                        }
+                        readOnly
+                        plaintext
+                      />
+                    </Form.Group>
                   </div>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="iva105"
-                    value={selectedComprobante.iva105 || 0}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
 
-                <Form.Group className="mb-3 col-md-3">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <Form.Label className="mb-0">IVA 21%</Form.Label>
-                    <Button size="sm" variant="outline-secondary" onClick={calcIVA21Edit}>
-                      calc
-                    </Button>
+                  <div className="row">
+
+                    {/* NETO */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>Neto</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="neto"
+                        value={selectedComprobante.neto ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* IVA 10,5% */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <Form.Label className="mb-0">
+                          IVA 10,5%
+                        </Form.Label>
+
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          onClick={calcIVA105Edit}
+                        >
+                          calc
+                        </Button>
+                      </div>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="iva105"
+                        value={selectedComprobante.iva105 ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* IVA 21% */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <Form.Label className="mb-0">
+                          IVA 21%
+                        </Form.Label>
+
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          onClick={calcIVA21Edit}
+                        >
+                          calc
+                        </Button>
+                      </div>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="iva21"
+                        value={selectedComprobante.iva21 ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* IVA ESPECIAL % */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>IVA especial %</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="iva_especial_porcentaje"
+                        value={selectedComprobante.iva_especial_porcentaje ?? ""}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* IVA ESPECIAL IMPORTE */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <Form.Label className="mb-0">
+                          IVA especial
+                        </Form.Label>
+
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          onClick={calcIVAEspecialEdit}
+                        >
+                          calc
+                        </Button>
+                      </div>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="iva_especial"
+                        value={selectedComprobante.iva_especial ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* PERCEPCIÓN IVA */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>Percep. IVA</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="percepcion_iva"
+                        value={selectedComprobante.percepcion_iva ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* PERCEPCIÓN GANANCIAS */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>Percep. Ganancias</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="percepcion_ganancias"
+                        value={selectedComprobante.percepcion_ganancias ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* PERCEPCIÓN IIBB */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>Percep. IIBB</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="percepcion_iibb"
+                        value={selectedComprobante.percepcion_iibb ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* IMPUESTOS INTERNOS */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>Imp. Internos</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="impuestos_internos"
+                        value={selectedComprobante.impuestos_internos ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* EXENTO / NO GRAVADO */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>Exento / No Grav.</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="exento_no_gravado"
+                        value={selectedComprobante.exento_no_gravado ?? 0}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+
+
+                    {/* TOTAL */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>Total (auto)</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="total"
+                        value={selectedComprobante.total ?? 0}
+                        readOnly
+                      />
+                    </Form.Group>
+
                   </div>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="iva21"
-                    value={selectedComprobante.iva21 || 0}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
 
-                <Form.Group className="mb-3 col-md-3">
-                  <Form.Label>Retención</Form.Label>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="retencion"
-                    value={selectedComprobante?.retencion ?? 0}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
+                  <div className="row">
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Tipo Comprobante</Form.Label>
+                      <Form.Select
+                        name="tipocomprobante_id"
+                        value={selectedComprobante.tipocomprobante_id || ""}
+                        onChange={handleChange}
+                        className="form-control my-input"
+                      >
+                        <option value="">Seleccione...</option>
+                        {tiposComprobanteTabla.map((tc) => (
+                          <option key={tc.id} value={tc.id}>
+                            {tc.descripcion}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
 
-                <Form.Group className="mb-3 col-md-3">
-                  <Form.Label>Total (auto)</Form.Label>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="total"
-                    value={selectedComprobante.total || 0}
-                    readOnly
-                  />
-                </Form.Group>
-              </div>
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Punto de Venta</Form.Label>
+                      <Form.Select
+                        name="ptoventa_id"
+                        value={selectedComprobante.ptoventa_id || ""}
+                        onChange={handleChange}
+                        className="form-control my-input"
+                      >
+                        <option value="">Seleccione...</option>
+                        {ptosVtaFiltrados.map((pv) => (
+                          <option key={pv.id} value={pv.id}>
+                            {pv.descripcion}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
 
-              <div className="row">
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Tipo Comprobante</Form.Label>
-                  <Form.Select
-                    name="tipocomprobante_id"
-                    value={selectedComprobante.tipocomprobante_id || ""}
-                    onChange={handleChange}
-                    className="form-control my-input"
-                  >
-                    <option value="">Seleccione...</option>
-                    {tiposComprobanteTabla.map((tc) => (
-                      <option key={tc.id} value={tc.id}>
-                        {tc.descripcion}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Libro IVA</Form.Label>
+                      <Form.Select
+                        name="libroiva_id"
+                        value={selectedComprobante.libroiva_id || ""}
+                        onChange={handleChange}
+                        className="form-control my-input"
+                      >
+                        <option value="">Seleccione...</option>
+                        {librosIVAFiltrados.map((l) => (
+                          <option key={l.id} value={l.id}>
+                            {`${l.mes} / ${l.anio}`}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </div>
 
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Punto de Venta</Form.Label>
-                  <Form.Select
-                    name="ptoventa_id"
-                    value={selectedComprobante.ptoventa_id || ""}
-                    onChange={handleChange}
-                    className="form-control my-input"
-                  >
-                    <option value="">Seleccione...</option>
-                    {ptosVtaFiltrados.map((pv) => (
-                      <option key={pv.id} value={pv.id}>
-                        {pv.descripcion}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+                  <div className="row">
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Fecha Comprobante</Form.Label>
+                      <Form.Control
+                        type="date"
+                        name="fechacomprobante"
+                        value={selectedComprobante.fechacomprobante || ""}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
 
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Libro IVA</Form.Label>
-                  <Form.Select
-                    name="libroiva_id"
-                    value={selectedComprobante.libroiva_id || ""}
-                    onChange={handleChange}
-                    className="form-control my-input"
-                  >
-                    <option value="">Seleccione...</option>
-                    {librosIVAFiltrados.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {`${l.mes} / ${l.anio}`}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </div>
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Fecha Vencimiento</Form.Label>
+                      <Form.Control
+                        type="date"
+                        name="fechavencimiento"
+                        value={selectedComprobante.fechavencimiento || ""}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
 
-              <div className="row">
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Fecha Comprobante</Form.Label>
-                  <Form.Control
-                    type="date"
-                    name="fechacomprobante"
-                    value={selectedComprobante.fechacomprobante || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Fecha Pago</Form.Label>
+                      <Form.Control
+                        type="date"
+                        name="fechapago"
+                        value={selectedComprobante.fechapago || ""}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  </div>
 
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Fecha Vencimiento</Form.Label>
-                  <Form.Control
-                    type="date"
-                    name="fechavencimiento"
-                    value={selectedComprobante.fechavencimiento || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
+                  <div className="row">
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Estado Pago</Form.Label>
+                      <Form.Select
+                        name="estadopago"
+                        value={selectedComprobante.estadopago || "impaga"}
+                        onChange={handleChange}
+                        className="form-control my-input"
+                      >
+                        <option value="pagada">Pagada</option>
+                        <option value="impaga">Impaga</option>
+                        <option value="parcial">Parcial</option>
+                      </Form.Select>
+                    </Form.Group>
 
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Fecha Pago</Form.Label>
-                  <Form.Control
-                    type="date"
-                    name="fechapago"
-                    value={selectedComprobante.fechapago || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </div>
+                    {/* Monto Real (solo editable en LCD) */}
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Monto Real {esLCDEdit ? "" : "(solo LCD)"}</Form.Label>
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="montoreal"
+                        value={esLCDEdit ? (selectedComprobante.montoreal || 0) : 0}
+                        onChange={esLCDEdit ? handleChange : undefined}
+                        readOnly={!esLCDEdit}
+                      />
+                    </Form.Group>
 
-              <div className="row">
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Estado Pago</Form.Label>
-                  <Form.Select
-                    name="estadopago"
-                    value={selectedComprobante.estadopago || "impaga"}
-                    onChange={handleChange}
-                    className="form-control my-input"
-                  >
-                    <option value="pagada">Pagada</option>
-                    <option value="impaga">Impaga</option>
-                    <option value="parcial">Parcial</option>
-                  </Form.Select>
-                </Form.Group>
+                    {/* Diferencia Efectivo (auto) */}
+                    <Form.Group className="mb-3 col-md-4">
+                      <Form.Label>Diferencia Efectivo (auto)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        step="0.01"
+                        name="diferenciaefectivo"
+                        value={esLCDEdit ? (selectedComprobante.diferenciaefectivo || 0) : 0}
+                        readOnly
+                      />
+                      <small className="text-muted">
+                        {esLCDEdit ? "Se calcula: Monto real − Total." : "Disponible solo para LCD."}
+                      </small>
+                    </Form.Group>
+                  </div>
 
-                {/* Monto Real (solo editable en LCD) */}
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Monto Real {esLCDEdit ? "" : "(solo LCD)"}</Form.Label>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="montoreal"
-                    value={esLCDEdit ? (selectedComprobante.montoreal || 0) : 0}
-                    onChange={esLCDEdit ? handleChange : undefined}
-                    readOnly={!esLCDEdit}
-                  />
-                </Form.Group>
-
-                {/* Diferencia Efectivo (auto) */}
-                <Form.Group className="mb-3 col-md-4">
-                  <Form.Label>Diferencia Efectivo (auto)</Form.Label>
-                  <Form.Control
-                    type="number"
-                    step="0.01"
-                    name="diferenciaefectivo"
-                    value={esLCDEdit ? (selectedComprobante.diferenciaefectivo || 0) : 0}
-                    readOnly
-                  />
-                  <small className="text-muted">
-                    {esLCDEdit ? "Se calcula: Monto real − Total." : "Disponible solo para LCD."}
-                  </small>
-                </Form.Group>
-              </div>
-
-              <div className="row">
-                {/* <Form.Group className="mb-3 col-md-6">
+                  <div className="row">
+                    {/* <Form.Group className="mb-3 col-md-6">
                   <Form.Label>Cuenta Cte. Proveedor (opcional)</Form.Label>
                   <Form.Control
                     name="ctacteproveedor_id"
@@ -1439,139 +1831,139 @@ export default function ComprobantesEgresoList() {
 
 
 
-                <Form.Group className="mb-3 col-md-6">
-                  <Form.Label>Hacienda (opcional)</Form.Label>
-                  <InputGroup>
+                    <Form.Group className="mb-3 col-md-6">
+                      <Form.Label>Hacienda (opcional)</Form.Label>
+                      <InputGroup>
+                        <Form.Control
+                          name="hacienda_id"
+                          value={selectedComprobante?.hacienda_id || ""}
+                          onChange={handleChange}
+                          placeholder="ID de Hacienda"
+                        />
+                        <Button
+                          variant="outline-primary"
+                          disabled={
+                            !empresaSeleccionada?.id ||
+                            !selectedComprobante?.proveedor_id
+                          }
+                          title={
+                            !empresaSeleccionada?.id
+                              ? "Seleccioná empresa"
+                              : !selectedComprobante?.proveedor_id
+                                ? "Seleccioná proveedor"
+                                : hasHaciendaDisponiblesEdit
+                                  ? "Buscar Hacienda disponibles"
+                                  : "Sin Hacienda disponibles"
+                          }
+                          onClick={() => setShowHaciendaPickerEdit(true)}
+                          className="mx-2"
+                        >
+                          Buscar
+                        </Button>
+
+                        {/* NUEVO: botón para quitar la Hacienda */}
+                        <Button
+                          variant="outline-danger"
+                          disabled={!selectedComprobante?.hacienda_id}
+                          title="Quitar Hacienda seleccionada"
+                          onClick={() =>
+                            setSelectedComprobante((prev) => ({ ...prev, hacienda_id: null }))
+                          }
+                          className="mx-2"
+                        >
+                          Quitar
+                        </Button>
+                      </InputGroup>
+                      <Form.Text className="text-muted">
+                        Doble click en una fila del modal para seleccionar. “Quitar” deja el campo vacío.
+                      </Form.Text>
+                    </Form.Group>
+
+                  </div>
+
+                  <div className="row">
+                    <Form.Group className="mb-3 col-md-6 d-flex align-items-end">
+                      <Form.Check
+                        label="Con Factura"
+                        name="conFactura"
+                        checked={!!selectedComprobante.conFactura}
+                        onChange={(e) =>
+                          setSelectedComprobante((prev) => ({
+                            ...prev,
+                            conFactura: e.target.checked,
+                          }))
+                        }
+                      />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3 col-md-6">
+                      <Form.Label>Imputación Contable</Form.Label>
+                      <Form.Select
+                        name="imputacioncontable_id"
+                        value={selectedComprobante.imputacioncontable_id || ""}
+                        onChange={handleChange}
+                        className="form-control my-input"
+                      >
+                        <option value="">Seleccione...</option>
+                        {imputacionContableTabla.map((i) => (
+                          <option key={i.id} value={i.id}>
+                            {i.descripcion}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </div>
+
+                  <Form.Group className="mb-3">
+                    <Form.Label>Observaciones</Form.Label>
                     <Form.Control
-                      name="hacienda_id"
-                      value={selectedComprobante?.hacienda_id || ""}
+                      as="textarea"
+                      name="observaciones"
+                      rows={2}
+                      value={selectedComprobante.observaciones || ""}
                       onChange={handleChange}
-                      placeholder="ID de Hacienda"
                     />
-                    <Button
-                      variant="outline-primary"
-                      disabled={
-                        !empresaSeleccionada?.id ||
-                        !selectedComprobante?.proveedor_id
-                      }
-                      title={
-                        !empresaSeleccionada?.id
-                          ? "Seleccioná empresa"
-                          : !selectedComprobante?.proveedor_id
-                            ? "Seleccioná proveedor"
-                            : hasHaciendaDisponiblesEdit
-                              ? "Buscar Hacienda disponibles"
-                              : "Sin Hacienda disponibles"
-                      }
-                      onClick={() => setShowHaciendaPickerEdit(true)}
-                      className="mx-2"
-                    >
-                      Buscar
-                    </Button>
+                  </Form.Group>
 
-                    {/* NUEVO: botón para quitar la Hacienda */}
-                    <Button
-                      variant="outline-danger"
-                      disabled={!selectedComprobante?.hacienda_id}
-                      title="Quitar Hacienda seleccionada"
-                      onClick={() =>
-                        setSelectedComprobante((prev) => ({ ...prev, hacienda_id: null }))
-                      }
-                      className="mx-2"
-                    >
-                      Quitar
-                    </Button>
-                  </InputGroup>
-                  <Form.Text className="text-muted">
-                    Doble click en una fila del modal para seleccionar. “Quitar” deja el campo vacío.
-                  </Form.Text>
-                </Form.Group>
+                  <hr />
+                  <h5 className="mb-3">
+                    Formas de pago aplicadas{" "}
+                    {selectedComprobante?.ordenpago_id ? (
+                      <small className="text-muted"> (Orden #{selectedComprobante.ordenpago_id})</small>
+                    ) : null}
+                  </h5>
 
-              </div>
-
-              <div className="row">
-                <Form.Group className="mb-3 col-md-6 d-flex align-items-end">
-                  <Form.Check
-                    label="Con Factura"
-                    name="conFactura"
-                    checked={!!selectedComprobante.conFactura}
-                    onChange={(e) =>
-                      setSelectedComprobante((prev) => ({
-                        ...prev,
-                        conFactura: e.target.checked,
-                      }))
-                    }
-                  />
-                </Form.Group>
-
-                <Form.Group className="mb-3 col-md-6">
-                  <Form.Label>Imputación Contable</Form.Label>
-                  <Form.Select
-                    name="imputacioncontable_id"
-                    value={selectedComprobante.imputacioncontable_id || ""}
-                    onChange={handleChange}
-                    className="form-control my-input"
-                  >
-                    <option value="">Seleccione...</option>
-                    {imputacionContableTabla.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.descripcion}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </div>
-
-              <Form.Group className="mb-3">
-                <Form.Label>Observaciones</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  name="observaciones"
-                  rows={2}
-                  value={selectedComprobante.observaciones || ""}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-
-              <hr />
-              <h5 className="mb-3">
-                Formas de pago aplicadas{" "}
-                {selectedComprobante?.ordenpago_id ? (
-                  <small className="text-muted"> (Orden #{selectedComprobante.ordenpago_id})</small>
-                ) : null}
-              </h5>
-
-              {loadingPagos ? (
-                <div className="text-muted">Cargando pagos…</div>
-              ) : pagosComprobante.length === 0 ? (
-                <div className="text-muted">Este comprobante no tiene pagos asociados.</div>
-              ) : (
-                <Table striped bordered hover size="sm">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Medio</th>
-                      <th>Detalle</th>
-                      <th>Importe</th>
-                      {/* <th>FP Acordada</th> 👈 nueva columna */}
-                      {/*  <th>Info</th>*/}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pagosComprobante.map((p) => (
-                      <tr key={`${p.tabla}-${p.id}`}>
-                        <td>{p.fecha || "-"}</td>
-                        <td>{p.medio}</td>
-                        <td>{p.detalle || "-"}</td>
-                        <td>{fmtMoney(p.monto)}</td>
-                        {/* <td>
+                  {loadingPagos ? (
+                    <div className="text-muted">Cargando pagos…</div>
+                  ) : pagosComprobante.length === 0 ? (
+                    <div className="text-muted">Este comprobante no tiene pagos asociados.</div>
+                  ) : (
+                    <Table striped bordered hover size="sm">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Medio</th>
+                          <th>Detalle</th>
+                          <th>Importe</th>
+                          {/* <th>FP Acordada</th> 👈 nueva columna */}
+                          {/*  <th>Info</th>*/}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pagosComprobante.map((p) => (
+                          <tr key={`${p.tabla}-${p.id}`}>
+                            <td>{p.fecha || "-"}</td>
+                            <td>{p.medio}</td>
+                            <td>{p.detalle || "-"}</td>
+                            <td>{fmtMoney(p.monto)}</td>
+                            {/* <td>
                           {p.formapago_id
                             ? getFormaPagoDesc(p.formapago_id)
                             : p.ordenpago_id
                               ? "Segun Orden de Pago"
                               : "-"}
                         </td>*/}
-                        {/*   <td>
+                            {/*   <td>
                           {p.medio === "caja" && (p.caja_id ? `Caja #${p.caja_id}` : "-")}
                           {p.medio === "transferencia" && (p.banco_id ? `Banco #${p.banco_id}` : "-")}
                           {p.medio === "echeq" &&
@@ -1580,13 +1972,16 @@ export default function ComprobantesEgresoList() {
                             `Tipo ${p.tipotarjeta_id || "-"} · Marca ${p.marcatarjeta_id || "-"} · Cupón ${p.cupon_numero || "-"}`}
                           {p.medio === "ctacte" && (p.fecha_pago ? `Fecha pago ${p.fecha_pago}` : "A cuenta corriente")}
                         </td>*/}
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
 
-              )}
-            </Form>
+                  )}
+
+                </fieldset>
+              </Form>
+            </>
 
 
           )}
@@ -1595,7 +1990,11 @@ export default function ComprobantesEgresoList() {
           <Button variant="secondary" onClick={handleCloseModal}>
             Cancelar
           </Button>
-          <Button variant="success" onClick={handleGuardarCambios}>
+          <Button
+            variant="success"
+            onClick={handleGuardarCambios}
+            disabled={!puedeEditarComprobante}
+          >
             Guardar Cambios
           </Button>
         </Modal.Footer>
@@ -1850,72 +2249,169 @@ export default function ComprobantesEgresoList() {
             </div>
 
             <div className="row">
+
+              {/* NETO */}
               <Form.Group className="mb-3 col-md-3">
-                <div className="d-flex justify-content-between align-items-center">
-                  <Form.Label className="mb-0">Neto</Form.Label>
-                </div>
+                <Form.Label>Neto</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.01"
                   name="neto"
-                  value={nuevoComprobante.neto}
+                  value={nuevoComprobante.neto ?? 0}
                   onChange={handleNuevoChange}
                 />
               </Form.Group>
 
+              {/* IVA 10,5% */}
               <Form.Group className="mb-3 col-md-3">
                 <div className="d-flex justify-content-between align-items-center">
-                  <Form.Label className="mb-0">IVA 10.5%</Form.Label>
-                  <Button size="sm" variant="outline-secondary" onClick={calcIVA105Create}>
+                  <Form.Label className="mb-0">IVA 10,5%</Form.Label>
+                  <Button
+                    size="sm"
+                    variant="outline-secondary"
+                    onClick={calcIVA105Create}
+                  >
                     calc
                   </Button>
                 </div>
+
                 <Form.Control
                   type="number"
                   step="0.01"
                   name="iva105"
-                  value={nuevoComprobante.iva105}
+                  value={nuevoComprobante.iva105 ?? 0}
                   onChange={handleNuevoChange}
                 />
               </Form.Group>
 
+              {/* IVA 21% */}
               <Form.Group className="mb-3 col-md-3">
                 <div className="d-flex justify-content-between align-items-center">
                   <Form.Label className="mb-0">IVA 21%</Form.Label>
-                  <Button size="sm" variant="outline-secondary" onClick={calcIVA21Create}>
+                  <Button
+                    size="sm"
+                    variant="outline-secondary"
+                    onClick={calcIVA21Create}
+                  >
                     calc
                   </Button>
                 </div>
+
                 <Form.Control
                   type="number"
                   step="0.01"
                   name="iva21"
-                  value={nuevoComprobante.iva21}
+                  value={nuevoComprobante.iva21 ?? 0}
                   onChange={handleNuevoChange}
                 />
               </Form.Group>
 
+              {/* IVA ESPECIAL % */}
               <Form.Group className="mb-3 col-md-3">
-                <Form.Label>Retención</Form.Label>
+                <Form.Label>IVA especial %</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.01"
-                  name="retencion"
-                  value={nuevoComprobante.retencion || 0}
+                  name="iva_especial_porcentaje"
+                  value={nuevoComprobante.iva_especial_porcentaje ?? ""}
                   onChange={handleNuevoChange}
                 />
               </Form.Group>
 
+              {/* IVA ESPECIAL IMPORTE */}
+              <Form.Group className="mb-3 col-md-3">
+                <div className="d-flex justify-content-between align-items-center">
+                  <Form.Label className="mb-0">IVA especial</Form.Label>
+                  <Button
+                    size="sm"
+                    variant="outline-secondary"
+                    onClick={calcIVAEspecialCreate}
+                  >
+                    calc
+                  </Button>
+                </div>
+
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  name="iva_especial"
+                  value={nuevoComprobante.iva_especial ?? 0}
+                  onChange={handleNuevoChange}
+                />
+              </Form.Group>
+
+              {/* PERCEPCIÓN IVA */}
+              <Form.Group className="mb-3 col-md-3">
+                <Form.Label>Percep. IVA</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  name="percepcion_iva"
+                  value={nuevoComprobante.percepcion_iva ?? 0}
+                  onChange={handleNuevoChange}
+                />
+              </Form.Group>
+
+              {/* PERCEPCIÓN GANANCIAS */}
+              <Form.Group className="mb-3 col-md-3">
+                <Form.Label>Percep. Ganancias</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  name="percepcion_ganancias"
+                  value={nuevoComprobante.percepcion_ganancias ?? 0}
+                  onChange={handleNuevoChange}
+                />
+              </Form.Group>
+
+              {/* PERCEPCIÓN IIBB */}
+              <Form.Group className="mb-3 col-md-3">
+                <Form.Label>Percep. IIBB</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  name="percepcion_iibb"
+                  value={nuevoComprobante.percepcion_iibb ?? 0}
+                  onChange={handleNuevoChange}
+                />
+              </Form.Group>
+
+              {/* IMPUESTOS INTERNOS */}
+              <Form.Group className="mb-3 col-md-3">
+                <Form.Label>Imp. Internos</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  name="impuestos_internos"
+                  value={nuevoComprobante.impuestos_internos ?? 0}
+                  onChange={handleNuevoChange}
+                />
+              </Form.Group>
+
+              {/* EXENTO / NO GRAVADO */}
+              <Form.Group className="mb-3 col-md-3">
+                <Form.Label>Exento / No Grav.</Form.Label>
+                <Form.Control
+                  type="number"
+                  step="0.01"
+                  name="exento_no_gravado"
+                  value={nuevoComprobante.exento_no_gravado ?? 0}
+                  onChange={handleNuevoChange}
+                />
+              </Form.Group>
+
+              {/* TOTAL */}
               <Form.Group className="mb-3 col-md-3">
                 <Form.Label>Total (auto)</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.01"
                   name="total"
-                  value={nuevoComprobante.total}
+                  value={nuevoComprobante.total ?? 0}
                   readOnly
                 />
               </Form.Group>
+
             </div>
 
             {/* Editor de formas de pago (con existing_ref y gasto mensual) */}
