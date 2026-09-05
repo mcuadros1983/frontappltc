@@ -165,6 +165,7 @@ import AdelantosSueldosTesoreria from "./pages/sueldosTesoreria/adelantoSueldosT
 import CtasCtesList from "./pages/comprasTesoreria/ctasCtesList.js";
 import NuevoMovimientoBancoExcel from "./pages/tesoreria/NuevoMovimientoBancoExcel.js";
 import MovimientosTarjetasTesoreria from "./pages/tesoreria/MovimientosTarjetaTesoreria.js";
+import AjustesComprobantesEgresoList  from "./pages/tesoreria/AjustesComprobantesEgresoList.js";
 import MovimientosChequesTesoreria from "./pages/tesoreria/MovimientosChequesTesoreria.js";
 import RegistroHacienda from "./pages/gmedias/RegistroHacienda.js";
 import MoivmientosCajaRetirosTesoreria from "./pages/tesoreria/MovimientosCajaRetirosTesoreria.js";
@@ -1042,6 +1043,9 @@ INTELIGENCIA COMERCIAL
 
                         {/* Tarjetas Tesoreria */}
                         <Route path="/tesoreria/movimientos-tarjetas-tesoreria" element={<MovimientosTarjetasTesoreria />} />
+
+                        {/*Ajuste comprobante */}
+                        <Route path="/tesoreria/ajustes-comprobantes" element={<AjustesComprobantesEgresoList  />} />
 
                         {/* Echeq Tesoreria */}
                         <Route path="/tesoreria/movimientos-echeq-tesoreria" element={<MovimientosChequesTesoreria />} />

@@ -89,6 +89,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
   const [movBancoItem, setMovBancoItem] = useState(false);
   const [movTarjetaItem, setMovTarjetaItem] = useState(false);
   const [registroChequeItem, setRegistroChequeItem] = useState(false);
+  const [registroAjusteItem, setRegistroAjusteItem] = useState(false);
   const [showStaticsItems, setShowStaticsItems] = useState(false);
   const [showIVAItems, setShowIVAItems] = useState(false);
   const [showAsistenciaItems, setShowAsistenciaItems] = useState(false);
@@ -1977,6 +1978,34 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       <div className="ml-3 sb-sub">
                         <Link to="/tesoreria/movimientos-echeq-tesoreria" className="nav-link" onClick={handleLinkClick}>
                           Cheques / Echeq
+                        </Link>
+                      </div>
+                    </Collapse>
+                  </>
+                )}
+
+                {/* Registro de Ajustes */}
+                {can("tesoreria:view") && (
+                  <>
+                    <Nav.Item
+                      onClick={() =>
+                        setRegistroAjusteItem(!registroAjusteItem)
+                      }
+                    >
+                      <Link to="#" className="nav-link">
+                        Registro de Ajustes{" "}
+                        <Caret open={registroAjusteItem} />
+                      </Link>
+                    </Nav.Item>
+
+                    <Collapse in={registroAjusteItem}>
+                      <div className="ml-3 sb-sub">
+                        <Link
+                          to="/tesoreria/ajustes-comprobantes"
+                          className="nav-link"
+                          onClick={handleLinkClick}
+                        >
+                          Registros de ajustes
                         </Link>
                       </div>
                     </Collapse>

@@ -108,6 +108,8 @@ export default function ComprobantesEgresoList() {
 
   // === Estado principal ===
   const [pagos, setPagos] = useState([]);
+  const [ajustes, setAjustes] = useState([]);
+  const [ajustesComprobante, setAjustesComprobante] = useState([]);
   const [comprobantes, setComprobantes] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedComprobante, setSelectedComprobante] = useState(null);
@@ -117,6 +119,8 @@ export default function ComprobantesEgresoList() {
   const [pagosComprobante, setPagosComprobante] = useState([]);
   const [loadingPagos, setLoadingPagos] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [creandoComprobante, setCreandoComprobante] = useState(false);
   // [REF: HAC_MODAL_STATE]
   const [showHaciendaPickerCreate, setShowHaciendaPickerCreate] = useState(false);
   const [showHaciendaPickerEdit, setShowHaciendaPickerEdit] = useState(false);
@@ -216,9 +220,9 @@ export default function ComprobantesEgresoList() {
 
   const resetCreateForm = () => {
     setPagos([]);
+    setAjustes([]);
     setNuevoComprobante(makeInitialNuevo());
   };
-
   const [nuevoComprobante, setNuevoComprobante] = useState(makeInitialNuevo());
 
   const librosIVAFiltrados = librosIvaTabla.filter((l) => l.empresa_id === empresaSeleccionada?.id);
@@ -581,6 +585,12 @@ export default function ComprobantesEgresoList() {
           : []
       );
 
+      setAjustesComprobante(
+        Array.isArray(data?.ajustes)
+          ? data.ajustes
+          : []
+      );
+
       /*
        * Ahora SIEMPRE abrimos el modal.
        */
@@ -646,6 +656,7 @@ export default function ComprobantesEgresoList() {
   const handleCloseModal = () => {
     setSelectedComprobante(null);
     setPagosComprobante([]);
+    setAjustesComprobante([]);
     setPuedeEditarComprobante(false);
     setMotivoNoEditar("");
     setShowModal(false);
@@ -668,7 +679,11 @@ export default function ComprobantesEgresoList() {
   };
 
   const handleGuardarCambios = async () => {
+
+    if (guardandoEdicion) return;
+
     try {
+
       const faltanEdit = validarObligatorios(
         selectedComprobante,
         [
@@ -685,27 +700,69 @@ export default function ComprobantesEgresoList() {
         ]
       );
 
-
       if (faltanEdit.length) {
-        alert("Faltan completar campos obligatorios: " + faltanEdit.join(", "));
+        alert(
+          "Faltan completar campos obligatorios: " +
+          faltanEdit.join(", ")
+        );
         return;
       }
+
+      setGuardandoEdicion(true);
+
       const body = {
         ...selectedComprobante,
-        hacienda_id: selectedComprobante?.hacienda_id
-          ? Number(selectedComprobante.hacienda_id)
-          : null,
+
+        hacienda_id:
+          selectedComprobante?.hacienda_id
+            ? Number(selectedComprobante.hacienda_id)
+            : null,
       };
-      await fetch(`${apiUrl}/comprobantes-egreso/${selectedComprobante.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body),
-      });
+
+      const res = await fetch(
+        `${apiUrl}/comprobantes-egreso/${selectedComprobante.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(body),
+        }
+      );
+
+      const data =
+        await res
+          .json()
+          .catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+          "No se pudo actualizar el comprobante"
+        );
+      }
+
       await loadComprobantes();
+
       handleCloseModal();
+
     } catch (error) {
-      console.error("❌ Error al actualizar comprobante:", error);
+
+      console.error(
+        "❌ Error al actualizar comprobante:",
+        error
+      );
+
+      alert(
+        error.message ||
+        "No se pudo actualizar el comprobante."
+      );
+
+    } finally {
+
+      setGuardandoEdicion(false);
+
     }
   };
 
@@ -761,7 +818,42 @@ export default function ComprobantesEgresoList() {
     return cat?.imputacioncontable_id ?? null;
   };
 
+  const agregarAjuste = () => {
+    setAjustes((prev) => [
+      ...prev,
+      {
+        tipo: "disminuye",
+        concepto: "",
+        importe: "",
+        detalle: "",
+        observaciones: "",
+      },
+    ]);
+  };
+
+  const actualizarAjuste = (idx, campo, valor) => {
+    setAjustes((prev) =>
+      prev.map((ajuste, i) =>
+        i === idx
+          ? {
+            ...ajuste,
+            [campo]: valor,
+          }
+          : ajuste
+      )
+    );
+  };
+
+  const eliminarAjuste = (idx) => {
+    setAjustes((prev) =>
+      prev.filter((_, i) => i !== idx)
+    );
+  };
+
   const handleCrearComprobante = async () => {
+
+    if (creandoComprobante) return;
+
     try {
       // si hay transferencia nueva debe traer banco_id
       const transferenciaInvalida = pagos.some((p) => {
@@ -790,16 +882,19 @@ export default function ComprobantesEgresoList() {
         return;
       }
 
-      // Base de comparación para pagos: Monto real si es LCD, Total si no
-      const totalReferencia = esLCDCreate
-        ? Number(nuevoComprobante.montoreal || 0)
-        : Number(nuevoComprobante.total || 0);
+      // Los pagos deben cubrir el total financiero luego de aplicar ajustes
+      const totalReferencia =
+        totalParaPagos;
 
-      const sumaPagosLocal = pagos.reduce((acc, it) => acc + (Number(it.monto) || 0), 0);
+      const sumaPagosLocal =
+        pagos.reduce(
+          (acc, it) =>
+            acc + (Number(it.monto) || 0),
+          0
+        );
       if (Math.abs(totalReferencia - sumaPagosLocal) > 0.009) {
         alert(
-          `La suma de las formas de pago debe coincidir con ${esLCDCreate ? "el Monto real" : "el Total"
-          } del comprobante.`
+          `La suma de las formas de pago debe coincidir con el total financiero del comprobante (${fmtMoney(totalReferencia)}).`
         );
         return;
       }
@@ -1029,10 +1124,67 @@ export default function ComprobantesEgresoList() {
         return base;
       });
 
+      const ajustesNormalizados = ajustes.map((a) => ({
+        medio: "ajuste",
+        tipo_ajuste: a.tipo,
+        monto: Number(a.importe || 0),
+
+        fecha:
+          nuevoComprobante.fechacomprobante ||
+          nuevoComprobante.fechapago ||
+          null,
+
+        concepto: String(a.concepto || "").trim(),
+
+        detalle:
+          String(a.detalle || "").trim() ||
+          null,
+
+        observaciones:
+          String(a.observaciones || "").trim() ||
+          null,
+
+        referencia_tipo:
+          a.referencia_tipo ||
+          null,
+
+        referencia_id:
+          a.referencia_id ||
+          null,
+      }));
+
+      const ajusteInvalido =
+        ajustesNormalizados.find(
+          (a) =>
+            !["aumenta", "disminuye"].includes(
+              String(a.tipo_ajuste || "")
+                .trim()
+                .toLowerCase()
+            ) ||
+            !String(a.concepto || "").trim() ||
+            !(Number(a.monto || 0) > 0)
+        );
+
+      if (ajusteInvalido) {
+        alert(
+          "Todos los ajustes deben tener tipo, concepto e importe mayor a cero."
+        );
+        return;
+      }
+      if (totalParaPagos < 0) {
+        alert(
+          "Los ajustes no pueden dejar un total financiero negativo."
+        );
+        return;
+      }
       const payload = {
         empresa_id: empresaSeleccionada.id,
         comprobante: comprobanteBase,
-        pagos: pagosNormalizados,
+
+        pagos: [
+          ...pagosNormalizados,
+          ...ajustesNormalizados,
+        ],
       };
 
       console.log("emitir comprobante payload:", JSON.parse(JSON.stringify(payload)));
@@ -1055,17 +1207,33 @@ export default function ComprobantesEgresoList() {
       }
 
       const erroresPagos = validarPagos(pagosNormalizados);
+
       if (erroresPagos.length) {
-        alert("Revisá las formas de pago:\n" + erroresPagos.join("\n"));
+        alert(
+          "Revisá las formas de pago:\n" +
+          erroresPagos.join("\n")
+        );
         return;
       }
 
-      const res = await fetch(`${apiUrl}/comprobantes-egreso/emitir`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+
+      // A partir de acá ya pasaron todas las validaciones.
+      // Bloqueamos el botón antes de enviar al backend.
+      setCreandoComprobante(true);
+
+      console.log(
+        "🔵 PAYLOAD FINAL COMPROBANTE:",
+        JSON.stringify(payload, null, 2)
+      );
+
+      const res = await fetch(
+        `${apiUrl}/comprobantes-egreso/emitir`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -1076,8 +1244,21 @@ export default function ComprobantesEgresoList() {
       setShowCreateModal(false);
       resetCreateForm();
     } catch (error) {
-      console.error("❌ Error al emitir comprobante:", error);
-      alert(error.message);
+
+      console.error(
+        "❌ Error al emitir comprobante:",
+        error
+      );
+
+      alert(
+        error.message ||
+        "No se pudo emitir el comprobante."
+      );
+
+    } finally {
+
+      setCreandoComprobante(false);
+
     }
   };
 
@@ -1182,14 +1363,64 @@ export default function ComprobantesEgresoList() {
     }
   };
 
-  // ====== Totales y pagos (creación)
-  const totalParaPagos = useMemo(
-    () => (esLCDCreate ? Number(nuevoComprobante.montoreal || 0) : Number(nuevoComprobante.total || 0)),
-    [esLCDCreate, nuevoComprobante.montoreal, nuevoComprobante.total]
+  // ====== Totales, ajustes y pagos (creación)
+
+  const totalBaseFinanciero = useMemo(
+    () =>
+      esLCDCreate
+        ? Number(nuevoComprobante.montoreal || 0)
+        : Number(nuevoComprobante.total || 0),
+    [
+      esLCDCreate,
+      nuevoComprobante.montoreal,
+      nuevoComprobante.total,
+    ]
   );
 
-  const sumaPagos = pagos.reduce((acc, it) => acc + (Number(it.monto) || 0), 0);
-  const montosOk = Math.abs(totalParaPagos - sumaPagos) < 0.009;
+  const totalAjustesAumenta = useMemo(
+    () =>
+      ajustes
+        .filter((a) => a.tipo === "aumenta")
+        .reduce(
+          (acc, a) =>
+            acc + Number(a.importe || 0),
+          0
+        ),
+    [ajustes]
+  );
+
+  const totalAjustesDisminuye = useMemo(
+    () =>
+      ajustes
+        .filter((a) => a.tipo === "disminuye")
+        .reduce(
+          (acc, a) =>
+            acc + Number(a.importe || 0),
+          0
+        ),
+    [ajustes]
+  );
+
+  const totalAjustes =
+    totalAjustesAumenta -
+    totalAjustesDisminuye;
+
+  const totalParaPagos = round2(
+    totalBaseFinanciero +
+    totalAjustes
+  );
+
+  const sumaPagos = pagos.reduce(
+    (acc, it) =>
+      acc + (Number(it.monto) || 0),
+    0
+  );
+
+  const montosOk =
+    totalParaPagos >= 0 &&
+    Math.abs(
+      totalParaPagos - sumaPagos
+    ) < 0.009;
 
   const imputHeaderDesc = useMemo(() => {
     const it = imputacionContableTabla.find(
@@ -1925,7 +2156,75 @@ export default function ComprobantesEgresoList() {
                     />
                   </Form.Group>
 
+
+
                   <hr />
+
+                  <h5 className="mb-3">
+                    Ajustes aplicados
+                  </h5>
+
+                  {ajustesComprobante.length === 0 ? (
+
+                    <div className="text-muted mb-3">
+                      Este comprobante no tiene ajustes.
+                    </div>
+
+                  ) : (
+
+                    <Table striped bordered hover size="sm">
+
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Tipo</th>
+                          <th>Concepto</th>
+                          <th>Detalle</th>
+                          <th>Importe</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+
+                        {ajustesComprobante.map((a) => (
+
+                          <tr key={`ajuste-${a.id}`}>
+
+                            <td>
+                              {a.fecha || "-"}
+                            </td>
+
+                            <td>
+                              {a.tipo === "aumenta"
+                                ? "Aumenta"
+                                : "Disminuye"}
+                            </td>
+
+                            <td>
+                              {a.concepto || "-"}
+                            </td>
+
+                            <td>
+                              {a.detalle || "-"}
+                            </td>
+
+                            <td>
+                              {a.tipo === "aumenta" ? "+" : "-"}{" "}
+                              {fmtMoney(a.importe)}
+                            </td>
+
+                          </tr>
+
+                        ))}
+
+                      </tbody>
+
+                    </Table>
+
+                  )}
+
+                  <hr />
+
                   <h5 className="mb-3">
                     Formas de pago aplicadas{" "}
                     {selectedComprobante?.ordenpago_id ? (
@@ -1987,15 +2286,24 @@ export default function ComprobantesEgresoList() {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
+          <Button
+            variant="secondary"
+            onClick={handleCloseModal}
+            disabled={guardandoEdicion}
+          >
             Cancelar
           </Button>
           <Button
             variant="success"
             onClick={handleGuardarCambios}
-            disabled={!puedeEditarComprobante}
+            disabled={
+              !puedeEditarComprobante ||
+              guardandoEdicion
+            }
           >
-            Guardar Cambios
+            {guardandoEdicion
+              ? "Guardando..."
+              : "Guardar Cambios"}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -2414,6 +2722,205 @@ export default function ComprobantesEgresoList() {
 
             </div>
 
+
+            {/* ===== Ajustes del comprobante ===== */}
+            <div className="border rounded p-3 mb-3">
+
+              <div className="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+                  <h5 className="mb-0">
+                    Ajustes
+                  </h5>
+
+                  <small className="text-muted">
+                    Modifican el importe financiero a pagar sin modificar el total fiscal del comprobante.
+                  </small>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="outline-primary"
+                  onClick={agregarAjuste}
+                >
+                  + Agregar ajuste
+                </Button>
+
+              </div>
+
+              {ajustes.length === 0 ? (
+
+                <div className="text-muted">
+                  No hay ajustes aplicados.
+                </div>
+
+              ) : (
+
+                ajustes.map((ajuste, idx) => (
+
+                  <div
+                    key={idx}
+                    className="border rounded p-2 mb-2"
+                  >
+
+                    <div className="row">
+
+                      <Form.Group className="mb-2 col-md-3">
+
+                        <Form.Label>
+                          Tipo
+                        </Form.Label>
+
+                        <Form.Select
+                          value={ajuste.tipo}
+                          onChange={(e) =>
+                            actualizarAjuste(
+                              idx,
+                              "tipo",
+                              e.target.value
+                            )
+                          }
+                        >
+
+                          <option value="disminuye">
+                            Disminuye
+                          </option>
+
+                          <option value="aumenta">
+                            Aumenta
+                          </option>
+
+                        </Form.Select>
+
+                      </Form.Group>
+
+
+                      <Form.Group className="mb-2 col-md-3">
+
+                        <Form.Label>
+                          Importe
+                        </Form.Label>
+
+                        <Form.Control
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={ajuste.importe}
+                          onChange={(e) =>
+                            actualizarAjuste(
+                              idx,
+                              "importe",
+                              e.target.value
+                            )
+                          }
+                        />
+
+                      </Form.Group>
+
+
+                      <Form.Group className="mb-2 col-md-6">
+
+                        <Form.Label>
+                          Concepto
+                        </Form.Label>
+
+                        <Form.Control
+                          value={ajuste.concepto}
+                          onChange={(e) =>
+                            actualizarAjuste(
+                              idx,
+                              "concepto",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej.: diferencia, redondeo, descuento..."
+                        />
+
+                      </Form.Group>
+
+                    </div>
+
+
+                    <div className="row">
+
+                      <Form.Group className="mb-2 col-md-9">
+
+                        <Form.Label>
+                          Detalle
+                        </Form.Label>
+
+                        <Form.Control
+                          value={ajuste.detalle}
+                          onChange={(e) =>
+                            actualizarAjuste(
+                              idx,
+                              "detalle",
+                              e.target.value
+                            )
+                          }
+                        />
+
+                      </Form.Group>
+
+
+                      <div className="col-md-3 d-flex align-items-end justify-content-end mb-2">
+
+                        <Button
+                          size="sm"
+                          variant="outline-danger"
+                          onClick={() =>
+                            eliminarAjuste(idx)
+                          }
+                        >
+                          Eliminar
+                        </Button>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                ))
+
+              )}
+
+
+              <div className="mt-3 text-end">
+
+                <div>
+                  Total base:{" "}
+                  <strong>
+                    {fmtMoney(totalBaseFinanciero)}
+                  </strong>
+                </div>
+
+                <div>
+                  Ajustes aumenta:{" "}
+                  <strong>
+                    + {fmtMoney(totalAjustesAumenta)}
+                  </strong>
+                </div>
+
+                <div>
+                  Ajustes disminuye:{" "}
+                  <strong>
+                    - {fmtMoney(totalAjustesDisminuye)}
+                  </strong>
+                </div>
+
+                <div className="mt-1">
+                  Total financiero:{" "}
+                  <strong>
+                    {fmtMoney(totalParaPagos)}
+                  </strong>
+                </div>
+
+              </div>
+
+            </div>
+
+
             {/* Editor de formas de pago (con existing_ref y gasto mensual) */}
             <FormasPagoEditor
               total={totalParaPagos}           // **base de pagos**: Monto real si LCD, Total si no
@@ -2490,16 +2997,26 @@ export default function ComprobantesEgresoList() {
             Suma pagos: <strong>{fmtMoney(sumaPagos)}</strong>{" "}
             {montosOk ? "✓" : esLCDCreate ? "↔️ debe coincidir con Monto real" : "↔️ debe coincidir con Total"}
           </div>
-          <Button variant="secondary" onClick={handleCloseCreate}>
+          <Button
+            variant="secondary"
+            onClick={handleCloseCreate}
+            disabled={creandoComprobante}
+          >
             Cancelar
           </Button>
 
           <Button
             variant="success"
             onClick={handleCrearComprobante}
-            disabled={!montosOk || !empresaSeleccionada}
+            disabled={
+              !montosOk ||
+              !empresaSeleccionada ||
+              creandoComprobante
+            }
           >
-            Crear Comprobante
+            {creandoComprobante
+              ? "Creando..."
+              : "Crear Comprobante"}
           </Button>
         </Modal.Footer>
       </Modal>
