@@ -225,8 +225,154 @@ export default function ComprobantesEgresoList() {
   };
   const [nuevoComprobante, setNuevoComprobante] = useState(makeInitialNuevo());
 
-  const librosIVAFiltrados = librosIvaTabla.filter((l) => l.empresa_id === empresaSeleccionada?.id);
-  const ptosVtaFiltrados = ptosVentaTabla.filter((l) => l.empresa_id === empresaSeleccionada?.id);
+  const librosIVAFiltrados = useMemo(() => {
+
+    return librosIvaTabla
+      .filter(
+        (l) =>
+          Number(l.empresa_id) ===
+          Number(empresaSeleccionada?.id)
+      )
+      .sort((a, b) => {
+
+        const periodoA =
+          Number(a.anio) * 100 +
+          Number(a.mes);
+
+        const periodoB =
+          Number(b.anio) * 100 +
+          Number(b.mes);
+
+        return periodoB - periodoA;
+      });
+
+  }, [
+    librosIvaTabla,
+    empresaSeleccionada?.id,
+  ]);
+
+  const ptosVtaFiltrados = useMemo(() => {
+
+    return ptosVentaTabla
+      .filter(
+        (l) =>
+          Number(l.empresa_id) ===
+          Number(empresaSeleccionada?.id)
+      )
+      .sort((a, b) => {
+
+        /*
+         * Ordenamos numéricamente por la descripción
+         * del punto de venta.
+         *
+         * Ejemplo:
+         * 12
+         * 10
+         * 5
+         * 2
+         */
+        const numeroA =
+          Number(
+            String(a.descripcion || "")
+              .replace(/\D/g, "")
+          ) || 0;
+
+        const numeroB =
+          Number(
+            String(b.descripcion || "")
+              .replace(/\D/g, "")
+          ) || 0;
+
+        return  numeroA - numeroB
+
+      });
+
+  }, [
+    ptosVentaTabla,
+    empresaSeleccionada?.id,
+  ]);
+
+  const obtenerLibroIVAPorFecha = useCallback(
+    (fecha) => {
+
+      if (
+        !fecha ||
+        !empresaSeleccionada?.id
+      ) {
+        return null;
+      }
+
+      const librosEmpresa =
+        librosIvaTabla.filter(
+          (l) =>
+            Number(l.empresa_id) ===
+            Number(empresaSeleccionada.id)
+        );
+
+      if (!librosEmpresa.length) {
+        return null;
+      }
+
+
+      /*
+       * La fecha viene como YYYY-MM-DD.
+       *
+       * Evitamos new Date() para no introducir
+       * problemas de zona horaria.
+       */
+      const [
+        anioFecha,
+        mesFecha,
+      ] = String(fecha)
+        .split("-")
+        .map(Number);
+
+
+      /*
+       * 1. Primero buscamos coincidencia exacta
+       *    mes + año.
+       */
+      const exacto =
+        librosEmpresa.find(
+          (l) =>
+            Number(l.mes) === mesFecha &&
+            Number(l.anio) === anioFecha
+        );
+
+      if (exacto) {
+        return exacto;
+      }
+
+
+      /*
+       * 2. Si ese período no existe,
+       *    seleccionamos el Libro IVA
+       *    cronológicamente más reciente.
+       */
+      const ordenados =
+        [...librosEmpresa].sort(
+          (a, b) => {
+
+            const periodoA =
+              Number(a.anio) * 100 +
+              Number(a.mes);
+
+            const periodoB =
+              Number(b.anio) * 100 +
+              Number(b.mes);
+
+            return periodoB - periodoA;
+          }
+        );
+
+      return ordenados[0] || null;
+
+    },
+    [
+      librosIvaTabla,
+      empresaSeleccionada?.id,
+    ]
+  );
 
   const loadComprobantes = useCallback(async () => {
     try {
@@ -797,8 +943,49 @@ export default function ComprobantesEgresoList() {
 
   // === Creación
   const handleNuevoChange = (e) => {
-    const { name, value, type, checked } = e.target;
 
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = e.target;
+
+
+    /*
+     * FECHA COMPROBANTE
+     *
+     * Cuando cambia la fecha:
+     *
+     * 1. buscamos Libro IVA del mismo mes/año;
+     * 2. si no existe, usamos el más reciente;
+     * 3. el usuario después puede cambiar
+     *    manualmente el Libro IVA.
+     */
+    if (name === "fechacomprobante") {
+
+      const libroAutomatico =
+        obtenerLibroIVAPorFecha(value);
+
+      setNuevoComprobante((prev) => ({
+        ...prev,
+
+        fechacomprobante:
+          value,
+
+        libroiva_id:
+          libroAutomatico?.id
+            ? String(libroAutomatico.id)
+            : "",
+      }));
+
+      return;
+    }
+
+
+    /*
+     * RESTO DE LOS CAMPOS
+     */
     setNuevoComprobante((prev) => ({
       ...prev,
 
@@ -812,7 +999,9 @@ export default function ComprobantesEgresoList() {
               : value
             : value,
     }));
+
   };
+
   const getImputacionFromCategoria = (categoriaId) => {
     const cat = categoriasEgreso?.find((c) => Number(c.id) === Number(categoriaId));
     return cat?.imputacioncontable_id ?? null;
@@ -1542,12 +1731,40 @@ export default function ComprobantesEgresoList() {
             variant="success"
             disabled={!empresaSeleccionada}
             onClick={() => {
+
               if (!empresaSeleccionada) {
-                alert("Debe seleccionar una empresa para emitir comprobantes.");
+
+                alert(
+                  "Debe seleccionar una empresa para emitir comprobantes."
+                );
+
                 return;
               }
-              resetCreateForm();   // <-- agrega esto
+
+
+              const inicial =
+                makeInitialNuevo();
+
+              const libroAutomatico =
+                obtenerLibroIVAPorFecha(
+                  inicial.fechacomprobante
+                );
+
+
+              setPagos([]);
+              setAjustes([]);
+
+              setNuevoComprobante({
+                ...inicial,
+
+                libroiva_id:
+                  libroAutomatico?.id
+                    ? String(libroAutomatico.id)
+                    : "",
+              });
+
               setShowCreateModal(true);
+
             }}
           >
             Ingresar Comprobante

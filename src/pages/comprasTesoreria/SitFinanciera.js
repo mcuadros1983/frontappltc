@@ -20,6 +20,7 @@ import EditarInstanciaGasto
   from "../../components/tesoreria/EditarInstanciaGasto";
 import EditarEcheqModal
   from "./EditarEcheqModal";
+import AbonoCtaCteModal from "./abonoCtaCteModal";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -331,6 +332,10 @@ export default function SitFinanciera() {
   const [
     programadoEditar,
     setProgramadoEditar
+  ] = useState(null);
+  const [
+    cargoCtaCteAcreditar,
+    setCargoCtaCteAcreditar,
   ] = useState(null);
   const cargaSeq = useRef(0);
   const [err, setErr] = useState(null);
@@ -1450,6 +1455,15 @@ export default function SitFinanciera() {
       </th>
     );
   };
+
+  const handleAcreditarCtaCte =
+    (row) => {
+
+      setCargoCtaCteAcreditar(
+        row
+      );
+
+    };
 
   const handleAcreditarProgramado =
     (row) => {
@@ -3037,30 +3051,41 @@ export default function SitFinanciera() {
 
 
                         {/* ================================= */}
-                        {/* CUENTA CORRIENTE / OTROS          */}
+                        {/* CUENTA CORRIENTE                  */}
                         {/* ================================= */}
 
-                        {row.tipo !== "programado" &&
-                          row.tipo !== "echeq" &&
-                          row.tipo !== "instancia" && (
+                        {row.tipo === "ctacte" && (
 
-                            <div className="d-flex justify-content-center gap-1">
+                          <div className="d-flex justify-content-center gap-1">
 
-                              <BotonNoHabilitado>
-                                Acreditar
-                              </BotonNoHabilitado>
+                            <Button
+                              size="sm"
+                              variant="success"
+                              disabled={
+                                accionandoId === row.key
+                              }
+                              onClick={() =>
+                                handleAcreditarCtaCte(
+                                  row
+                                )
+                              }
+                            >
+                              Acreditar
+                            </Button>
 
-                              <BotonNoHabilitado>
-                                Editar
-                              </BotonNoHabilitado>
 
-                              <BotonNoHabilitado>
-                                Eliminar
-                              </BotonNoHabilitado>
+                            <BotonNoHabilitado>
+                              Editar
+                            </BotonNoHabilitado>
 
-                            </div>
 
-                          )}
+                            <BotonNoHabilitado>
+                              Eliminar
+                            </BotonNoHabilitado>
+
+                          </div>
+
+                        )}
 
                       </td>
                     </tr>
@@ -3309,6 +3334,45 @@ export default function SitFinanciera() {
           await cargar();
         }}
       />
+
+      <AbonoCtaCteModal
+
+        show={
+          Boolean(
+            cargoCtaCteAcreditar
+          )
+        }
+
+        proveedorIdInicial={
+          cargoCtaCteAcreditar?.proveedor_id ??
+          null
+        }
+
+        cargoIdInicial={
+          cargoCtaCteAcreditar?.id ??
+          null
+        }
+
+        onClose={() => {
+
+          setCargoCtaCteAcreditar(
+            null
+          );
+
+        }}
+
+        onCreated={async () => {
+
+          setCargoCtaCteAcreditar(
+            null
+          );
+
+          await cargar();
+
+        }}
+
+      />
+
     </>
   );
 

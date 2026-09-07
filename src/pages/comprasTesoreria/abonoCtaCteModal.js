@@ -32,7 +32,18 @@ const apiUrl = process.env.REACT_APP_API_URL;
  *     incluirNumerosComp?: boolean
  *   }
  */
-export default function AbonoCtaCteModal({ show, onClose, onCreated }) {
+// export default function AbonoCtaCteModal({ show, onClose, onCreated }) {
+export default function AbonoCtaCteModal({
+  show,
+  onClose,
+  onCreated,
+
+  // Opcionales.
+  // Se utilizan cuando el modal se abre desde
+  // Situación Financiera.
+  proveedorIdInicial = null,
+  cargoIdInicial = null,
+}) {
   const dataContext = useContext(Contexts.DataContext);
   const {
     empresaSeleccionada,
@@ -96,20 +107,58 @@ export default function AbonoCtaCteModal({ show, onClose, onCreated }) {
     loadAbonos();
   }, [show, origen, proveedorId, empresaSeleccionada?.id, apiUrl]);
 
-  // Reset al cerrar
+  // Reset / inicialización del modal
   useEffect(() => {
+
     if (!show) {
+
       setProveedorId("");
       setCargos([]);
       setAplicados({});
       setPagos([]);
-      setFecha(new Date().toISOString().slice(0, 10));
+      setFecha(
+        new Date()
+          .toISOString()
+          .slice(0, 10)
+      );
       setDescripcion("");
       setOrigen("pagos");
       setAbonos([]);
       setAbonoIdSel(null);
+
+      return;
     }
-  }, [show]);
+
+
+    /*
+     * Si viene desde Situación Financiera,
+     * precargamos el proveedor.
+     *
+     * Esto provocará automáticamente que el
+     * useEffect de cargos-abiertos consulte
+     * los cargos de ese proveedor.
+     */
+    if (proveedorIdInicial) {
+
+      setProveedorId(
+        String(proveedorIdInicial)
+      );
+
+    }
+
+    /*
+     * Cada apertura comienza con fecha actual.
+     */
+    setFecha(
+      new Date()
+        .toISOString()
+        .slice(0, 10)
+    );
+
+  }, [
+    show,
+    proveedorIdInicial,
+  ]);
 
   // Cargar CARGOS pendientes cuando cambia proveedor
   useEffect(() => {
@@ -132,10 +181,33 @@ export default function AbonoCtaCteModal({ show, onClose, onCreated }) {
         const arr = Array.isArray(data?.rows) ? data.rows : (Array.isArray(data) ? data : []);
         setCargos(arr);
 
-        // Prefija montos en 0
+
+        /*
+         * Inicializamos todos los cargos en cero.
+         *
+         * Si recibimos cargoIdInicial desde
+         * Situación Financiera, seleccionamos
+         * automáticamente ese cargo por su saldo.
+         */
         const preset = {};
-        for (const c of arr) preset[c.id] = 0;
-        setAplicados(preset);
+
+        for (const c of arr) {
+
+          const esCargoInicial =
+            cargoIdInicial &&
+            Number(c.id) ===
+            Number(cargoIdInicial);
+
+
+          preset[c.id] =
+            esCargoInicial
+              ? Number(c.saldo || 0)
+              : 0;
+        }
+
+        setAplicados(
+          preset
+        );
       } catch (err) {
         console.error("❌ cargos pendientes:", err);
         setCargos([]);
@@ -146,7 +218,11 @@ export default function AbonoCtaCteModal({ show, onClose, onCreated }) {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [proveedorId, empresaSeleccionada?.id]);
+  }, [
+    proveedorId,
+    empresaSeleccionada?.id,
+    cargoIdInicial,
+  ]);
 
   const totalAplicar = useMemo(
     () => Object.values(aplicados).reduce((acc, v) => acc + (Number(v) || 0), 0),
