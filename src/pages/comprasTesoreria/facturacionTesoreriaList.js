@@ -87,7 +87,8 @@ export default function ComprobantesEgresoList() {
       toNum(comp?.percepcion_ganancias) +
       toNum(comp?.percepcion_iibb) +
       toNum(comp?.impuestos_internos) +
-      toNum(comp?.exento_no_gravado)
+      toNum(comp?.exento_no_gravado) -
+      toNum(comp?.retencion)
     );
 
   const dataContext = useContext(Contexts.DataContext);
@@ -283,7 +284,7 @@ export default function ComprobantesEgresoList() {
               .replace(/\D/g, "")
           ) || 0;
 
-        return  numeroA - numeroB
+        return numeroA - numeroB
 
       });
 
@@ -541,6 +542,7 @@ export default function ComprobantesEgresoList() {
     nuevoComprobante.percepcion_iibb,
     nuevoComprobante.impuestos_internos,
     nuevoComprobante.exento_no_gravado,
+    nuevoComprobante.retencion,
   ]);
 
   // === Auto TOTAL fiscal (edición)
@@ -570,6 +572,7 @@ export default function ComprobantesEgresoList() {
     selectedComprobante?.percepcion_iibb,
     selectedComprobante?.impuestos_internos,
     selectedComprobante?.exento_no_gravado,
+    selectedComprobante?.retencion,
   ]);
 
   // === Diferencia Efectivo: si no es LCD → 0 y readonly; si es LCD → auto (montoreal - total)
@@ -798,6 +801,17 @@ export default function ComprobantesEgresoList() {
     "diferenciaefectivo",
     "retencion",
   ];
+
+  const handleFocusNumero = (e) => {
+    const { name, value } = e.target;
+
+    if (
+      CAMPOS_NUMERICOS_COMPROBANTE.includes(name) &&
+      Number(value) === 0
+    ) {
+      e.target.select();
+    }
+  };
 
   const handleCloseModal = () => {
     setSelectedComprobante(null);
@@ -1957,6 +1971,7 @@ export default function ComprobantesEgresoList() {
                         name="neto"
                         value={selectedComprobante.neto ?? 0}
                         onChange={handleChange}
+                        onFocus={handleFocusNumero}
                       />
                     </Form.Group>
 
@@ -2062,7 +2077,8 @@ export default function ComprobantesEgresoList() {
                         step="0.01"
                         name="percepcion_iva"
                         value={selectedComprobante.percepcion_iva ?? 0}
-                        onChange={handleChange}
+                        onChange={handleNuevoChange}
+                        onFocus={handleFocusNumero}
                       />
                     </Form.Group>
 
@@ -2090,7 +2106,8 @@ export default function ComprobantesEgresoList() {
                         step="0.01"
                         name="percepcion_iibb"
                         value={selectedComprobante.percepcion_iibb ?? 0}
-                        onChange={handleChange}
+                        onChange={handleNuevoChange}
+  onFocus={handleFocusNumero}
                       />
                     </Form.Group>
 
@@ -2104,7 +2121,8 @@ export default function ComprobantesEgresoList() {
                         step="0.01"
                         name="impuestos_internos"
                         value={selectedComprobante.impuestos_internos ?? 0}
-                        onChange={handleChange}
+                        onChange={handleNuevoChange}
+  onFocus={handleFocusNumero}
                       />
                     </Form.Group>
 
@@ -2118,7 +2136,21 @@ export default function ComprobantesEgresoList() {
                         step="0.01"
                         name="exento_no_gravado"
                         value={selectedComprobante.exento_no_gravado ?? 0}
+                        onChange={handleNuevoChange}
+  onFocus={handleFocusNumero}
+                      />
+                    </Form.Group>
+                    {/* RETENCIÓN */}
+                    <Form.Group className="mb-3 col-md-3">
+                      <Form.Label>Retención</Form.Label>
+                      <Form.Control
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        name="retencion"
+                        value={selectedComprobante?.retencion ?? 0}
                         onChange={handleChange}
+                        onFocus={handleFocusNumero}
                       />
                     </Form.Group>
 
@@ -2247,6 +2279,7 @@ export default function ComprobantesEgresoList() {
                         name="montoreal"
                         value={esLCDEdit ? (selectedComprobante.montoreal || 0) : 0}
                         onChange={esLCDEdit ? handleChange : undefined}
+                        onFocus={esLCDEdit ? handleFocusNumero : undefined}
                         readOnly={!esLCDEdit}
                       />
                     </Form.Group>
@@ -2784,6 +2817,7 @@ export default function ComprobantesEgresoList() {
                   name="neto"
                   value={nuevoComprobante.neto ?? 0}
                   onChange={handleNuevoChange}
+                  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -2828,6 +2862,7 @@ export default function ComprobantesEgresoList() {
                   name="iva21"
                   value={nuevoComprobante.iva21 ?? 0}
                   onChange={handleNuevoChange}
+                  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -2874,6 +2909,7 @@ export default function ComprobantesEgresoList() {
                   name="percepcion_iva"
                   value={nuevoComprobante.percepcion_iva ?? 0}
                   onChange={handleNuevoChange}
+                  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -2886,6 +2922,7 @@ export default function ComprobantesEgresoList() {
                   name="percepcion_ganancias"
                   value={nuevoComprobante.percepcion_ganancias ?? 0}
                   onChange={handleNuevoChange}
+                  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -2898,6 +2935,7 @@ export default function ComprobantesEgresoList() {
                   name="percepcion_iibb"
                   value={nuevoComprobante.percepcion_iibb ?? 0}
                   onChange={handleNuevoChange}
+                  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -2910,6 +2948,7 @@ export default function ComprobantesEgresoList() {
                   name="impuestos_internos"
                   value={nuevoComprobante.impuestos_internos ?? 0}
                   onChange={handleNuevoChange}
+  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -2922,6 +2961,22 @@ export default function ComprobantesEgresoList() {
                   name="exento_no_gravado"
                   value={nuevoComprobante.exento_no_gravado ?? 0}
                   onChange={handleNuevoChange}
+  onFocus={handleFocusNumero}
+                />
+              </Form.Group>
+
+              {/* RETENCIÓN */}
+              <Form.Group className="mb-3 col-md-3">
+                <Form.Label>Retención</Form.Label>
+
+                <Form.Control
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="retencion"
+                  value={nuevoComprobante.retencion ?? 0}
+                  onChange={handleNuevoChange}
+                  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -3176,6 +3231,7 @@ export default function ComprobantesEgresoList() {
                   name="montoreal"
                   value={esLCDCreate ? (nuevoComprobante.montoreal || 0) : 0}
                   onChange={esLCDCreate ? handleNuevoChange : undefined}
+                  onFocus={esLCDCreate ? handleFocusNumero : undefined}
                   readOnly={!esLCDCreate}
                 />
               </Form.Group>
