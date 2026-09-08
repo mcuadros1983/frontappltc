@@ -14,6 +14,8 @@ export default function AccountForm() {
   const [descripcionCobranza, setDescripcionCobranza] = useState("");
   const [formaCobro, setFormaCobro] = useState("");
   const [fechaCobranza, setFechaCobranza] = useState("");
+  const [guardandoCobranza, setGuardandoCobranza] = useState(false);
+  const guardandoCobranzaRef = useRef(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [movimientosPerPage] = useState(10);
@@ -183,54 +185,236 @@ export default function AccountForm() {
   const handleCloseModal = () => setShowModal(false);
 
   const handleGuardarCobranza = async () => {
-    const montoNum = Number(montoCobranza);
 
-    if (!String(montoCobranza).trim()) {
-      alert("Por favor, ingrese un monto válido.");
+    /*
+     * Bloqueo inmediato.
+     *
+     * A diferencia del state, el ref cambia
+     * sin esperar un nuevo render.
+     *
+     * Si el usuario hace doble clic o vuelve
+     * a presionar Guardar mientras el backend
+     * todavía está procesando el POST,
+     * la segunda ejecución termina acá.
+     */
+    if (guardandoCobranzaRef.current) {
       return;
     }
 
-    if (!Number.isFinite(montoNum) || montoNum === 0) {
-      alert("El monto debe ser numérico y distinto de 0.");
-      return;
-    }
-    if (!selectedCliente?.id) {
-      alert("Debe haber un cliente seleccionado.");
+
+    const montoNum =
+      Number(
+        montoCobranza
+      );
+
+
+    // ================================================
+    // VALIDACIONES
+    // ================================================
+
+    if (
+      !String(
+        montoCobranza
+      ).trim()
+    ) {
+
+      alert(
+        "Por favor, ingrese un monto válido."
+      );
+
       return;
     }
 
-    const confirmGuardar = window.confirm("¿Seguro que desea grabar esta cobranza?");
-    if (!confirmGuardar) return;
+
+    if (
+      !Number.isFinite(
+        montoNum
+      ) ||
+      montoNum === 0
+    ) {
+
+      alert(
+        "El monto debe ser numérico y distinto de 0."
+      );
+
+      return;
+    }
+
+
+    if (
+      !selectedCliente?.id
+    ) {
+
+      alert(
+        "Debe haber un cliente seleccionado."
+      );
+
+      return;
+    }
+
+
+    const confirmGuardar =
+      window.confirm(
+        "¿Seguro que desea grabar esta cobranza?"
+      );
+
+
+    if (!confirmGuardar) {
+      return;
+    }
+
+
+    /*
+     * IMPORTANTE:
+     *
+     * El bloqueo se activa inmediatamente después
+     * de la confirmación y ANTES del fetch.
+     */
+    guardandoCobranzaRef.current =
+      true;
+
+    setGuardandoCobranza(
+      true
+    );
+
 
     try {
-      await fetch(`${apiUrl}/cobranzas`, {
-        credentials: "include",
-        method: "POST",
-        body: JSON.stringify({
-          clienteId: selectedCliente.id,
-          detallesCobranza: montoCobranza,
-          descripcionCobranza,
-          formaCobro,
-          montoTotal: montoCobranza,
-          fecha: fechaCobranza,
-        }),
-        headers: { "Content-Type": "application/json" },
-      });
 
-      const operaciones = await obtenerOperaciones(selectedCliente.id);
-      const allMovs = [...(operaciones.ventas || []), ...(operaciones.cobranzas || [])].sort(
-        (a, b) => new Date(b.fecha) - new Date(a.fecha)
+      // ================================================
+      // REGISTRAR COBRANZA
+      // ================================================
+
+      const response =
+        await fetch(
+          `${apiUrl}/cobranzas`,
+          {
+            credentials:
+              "include",
+
+            method:
+              "POST",
+
+            body:
+              JSON.stringify({
+                clienteId:
+                  selectedCliente.id,
+
+                detallesCobranza:
+                  montoCobranza,
+
+                descripcionCobranza,
+
+                formaCobro,
+
+                montoTotal:
+                  montoCobranza,
+
+                fecha:
+                  fechaCobranza,
+              }),
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+          }
+        );
+
+
+      /*
+       * Antes no se comprobaba response.ok.
+       *
+       * fetch NO lanza automáticamente un error
+       * ante respuestas HTTP 400/500.
+       */
+      if (!response.ok) {
+
+        const json =
+          await response
+            .json()
+            .catch(
+              () => ({})
+            );
+
+
+        throw new Error(
+          json?.error ||
+          "No se pudo registrar la cobranza."
+        );
+      }
+
+
+      // ================================================
+      // RECARGAR MOVIMIENTOS
+      // ================================================
+
+      const operaciones =
+        await obtenerOperaciones(
+          selectedCliente.id
+        );
+
+
+      const allMovs = [
+        ...(operaciones.ventas || []),
+        ...(operaciones.cobranzas || []),
+      ].sort(
+        (a, b) =>
+          new Date(b.fecha) -
+          new Date(a.fecha)
       );
-      setMovimientos(allMovs);
-      setSaldoActual(operaciones.saldoActual);
-      setCurrentPage(1);
-    } catch (error) {
-      console.error("Error al guardar cobranza/recargar movimientos", error);
-      alert("Error al guardar la cobranza o al obtener movimientos y saldo.");
-    }
 
-    setMontoCobranza("");
-    handleCloseModal();
+
+      setMovimientos(
+        allMovs
+      );
+
+      setSaldoActual(
+        operaciones.saldoActual
+      );
+
+      setCurrentPage(
+        1
+      );
+
+
+      // ================================================
+      // LIMPIAR Y CERRAR
+      // ================================================
+
+      setMontoCobranza(
+        ""
+      );
+
+      handleCloseModal();
+
+
+    } catch (error) {
+
+      console.error(
+        "Error al guardar cobranza/recargar movimientos",
+        error
+      );
+
+
+      alert(
+        error?.message ||
+        "Error al guardar la cobranza o al obtener movimientos y saldo."
+      );
+
+
+    } finally {
+
+      /*
+       * Solamente después de que terminó TODO el proceso
+       * permitimos una nueva cobranza.
+       */
+      guardandoCobranzaRef.current =
+        false;
+
+      setGuardandoCobranza(
+        false
+      );
+    }
   };
 
   // === Filtro + Orden + Paginación ===
@@ -502,7 +686,16 @@ export default function AccountForm() {
       )}
 
       {/* Modal Cobranza */}
-      <Modal show={showModal} onHide={handleCloseModal} backdrop="static" keyboard={false}>
+      <Modal
+        show={showModal}
+        onHide={() => {
+          if (!guardandoCobranza) {
+            handleCloseModal();
+          }
+        }}
+        backdrop="static"
+        keyboard={false}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Registrar Cobranza</Modal.Title>
         </Modal.Header>
@@ -536,11 +729,23 @@ export default function AccountForm() {
           </Form.Select>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
+          <Button
+            variant="secondary"
+            onClick={handleCloseModal}
+            disabled={guardandoCobranza}
+          >
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleGuardarCobranza}>
-            Guardar
+          <Button
+            variant="primary"
+            onClick={handleGuardarCobranza}
+            disabled={guardandoCobranza}
+          >
+            {
+              guardandoCobranza
+                ? "Guardando..."
+                : "Guardar"
+            }
           </Button>
         </Modal.Footer>
       </Modal>
