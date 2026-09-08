@@ -129,6 +129,12 @@ export default function NuevoPagoProgramado({
 
 
   const [
+    echeqFechaVencimiento,
+    setEcheqFechaVencimiento,
+  ] = useState("");
+
+
+  const [
     formaPagoId,
     setFormaPagoId,
   ] = useState("");
@@ -189,12 +195,33 @@ export default function NuevoPagoProgramado({
   // El usuario puede elegirla manualmente.
   // ==========================================================
 
-  const formasPagoFiltradas =
+  const formaPagoAutomatica =
     useMemo(() => {
 
-      return formasPagoTesoreria || [];
+      const descripcionBuscada =
+        medio === "caja"
+          ? "EFECTIVO"
+          : medio === "echeq"
+            ? "ECHEQ"
+            : "TRANSFERENCIA";
 
-    }, [formasPagoTesoreria]);
+
+      return (
+        formasPagoTesoreria || []
+      ).find(
+        (fp) =>
+          String(
+            fp.descripcion || ""
+          )
+            .trim()
+            .toUpperCase() ===
+          descripcionBuscada
+      ) || null;
+
+    }, [
+      formasPagoTesoreria,
+      medio,
+    ]);
 
 
   // ==========================================================
@@ -393,6 +420,7 @@ export default function NuevoPagoProgramado({
       setImputacionId("");
       setProyectoId("");
       setBancoId("");
+      setEcheqFechaVencimiento("");
       setFormaPagoId("");
       setMsg(null);
     };
@@ -433,9 +461,19 @@ export default function NuevoPagoProgramado({
 
     !!categoriaId &&
 
+    !!formaPagoAutomatica?.id &&
+
     (
-      medio !== "banco" ||
+      !["banco", "echeq"].includes(medio) ||
       !!bancoId
+    ) &&
+
+    (
+      medio !== "echeq" ||
+      (
+        !!echeqFechaVencimiento &&
+        echeqFechaVencimiento >= fechaProgramada
+      )
     );
 
 
@@ -498,9 +536,9 @@ export default function NuevoPagoProgramado({
             null,
 
           formapago_id:
-            formaPagoId
-              ? Number(formaPagoId)
-              : null,
+            Number(
+              formaPagoAutomatica.id
+            ),
 
           /*
            * Si es Banco sí dejamos el banco prefijado.
@@ -510,12 +548,20 @@ export default function NuevoPagoProgramado({
            * de ACREDITAR.
            */
           banco_id:
-            medio === "banco"
+            (
+              medio === "banco" ||
+              medio === "echeq"
+            )
               ? Number(bancoId)
               : null,
 
           caja_id:
             null,
+
+          echeq_fecha_vencimiento:
+            medio === "echeq"
+              ? echeqFechaVencimiento
+              : null,
 
           categoriaegreso_id:
             Number(categoriaId),
@@ -746,7 +792,7 @@ export default function NuevoPagoProgramado({
 
 
               <div
-                className="d-flex align-items-center"
+                className="d-flex flex-wrap align-items-center"
                 style={{
                   gap: 16,
                 }}
@@ -760,8 +806,7 @@ export default function NuevoPagoProgramado({
                   label="Transferencia / Banco"
                   value="banco"
                   checked={
-                    medio ===
-                    "banco"
+                    medio === "banco"
                   }
                   onChange={(e) =>
                     setMedio(
@@ -779,8 +824,25 @@ export default function NuevoPagoProgramado({
                   label="Caja"
                   value="caja"
                   checked={
-                    medio ===
-                    "caja"
+                    medio === "caja"
+                  }
+                  onChange={(e) =>
+                    setMedio(
+                      e.target.value
+                    )
+                  }
+                />
+
+
+                <Form.Check
+                  inline
+                  type="radio"
+                  id="medio-echeq"
+                  name="medio-programado"
+                  label="eCheq"
+                  value="echeq"
+                  checked={
+                    medio === "echeq"
                   }
                   onChange={(e) =>
                     setMedio(
@@ -822,53 +884,95 @@ export default function NuevoPagoProgramado({
               BANCO
              ================================================== */}
 
-          {medio === "banco" && (
+          {(
+            medio === "banco" ||
+            medio === "echeq"
+          ) && (
 
-            <Row className="mb-3">
+              <Row className="mb-3">
 
-              <Col md={6}>
+                <Col md={6}>
 
-                <Form.Label>
-                  Banco
-                </Form.Label>
+                  <Form.Label>
+                    Banco
+                  </Form.Label>
 
-                <Form.Select
-                  value={bancoId}
-                  onChange={(e) =>
-                    setBancoId(
-                      e.target.value
-                    )
-                  }
-                  required
-                  className="form-control my-input"
-                >
+                  <Form.Select
+                    value={bancoId}
+                    onChange={(e) =>
+                      setBancoId(
+                        e.target.value
+                      )
+                    }
+                    required
+                    className="form-control my-input"
+                  >
 
-                  <option value="">
-                    Seleccione…
-                  </option>
+                    <option value="">
+                      Seleccione…
+                    </option>
 
-                  {bancosDisponibles.map(
-                    (b) => (
+                    {bancosDisponibles.map(
+                      (b) => (
 
-                      <option
-                        key={b.id}
-                        value={b.id}
-                      >
-                        {b.nombre ||
-                          b.descripcion ||
-                          b.alias ||
-                          `Banco ${b.id}`}
-                      </option>
+                        <option
+                          key={b.id}
+                          value={b.id}
+                        >
+                          {b.nombre ||
+                            b.descripcion ||
+                            b.alias ||
+                            `Banco ${b.id}`}
+                        </option>
 
-                    )
-                  )}
+                      )
+                    )}
 
-                </Form.Select>
+                  </Form.Select>
 
-              </Col>
+                </Col>
 
+                {medio === "echeq" && (
 
-              {/* <Col md={6}>
+                  <Col md={6}>
+
+                    <Form.Label>
+                      Vencimiento previsto del eCheq
+                    </Form.Label>
+
+                    <Form.Control
+                      type="date"
+                      value={
+                        echeqFechaVencimiento
+                      }
+                      min={
+                        fechaProgramada || undefined
+                      }
+                      onChange={(e) =>
+                        setEcheqFechaVencimiento(
+                          e.target.value
+                        )
+                      }
+                      required
+                      isInvalid={
+                        !!echeqFechaVencimiento &&
+                        !!fechaProgramada &&
+                        echeqFechaVencimiento <
+                        fechaProgramada
+                      }
+                    />
+
+                    <Form.Control.Feedback
+                      type="invalid"
+                    >
+                      El vencimiento no puede ser anterior
+                      a la fecha programada.
+                    </Form.Control.Feedback>
+
+                  </Col>
+
+                )}
+                {/* <Col md={6}>
 
                 <Form.Label>
                   Forma de pago
@@ -909,9 +1013,9 @@ export default function NuevoPagoProgramado({
 
               </Col> */}
 
-            </Row>
+              </Row>
 
-          )}
+            )}
 
           {medio === "caja" && (
 

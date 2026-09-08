@@ -109,12 +109,23 @@ export default function AcreditarPagoProgramadoModal({
 
 
   const [
+    echeqFechaVencimiento,
+    setEcheqFechaVencimiento,
+  ] = useState("");
+
+
+  const [
+    numeroEcheq,
+    setNumeroEcheq,
+  ] = useState("");
+
+
+  const [
     fecha,
     setFecha,
   ] = useState(
     isoToday()
   );
-
 
   const [
     monto,
@@ -182,7 +193,9 @@ export default function AcreditarPagoProgramadoModal({
       const descripcionBuscada =
         medio === "caja"
           ? "EFECTIVO"
-          : "TRANSFERENCIA";
+          : medio === "echeq"
+            ? "ECHEQ"
+            : "TRANSFERENCIA";
 
       return (
         formasPagoTesoreria || []
@@ -331,14 +344,20 @@ export default function AcreditarPagoProgramadoModal({
           "banco"
         );
 
+      } else if (
+        row.medio === "echeq"
+      ) {
+
+        setMedio(
+          "echeq"
+        );
+
       } else {
 
         setMedio(
           "caja"
         );
       }
-
-
       // ================================================
       // BANCO ORIGINAL
       // ================================================
@@ -351,7 +370,16 @@ export default function AcreditarPagoProgramadoModal({
           : ""
       );
 
+      setEcheqFechaVencimiento(
+        row.echeq_fecha_vencimiento
+          ? String(
+            row.echeq_fecha_vencimiento
+          )
+          : ""
+      );
 
+
+      setNumeroEcheq("");
       // ================================================
       // CAJA ORIGINAL
       // ================================================
@@ -473,7 +501,7 @@ export default function AcreditarPagoProgramadoModal({
 
 
     if (
-      !["caja", "banco"].includes(
+      !["caja", "banco", "echeq"].includes(
         medio
       )
     ) {
@@ -482,7 +510,6 @@ export default function AcreditarPagoProgramadoModal({
         "Debe seleccionar una forma de pago"
       );
     }
-
 
     if (
       medio === "caja" &&
@@ -496,14 +523,37 @@ export default function AcreditarPagoProgramadoModal({
         "No hay una caja abierta disponible para registrar el pago"
       );
     }
-
     if (
-      medio === "banco" &&
+      ["banco", "echeq"].includes(medio) &&
       !bancoId
     ) {
 
       throw new Error(
-        "Debe seleccionar un banco"
+        medio === "echeq"
+          ? "Debe seleccionar el banco del eCheq"
+          : "Debe seleccionar un banco"
+      );
+    }
+
+
+    if (
+      medio === "echeq" &&
+      !echeqFechaVencimiento
+    ) {
+
+      throw new Error(
+        "Debe indicar la fecha de vencimiento del eCheq"
+      );
+    }
+
+
+    if (
+      medio === "echeq" &&
+      echeqFechaVencimiento < fecha
+    ) {
+
+      throw new Error(
+        "La fecha de vencimiento del eCheq no puede ser anterior a la fecha de emisión"
       );
     }
 
@@ -512,7 +562,9 @@ export default function AcreditarPagoProgramadoModal({
       throw new Error(
         medio === "caja"
           ? "No se encontró la forma de pago Efectivo"
-          : "No se encontró la forma de pago Transferencia"
+          : medio === "echeq"
+            ? "No se encontró la forma de pago ECHEQ"
+            : "No se encontró la forma de pago Transferencia"
       );
     }
     // if (!formaPagoId) {
@@ -561,10 +613,24 @@ export default function AcreditarPagoProgramadoModal({
               : null,
 
           banco_id:
-            medio === "banco"
+            (
+              medio === "banco" ||
+              medio === "echeq"
+            )
               ? Number(
                 bancoId
               )
+              : null,
+
+          echeq_fecha_vencimiento:
+            medio === "echeq"
+              ? echeqFechaVencimiento
+              : null,
+
+          numero_echeq:
+            medio === "echeq" &&
+              numeroEcheq.trim()
+              ? numeroEcheq.trim()
               : null,
 
           monto:
@@ -877,6 +943,26 @@ export default function AcreditarPagoProgramadoModal({
                   }
                 />
 
+                <Form.Check
+                  inline
+                  type="radio"
+                  name="medio-programado"
+                  id="programado-medio-echeq"
+                  label="eCheq"
+                  value="echeq"
+                  checked={
+                    medio === "echeq"
+                  }
+                  disabled={
+                    saving
+                  }
+                  onChange={() =>
+                    setMedio(
+                      "echeq"
+                    )
+                  }
+                />
+
               </div>
 
             </Form.Group>
@@ -987,63 +1073,145 @@ export default function AcreditarPagoProgramadoModal({
               {/* BANCO                                 */}
               {/* ===================================== */}
 
-              {medio === "banco" && (
+              {(
+                medio === "banco" ||
+                medio === "echeq"
+              ) && (
 
-                <Col md={6}>
+                  <Col md={6}>
 
-                  <Form.Group>
+                    <Form.Group>
 
-                    <Form.Label>
-                      Banco
-                    </Form.Label>
+                      <Form.Label>
+                        Banco
+                      </Form.Label>
 
-                    <Form.Select
-                      value={
-                        bancoId
-                      }
-                      disabled={
-                        saving
-                      }
-                      onChange={(e) =>
-                        setBancoId(
-                          e.target.value
-                        )
-                      }
-                    >
+                      <Form.Select
+                        value={
+                          bancoId
+                        }
+                        disabled={
+                          saving
+                        }
+                        onChange={(e) =>
+                          setBancoId(
+                            e.target.value
+                          )
+                        }
+                      >
 
-                      <option value="">
-                        Seleccionar...
-                      </option>
+                        <option value="">
+                          Seleccionar...
+                        </option>
 
 
-                      {bancosDisponibles.map(
-                        (b) => (
+                        {bancosDisponibles.map(
+                          (b) => (
 
-                          <option
-                            key={
-                              b.id
-                            }
-                            value={
-                              b.id
-                            }
-                          >
+                            <option
+                              key={
+                                b.id
+                              }
+                              value={
+                                b.id
+                              }
+                            >
 
-                            {
-                              b.descripcion ||
-                              b.nombre ||
-                              `Banco ${b.id}`
-                            }
+                              {
+                                b.descripcion ||
+                                b.nombre ||
+                                `Banco ${b.id}`
+                              }
 
-                          </option>
+                            </option>
 
-                        )
-                      )}
+                          )
+                        )}
 
-                    </Form.Select>
+                      </Form.Select>
 
-                  </Form.Group>
+                    </Form.Group>
 
-                </Col>
+                  </Col>
+
+                )}
+
+              {medio === "echeq" && (
+
+                <>
+
+                  <Col md={6}>
+
+                    <Form.Group>
+
+                      <Form.Label>
+                        Fecha de vencimiento del eCheq
+                      </Form.Label>
+
+                      <Form.Control
+                        type="date"
+                        value={
+                          echeqFechaVencimiento
+                        }
+                        min={
+                          fecha || undefined
+                        }
+                        disabled={
+                          saving
+                        }
+                        onChange={(e) =>
+                          setEcheqFechaVencimiento(
+                            e.target.value
+                          )
+                        }
+                        isInvalid={
+                          !!echeqFechaVencimiento &&
+                          !!fecha &&
+                          echeqFechaVencimiento <
+                          fecha
+                        }
+                      />
+
+                      <Form.Control.Feedback
+                        type="invalid"
+                      >
+                        El vencimiento no puede ser anterior
+                        a la fecha de emisión.
+                      </Form.Control.Feedback>
+
+                    </Form.Group>
+
+                  </Col>
+
+
+                  <Col md={6}>
+
+                    <Form.Group>
+
+                      <Form.Label>
+                        Número eCheq / Descripción
+                      </Form.Label>
+
+                      <Form.Control
+                        value={
+                          numeroEcheq
+                        }
+                        disabled={
+                          saving
+                        }
+                        placeholder="Opcional"
+                        onChange={(e) =>
+                          setNumeroEcheq(
+                            e.target.value
+                          )
+                        }
+                      />
+
+                    </Form.Group>
+
+                  </Col>
+
+                </>
 
               )}
 
@@ -1057,7 +1225,9 @@ export default function AcreditarPagoProgramadoModal({
                 <Form.Group>
 
                   <Form.Label>
-                    Fecha de pago
+                    {medio === "echeq"
+                      ? "Fecha de emisión"
+                      : "Fecha de pago"}
                   </Form.Label>
 
                   <Form.Control

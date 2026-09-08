@@ -242,35 +242,156 @@ export default function FormasPagoEditor({
     }
   };
 
-  const elegirExistente = (idx, selectedId) => {
-    const opts = opcionesPorFila[idx]?.items || [];
-    const it = opts.find((x) => String(x.id) === String(selectedId));
-    if (!it) return;
+  const elegirExistente = (
+    idx,
+    selectedValue
+  ) => {
 
-    const row = value[idx];
-    const medio = medioFromFp(row.formapago_id);
-    const tipo = tipoExistingFromMedio(medio);
+    const opts =
+      opcionesPorFila[idx]?.items ||
+      [];
+
+
+    /*
+     * Cada opción se identifica por:
+     *
+     * tipo:id
+     *
+     * Ejemplos:
+     *
+     * banco:18
+     * caja:25
+     * echeq:25
+     * pago_programado:25
+     *
+     * Esto evita colisiones entre IDs provenientes
+     * de tablas diferentes.
+     */
+
+    const it =
+      opts.find(
+        (x) =>
+          `${x.tipo}:${x.id}` ===
+          String(selectedValue)
+      );
+
+
+    if (!it) {
+      return;
+    }
+
+
+    const row =
+
+      value[idx];
+
+    const medio =
+      medioFromFp(
+        row.formapago_id
+      );
+
+
+    /*
+     * FUNDAMENTAL:
+     *
+     * Si el backend nos informa el tipo real,
+     * siempre lo respetamos.
+     *
+     * Especialmente:
+     *
+     * tipo = "pago_programado"
+     *
+     * No debemos convertirlo nuevamente en
+     * banco/caja/echeq según el medio elegido.
+     */
+
+    const tipo =
+      it.tipo ||
+      tipoExistingFromMedio(
+        medio
+      );
+
 
     const importe =
       medio === "echeq"
-        ? Number(it.importe ?? it.monto ?? 0)
-        : Number(it.monto ?? 0);
+        ? Number(
+          it.importe ??
+          it.monto ??
+          0
+        )
+        : Number(
+          it.monto ??
+          it.importe ??
+          0
+        );
 
-    const next = value.slice();
+
+    const next =
+      value.slice();
+
+
     next[idx] = {
       ...row,
-      existing_ref: { tipo, id: it.id },
-      monto: String(importe),
-      gastoestimado: { aplicar: false, instancia_id: "", cancelar_renovacion: false },
-      // cualquier campo propio de ctacte no aplica si hay existente
-      fecha_pago: "",
-      formapago_futuro_id: "",
-      // asegurar fecha igual al comprobante
-      fecha: fechaComprobante || row.fecha,
+
+      existing_ref: {
+        tipo,
+        id:
+          it.id,
+      },
+
+      monto:
+        String(importe),
+
+      gastoestimado: {
+        aplicar:
+          false,
+
+        instancia_id:
+          "",
+
+        cancelar_renovacion:
+          false,
+      },
+
+      fecha_pago:
+        "",
+
+      formapago_futuro_id:
+        "",
+
+      fecha:
+        fechaComprobante ||
+        row.fecha,
     };
-    onChange?.(next);
-    setOpc(idx, { chosen: it });
-    setGm(idx, { items: [], error: null, loading: false });
+
+
+    onChange?.(
+      next
+    );
+
+
+    setOpc(
+      idx,
+      {
+        chosen:
+          it,
+      }
+    );
+
+
+    setGm(
+      idx,
+      {
+        items:
+          [],
+
+        error:
+          null,
+
+        loading:
+          false,
+      }
+    );
   };
 
   const quitarExistente = (idx) => {
@@ -491,19 +612,58 @@ export default function FormasPagoEditor({
                 {Array.isArray(op.items) && op.items.length > 0 && (
                   <div className="mt-2">
                     <Form.Select
-                      value={op.chosen?.id || ""}
-                      onChange={(e) => elegirExistente(idx, e.target.value)}
+                      value={
+                        op.chosen
+                          ? `${op.chosen.tipo}:${op.chosen.id}`
+                          : ""
+                      }
+                      onChange={(e) =>
+                        elegirExistente(
+                          idx,
+                          e.target.value
+                        )
+                      }
                       className="form-control form-control-sm my-input"
                     >
                       <option value="">Seleccionar movimiento disponible…</option>
                       {op.items.map((mv) => {
                         const resumen = (() => {
-                          if (medio === "caja")
-                            return `#${mv.id} · ${mv.fecha} · $${Number(mv.monto || 0).toFixed(2)} · ${mv.descripcion || ""}`;
-                          if (medio === "transferencia")
-                            return `#${mv.id} · ${mv.fecha} · $${Number(mv.monto || 0).toFixed(2)} · ${mv.descripcion || ""}`;
-                          if (medio === "echeq")
-                            return `#${mv.id} · Emisión ${mv.fecha_emision} · Vto ${mv.fecha_vencimiento} · $${Number(mv.importe || mv.monto || 0).toFixed(2)}`;
+                          if (medio === "caja") {
+
+                            if (mv.tipo === "pago_programado") {
+                              return `PROGRAMADO #${mv.id} · ${mv.fecha} · $${Number(
+                                mv.monto || 0
+                              ).toFixed(2)} · ${mv.descripcion || ""}`;
+                            }
+
+                            return `CAJA #${mv.id} · ${mv.fecha} · $${Number(
+                              mv.monto || 0
+                            ).toFixed(2)} · ${mv.descripcion || ""}`;
+                          }
+                          if (medio === "transferencia") {
+
+                            if (mv.tipo === "pago_programado") {
+                              return `PROGRAMADO #${mv.id} · ${mv.fecha} · $${Number(
+                                mv.monto || 0
+                              ).toFixed(2)} · ${mv.descripcion || ""}`;
+                            }
+
+                            return `BANCO #${mv.id} · ${mv.fecha} · $${Number(
+                              mv.monto || 0
+                            ).toFixed(2)} · ${mv.descripcion || ""}`;
+                          }
+                          if (medio === "echeq") {
+
+                            if (mv.tipo === "pago_programado") {
+                              return `PROGRAMADO #${mv.id} · Fecha ${mv.fecha_emision || mv.fecha || "-"} · Vto ${mv.fecha_vencimiento || "-"} · $${Number(
+                                mv.importe || mv.monto || 0
+                              ).toFixed(2)} · ${mv.descripcion || ""}`;
+                            }
+
+                            return `ECHEQ #${mv.id} · Emisión ${mv.fecha_emision || "-"} · Vto ${mv.fecha_vencimiento || "-"} · $${Number(
+                              mv.importe || mv.monto || 0
+                            ).toFixed(2)}`;
+                          }
                           if (medio === "tarjeta")
                             return `#${mv.id} · ${mv.fecha} · $${Number(mv.importe || mv.monto || 0).toFixed(2)} · cupón ${mv.cupon_numero || "-"}`;
                           if (medio === "ctacte")
@@ -511,7 +671,12 @@ export default function FormasPagoEditor({
                           return `#${mv.id}`;
                         })();
                         return (
-                          <option key={mv.id} value={mv.id}>{resumen}</option>
+                          <option
+                            key={`${mv.tipo}:${mv.id}`}
+                            value={`${mv.tipo}:${mv.id}`}
+                          >
+                            {resumen}
+                          </option>
                         );
                       })}
                     </Form.Select>
