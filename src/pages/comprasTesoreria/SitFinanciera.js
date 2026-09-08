@@ -21,6 +21,7 @@ import EditarInstanciaGasto
 import EditarEcheqModal
   from "./EditarEcheqModal";
 import AbonoCtaCteModal from "./abonoCtaCteModal";
+import * as XLSX from "xlsx";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -1425,6 +1426,152 @@ export default function SitFinanciera() {
     [sortedItems]
   );
 
+  const exportarExcel = () => {
+
+    if (!sortedItems.length) {
+      window.alert(
+        "No hay registros para exportar."
+      );
+
+      return;
+    }
+
+
+    const tipoDescripcion = (row) => {
+
+      if (row.tipo === "ctacte") {
+        return "Cuenta corriente";
+      }
+
+      if (row.tipo === "echeq") {
+        return "eCheq";
+      }
+
+      if (row.tipo === "programado") {
+
+        return row.pago_programado_tipo === "anticipo"
+          ? "Anticipo programado"
+          : "Egreso programado";
+      }
+
+      if (row.tipo === "instancia") {
+        return "Gasto estimado";
+      }
+
+      return row.tipo || "";
+    };
+
+
+    /*
+     * IMPORTANTE:
+     *
+     * Exportamos sortedItems, NO pageItems.
+     *
+     * sortedItems contiene todos los registros que
+     * quedaron después de aplicar los filtros actuales,
+     * independientemente de la página que se esté viendo.
+     */
+    const datosParaExportar =
+      sortedItems.map(
+        (row) => ({
+          ID:
+            row.id,
+
+          Tipo:
+            tipoDescripcion(row),
+
+          Empresa:
+            row.empresa_nombre ||
+            "",
+
+          Descripción:
+            row.descripcion ||
+            "",
+
+          Proveedor:
+            row.proveedor_nombre ||
+            "",
+
+          Categoría:
+            row.categoria_nombre ||
+            "",
+
+          Sucursal:
+            row.sucursal_nombre ||
+            "",
+
+          Vencimiento:
+            row.fecha_vencimiento ||
+            "",
+
+          Monto:
+            Number(
+              row.monto_base ||
+              0
+            ),
+
+          Estado:
+            row.estado ||
+            "",
+
+          "FP Acordada":
+            row.formapago_futuro_desc ||
+            "",
+        })
+      );
+
+
+    const ws =
+      XLSX.utils.json_to_sheet(
+        datosParaExportar
+      );
+
+
+    /*
+     * Anchos aproximados para que el Excel
+     * salga más cómodo de leer.
+     */
+    ws["!cols"] = [
+      { wch: 10 }, // ID
+      { wch: 22 }, // Tipo
+      { wch: 22 }, // Empresa
+      { wch: 40 }, // Descripción
+      { wch: 30 }, // Proveedor
+      { wch: 25 }, // Categoría
+      { wch: 22 }, // Sucursal
+      { wch: 15 }, // Vencimiento
+      { wch: 18 }, // Monto
+      { wch: 15 }, // Estado
+      { wch: 22 }, // FP
+    ];
+
+
+    const wb =
+      XLSX.utils.book_new();
+
+
+    XLSX.utils.book_append_sheet(
+      wb,
+      ws,
+      "Situación financiera"
+    );
+
+
+    /*
+     * Nombre con fecha actual.
+     */
+    const fechaArchivo =
+      iso(
+        new Date()
+      );
+
+
+    XLSX.writeFile(
+      wb,
+      `situacion_financiera_${fechaArchivo}.xlsx`
+    );
+  };
+
   // -------- Helpers UI de orden --------
   const toggleSort = (key) => {
     setPage(1);
@@ -2744,7 +2891,7 @@ export default function SitFinanciera() {
 
 
             {/* ================================================== */}
-            {/* ACTUALIZAR                                         */}
+            {/* EXPORTAR / ACTUALIZAR                              */}
             {/* ================================================== */}
 
             <Col
@@ -2754,9 +2901,28 @@ export default function SitFinanciera() {
             >
 
               <Button
+                variant="outline-success"
+                onClick={
+                  exportarExcel
+                }
+                disabled={
+                  loading ||
+                  sortedItems.length === 0
+                }
+              >
+                Exportar Excel
+              </Button>
+
+
+              <Button
                 variant="outline-secondary"
-                onClick={cargar}
-                disabled={loading}
+                onClick={
+                  cargar
+                }
+                disabled={
+                  loading
+                }
+                className="ms-2"
               >
                 {
                   loading
