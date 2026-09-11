@@ -15,6 +15,7 @@ export default function FormasPagoOrdenEditor({
   totalReferencia = 0,
   value = [],
   onChange,
+  proveedorId = null,
 }) {
   const dataContext = useContext(Contexts.DataContext) || {};
   const {
@@ -75,12 +76,30 @@ export default function FormasPagoOrdenEditor({
     ]);
   };
 
-  const removeRow = (idx) => {
-    const next = value.slice();
-    next.splice(idx, 1);
-    onChange?.(next);
-    setOpc(idx, { items: [], chosen: null, error: null });
-  };
+ const removeRow = (idx) => {
+
+  const next =
+    value.slice();
+
+  next.splice(
+    idx,
+    1
+  );
+
+  onChange?.(
+    next
+  );
+
+  setOpc(
+    idx,
+    {
+      items: [],
+      chosen: null,
+      error: null,
+    }
+  );
+
+};
 
   const updateField = (idx, name, val) => {
     const next = value.slice();
@@ -105,30 +124,269 @@ export default function FormasPagoOrdenEditor({
 
   // === Buscar disponibles (mov. existentes) ===
   const buscarDisponibles = async (idx) => {
+
     const row = value[idx];
-    const fpId = row?.formapago_id;
-    const medio = medioFromFp(fpId);
-    // OP: NO soportamos cta cte como medio de pago
-    if (!empresaId || !fpId || medio === "desconocido" || medio === "ctacte") {
-      setOpc(idx, { error: "Completar Empresa y Forma de pago válida", items: [] });
+
+    const fpId =
+      row?.formapago_id;
+
+    const medio =
+      medioFromFp(fpId);
+
+
+    if (
+      !proveedorId ||
+      !fpId ||
+      medio === "desconocido" ||
+      medio === "ctacte"
+    ) {
+
+      setOpc(idx, {
+        error:
+          !proveedorId
+            ? "Debe seleccionar un proveedor."
+            : "Debe seleccionar una forma de pago válida.",
+
+        items: [],
+        loading: false,
+      });
+
       return;
     }
-    try {
-      setOpc(idx, { loading: true, error: null });
-      const qs = new URLSearchParams();
-      qs.set("medio", medio);
-      // En OP no filtramos por proveedor necesariamente (puede o no tenerlo el movimiento),
-      // pero si querés podés sumar ?proveedor_id=X para acotar:
-      // if (proveedorId) qs.set("proveedor_id", String(proveedorId));
-      const res = await fetch(`${apiUrl}/tesoreria/disponibles?${qs.toString()}`, { credentials: "include" });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "No se pudieron obtener disponibles");
-      setOpc(idx, { items: Array.isArray(json) ? json : [], loading: false });
-    } catch (e) {
-      setOpc(idx, { error: e.message || "Error al buscar disponibles", loading: false, items: [] });
-    }
-  };
 
+
+    try {
+
+      setOpc(idx, {
+        loading: true,
+        error: null,
+        items: [],
+      });
+
+
+      const qs =
+        new URLSearchParams();
+
+
+      qs.set(
+        "medio",
+        medio
+      );
+
+
+      qs.set(
+        "proveedor_id",
+        String(proveedorId)
+      );
+
+
+      const res =
+        await fetch(
+          `${apiUrl}/tesoreria/disponibles?${qs.toString()}`,
+          {
+            credentials:
+              "include",
+          }
+        );
+
+
+      const json =
+        await res.json();
+
+
+      if (!res.ok) {
+
+        throw new Error(
+          json?.error ||
+          "No se pudieron obtener disponibles"
+        );
+
+      }
+
+
+      /*
+       * El backend ya excluye movimientos
+       * utilizados y guardados en Cta.Cte.
+       *
+       * Acá además excluimos movimientos
+       * seleccionados en OTRAS filas de
+       * este mismo formulario.
+       */
+      const disponiblesBackend =
+        Array.isArray(json)
+          ? json
+          : [];
+
+
+      const normalizarTipoExistente =
+        (tipo) => {
+
+          const t =
+            String(tipo || "")
+              .trim()
+              .toLowerCase();
+
+
+          if (
+            [
+              "caja",
+              "movimiento_caja",
+              "movimientocajatesoreria",
+            ].includes(t)
+          ) {
+            return "caja";
+          }
+
+
+          if (
+            [
+              "banco",
+              "transferencia",
+              "movimiento_banco",
+              "movimientobancotesoreria",
+            ].includes(t)
+          ) {
+            return "banco";
+          }
+
+
+          if (
+            [
+              "echeq",
+              "echeq_emitido",
+              "echeqemitido",
+            ].includes(t)
+          ) {
+            return "echeq";
+          }
+
+
+          if (
+            [
+              "tarjeta",
+              "pago_tarjeta",
+              "pagotarjetacredito",
+            ].includes(t)
+          ) {
+            return "tarjeta";
+          }
+
+
+          if (
+            [
+              "pago_programado",
+              "pagoprogramadotesoreria",
+            ].includes(t)
+          ) {
+            return "pago_programado";
+          }
+
+
+          return t;
+        };
+
+
+      /*
+       * Tomamos los existentes seleccionados
+       * en las OTRAS filas.
+       *
+       * La fila actual se ignora para que
+       * no se bloquee a sí misma.
+       */
+      const existentesSeleccionados =
+        value
+          .map(
+            (pago, filaIdx) => {
+
+              if (
+                filaIdx === idx ||
+                !pago?.existing_ref?.id
+              ) {
+                return null;
+              }
+
+
+              return {
+                tipo:
+                  normalizarTipoExistente(
+                    pago.existing_ref.tipo
+                  ),
+
+                id:
+                  Number(
+                    pago.existing_ref.id
+                  ),
+              };
+            }
+          )
+          .filter(Boolean);
+
+
+      /*
+       * Excluir de la búsqueda los movimientos
+       * que ya fueron elegidos en otra fila.
+       */
+      const disponiblesFiltrados =
+        disponiblesBackend.filter(
+          (item) => {
+
+            const itemTipo =
+              normalizarTipoExistente(
+                item.tipo ||
+                tipoExistingFromMedio(
+                  medio
+                )
+              );
+
+
+            const itemId =
+              Number(item.id);
+
+
+            const yaSeleccionado =
+              existentesSeleccionados.some(
+                (seleccionado) =>
+                  seleccionado.tipo ===
+                  itemTipo &&
+                  seleccionado.id ===
+                  itemId
+              );
+
+
+            return !yaSeleccionado;
+          }
+        );
+
+
+      setOpc(idx, {
+        items:
+          disponiblesFiltrados,
+
+        loading:
+          false,
+
+        error:
+          null,
+      });
+
+
+    } catch (e) {
+
+      setOpc(idx, {
+        error:
+          e.message ||
+          "Error al buscar disponibles",
+
+        loading:
+          false,
+
+        items:
+          [],
+      });
+
+    }
+
+  };
   const elegirExistente = (idx, selectedId) => {
     const opts = opcionesPorFila[idx]?.items || [];
     const it = opts.find((x) => String(x.id) === String(selectedId));
@@ -136,7 +394,9 @@ export default function FormasPagoOrdenEditor({
 
     const row = value[idx];
     const medio = medioFromFp(row.formapago_id);
-    const tipo = tipoExistingFromMedio(medio);
+    const tipo =
+      it.tipo ||
+      tipoExistingFromMedio(medio);
     // Monto que usamos para cuadrar visualmente
     const importe = Number(it.importe ?? it.monto ?? 0);
 
@@ -380,9 +640,18 @@ export default function FormasPagoOrdenEditor({
                 <Button
                   size="sm"
                   variant="outline-primary"
-                  disabled={!row.formapago_id || esCtaCte(row.formapago_id)}
+                  disabled={
+                    !proveedorId ||
+                    !row.formapago_id ||
+                    esCtaCte(row.formapago_id)
+                  }
                   onClick={() => buscarDisponibles(idx)}
                   className="my-2"
+                  title={
+                    !proveedorId
+                      ? "Seleccione un proveedor"
+                      : ""
+                  }
                 >
                   Buscar disponibles
                 </Button>

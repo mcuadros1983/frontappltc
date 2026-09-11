@@ -112,6 +112,7 @@ export default function MovimentosTarjetaTesoreria() {
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
   const [terminacion, setTerminacion] = useState("");
+  const [proveedorFiltro, setProveedorFiltro] = useState("");
 
   // Modal
   const [showNuevo, setShowNuevo] = useState(false);
@@ -120,12 +121,16 @@ export default function MovimentosTarjetaTesoreria() {
   const [movSeleccionado, setMovSeleccionado] = useState(null);
 
   const [eliminandoId, setEliminandoId] = useState(null);
+const [ordenTabla, setOrdenTabla] = useState({
+  campo: "fecha",
+  direccion: "asc",
+});
 
- const fmtMoney = (n) =>
-  `$${Number(n || 0).toLocaleString("es-AR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  const fmtMoney = (n) =>
+    `$${Number(n || 0).toLocaleString("es-AR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   const buildQS = (params = {}) => {
     const qs = new URLSearchParams();
@@ -196,16 +201,55 @@ export default function MovimentosTarjetaTesoreria() {
 
   const onAplicarFiltro = () => loadMovs();
   const onLimpiarFiltro = () => {
+
     setFechaDesde("");
     setFechaHasta("");
     setTerminacion("");
-    loadMovs({ fechaDesde: "", fechaHasta: "", terminacion: "" });
+    setProveedorFiltro("");
+
+    loadMovs({
+      fechaDesde: "",
+      fechaHasta: "",
+      terminacion: "",
+    });
   };
+  const movsFiltrados = useMemo(() => {
+
+    if (!proveedorFiltro) {
+      return movs;
+    }
+
+    const proveedorId =
+      Number(proveedorFiltro);
+
+    return movs.filter(
+      (m) =>
+        Number(m.proveedor_id) ===
+        proveedorId
+    );
+
+  }, [
+    movs,
+    proveedorFiltro,
+  ]);
+
 
   const { egresosTotal } = useMemo(() => {
-    const egresos = movs.reduce((a, b) => a + Number(b.importe || 0), 0);
-    return { egresosTotal: egresos };
-  }, [movs]);
+
+    const egresos =
+      movsFiltrados.reduce(
+        (a, b) =>
+          a + Number(b.importe || 0),
+        0
+      );
+
+    return {
+      egresosTotal: egresos,
+    };
+
+  }, [
+    movsFiltrados,
+  ]);
 
   const mostrarTerminacion = (m) => {
     const tInc = m?.tarjeta?.terminacion;
@@ -233,6 +277,174 @@ export default function MovimentosTarjetaTesoreria() {
     const p = proyById.get(Number(id));
     return p?.descripcion || p?.nombre || (id ? `Proyecto #${id}` : "");
   };
+
+  const cambiarOrden = (campo) => {
+
+  setOrdenTabla((prev) => {
+
+    if (prev.campo === campo) {
+
+      return {
+        campo,
+        direccion:
+          prev.direccion === "asc"
+            ? "desc"
+            : "asc",
+      };
+    }
+
+    return {
+      campo,
+      direccion: "asc",
+    };
+  });
+};
+
+
+const indicadorOrden = (campo) => {
+
+  if (ordenTabla.campo !== campo) {
+    return "";
+  }
+
+  return ordenTabla.direccion === "asc"
+    ? " ▲"
+    : " ▼";
+};
+
+
+const movsOrdenados = useMemo(() => {
+
+  const lista =
+    [...movsFiltrados];
+
+
+  const obtenerValor = (m) => {
+
+    switch (ordenTabla.campo) {
+
+      case "id":
+        return Number(m.id || 0);
+
+      case "fecha":
+        return String(m.fecha || "");
+
+      case "tarjeta":
+        return String(
+          mostrarTerminacion(m) || ""
+        );
+
+      case "banco":
+        return String(
+          mostrarBanco(m) || ""
+        );
+
+      case "proveedor":
+        return String(
+          nombreProveedor(m.proveedor_id) || ""
+        );
+
+      case "categoria":
+        return String(
+          nombreCategoria(m.categoriaegreso_id) || ""
+        );
+
+      case "proyecto":
+        return String(
+          nombreProyecto(m.proyecto_id) || ""
+        );
+
+      case "concepto":
+        return String(
+          m.concepto || ""
+        );
+
+      case "cupon":
+        return String(
+          m.cupon_numero || ""
+        );
+
+      case "plan":
+        return String(
+          nombrePlan(m.planpago_id) || ""
+        );
+
+      case "estado":
+        return String(
+          m.estado || ""
+        );
+
+      case "egreso":
+        return Number(
+          m.importe || 0
+        );
+
+      default:
+        return "";
+    }
+  };
+
+
+  lista.sort((a, b) => {
+
+    const valorA =
+      obtenerValor(a);
+
+    const valorB =
+      obtenerValor(b);
+
+    let resultado = 0;
+
+
+    if (
+      typeof valorA === "number" &&
+      typeof valorB === "number"
+    ) {
+
+      resultado =
+        valorA - valorB;
+
+    } else {
+
+      resultado =
+        String(valorA).localeCompare(
+          String(valorB),
+          "es",
+          {
+            numeric: true,
+            sensitivity: "base",
+          }
+        );
+    }
+
+
+    if (resultado === 0) {
+
+      resultado =
+        Number(a.id || 0) -
+        Number(b.id || 0);
+    }
+
+
+    return ordenTabla.direccion === "asc"
+      ? resultado
+      : -resultado;
+
+  });
+
+
+  return lista;
+
+}, [
+  movsFiltrados,
+  ordenTabla,
+  tarjetasById,
+  bancoById,
+  provById,
+  catById,
+  proyById,
+  planById,
+]);
 
   const onNuevoCreated = () => {
     loadMovs();
@@ -289,6 +501,69 @@ export default function MovimentosTarjetaTesoreria() {
       {/* Filtros (habilitados aun sin empresa) */}
       <Form className="mb-3">
         <Row className="g-2">
+
+           <Col md={3}>
+
+            <Form.Label>
+              Proveedor
+            </Form.Label>
+
+            <Form.Select
+              value={proveedorFiltro}
+              onChange={
+                (e) =>
+                  setProveedorFiltro(
+                    e.target.value
+                  )
+              }
+              disabled={loading}
+              className="form-control my-input"
+            >
+
+              <option value="">
+                Todos
+              </option>
+
+              {proveedoresTabla
+                .slice()
+                .sort(
+                  (a, b) =>
+                    String(
+                      a.razonsocial ||
+                      a.nombre ||
+                      ""
+                    ).localeCompare(
+                      String(
+                        b.razonsocial ||
+                        b.nombre ||
+                        ""
+                      ),
+                      "es"
+                    )
+                )
+                .map(
+                  (p) => (
+
+                    <option
+                      key={p.id}
+                      value={p.id}
+                    >
+                      {
+                        p.razonsocial ||
+                        p.nombre ||
+                        p.descripcion ||
+                        `Proveedor #${p.id}`
+                      }
+                    </option>
+
+                  )
+                )}
+
+            </Form.Select>
+
+          </Col>
+
+
           <Col md={3}>
             <Form.Label>Fecha desde</Form.Label>
             <Form.Control
@@ -307,7 +582,7 @@ export default function MovimentosTarjetaTesoreria() {
               disabled={loading}   // ⬅️ cambio
             />
           </Col>
-
+         
 
           <Col md={3}>
             <Form.Label>Tarjeta / terminación</Form.Label>
@@ -358,23 +633,112 @@ export default function MovimentosTarjetaTesoreria() {
       </Form>
 
       <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Fecha</th>
-            <th>Tarjeta</th>
-            <th>Banco</th>
-            <th>Proveedor</th>
-            <th>Categoría</th>
-            <th>Proyecto</th>
-            <th>Concepto</th>
-            <th>Cupón</th>
-            <th>Plan</th>
-            <th>Estado</th>
-            <th className="text-end">Egreso</th>
-            <th>Acciones</th> {/* NUEVA */}
-          </tr>
-        </thead>
+   <thead>
+  <tr>
+
+    <th
+      onClick={() => cambiarOrden("id")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por número"
+    >
+      #{indicadorOrden("id")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("fecha")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por fecha"
+    >
+      Fecha{indicadorOrden("fecha")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("tarjeta")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por tarjeta"
+    >
+      Tarjeta{indicadorOrden("tarjeta")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("banco")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por banco"
+    >
+      Banco{indicadorOrden("banco")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("proveedor")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por proveedor"
+    >
+      Proveedor{indicadorOrden("proveedor")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("categoria")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por categoría"
+    >
+      Categoría{indicadorOrden("categoria")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("proyecto")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por proyecto"
+    >
+      Proyecto{indicadorOrden("proyecto")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("concepto")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por concepto"
+    >
+      Concepto{indicadorOrden("concepto")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("cupon")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por cupón"
+    >
+      Cupón{indicadorOrden("cupon")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("plan")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por plan"
+    >
+      Plan{indicadorOrden("plan")}
+    </th>
+
+    <th
+      onClick={() => cambiarOrden("estado")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por estado"
+    >
+      Estado{indicadorOrden("estado")}
+    </th>
+
+    <th
+      className="text-end"
+      onClick={() => cambiarOrden("egreso")}
+      style={{ cursor: "pointer", userSelect: "none" }}
+      title="Ordenar por importe"
+    >
+      Egreso{indicadorOrden("egreso")}
+    </th>
+
+    <th>
+      Acciones
+    </th>
+
+  </tr>
+</thead>
 
         <tbody>
           {loading && (
@@ -383,7 +747,7 @@ export default function MovimentosTarjetaTesoreria() {
             </tr>
           )}
 
-          {!loading && movs.map((m) => (
+    {!loading && movsOrdenados.map((m) => (
             <tr
               key={m.id}
               onDoubleClick={() => { setMovSeleccionado(m); setShowDetalle(true); }}
@@ -420,7 +784,7 @@ export default function MovimentosTarjetaTesoreria() {
             </tr>
           ))}
 
-          {!loading && movs.length === 0 && (
+          {!loading && movsFiltrados.length === 0 && (
             <tr>
               <td colSpan={12} className="text-center text-muted">No hay movimientos para mostrar.</td>
             </tr>

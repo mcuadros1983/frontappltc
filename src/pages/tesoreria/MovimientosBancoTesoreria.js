@@ -55,12 +55,19 @@ export default function BancoTesoreriaList() {
   // eliminación
   const [deletingId, setDeletingId] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
-
+  const [ordenTabla, setOrdenTabla] = useState({
+    campo: "fecha",
+    direccion: "asc",
+  });
   // filtros
   const [bancoIdFiltro, setBancoIdFiltro] = useState("");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
-
+  const [descFiltro, setDescFiltro] = useState("");
+  const [catFiltro, setCatFiltro] = useState("");
+  const [proveedorFiltro, setProveedorFiltro] = useState("");
+  const [descripcionFiltro, setDescripcionFiltro] = useState("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("");
   // modales
   const [showNuevo, setShowNuevo] = useState(false);
   const [showDetalle, setShowDetalle] = useState(false);
@@ -155,26 +162,151 @@ export default function BancoTesoreriaList() {
 
   const onAplicarFiltro = () => loadMovs();
   const onLimpiarFiltro = () => {
+
     setBancoIdFiltro("");
     setFechaDesde("");
     setFechaHasta("");
-    loadMovs({ bancoIdFiltro: "", fechaDesde: "", fechaHasta: "" });
+    setDescFiltro("");
+    setCatFiltro("");
+    setProveedorFiltro("");
+
+    loadMovs({
+      bancoIdFiltro: "",
+      fechaDesde: "",
+      fechaHasta: "",
+    });
   };
+  const movsFiltrados = useMemo(() => {
+
+    return movs.filter((m) => {
+
+      // ============================
+      // DESCRIPCIÓN
+      // ============================
+
+      if (descFiltro.trim()) {
+
+        const descripcion =
+          String(m?.descripcion || "")
+            .toLowerCase();
+
+        const buscar =
+          descFiltro
+            .trim()
+            .toLowerCase();
+
+        if (!descripcion.includes(buscar)) {
+          return false;
+        }
+      }
+
+
+      // ============================
+      // CATEGORÍA
+      // ============================
+
+      if (catFiltro) {
+
+        if (
+          Number(m?.categoriaegreso_id) !==
+          Number(catFiltro)
+        ) {
+          return false;
+        }
+      }
+
+
+      // ============================
+      // PROVEEDOR
+      // ============================
+
+      if (proveedorFiltro) {
+
+        const proveedorId =
+          Number(proveedorFiltro);
+
+        const ordenId =
+          m?.ordenpago_id ||
+          m?.ordenpago?.id;
+
+        const orden =
+          (
+            ordenId &&
+            ordenesCache[ordenId]
+          ) ||
+          m?.ordenpago ||
+          null;
+
+        const provId =
+          orden?.proveedor_id ??
+          m?.proveedor_id ??
+          null;
+
+        if (
+          Number(provId) !==
+          proveedorId
+        ) {
+          return false;
+        }
+      }
+
+
+      return true;
+    });
+
+  }, [
+    movs,
+    descFiltro,
+    catFiltro,
+    proveedorFiltro,
+    ordenesCache,
+  ]);
 
   // Totales del listado (período filtrado)
-  const { ingresosTotal, egresosTotal, saldoPeriodo } = useMemo(() => {
-    const ingresos = movs
-      .filter((m) => String(m.tipo).toLowerCase() === "ingreso" && !m.anulado)
-      .reduce((a, b) => a + Number(b.monto || 0), 0);
-    const egresos = movs
-      .filter((m) => String(m.tipo).toLowerCase() === "egreso" && !m.anulado)
-      .reduce((a, b) => a + Number(b.monto || 0), 0);
+  const {
+    ingresosTotal,
+    egresosTotal,
+    saldoPeriodo,
+  } = useMemo(() => {
+
+    const ingresos =
+      movsFiltrados
+        .filter(
+          (m) =>
+            String(m.tipo).toLowerCase() === "ingreso" &&
+            !m.anulado
+        )
+        .reduce(
+          (a, b) =>
+            a + Number(b.monto || 0),
+          0
+        );
+
+
+    const egresos =
+      movsFiltrados
+        .filter(
+          (m) =>
+            String(m.tipo).toLowerCase() === "egreso" &&
+            !m.anulado
+        )
+        .reduce(
+          (a, b) =>
+            a + Number(b.monto || 0),
+          0
+        );
+
+
     return {
       ingresosTotal: ingresos,
       egresosTotal: egresos,
-      saldoPeriodo: ingresos - egresos,
+      saldoPeriodo:
+        ingresos - egresos,
     };
-  }, [movs]);
+
+  }, [
+    movsFiltrados,
+  ]);
 
   const nombreProveedorDeMovimiento = (m) => {
     const ordenId = m?.ordenpago_id || m?.ordenpago?.id;
@@ -191,6 +323,150 @@ export default function BancoTesoreriaList() {
     }
     return "";
   };
+
+  const cambiarOrden = (campo) => {
+
+    setOrdenTabla((prev) => {
+
+      if (prev.campo === campo) {
+        return {
+          campo,
+          direccion:
+            prev.direccion === "asc"
+              ? "desc"
+              : "asc",
+        };
+      }
+
+      return {
+        campo,
+        direccion: "asc",
+      };
+    });
+  };
+
+
+  const indicadorOrden = (campo) => {
+
+    if (ordenTabla.campo !== campo) {
+      return "";
+    }
+
+    return ordenTabla.direccion === "asc"
+      ? " ▲"
+      : " ▼";
+  };
+
+
+  const movsOrdenados = useMemo(() => {
+
+    const lista =
+      [...movsFiltrados];
+
+
+    const obtenerValor = (m) => {
+
+      switch (ordenTabla.campo) {
+
+        case "id":
+          return Number(m.id || 0);
+
+        case "fecha":
+          return String(m.fecha || "");
+
+        case "descripcion":
+          return String(
+            m.descripcion || ""
+          );
+
+        case "proyecto":
+          return String(
+            nombreProyecto(m) || ""
+          );
+
+        case "categoria":
+          return String(
+            nombreCategoria(m) || ""
+          );
+
+        case "proveedor":
+          return String(
+            nombreProveedorDeMovimiento(m) || ""
+          );
+
+        case "ingreso":
+          return String(m.tipo).toLowerCase() === "ingreso"
+            ? Number(m.monto || 0)
+            : 0;
+
+        case "egreso":
+          return String(m.tipo).toLowerCase() === "egreso"
+            ? Number(m.monto || 0)
+            : 0;
+
+        default:
+          return "";
+      }
+    };
+
+
+    lista.sort((a, b) => {
+
+      const valorA =
+        obtenerValor(a);
+
+      const valorB =
+        obtenerValor(b);
+
+      let resultado = 0;
+
+
+      if (
+        typeof valorA === "number" &&
+        typeof valorB === "number"
+      ) {
+
+        resultado =
+          valorA - valorB;
+
+      } else {
+
+        resultado =
+          String(valorA).localeCompare(
+            String(valorB),
+            "es",
+            {
+              numeric: true,
+              sensitivity: "base",
+            }
+          );
+      }
+
+
+      if (resultado === 0) {
+        resultado =
+          Number(a.id || 0) -
+          Number(b.id || 0);
+      }
+
+
+      return ordenTabla.direccion === "asc"
+        ? resultado
+        : -resultado;
+
+    });
+
+
+    return lista;
+
+  }, [
+    movsFiltrados,
+    ordenTabla,
+    ordenesCache,
+    proveedoresTabla,
+    categorias,
+    proyectosTabla,
+  ]);
 
   const abrirDetalle = (mov) => {
     setMovSeleccionado(mov);
@@ -256,48 +532,236 @@ export default function BancoTesoreriaList() {
       {/* Filtros */}
       <Form className="mb-3">
         <Row className="g-2">
+
+
           <Col md={3}>
-            <Form.Label>Banco</Form.Label>
+            <Form.Label>
+              Proveedor
+            </Form.Label>
+
             <Form.Select
-              value={bancoIdFiltro}
-              onChange={(e) => setBancoIdFiltro(e.target.value)}
+              value={proveedorFiltro}
+              onChange={
+                (e) =>
+                  setProveedorFiltro(
+                    e.target.value
+                  )
+              }
               className="form-control my-input"
             >
-              <option value="">Todos</option>
-              {bancosParaCombo.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.nombre || b.descripcion || b.alias || `Banco ${b.id}`}
-                </option>
-              ))}
+
+              <option value="">
+                Todos
+              </option>
+
+              {proveedoresTabla
+                .slice()
+                .sort(
+                  (a, b) =>
+                    String(
+                      a.razonsocial ||
+                      a.nombre ||
+                      ""
+                    ).localeCompare(
+                      String(
+                        b.razonsocial ||
+                        b.nombre ||
+                        ""
+                      ),
+                      "es"
+                    )
+                )
+                .map(
+                  (p) => (
+
+                    <option
+                      key={p.id}
+                      value={p.id}
+                    >
+                      {
+                        p.razonsocial ||
+                        p.nombre ||
+                        `Proveedor #${p.id}`
+                      }
+                    </option>
+
+                  )
+                )}
+
             </Form.Select>
           </Col>
 
           <Col md={3}>
-            <Form.Label>Fecha desde</Form.Label>
+            <Form.Label>
+              Fecha desde
+            </Form.Label>
+
             <Form.Control
               type="date"
               value={fechaDesde}
-              onChange={(e) => setFechaDesde(e.target.value)}
-            />
-          </Col>
-          <Col md={3}>
-            <Form.Label>Fecha hasta</Form.Label>
-            <Form.Control
-              type="date"
-              value={fechaHasta}
-              onChange={(e) => setFechaHasta(e.target.value)}
+              onChange={
+                (e) =>
+                  setFechaDesde(e.target.value)
+              }
             />
           </Col>
 
-          <Col md="auto" className="d-flex align-items-end">
+
+          <Col md={3}>
+            <Form.Label>
+              Fecha hasta
+            </Form.Label>
+
+            <Form.Control
+              type="date"
+              value={fechaHasta}
+              onChange={
+                (e) =>
+                  setFechaHasta(e.target.value)
+              }
+            />
+          </Col>
+
+
+          <Col md={3}>
+            <Form.Label>
+              Descripción
+            </Form.Label>
+
+            <Form.Control
+              placeholder="Buscar descripción…"
+              value={descFiltro}
+              onChange={
+                (e) =>
+                  setDescFiltro(e.target.value)
+              }
+            />
+          </Col>
+
+
+          <Col md={3}>
+            <Form.Label>
+              Categoría
+            </Form.Label>
+
+            <Form.Select
+              value={catFiltro}
+              onChange={
+                (e) =>
+                  setCatFiltro(e.target.value)
+              }
+              className="form-control my-input"
+            >
+
+              <option value="">
+                Todas
+              </option>
+
+              {categorias
+                .slice()
+                .sort(
+                  (a, b) =>
+                    String(
+                      a.nombre ||
+                      a.descripcion ||
+                      ""
+                    ).localeCompare(
+                      String(
+                        b.nombre ||
+                        b.descripcion ||
+                        ""
+                      ),
+                      "es"
+                    )
+                )
+                .map(
+                  (c) => (
+
+                    <option
+                      key={c.id}
+                      value={c.id}
+                    >
+                      {
+                        c.nombre ||
+                        c.descripcion ||
+                        `Categoría #${c.id}`
+                      }
+                    </option>
+
+                  )
+                )}
+
+            </Form.Select>
+          </Col>
+
+
+
+
+          <Col md={3}>
+            <Form.Label>
+              Banco
+            </Form.Label>
+
+            <Form.Select
+              value={bancoIdFiltro}
+              onChange={
+                (e) =>
+                  setBancoIdFiltro(
+                    e.target.value
+                  )
+              }
+              className="form-control my-input"
+            >
+
+              <option value="">
+                Todos
+              </option>
+
+              {bancosParaCombo.map(
+                (b) => (
+
+                  <option
+                    key={b.id}
+                    value={b.id}
+                  >
+                    {
+                      b.nombre ||
+                      b.descripcion ||
+                      b.alias ||
+                      `Banco ${b.id}`
+                    }
+                  </option>
+
+                )
+              )}
+
+            </Form.Select>
+          </Col>
+
+
+          <Col
+            md="auto"
+            className="d-flex align-items-end"
+          >
+
             <Button
               className="mx-1"
               variant="outline-secondary"
               onClick={onAplicarFiltro}
               disabled={loading}
             >
-              {loading ? <Spinner animation="border" size="sm" /> : "Aplicar filtro"}
+              {
+                loading
+                  ? (
+                    <Spinner
+                      animation="border"
+                      size="sm"
+                    />
+                  )
+                  : "Aplicar filtro"
+              }
             </Button>
+
             <Button
               className="mx-1"
               variant="outline-dark"
@@ -306,22 +770,86 @@ export default function BancoTesoreriaList() {
             >
               Limpiar
             </Button>
+
           </Col>
+
         </Row>
       </Form>
 
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Fecha</th>
-            <th>Descripción</th>
-            <th>Proyecto</th>
-            <th>Categoría</th>
-            <th>Entidad / Proveedor</th>
-            <th className="text-end">Ingreso</th>
-            <th className="text-end">Egreso</th>
-            <th>Acciones</th>
+
+            <th
+              onClick={() => cambiarOrden("id")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por número"
+            >
+              #{indicadorOrden("id")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("fecha")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por fecha"
+            >
+              Fecha{indicadorOrden("fecha")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("descripcion")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por descripción"
+            >
+              Descripción{indicadorOrden("descripcion")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("proyecto")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por proyecto"
+            >
+              Proyecto{indicadorOrden("proyecto")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("categoria")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por categoría"
+            >
+              Categoría{indicadorOrden("categoria")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("proveedor")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por proveedor"
+            >
+              Entidad / Proveedor{indicadorOrden("proveedor")}
+            </th>
+
+            <th
+              className="text-end"
+              onClick={() => cambiarOrden("ingreso")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por ingreso"
+            >
+              Ingreso{indicadorOrden("ingreso")}
+            </th>
+
+            <th
+              className="text-end"
+              onClick={() => cambiarOrden("egreso")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por egreso"
+            >
+              Egreso{indicadorOrden("egreso")}
+            </th>
+
+            <th>
+              Acciones
+            </th>
+
           </tr>
         </thead>
         <tbody>
@@ -334,7 +862,7 @@ export default function BancoTesoreriaList() {
           )}
 
           {!loading &&
-            movs.map((m) => {
+            movsOrdenados.map((m) => {
               const isIngreso = String(m.tipo).toLowerCase() === "ingreso";
               return (
                 <tr
@@ -371,7 +899,7 @@ export default function BancoTesoreriaList() {
               );
             })}
 
-          {!loading && movs.length === 0 && (
+          {!loading && movsFiltrados.length === 0 && (
             <tr>
               <td colSpan={9} className="text-center text-muted">
                 No hay movimientos para mostrar.

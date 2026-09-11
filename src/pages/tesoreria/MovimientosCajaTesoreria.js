@@ -28,8 +28,9 @@ export default function CajaTesoreriaList() {
 
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
-  const [descFiltro, setDescFiltro] = useState("");        // 👈 filtro por descripción
+  const [descFiltro, setDescFiltro] = useState("");
   const [catFiltro, setCatFiltro] = useState("");
+  const [proveedorFiltro, setProveedorFiltro] = useState("");
 
   const [totalesCajaAbierta, setTotalesCajaAbierta] = useState({ ingresos: 0, egresos: 0 });
 
@@ -39,6 +40,10 @@ export default function CajaTesoreriaList() {
   const [showNuevoIngreso, setShowNuevoIngreso] = useState(false);
   const [showDetalleIngreso, setShowDetalleIngreso] = useState(false); // 👈 NUEVO
   const [deletingId, setDeletingId] = useState(null);
+  const [ordenTabla, setOrdenTabla] = useState({
+    campo: "fecha",
+    direccion: "asc",
+  });
 
   const eliminarMovimiento = async (mov) => {
     if (!mov?.id) return;
@@ -121,22 +126,264 @@ export default function CajaTesoreriaList() {
     projById.get(Number(m.proyecto_id))?.descripcion ||
     "";
 
-  const movsFiltrados = useMemo(() => {
-    let out = movs;
-    // Filtro por descripción (case-insensitive)
-    if (descFiltro.trim()) {
-      const q = descFiltro.trim().toLowerCase();
-      out = out.filter(m => String(m.descripcion || "").toLowerCase().includes(q));
+  const cambiarOrden = (campo) => {
+
+    setOrdenTabla((prev) => {
+
+      if (prev.campo === campo) {
+        return {
+          campo,
+          direccion:
+            prev.direccion === "asc"
+              ? "desc"
+              : "asc",
+        };
+      }
+
+      return {
+        campo,
+        direccion: "asc",
+      };
+    });
+  };
+
+
+  const indicadorOrden = (campo) => {
+
+    if (ordenTabla.campo !== campo) {
+      return "";
     }
+
+    return ordenTabla.direccion === "asc"
+      ? " ▲"
+      : " ▼";
+  };
+
+  const movsFiltrados = useMemo(() => {
+
+    let out = movs;
+
+
+    // Filtro por descripción
+    if (descFiltro.trim()) {
+
+      const q =
+        descFiltro
+          .trim()
+          .toLowerCase();
+
+      out = out.filter(
+        (m) =>
+          String(
+            m.descripcion || ""
+          )
+            .toLowerCase()
+            .includes(q)
+      );
+    }
+
+
     // Filtro por categoría
     if (catFiltro) {
-      const [tipo, idStr] = catFiltro.split(":");
-      const id = Number(idStr);
-      if (tipo === "ingreso") out = out.filter(m => Number(m.categoriaingreso_id) === id || Number(m?.categoriaingreso?.id) === id);
-      if (tipo === "egreso") out = out.filter(m => Number(m.categoriaegreso_id) === id || Number(m?.categoriaegreso?.id) === id);
+
+      const [tipo, idStr] =
+        catFiltro.split(":");
+
+      const id =
+        Number(idStr);
+
+
+      if (tipo === "ingreso") {
+
+        out = out.filter(
+          (m) =>
+            Number(
+              m.categoriaingreso_id
+            ) === id ||
+            Number(
+              m?.categoriaingreso?.id
+            ) === id
+        );
+      }
+
+
+      if (tipo === "egreso") {
+
+        out = out.filter(
+          (m) =>
+            Number(
+              m.categoriaegreso_id
+            ) === id ||
+            Number(
+              m?.categoriaegreso?.id
+            ) === id
+        );
+      }
     }
+
+
+    // Filtro por proveedor
+    if (proveedorFiltro) {
+
+      const proveedorId =
+        Number(proveedorFiltro);
+
+
+      out = out.filter(
+        (m) => {
+
+          const ordenId =
+            m?.ordenpago_id ||
+            m?.ordenpago?.id;
+
+
+          const orden =
+            (
+              ordenId &&
+              ordenesCache[ordenId]
+            ) ||
+            m?.ordenpago ||
+            null;
+
+
+          const provId =
+            orden?.proveedor_id ??
+            m?.proveedor_id ??
+            null;
+
+
+          return (
+            Number(provId) ===
+            proveedorId
+          );
+        }
+      );
+    }
+
+
     return out;
-  }, [movs, descFiltro, catFiltro]);
+
+  }, [
+    movs,
+    descFiltro,
+    catFiltro,
+    proveedorFiltro,
+    ordenesCache,
+  ]);
+
+  const movsOrdenados = useMemo(() => {
+
+    const lista =
+      [...movsFiltrados];
+
+
+    const obtenerValor = (m) => {
+
+      switch (ordenTabla.campo) {
+
+        case "id":
+          return Number(m.id || 0);
+
+        case "fecha":
+          return String(m.fecha || "");
+
+        case "descripcion":
+          return String(
+            m.descripcion || ""
+          );
+
+        case "proyecto":
+          return String(
+            nombreProyecto(m) || ""
+          );
+
+        case "categoria":
+          return String(
+            nombreCategoriaMovimiento(m) || ""
+          );
+
+        case "proveedor":
+          return String(
+            nombreProveedorDeMovimiento(m) || ""
+          );
+
+        case "ingreso":
+          return String(m.tipo).toLowerCase() === "ingreso"
+            ? Number(m.monto || 0)
+            : 0;
+
+        case "egreso":
+          return String(m.tipo).toLowerCase() === "egreso"
+            ? Number(m.monto || 0)
+            : 0;
+
+        default:
+          return "";
+      }
+    };
+
+
+    lista.sort((a, b) => {
+
+      const valorA =
+        obtenerValor(a);
+
+      const valorB =
+        obtenerValor(b);
+
+      let resultado = 0;
+
+
+      if (
+        typeof valorA === "number" &&
+        typeof valorB === "number"
+      ) {
+
+        resultado =
+          valorA - valorB;
+
+      } else {
+
+        resultado =
+          String(valorA).localeCompare(
+            String(valorB),
+            "es",
+            {
+              numeric: true,
+              sensitivity: "base",
+            }
+          );
+      }
+
+
+      /*
+       * Desempate estable por ID.
+       */
+      if (resultado === 0) {
+        resultado =
+          Number(a.id || 0) -
+          Number(b.id || 0);
+      }
+
+
+      return ordenTabla.direccion === "asc"
+        ? resultado
+        : -resultado;
+
+    });
+
+
+    return lista;
+
+  }, [
+    movsFiltrados,
+    ordenTabla,
+    ordenesCache,
+    proveedoresTabla,
+    categorias,
+    categoriasIngreso,
+    proyectosTabla,
+  ]);
 
 
   // Totales del listado
@@ -279,7 +526,12 @@ export default function CajaTesoreriaList() {
     setFechaHasta("");
     setDescFiltro("");
     setCatFiltro("");
-    loadMovs({ fechaDesde: "", fechaHasta: "" });
+    setProveedorFiltro("");
+
+    loadMovs({
+      fechaDesde: "",
+      fechaHasta: "",
+    });
   };
 
   const nuevoMovimiento = () => setShowNuevo(true);
@@ -365,6 +617,64 @@ export default function CajaTesoreriaList() {
       {/* Filtros */}
       <Form className="mb-3">
         <Row className="g-2">
+
+          <Col md={3}>
+
+            <Form.Label>
+              Proveedor
+            </Form.Label>
+
+            <Form.Select
+              value={proveedorFiltro}
+              onChange={
+                (e) =>
+                  setProveedorFiltro(
+                    e.target.value
+                  )
+              }
+              className="form-control my-input"
+            >
+
+              <option value="">
+                Todos
+              </option>
+
+              {proveedoresTabla
+                .slice()
+                .sort(
+                  (a, b) =>
+                    String(
+                      a.razonsocial ||
+                      a.nombre ||
+                      ""
+                    ).localeCompare(
+                      String(
+                        b.razonsocial ||
+                        b.nombre ||
+                        ""
+                      ),
+                      "es"
+                    )
+                )
+                .map(
+                  (p) => (
+
+                    <option
+                      key={p.id}
+                      value={p.id}
+                    >
+                      {p.razonsocial ||
+                        p.nombre ||
+                        `Proveedor #${p.id}`}
+                    </option>
+
+                  )
+                )}
+
+            </Form.Select>
+
+          </Col>
+
           <Col md={3}>
             <Form.Label>Fecha desde</Form.Label>
             <Form.Control type="date" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} />
@@ -414,15 +724,77 @@ export default function CajaTesoreriaList() {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Fecha</th>
-            <th>Descripción</th>
-            <th>Proyecto</th>    {/* 👈 NUEVA */}
-            <th>Categoría</th>
-            <th>Entidad / Proveedor</th>
-            <th className="text-end">Ingreso</th>
-            <th className="text-end">Egreso</th>
-            <th>Acciones</th> {/* 👈 NUEVA */}
+
+            <th
+              onClick={() => cambiarOrden("id")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por número"
+            >
+              #{indicadorOrden("id")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("fecha")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por fecha"
+            >
+              Fecha{indicadorOrden("fecha")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("descripcion")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por descripción"
+            >
+              Descripción{indicadorOrden("descripcion")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("proyecto")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por proyecto"
+            >
+              Proyecto{indicadorOrden("proyecto")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("categoria")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por categoría"
+            >
+              Categoría{indicadorOrden("categoria")}
+            </th>
+
+            <th
+              onClick={() => cambiarOrden("proveedor")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por proveedor"
+            >
+              Entidad / Proveedor{indicadorOrden("proveedor")}
+            </th>
+
+            <th
+              className="text-end"
+              onClick={() => cambiarOrden("ingreso")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por ingreso"
+            >
+              Ingreso{indicadorOrden("ingreso")}
+            </th>
+
+            <th
+              className="text-end"
+              onClick={() => cambiarOrden("egreso")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por egreso"
+            >
+              Egreso{indicadorOrden("egreso")}
+            </th>
+
+            <th>
+              Acciones
+            </th>
+
           </tr>
         </thead>
         <tbody>
@@ -432,7 +804,7 @@ export default function CajaTesoreriaList() {
             </tr>
           )}
 
-          {!loading && movsFiltrados.map((m) => {
+          {!loading && movsOrdenados.map((m) => {
             const isIngreso = String(m.tipo).toLowerCase() === "ingreso";
             return (
               <tr

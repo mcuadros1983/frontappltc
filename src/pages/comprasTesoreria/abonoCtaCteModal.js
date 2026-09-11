@@ -234,6 +234,41 @@ export default function AbonoCtaCteModal({
     [pagos]
   );
 
+  /*
+ * Movimientos existentes que ya fueron seleccionados
+ * dentro de este mismo modal.
+ *
+ * Esto NO significa que estén utilizados en la base.
+ * Solamente evita seleccionar dos veces el mismo
+ * movimiento mientras se está armando el pago.
+ */
+  const movimientosExistentesSeleccionados =
+    useMemo(
+      () =>
+        pagos
+          .filter(
+            (p) =>
+              p?.existing_ref?.tipo &&
+              p?.existing_ref?.id
+          )
+          .map(
+            (p) => ({
+              tipo:
+                String(
+                  p.existing_ref.tipo
+                )
+                  .trim()
+                  .toLowerCase(),
+
+              id:
+                Number(
+                  p.existing_ref.id
+                ),
+            })
+          ),
+      [pagos]
+    );
+
   // Helper para derivar "medio" desde formapago_id (coincide con tu editor)
   const medioFromFp = (fpId) => {
     const fp = formasPagoTesoreria.find(f => Number(f.id) === Number(fpId));
@@ -431,41 +466,243 @@ export default function AbonoCtaCteModal({
       if (totalPagos < totalAplicar) {
         return alert("La suma de pagos debe ser mayor o igual al total aplicado.");
       }
-
       // Validaciones de pagos
       for (const p of pagos) {
-        const medio = medioFromFp(p.formapago_id);
-        const monto = Number(p.monto || 0);
-        if (monto <= 0) return alert("Hay un pago con monto inválido.");
-        if (medio === "ctacte") return alert("La forma 'Cuenta Corriente' no está permitida como medio de pago.");
-        if (p?.existing_ref) return alert("No se permiten movimientos existentes en este flujo.");
-        if (medio === "caja" && !p.caja_id) return alert("Pago en caja requiere caja abierta.");
-        if (medio === "transferencia" && !p.banco_id) return alert("Transferencia requiere seleccionar banco.");
-        if (medio === "echeq" && (!p.banco_id || !p.fecha_vencimiento))
-          return alert("eCheq requiere banco y fecha de vencimiento.");
-        if (medio === "tarjeta" && (!p.tipotarjeta_id || !p.marcatarjeta_id || !p.cupon_numero))
-          return alert("Tarjeta requiere Tipo, Marca y Nº cupón.");
+
+        const medio =
+          medioFromFp(p.formapago_id);
+
+        const monto =
+          Number(p.monto || 0);
+
+        const usaExistente =
+          !!p?.existing_ref;
+
+
+        const tipoExistente =
+          String(
+            p?.existing_ref?.tipo || ""
+          )
+            .trim()
+            .toLowerCase();
+
+
+        const esPagoProgramado =
+          tipoExistente ===
+          "pago_programado";
+
+
+        const esMovimientoBancoExistente =
+          [
+            "banco",
+            "movimiento_banco",
+            "movimientobancotesoreria",
+          ].includes(
+            tipoExistente
+          );
+
+
+        const esMovimientoCajaExistente =
+          [
+            "caja",
+            "movimiento_caja",
+            "movimientocajatesoreria",
+          ].includes(
+            tipoExistente
+          );
+
+
+        const esEcheqExistente =
+          [
+            "echeq",
+            "echeq_emitido",
+            "echeqemitido",
+          ].includes(
+            tipoExistente
+          );
+
+
+        const esMovimientoExistentePermitido =
+          esPagoProgramado ||
+          esMovimientoBancoExistente ||
+          esMovimientoCajaExistente ||
+          esEcheqExistente;
+
+
+        if (monto <= 0) {
+          return alert(
+            "Hay un pago con monto inválido."
+          );
+        }
+
+
+        if (medio === "ctacte") {
+          return alert(
+            "La forma 'Cuenta Corriente' no está permitida como medio de pago."
+          );
+        }
+
+
+        /*
+         * Permitimos utilizar movimientos existentes
+         * disponibles de Tesorería:
+         *
+         * - Pago Programado pendiente
+         * - Movimiento de Banco
+         * - Movimiento de Caja
+         * - eCheq emitido
+         */
+        if (
+          usaExistente &&
+          !esMovimientoExistentePermitido
+        ) {
+          return alert(
+            "El movimiento existente seleccionado no está permitido en este flujo."
+          );
+        }
+
+
+        /*
+         * Si utilizamos un movimiento existente,
+         * no validamos sus datos como si estuviéramos
+         * creando un movimiento financiero nuevo.
+         *
+         * El movimiento ya existe y solamente será
+         * aplicado a los cargos seleccionados.
+         */
+        if (
+          usaExistente &&
+          esMovimientoExistentePermitido
+        ) {
+          continue;
+        }
+
+        if (
+          medio === "caja" &&
+          !p.caja_id
+        ) {
+          return alert(
+            "Pago en caja requiere caja abierta."
+          );
+        }
+
+
+        if (
+          medio === "transferencia" &&
+          !p.banco_id
+        ) {
+          return alert(
+            "Transferencia requiere seleccionar banco."
+          );
+        }
+
+
+        if (
+          medio === "echeq" &&
+          (
+            !p.banco_id ||
+            !p.fecha_vencimiento
+          )
+        ) {
+          return alert(
+            "eCheq requiere banco y fecha de vencimiento."
+          );
+        }
+
+
+        if (
+          medio === "tarjeta" &&
+          (
+            !p.tipotarjeta_id ||
+            !p.marcatarjeta_id ||
+            !p.cupon_numero
+          )
+        ) {
+          return alert(
+            "Tarjeta requiere Tipo, Marca y Nº cupón."
+          );
+        }
       }
+      const pagosNormalized =
+        pagos.map((p) => ({
 
-      const pagosNormalized = pagos.map((p) => ({
-        medio: medioFromFp(p.formapago_id),
-        formapago_id: p.formapago_id ? Number(p.formapago_id) : null,
-        monto: Number(p.monto || 0),
-        fecha: p.fecha || fecha,
-        detalle: p.detalle || null,
-        caja_id: p.caja_id ? Number(p.caja_id) : null,
-        banco_id: p.banco_id ? Number(p.banco_id) : null,
-        referencia: p.referencia || null,
-        cbu_alias_destino: p.cbu_alias_destino || null,
-        titular_destino: p.titular_destino || null,
-        numero_echeq: p.numero_echeq || null,
-        fecha_vencimiento: p.fecha_vencimiento || null,
-        tipotarjeta_id: p.tipotarjeta_id ? Number(p.tipotarjeta_id) : null,
-        marcatarjeta_id: p.marcatarjeta_id ? Number(p.marcatarjeta_id) : null,
-        cupon_numero: p.cupon_numero || null,
-        planpago_id: p.planpago_id ? Number(p.planpago_id) : null,
-      }));
+          medio:
+            medioFromFp(
+              p.formapago_id
+            ),
 
+          formapago_id:
+            p.formapago_id
+              ? Number(p.formapago_id)
+              : null,
+
+          monto:
+            Number(p.monto || 0),
+
+          fecha:
+            p.fecha || fecha,
+
+          detalle:
+            p.detalle || null,
+
+          caja_id:
+            p.caja_id
+              ? Number(p.caja_id)
+              : null,
+
+          banco_id:
+            p.banco_id
+              ? Number(p.banco_id)
+              : null,
+
+          referencia:
+            p.referencia || null,
+
+          cbu_alias_destino:
+            p.cbu_alias_destino || null,
+
+          titular_destino:
+            p.titular_destino || null,
+
+          numero_echeq:
+            p.numero_echeq || null,
+
+          fecha_vencimiento:
+            p.fecha_vencimiento || null,
+
+          tipotarjeta_id:
+            p.tipotarjeta_id
+              ? Number(p.tipotarjeta_id)
+              : null,
+
+          marcatarjeta_id:
+            p.marcatarjeta_id
+              ? Number(p.marcatarjeta_id)
+              : null,
+
+          cupon_numero:
+            p.cupon_numero || null,
+
+          planpago_id:
+            p.planpago_id
+              ? Number(p.planpago_id)
+              : null,
+
+
+          // IMPORTANTE:
+          // conservar referencia al movimiento existente.
+          existing_ref:
+            p.existing_ref
+              ? {
+                ...p.existing_ref,
+                id:
+                  Number(
+                    p.existing_ref.id
+                  ),
+              }
+              : null,
+
+        }));
       // calcular ordenpago_id si aplica
       const cargoIdsSeleccionados = aplicaciones.map(a => a.cargo_id);
       const cargosSeleccionados = cargos.filter(c => cargoIdsSeleccionados.includes(Number(c.id)));
@@ -718,14 +955,27 @@ export default function AbonoCtaCteModal({
               totalReferencia={totalAplicar}
               value={pagos}
               onChange={setPagos}
+              proveedorId={proveedorId}
+              existingRefsSeleccionados={
+                movimientosExistentesSeleccionados
+              }
             />
           ) : (
             <>
-              <h6 className="mt-3">Pagos adicionales (opcional)</h6>
+              <h6 className="mt-3">
+                Pagos adicionales (opcional)
+              </h6>
               <FormasPagoOrdenEditor
-                totalReferencia={Math.max(0, totalAplicar - saldoAbonoSel)}
+                totalReferencia={Math.max(
+                  0,
+                  totalAplicar - saldoAbonoSel
+                )}
                 value={pagos}
                 onChange={setPagos}
+                proveedorId={proveedorId}
+                existingRefsSeleccionados={
+                  movimientosExistentesSeleccionados
+                }
               />
             </>
           )}

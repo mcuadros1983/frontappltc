@@ -187,6 +187,35 @@ export default function AcreditarPagoProgramadoModal({
     row?.pago_programado_tipo ===
     "anticipo";
 
+  const montoAplicado =
+    Number(
+      row?.monto_aplicado ??
+      row?.importe_aplicado ??
+      0
+    );
+
+
+  const montoBloqueado =
+    montoAplicado > 0;
+
+
+  const comprobantesAplicados =
+    Array.isArray(
+      row?.comprobantes_aplicados
+    )
+      ? row.comprobantes_aplicados
+      : [];
+
+
+  const numerosComprobantesAplicados =
+    comprobantesAplicados
+      .map(
+        (c) =>
+          c?.nrocomprobante ||
+          null
+      )
+      .filter(Boolean);
+
   const formaPagoAutomatica =
     useMemo(() => {
 
@@ -214,24 +243,7 @@ export default function AcreditarPagoProgramadoModal({
       medio,
     ]);
 
-  // ======================================================
-  // BANCOS EMPRESA
-  // ======================================================
 
-  // const bancosEmpresa =
-  //   useMemo(
-  //     () =>
-  //       (bancosTabla || []).filter(
-  //         (b) =>
-  //           !empresaId ||
-  //           Number(b.empresa_id) ===
-  //           Number(empresaId)
-  //       ),
-  //     [
-  //       bancosTabla,
-  //       empresaId,
-  //     ]
-  //   );
 
   const bancosDisponibles =
     useMemo(() => {
@@ -1270,7 +1282,8 @@ export default function AcreditarPagoProgramadoModal({
                       monto
                     }
                     disabled={
-                      saving
+                      saving ||
+                      montoBloqueado
                     }
                     onChange={(e) =>
                       setMonto(
@@ -1279,14 +1292,41 @@ export default function AcreditarPagoProgramadoModal({
                     }
                   />
 
-                  <Form.Text muted>
 
-                    Programado: $
-                    {toMoney(
-                      row.monto_base
-                    )}
+                  {montoBloqueado ? (
 
-                  </Form.Text>
+                    <Form.Text className="text-warning">
+
+                      El monto no puede modificarse porque este
+                      Pago Programado está asociado a
+                      {
+                        numerosComprobantesAplicados.length > 1
+                          ? " los comprobantes: "
+                          : " el comprobante: "
+                      }
+
+                      <strong>
+                        {
+                          numerosComprobantesAplicados.length > 0
+                            ? numerosComprobantesAplicados.join(", ")
+                            : "asociado"
+                        }
+                      </strong>.
+
+                    </Form.Text>
+
+                  ) : (
+
+                    <Form.Text muted>
+
+                      Programado: $
+                      {toMoney(
+                        row.monto_base
+                      )}
+
+                    </Form.Text>
+
+                  )}
 
                 </Form.Group>
 
@@ -1422,7 +1462,7 @@ export default function AcreditarPagoProgramadoModal({
               {/* VARIAS FACTURAS                       */}
               {/* ===================================== */}
 
-              {!esAnticipo && (
+              {/* {!esAnticipo && (
 
                 <Col md={12}>
 
@@ -1459,7 +1499,7 @@ export default function AcreditarPagoProgramadoModal({
 
                 </Col>
 
-              )}
+              )} */}
 
 
               {/* ===================================== */}

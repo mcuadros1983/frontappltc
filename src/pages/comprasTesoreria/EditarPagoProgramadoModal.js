@@ -155,6 +155,44 @@ export default function EditarPagoProgramadoModal({
         row?.pago_programado_tipo ===
         "anticipo";
 
+    const montoAplicado =
+        N(
+            row?.monto_aplicado ??
+            row?.importe_aplicado ??
+            0
+        );
+
+
+    const montoBloqueado =
+        montoAplicado > 0;
+
+    console.log(
+        "EDITAR PP - ROW RECIBIDO:",
+        row
+    );
+
+    console.log(
+        "EDITAR PP - COMPROBANTES APLICADOS:",
+        row?.comprobantes_aplicados
+    );
+
+    const comprobantesAplicados =
+        Array.isArray(
+            row?.comprobantes_aplicados
+        )
+            ? row.comprobantes_aplicados
+            : [];
+
+
+    const numerosComprobantesAplicados =
+        comprobantesAplicados
+            .map(
+                (c) =>
+                    c?.nrocomprobante ||
+                    null
+            )
+            .filter(Boolean);
+
     // ======================================================
     // FORMAS DE PAGO SEGÚN MEDIO
     // ======================================================
@@ -772,7 +810,8 @@ export default function EditarPagoProgramadoModal({
                                             monto
                                         }
                                         disabled={
-                                            saving
+                                            saving ||
+                                            montoBloqueado
                                         }
                                         onChange={(e) =>
                                             setMonto(
@@ -780,13 +819,38 @@ export default function EditarPagoProgramadoModal({
                                             )
                                         }
                                     />
+                                    {montoBloqueado ? (
 
-                                    <Form.Text muted>
-                                        Actual: $
-                                        {toMoney(
-                                            row.monto_base
-                                        )}
-                                    </Form.Text>
+                                        <Form.Text className="text-warning">
+
+                                            Para modificar el monto debe desasociar
+                                            primero este Pago Programado de
+                                            {
+                                                numerosComprobantesAplicados.length > 1
+                                                    ? " los comprobantes: "
+                                                    : " el comprobante: "
+                                            }
+
+                                            <strong>
+                                                {
+                                                    numerosComprobantesAplicados.length > 0
+                                                        ? numerosComprobantesAplicados.join(", ")
+                                                        : "asociado"
+                                                }
+                                            </strong>.
+
+                                        </Form.Text>
+
+                                    ) : (
+
+                                        <Form.Text muted>
+                                            Actual: $
+                                            {toMoney(
+                                                row.monto_base
+                                            )}
+                                        </Form.Text>
+
+                                    )}
 
                                 </Form.Group>
 

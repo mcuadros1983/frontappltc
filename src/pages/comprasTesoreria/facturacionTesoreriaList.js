@@ -118,6 +118,18 @@ export default function ComprobantesEgresoList() {
   const [motivoNoEditar, setMotivoNoEditar] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [pagosComprobante, setPagosComprobante] = useState([]);
+  const [
+    pagosProgramadosComprobante,
+    setPagosProgramadosComprobante
+  ] = useState([]);
+  const [
+    pagosProgramadosDesasociar,
+    setPagosProgramadosDesasociar
+  ] = useState([]);
+  const [
+    situacionCtaCteComprobante,
+    setSituacionCtaCteComprobante
+  ] = useState(null);
   const [loadingPagos, setLoadingPagos] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [guardandoEdicion, setGuardandoEdicion] = useState(false);
@@ -682,6 +694,7 @@ export default function ComprobantesEgresoList() {
 
     setLoadingPagos(true);
     setPagosComprobante([]);
+    setPagosProgramadosDesasociar([]);
 
     try {
 
@@ -702,6 +715,10 @@ export default function ComprobantesEgresoList() {
       }
 
       console.log("🟢 DETALLE COMPROBANTE:", data);
+      console.log(
+        "🔵 PAGOS DEL COMPROBANTE:",
+        data?.pagos
+      );
       console.log("🟢 puede_editar:", data?.puede_editar);
       console.log("🟢 motivo:", data?.motivo_no_editar);
 
@@ -720,7 +737,7 @@ export default function ComprobantesEgresoList() {
           ? ""
           : (
             data?.motivo_no_editar ||
-            "Este comprobante no puede ser editado porque cuenta con una forma de pago aplicada."
+            "Este comprobante no puede ser editado porque tiene formas de pago efectivas o pagos programados asociados."
           )
       );
 
@@ -734,6 +751,14 @@ export default function ComprobantesEgresoList() {
           : []
       );
 
+      setPagosProgramadosComprobante(
+        Array.isArray(data?.pagos_programados)
+          ? data.pagos_programados
+          : []
+      );
+      setSituacionCtaCteComprobante(
+        data?.ctacte || null
+      );
       setAjustesComprobante(
         Array.isArray(data?.ajustes)
           ? data.ajustes
@@ -816,12 +841,89 @@ export default function ComprobantesEgresoList() {
   const handleCloseModal = () => {
     setSelectedComprobante(null);
     setPagosComprobante([]);
+    setPagosProgramadosComprobante([]);
+    setPagosProgramadosDesasociar([]);
+    setSituacionCtaCteComprobante(null);
     setAjustesComprobante([]);
     setPuedeEditarComprobante(false);
     setMotivoNoEditar("");
     setShowModal(false);
   };
 
+  const toggleDesasociarPagoProgramado = (pagoProgramado) => {
+
+    const pagoProgramadoId =
+      Number(pagoProgramado?.id);
+
+    if (!pagoProgramadoId) {
+      return;
+    }
+
+
+    const yaMarcado =
+      pagosProgramadosDesasociar.some(
+        (id) =>
+          Number(id) ===
+          pagoProgramadoId
+      );
+
+
+    /*
+     * Si ya estaba marcado, simplemente
+     * deshacemos la decisión.
+     *
+     * No hace falta mostrar confirmación.
+     */
+    if (yaMarcado) {
+
+      setPagosProgramadosDesasociar(
+        (prev) =>
+          prev.filter(
+            (id) =>
+              Number(id) !==
+              pagoProgramadoId
+          )
+      );
+
+      return;
+    }
+
+
+    /*
+     * IMPORTANTE:
+     *
+     * Desasociar un Pago Programado será
+     * una operación GLOBAL.
+     *
+     * Todavía NO modificamos la BD.
+     * La operación se ejecutará recién
+     * cuando se presione "Guardar cambios".
+     */
+    const confirmar =
+      window.confirm(
+        "Este Pago Programado se desasociará de todos los comprobantes relacionados. El cambio se aplicará al guardar\n\n" +
+        "¿Desea continuar?"
+      );
+
+
+    if (!confirmar) {
+      return;
+    }
+
+
+    /*
+     * Solamente lo marcamos.
+     *
+     * NO hacemos fetch.
+     * NO modificamos BD.
+     */
+    setPagosProgramadosDesasociar(
+      (prev) => [
+        ...prev,
+        pagoProgramadoId,
+      ]
+    );
+  };
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setSelectedComprobante((prev) => ({
@@ -844,40 +946,81 @@ export default function ComprobantesEgresoList() {
 
     try {
 
-      const faltanEdit = validarObligatorios(
-        selectedComprobante,
-        [
-          "observaciones",
-          "hacienda_id",
+      /*
+       * Si el comprobante está bloqueado para edición,
+       * pero el usuario marcó uno o más Pagos Programados
+       * para desasociar, permitimos exclusivamente
+       * confirmar esa operación.
+       */
+      const soloDesasociandoPagoProgramado =
+        !puedeEditarComprobante &&
+        pagosProgramadosDesasociar.length > 0;
 
-          "iva_especial",
-          "iva_especial_porcentaje",
-          "percepcion_iva",
-          "percepcion_ganancias",
-          "percepcion_iibb",
-          "impuestos_internos",
-          "exento_no_gravado",
-        ]
-      );
 
-      if (faltanEdit.length) {
-        alert(
-          "Faltan completar campos obligatorios: " +
-          faltanEdit.join(", ")
+      /*
+       * Las validaciones normales del comprobante
+       * solamente se ejecutan cuando realmente estamos
+       * editando sus datos.
+       *
+       * Si solamente estamos desasociando un PP,
+       * no validamos campos históricos del comprobante.
+       */
+      if (!soloDesasociandoPagoProgramado) {
+
+        const faltanEdit = validarObligatorios(
+          selectedComprobante,
+          [
+            "observaciones",
+            "hacienda_id",
+
+            "iva_especial",
+            "iva_especial_porcentaje",
+            "percepcion_iva",
+            "percepcion_ganancias",
+            "percepcion_iibb",
+            "impuestos_internos",
+            "exento_no_gravado",
+          ]
         );
-        return;
+
+        if (faltanEdit.length) {
+          alert(
+            "Faltan completar campos obligatorios: " +
+            faltanEdit.join(", ")
+          );
+          return;
+        }
       }
 
+
       setGuardandoEdicion(true);
+      const body =
+        soloDesasociandoPagoProgramado
+          ? {
+            /*
+             * Comprobante bloqueado:
+             * enviamos EXCLUSIVAMENTE la operación
+             * de desasociación.
+             */
+            pagos_programados_desasociar:
+              pagosProgramadosDesasociar,
+          }
+          : {
+            /*
+             * Edición normal del comprobante.
+             */
+            ...selectedComprobante,
 
-      const body = {
-        ...selectedComprobante,
+            hacienda_id:
+              selectedComprobante?.hacienda_id
+                ? Number(
+                  selectedComprobante.hacienda_id
+                )
+                : null,
 
-        hacienda_id:
-          selectedComprobante?.hacienda_id
-            ? Number(selectedComprobante.hacienda_id)
-            : null,
-      };
+            pagos_programados_desasociar:
+              pagosProgramadosDesasociar,
+          };
 
       const res = await fetch(
         `${apiUrl}/comprobantes-egreso/${selectedComprobante.id}`,
@@ -1639,9 +1782,59 @@ export default function ComprobantesEgresoList() {
 
   const getFormaPagoDesc = (fpId) => {
     if (!fpId) return null;
-    const fp = formasPagoTesoreria.find(f => Number(f.id) === Number(fpId));
+
+    const fp = formasPagoTesoreria.find(
+      (f) =>
+        Number(f.id) ===
+        Number(fpId)
+    );
+
     return fp?.descripcion || `FP #${fpId}`;
   };
+
+
+  /*
+   * Pagos que deben mostrarse en el detalle.
+   *
+   * Si la Cta.Cte. ya quedó totalmente cubierta
+   * mediante un Pago Programado, dejamos de mostrar
+   * la Cta.Cte. como forma pendiente.
+   */
+  const pagosComprobanteVisibles =
+    pagosComprobante.filter((p) => {
+
+      if (
+        !situacionCtaCteComprobante
+          ?.totalmente_cubierta
+      ) {
+        return true;
+      }
+
+      if (
+        pagosProgramadosComprobante.length === 0
+      ) {
+        return true;
+      }
+
+      const tipo =
+        String(
+          p.tipo ||
+          p.medio ||
+          p.formapago ||
+          p.descripcion ||
+          ""
+        )
+          .trim()
+          .toLowerCase();
+
+      const esCtaCte =
+        tipo.includes("cta cte") ||
+        tipo.includes("cta. cte") ||
+        tipo.includes("cuenta corriente") ||
+        tipo === "ctacte";
+
+      return !esCtaCte;
+    });
 
 
   return (
@@ -1855,7 +2048,11 @@ export default function ComprobantesEgresoList() {
       {/* ===== Modal de edición ===== */}
       <Modal show={showModal} onHide={handleCloseModal} backdrop="static" centered size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Editar Comprobante</Modal.Title>
+          <Modal.Title>
+            {puedeEditarComprobante
+              ? "Editar Comprobante"
+              : "Detalle del Comprobante"}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedComprobante && (
@@ -1863,8 +2060,10 @@ export default function ComprobantesEgresoList() {
               {!puedeEditarComprobante && (
                 <div className="alert alert-warning mb-3">
                   <strong>Comprobante sólo para consulta.</strong>
+
                   <div>
-                    Este comprobante no puede ser editado porque cuenta con una forma de pago aplicada.
+                    {motivoNoEditar ||
+                      "Este comprobante no puede ser editado."}
                   </div>
                 </div>
               )}
@@ -1911,7 +2110,28 @@ export default function ComprobantesEgresoList() {
                       <Form.Select
                         name="categoriaegreso_id"
                         value={selectedComprobante.categoriaegreso_id || ""}
+                        onChange={(e) => {
 
+                          handleChange(e);
+
+                          const imputacionId =
+                            getImputacionFromCategoria(
+                              e.target.value
+                            );
+
+                          setSelectedComprobante(
+                            (prev) => ({
+                              ...prev,
+
+                              categoriaegreso_id:
+                                e.target.value,
+
+                              imputacioncontable_id:
+                                imputacionId || "",
+                            })
+                          );
+
+                        }}
                         className="form-control my-input"
                       >
                         <option value="">Seleccione...</option>
@@ -1932,7 +2152,7 @@ export default function ComprobantesEgresoList() {
                       <Form.Select
                         name="imputacioncontable_id"
                         value={selectedComprobante.imputacioncontable_id || ""}
-
+                        onChange={handleChange}
                         className="form-control my-input"
                       >
                         <option value="">Seleccione...</option>
@@ -2107,7 +2327,7 @@ export default function ComprobantesEgresoList() {
                         name="percepcion_iibb"
                         value={selectedComprobante.percepcion_iibb ?? 0}
                         onChange={handleNuevoChange}
-  onFocus={handleFocusNumero}
+                        onFocus={handleFocusNumero}
                       />
                     </Form.Group>
 
@@ -2122,7 +2342,7 @@ export default function ComprobantesEgresoList() {
                         name="impuestos_internos"
                         value={selectedComprobante.impuestos_internos ?? 0}
                         onChange={handleNuevoChange}
-  onFocus={handleFocusNumero}
+                        onFocus={handleFocusNumero}
                       />
                     </Form.Group>
 
@@ -2137,7 +2357,7 @@ export default function ComprobantesEgresoList() {
                         name="exento_no_gravado"
                         value={selectedComprobante.exento_no_gravado ?? 0}
                         onChange={handleNuevoChange}
-  onFocus={handleFocusNumero}
+                        onFocus={handleFocusNumero}
                       />
                     </Form.Group>
                     {/* RETENCIÓN */}
@@ -2473,57 +2693,238 @@ export default function ComprobantesEgresoList() {
 
                   )}
 
+                </fieldset>
+
+                <hr />
+
+                <h5 className="mb-3">
+                  Pagos programados / compromisos
+                </h5>
+
+                {pagosProgramadosComprobante.length === 0 ? (
+
+                  <div className="text-muted mb-3">
+                    Este comprobante no tiene pagos programados asociados.
+                  </div>
+
+                ) : (
+
+                  <Table
+                    striped
+                    bordered
+                    hover
+                    responsive
+                    size="sm"
+                    className="mb-3"
+                  >
+
+                    <thead>
+                      <tr>
+                        <th>Fecha programada</th>
+                        <th>Pago programado</th>
+                        <th>FP acordada</th>
+                        <th>Importe aplicado</th>
+                        <th>Importe total PP</th>
+                        <th>Estado</th>
+                        <th>Descripción</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+
+                      {pagosProgramadosComprobante.map((p) => {
+
+                        const marcadoParaDesasociar =
+                          pagosProgramadosDesasociar.some(
+                            (id) =>
+                              Number(id) ===
+                              Number(p.id)
+                          );
+
+                        const importeAplicado =
+                          Number(
+                            p.monto_aplicado ??
+                            p.importe_aplicado ??
+                            p.monto ??
+                            0
+                          );
+
+                        const importeTotal =
+                          Number(
+                            p.monto || 0
+                          );
+
+                        const formaPago =
+                          formasPagoTesoreria.find(
+                            (fp) =>
+                              Number(fp.id) ===
+                              Number(p.formapago_id)
+                          );
+
+                        const formaPagoDescripcion =
+                          formaPago?.descripcion ||
+                          p.medio ||
+                          "-";
+
+                        return (
+
+                          <tr
+                            key={`programado-${p.id}`}
+                            className={
+                              marcadoParaDesasociar
+                                ? "table-danger"
+                                : ""
+                            }
+                          >
+
+                            <td>
+                              {p.fecha_programada || "-"}
+                            </td>
+
+                            <td>
+                              #{p.id}
+                            </td>
+
+                            <td>
+                              <strong>
+                                {formaPagoDescripcion}
+                              </strong>
+                            </td>
+
+                            <td>
+                              <strong>
+                                {fmtMoney(
+                                  importeAplicado
+                                )}
+                              </strong>
+                            </td>
+
+                            <td>
+                              {fmtMoney(
+                                importeTotal
+                              )}
+                            </td>
+
+                            <td>
+                              {marcadoParaDesasociar ? (
+
+                                <span className="badge bg-danger">
+                                  SE DESASOCIARÁ AL GUARDAR
+                                </span>
+
+                              ) : (
+
+                                <span className="badge bg-warning text-dark">
+                                  PROGRAMADO · NO EFECTIVIZADO
+                                </span>
+
+                              )}
+                            </td>
+
+                            <td>
+
+                              <Button
+                                size="sm"
+                                variant={
+                                  marcadoParaDesasociar
+                                    ? "outline-secondary"
+                                    : "outline-danger"
+                                }
+                                onClick={() =>
+                                  toggleDesasociarPagoProgramado(p)
+                                }
+                              >
+                                {marcadoParaDesasociar
+                                  ? "Deshacer"
+                                  : "Desasociar"}
+                              </Button>
+
+                            </td>
+
+                          </tr>
+
+                        );
+
+                      })}
+
+                    </tbody>
+
+                  </Table>
+                )}
+
+                <fieldset disabled={!puedeEditarComprobante}>
+
                   <hr />
 
                   <h5 className="mb-3">
                     Formas de pago aplicadas{" "}
                     {selectedComprobante?.ordenpago_id ? (
-                      <small className="text-muted"> (Orden #{selectedComprobante.ordenpago_id})</small>
+                      <small className="text-muted">
+                        {" "}
+                        (Orden #{selectedComprobante.ordenpago_id})
+                      </small>
                     ) : null}
                   </h5>
 
                   {loadingPagos ? (
-                    <div className="text-muted">Cargando pagos…</div>
-                  ) : pagosComprobante.length === 0 ? (
-                    <div className="text-muted">Este comprobante no tiene pagos asociados.</div>
+
+                    <div className="text-muted">
+                      Cargando pagos…
+                    </div>
+
+                  ) : pagosComprobanteVisibles.length === 0 ? (
+
+                    <div className="text-muted">
+                      Este comprobante no tiene pagos efectivos asociados.
+                    </div>
+
                   ) : (
-                    <Table striped bordered hover size="sm">
+
+                    <Table
+                      striped
+                      bordered
+                      hover
+                      size="sm"
+                    >
+
                       <thead>
                         <tr>
                           <th>Fecha</th>
                           <th>Medio</th>
                           <th>Detalle</th>
                           <th>Importe</th>
-                          {/* <th>FP Acordada</th> 👈 nueva columna */}
-                          {/*  <th>Info</th>*/}
                         </tr>
                       </thead>
+
                       <tbody>
-                        {pagosComprobante.map((p) => (
+
+                        {pagosComprobanteVisibles.map((p) => (
+
                           <tr key={`${p.tabla}-${p.id}`}>
-                            <td>{p.fecha || "-"}</td>
-                            <td>{p.medio}</td>
-                            <td>{p.detalle || "-"}</td>
-                            <td>{fmtMoney(p.monto)}</td>
-                            {/* <td>
-                          {p.formapago_id
-                            ? getFormaPagoDesc(p.formapago_id)
-                            : p.ordenpago_id
-                              ? "Segun Orden de Pago"
-                              : "-"}
-                        </td>*/}
-                            {/*   <td>
-                          {p.medio === "caja" && (p.caja_id ? `Caja #${p.caja_id}` : "-")}
-                          {p.medio === "transferencia" && (p.banco_id ? `Banco #${p.banco_id}` : "-")}
-                          {p.medio === "echeq" &&
-                            `Banco #${p.banco_id || "-"} · N° ${p.numero_echeq || "-"} · Vto ${p.fecha_vencimiento || "-"}`}
-                          {p.medio === "tarjeta" &&
-                            `Tipo ${p.tipotarjeta_id || "-"} · Marca ${p.marcatarjeta_id || "-"} · Cupón ${p.cupon_numero || "-"}`}
-                          {p.medio === "ctacte" && (p.fecha_pago ? `Fecha pago ${p.fecha_pago}` : "A cuenta corriente")}
-                        </td>*/}
+
+                            <td>
+                              {p.fecha || "-"}
+                            </td>
+
+                            <td>
+                              {p.medio}
+                            </td>
+
+                            <td>
+                              {p.detalle || "-"}
+                            </td>
+
+                            <td>
+                              {fmtMoney(p.monto)}
+                            </td>
+
                           </tr>
+
                         ))}
+
                       </tbody>
+
                     </Table>
 
                   )}
@@ -2547,7 +2948,10 @@ export default function ComprobantesEgresoList() {
             variant="success"
             onClick={handleGuardarCambios}
             disabled={
-              !puedeEditarComprobante ||
+              (
+                !puedeEditarComprobante &&
+                pagosProgramadosDesasociar.length === 0
+              ) ||
               guardandoEdicion
             }
           >
@@ -2948,7 +3352,7 @@ export default function ComprobantesEgresoList() {
                   name="impuestos_internos"
                   value={nuevoComprobante.impuestos_internos ?? 0}
                   onChange={handleNuevoChange}
-  onFocus={handleFocusNumero}
+                  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -2961,7 +3365,7 @@ export default function ComprobantesEgresoList() {
                   name="exento_no_gravado"
                   value={nuevoComprobante.exento_no_gravado ?? 0}
                   onChange={handleNuevoChange}
-  onFocus={handleFocusNumero}
+                  onFocus={handleFocusNumero}
                 />
               </Form.Group>
 
@@ -3452,6 +3856,6 @@ export default function ComprobantesEgresoList() {
 
 
 
-    </Container>
+    </Container >
   );
 }

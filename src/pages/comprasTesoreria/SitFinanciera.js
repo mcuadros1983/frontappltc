@@ -11,7 +11,8 @@ import Contexts from "../../context/Contexts";
 import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
 import AcreditarPagoProgramadoModal
   from "./AcreditarPagoProgramadoModal";
-
+import EditarCtaCteModal
+  from "./EditarCtaCteModal";
 import EditarPagoProgramadoModal from "./EditarPagoProgramadoModal";
 import NuevoMovimientoCheques from "../tesoreria//NuevoMovimientoCheques";
 import AplicarInstanciaGasto
@@ -338,6 +339,10 @@ export default function SitFinanciera() {
     cargoCtaCteAcreditar,
     setCargoCtaCteAcreditar,
   ] = useState(null);
+  const [
+    cargoCtaCteEditar,
+    setCargoCtaCteEditar,
+  ] = useState(null);
   const cargaSeq = useRef(0);
   const [err, setErr] = useState(null);
   const [items, setItems] = useState([]); // normalizados combinados
@@ -516,31 +521,78 @@ export default function SitFinanciera() {
       const estado = saldo <= 0 ? "pagado" : diasRest < 0 ? "vencido" : "pendiente";
       const proveedor_nombre =
         provNameById.get(Number(c.proveedor_id)) || `Prov. ${c.proveedor_id || "-"}`;
-      const categoria_nombre = "";
-      const sucursal_nombre = "";
+      const categoria_nombre =
+        catNameById.get(
+          Number(c.categoriaegreso_id)
+        ) || "";
+
+      const sucursal_nombre =
+        sucNameById.get(
+          Number(c.sucursal_id)
+        ) || "";
       const descripcion =
         c.descripcion || (c.comprobante_nro ? `Comp. ${c.comprobante_nro}` : `Cargo #${c.id}`);
-
       return {
         tipo: "ctacte",
+
         id: c.id,
-        empresa_id: c.empresa_id ?? null,
-        empresa_nombre: empNameById.get(Number(c.empresa_id)) || "",
-        proveedor_id: c.proveedor_id ?? null,
+
+        empresa_id:
+          c.empresa_id ?? null,
+
+        empresa_nombre:
+          empNameById.get(
+            Number(c.empresa_id)
+          ) || "",
+
+        proveedor_id:
+          c.proveedor_id ?? null,
+
         proveedor_nombre,
-        categoria_id: null,
+
+        categoria_id:
+          c.categoriaegreso_id ?? null,
+
+        categoriaegreso_id:
+          c.categoriaegreso_id ?? null,
+
         categoria_nombre,
-        sucursal_id: null,
+
+        sucursal_id:
+          c.sucursal_id ?? null,
+
         sucursal_nombre,
-        fecha_vencimiento: fechaVenc,
-        monto_base: saldo,
+
+        fecha_vencimiento:
+          fechaVenc,
+
+        monto_base:
+          saldo,
+
         estado,
-        dias_restantes: diasRest,
+
+        dias_restantes:
+          diasRest,
+
         descripcion,
-        formapago_futuro_desc: c.formapago_id ? fpDesc(c.formapago_id) : "",
-        comprobanteegreso_id: c.comprobanteegreso_id ?? null, // <-- clave
-        comprobante_nro: null, // preferimos resolver por id
-        key: `cta-${c.id}`,
+
+        // IMPORTANTE
+        formapago_id:
+          c.formapago_id ?? null,
+
+        formapago_futuro_desc:
+          c.formapago_id
+            ? fpDesc(c.formapago_id)
+            : "",
+
+        comprobanteegreso_id:
+          c.comprobanteegreso_id ?? null,
+
+        comprobante_nro:
+          null,
+
+        key:
+          `cta-${c.id}`,
       };
     });
 
@@ -745,6 +797,23 @@ export default function SitFinanciera() {
             0
           ),
 
+        monto_aplicado:
+          Number(
+            p.monto_aplicado ||
+            0
+          ),
+
+        tiene_aplicaciones:
+          Boolean(
+            p.tiene_aplicaciones
+          ),
+
+        comprobantes_aplicados:
+          Array.isArray(
+            p.comprobantes_aplicados
+          )
+            ? p.comprobantes_aplicados
+            : [],
 
         // ================================================
         // ESTADO
@@ -1607,6 +1676,15 @@ export default function SitFinanciera() {
     (row) => {
 
       setCargoCtaCteAcreditar(
+        row
+      );
+
+    };
+
+  const handleEditarCtaCte =
+    (row) => {
+
+      setCargoCtaCteEditar(
         row
       );
 
@@ -3240,9 +3318,21 @@ export default function SitFinanciera() {
                             </Button>
 
 
-                            <BotonNoHabilitado>
+                            <Button
+                              size="sm"
+                              variant="outline-primary"
+                              disabled={
+                                accionandoId === row.key
+                              }
+                              onClick={() =>
+                                handleEditarCtaCte(
+                                  row
+                                )
+                              }
+                            >
                               Editar
-                            </BotonNoHabilitado>
+                            </Button>
+
 
 
                             <BotonNoHabilitado>
@@ -3537,6 +3627,34 @@ export default function SitFinanciera() {
 
         }}
 
+      />
+
+      <EditarCtaCteModal
+        show={!!cargoCtaCteEditar}
+
+        onHide={() =>
+          setCargoCtaCteEditar(null)
+        }
+
+        cargo={cargoCtaCteEditar}
+
+        empresas={empresasTabla || []}
+
+        categorias={categoriasEgreso || []}
+
+        sucursales={sucursalesTabla || []}
+
+        formasPago={formasPagoTesoreria || []}
+
+        onActualizado={async () => {
+
+          setCargoCtaCteEditar(
+            null
+          );
+
+          await cargar();
+
+        }}
       />
 
     </>
