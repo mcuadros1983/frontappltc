@@ -383,11 +383,29 @@ export default function MovimientosRetirosTesoreria() {
       {/* Vista según modo */}
       {!modoRecepcion ? (
         // ======== MODO NORMAL: Grilla por fecha origen ========
-        <div className="table-responsive">
+        <div
+          className="table-responsive"
+          style={{
+            position: "relative",
+          }}
+        >
           <table className="table table-sm table-bordered align-middle">
             <thead className="table-light">
               <tr>
-                <th style={{ minWidth: 120 }}>Fecha</th>
+                <th
+                  style={{
+                    minWidth: 120,
+                    width: 120,
+                    position: "sticky",
+                    left: 0,
+                    top: 0,
+                    zIndex: 10,
+                    backgroundColor: "#f8f9fa",
+                    boxShadow: "2px 0 3px rgba(0,0,0,0.12)",
+                  }}
+                >
+                  Fecha
+                </th>
                 {cols.map((s) => (
                   <th key={s.id} className="text-center">
                     <div className="fw-semibold">
@@ -407,7 +425,18 @@ export default function MovimientosRetirosTesoreria() {
               )}
               {dias.map((d) => (
                 <tr key={d}>
-                  <td className="text-nowrap">
+                  <td
+                    className="text-nowrap"
+                    style={{
+                      minWidth: 120,
+                      width: 120,
+                      position: "sticky",
+                      left: 0,
+                      zIndex: 2,
+                      backgroundColor: "#ffffff",
+                      boxShadow: "2px 0 3px rgba(0,0,0,0.08)",
+                    }}
+                  >
                     {new Date(d + "T00:00:00").toLocaleDateString("es-AR")}
                   </td>
                   {cols.map((s) => {
