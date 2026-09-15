@@ -257,9 +257,9 @@ export default function NuevoMovimientoCajaRetiro({
             0
           );
 
-          setExpresionSobres(
-            totalExistente > 0 ? String(totalExistente) : ""
-          );
+          // No cargamos todavía expresionSobres.
+          // Primero consultamos el movimiento para saber si existe
+          // una expresión original guardada.
 
           // Traer movimiento para completar encabezado
           if (movId) {
@@ -275,7 +275,14 @@ export default function NuevoMovimientoCajaRetiro({
                   : "";
 
               if (expresionGuardada) {
+                // Movimiento nuevo: recuperamos exactamente la expresión original.
                 setExpresionSobres(expresionGuardada);
+              } else {
+                // Movimiento histórico: no tenía expresión guardada,
+                // por lo que usamos como fallback la suma de sus retiros.
+                setExpresionSobres(
+                  totalExistente > 0 ? String(totalExistente) : ""
+                );
               }
 
               setDescripcion(mov.descripcion || "");
@@ -537,147 +544,157 @@ export default function NuevoMovimientoCajaRetiro({
           </Modal.Header>
 
           <Modal.Body>
-            {cargando && (
-              <div className="mb-2">
-                <Spinner size="sm" animation="border" className="me-2" />
-                Cargando datos…
-              </div>
-            )}
-
-            <Row className="mb-3">
-              <Col md={4}>
-                <Form.Label>Fecha (origen)</Form.Label>
-                <Form.Control
-                  type="date"
-                  value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                  required
-                  disabled={!!movimientoId}
-                />
-                <Form.Text className="text-muted">
-                  Caja #{caja_id ?? "-"} · {formaCobroCajaId ? "Caja/Efectivo" : "—"}
-                </Form.Text>
-              </Col>
-              <Col md={5}>
-                <Form.Label>Sucursal</Form.Label>
-                <Form.Control
-                  value={
-                    typeof presetSucursal === "object"
-                      ? `${presetSucursal?.id} - ${presetSucursal?.nombre || presetSucursal?.descripcion || ""}`.trim()
-                      : String(sucursalId || "")
-                  }
-                  disabled
-                />
-              </Col>
-              <Col md={3} className="d-flex align-items-end">
-                <Button variant="outline-info" className="w-100" onClick={openInfModal}>
-                  Ver retiros informados
-                </Button>
-              </Col>
-            </Row>
-
-            <Row className="mb-3">
-              <Col md={6}>
-                <Form.Label>Categoría de Ingreso</Form.Label>
-                <Form.Select
-                  value={categoriaingreso_id}
-                  onChange={(e) => setCategoriaIngresoId(e.target.value)}
-                  className="form-control my-input"
-                  required
-                >
-                  <option value="">Seleccione…</option>
-                  {(categoriasIngreso || []).map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Col>
-            </Row>
-
-            <div className="mb-3">
-              <Form.Label className="fw-bold">
-                Ingreso de sobres
-              </Form.Label>
-
-              <InputGroup>
-                <InputGroup.Text>$</InputGroup.Text>
-
-                <Form.Control
-                  type="text"
-                  value={expresionSobres}
-                  onChange={(e) => setExpresionSobres(e.target.value)}
-                  placeholder="Ej: 15000 + 12500 + 8000 - 500"
-                  autoComplete="off"
-                  style={{
-                    fontSize: "1.2rem",
-                    fontWeight: 600,
-                  }}
-                />
-              </InputGroup>
-
-              <Form.Text className="text-muted">
-                Ingrese los importes utilizando + y -.
-                Ejemplo: 15000 + 12500 - 3000
-              </Form.Text>
-
-              {expresionSobres && !expresionSobresValida && (
-                <div className="text-danger mt-1">
-                  Expresión inválida. Utilice solamente números, + y -.
+            {cargando ? (
+              <div
+                className="d-flex flex-column align-items-center justify-content-center"
+                style={{ minHeight: "280px" }}
+              >
+                <Spinner animation="border" className="mb-3" />
+                <div className="text-muted">
+                  Cargando datos…
                 </div>
-              )}
+              </div>
+            ) : (
+              <>
+                <Row className="mb-3">
+                  <Col md={4}>
+                    <Form.Label>Fecha (origen)</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={fecha}
+                      onChange={(e) => setFecha(e.target.value)}
+                      required
+                      disabled={!!movimientoId}
+                    />
+                    <Form.Text className="text-muted">
+                      Caja #{caja_id ?? "-"} · {formaCobroCajaId ? "Caja/Efectivo" : "—"}
+                    </Form.Text>
+                  </Col>
+                  <Col md={5}>
+                    <Form.Label>Sucursal</Form.Label>
+                    <Form.Control
+                      value={
+                        typeof presetSucursal === "object"
+                          ? `${presetSucursal?.id} - ${presetSucursal?.nombre || presetSucursal?.descripcion || ""}`.trim()
+                          : String(sucursalId || "")
+                      }
+                      disabled
+                    />
+                  </Col>
+                  <Col md={3} className="d-flex align-items-end">
+                    <Button variant="outline-info" className="w-100" onClick={openInfModal}>
+                      Ver retiros informados
+                    </Button>
+                  </Col>
+                </Row>
 
-              {expresionSobres &&
-                expresionSobresValida &&
-                !expresionSobresCompleta && (
-                  <div className="text-warning mt-1">
-                    Complete la operación antes de guardar.
+                <Row className="mb-3">
+                  <Col md={6}>
+                    <Form.Label>Categoría de Ingreso</Form.Label>
+                    <Form.Select
+                      value={categoriaingreso_id}
+                      onChange={(e) => setCategoriaIngresoId(e.target.value)}
+                      className="form-control my-input"
+                      required
+                    >
+                      <option value="">Seleccione…</option>
+                      {(categoriasIngreso || []).map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nombre}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Col>
+                </Row>
+
+                <div className="mb-3">
+                  <Form.Label className="fw-bold">
+                    Ingreso de sobres
+                  </Form.Label>
+
+                  <InputGroup>
+                    <InputGroup.Text>$</InputGroup.Text>
+
+                    <Form.Control
+                      type="text"
+                      value={expresionSobres}
+                      onChange={(e) => setExpresionSobres(e.target.value)}
+                      placeholder="Ej: 15000 + 12500 + 8000 - 500"
+                      autoComplete="off"
+                      style={{
+                        fontSize: "1.2rem",
+                        fontWeight: 600,
+                      }}
+                    />
+                  </InputGroup>
+
+                  <Form.Text className="text-muted">
+                    Ingrese los importes utilizando + y -.
+                    Ejemplo: 15000 + 12500 - 3000
+                  </Form.Text>
+
+                  {expresionSobres && !expresionSobresValida && (
+                    <div className="text-danger mt-1">
+                      Expresión inválida. Utilice solamente números, + y -.
+                    </div>
+                  )}
+
+                  {expresionSobres &&
+                    expresionSobresValida &&
+                    !expresionSobresCompleta && (
+                      <div className="text-warning mt-1">
+                        Complete la operación antes de guardar.
+                      </div>
+                    )}
+
+                  <div className="mt-3 p-3 border rounded bg-light">
+                    <div className="text-muted">
+                      Parcial
+                    </div>
+
+                    <div className="fs-3 fw-bold">
+                      {fmt(totalSobres)}
+                    </div>
+                  </div>
+                </div>
+                <Row className="mb-3">
+                  <Col>
+                    <Form.Label>Descripción</Form.Label>
+                    <Form.Control
+                      value={descripcion}
+                      onChange={(e) => setDescripcion(e.target.value)}
+                      placeholder={
+                        movimientoId
+                          ? "Descripción del movimiento"
+                          : `Retiros sucursal ${typeof presetSucursal === "object"
+                            ? presetSucursal?.nombre || presetSucursal?.descripcion || presetSucursal?.id
+                            : presetSucursal
+                          } (${fecha})`
+                      }
+                    />
+                  </Col>
+                </Row>
+
+                <Row>
+                  <Col>
+                    <Form.Label>Observaciones</Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={2}
+                      value={observaciones}
+                      onChange={(e) => setObservaciones(e.target.value)}
+                    />
+                  </Col>
+                </Row>
+
+                {msg && (
+                  <div className={`alert alert-${msg.type} mt-3 py-2`}>
+                    {msg.text}
                   </div>
                 )}
-
-              <div className="mt-3 p-3 border rounded bg-light">
-                <div className="text-muted">
-                  Parcial
-                </div>
-
-                <div className="fs-3 fw-bold">
-                  {fmt(totalSobres)}
-                </div>
-              </div>
-            </div>
-            <Row className="mb-3">
-              <Col>
-                <Form.Label>Descripción</Form.Label>
-                <Form.Control
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  placeholder={
-                    movimientoId
-                      ? "Descripción del movimiento"
-                      : `Retiros sucursal ${typeof presetSucursal === "object"
-                        ? presetSucursal?.nombre || presetSucursal?.descripcion || presetSucursal?.id
-                        : presetSucursal
-                      } (${fecha})`
-                  }
-                />
-              </Col>
-            </Row>
-
-            <Row>
-              <Col>
-                <Form.Label>Observaciones</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={2}
-                  value={observaciones}
-                  onChange={(e) => setObservaciones(e.target.value)}
-                />
-              </Col>
-            </Row>
-
-            {msg && <div className={`alert alert-${msg.type} mt-3 py-2`}>{msg.text}</div>}
+              </>
+            )}
           </Modal.Body>
-
           <Modal.Footer className="justify-content-between">
             {movimientoId ? (
               <Button variant="outline-danger" onClick={handleEliminarTodos} disabled={enviando}>
