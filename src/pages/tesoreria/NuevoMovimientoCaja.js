@@ -5,7 +5,12 @@ import Contexts from "../../context/Contexts";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
-export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
+export default function NuevoMovimientoCaja({
+  show,
+  onHide,
+  onCreated,
+  presetFecha = null,
+}) {
   const data = useContext(Contexts.DataContext) || {};
   const {
     empresaSeleccionada,
@@ -26,7 +31,9 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
 
   // ================== UI / FORM ==================
   const [tipo, setTipo] = useState("egresos"); // 'egresos' | 'anticipo' | 'deposito'
-  const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
+  const [fecha, setFecha] = useState(
+    () => presetFecha || new Date().toISOString().slice(0, 10)
+  );
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState("");
   const [observaciones, setObservaciones] = useState("");
@@ -50,6 +57,15 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
 
   const empresa_id = empresaSeleccionada?.id || null;
   const caja_id = cajaAbierta?.caja?.id || null;
+
+  // ================== FECHA PREDETERMINADA ==================
+  useEffect(() => {
+    if (!show) return;
+
+    setFecha(
+      presetFecha || new Date().toISOString().slice(0, 10)
+    );
+  }, [show, presetFecha]);
 
   // ================== REFRESCAR DATOS AL ABRIR MODAL ==================
   useEffect(() => {
@@ -120,7 +136,133 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
     return m?.id || null;
   }, [formasPagoTesoreria]);
 
-  const norm = (s) => String(s || "").trim().toLowerCase();
+  // const norm = (s) => String(s || "").trim().toLowerCase();
+  const norm = (s) =>
+    String(s || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+
+  // ==== Nombre de empresa para seleccionar proyecto por defecto ====
+  const nombreEmpresaSeleccionada = useMemo(() => {
+    return (
+      empresaSeleccionada?.descripcion ||
+      empresaSeleccionada?.razon_social ||
+      empresaSeleccionada?.nombre ||
+      empresaSeleccionada?.nombrecorto ||
+      empresaSeleccionada?.fantasia ||
+      empresaSeleccionada?.alias ||
+      ""
+    );
+  }, [empresaSeleccionada]);
+
+  // ==== Proyecto predeterminado según empresa seleccionada ====
+  const proyectoPredeterminado = useMemo(() => {
+    if (!Array.isArray(proyectosTabla) || proyectosTabla.length === 0) {
+      return null;
+    }
+
+    // Si no hay empresa seleccionada, usamos EL MANGO SRL.
+    const nombreBuscado =
+      nombreEmpresaSeleccionada || "EL MANGO SRL";
+
+    const buscado = norm(nombreBuscado);
+
+    return (
+      proyectosTabla.find((p) => {
+        const nombreProyecto =
+          p.descripcion ||
+          p.nombre ||
+          p.nombrecorto ||
+          p.alias ||
+          "";
+
+        return norm(nombreProyecto) === buscado;
+      }) ||
+      // Fallback solicitado: EL MANGO SRL.
+      proyectosTabla.find((p) => {
+        const nombreProyecto =
+          p.descripcion ||
+          p.nombre ||
+          p.nombrecorto ||
+          p.alias ||
+          "";
+
+        return norm(nombreProyecto) === norm("EL MANGO SRL");
+      }) ||
+      null
+    );
+  }, [proyectosTabla, nombreEmpresaSeleccionada]);
+
+  console.log(
+    "CATEGORÍAS EGRESO:",
+    categoriasEgreso
+  );
+
+  // ==== Categoría de egreso predeterminada: VARIOS ====
+  const categoriaVarios = useMemo(() => {
+    if (
+      !Array.isArray(categoriasEgreso) ||
+      categoriasEgreso.length === 0
+    ) {
+      return null;
+    }
+
+    return (
+      categoriasEgreso.find(
+        (c) => norm(c.nombre) === norm("VARIOS")
+      ) || null
+    );
+  }, [categoriasEgreso]);
+
+  // ==== Proveedor predeterminado: VARIOS ====
+  const proveedorVarios = useMemo(() => {
+    if (
+      !Array.isArray(proveedoresTabla) ||
+      proveedoresTabla.length === 0
+    ) {
+      return null;
+    }
+
+    return (
+      proveedoresTabla.find((p) => {
+        const nombreProveedor =
+          p.descripcion ||
+          p.nombre ||
+          "";
+
+        return norm(nombreProveedor) === norm("VARIOS");
+      }) || null
+    );
+  }, [proveedoresTabla]);
+
+  // ==== Valores predeterminados al crear un movimiento ====
+  useEffect(() => {
+    if (!show) return;
+
+    // Proyecto = empresa seleccionada.
+    // Si no existe coincidencia, usa EL MANGO SRL.
+    if (proyectoPredeterminado?.id) {
+      setProyectoId(String(proyectoPredeterminado.id));
+    }
+
+    // Categoría = VARIOS.
+    if (categoriaVarios?.id) {
+      setCategoriaId(String(categoriaVarios.id));
+    }
+
+    // Proveedor = VARIOS.
+    if (proveedorVarios?.id) {
+      setProveedorId(String(proveedorVarios.id));
+    }
+  }, [
+    show,
+    proyectoPredeterminado,
+    categoriaVarios,
+    proveedorVarios,
+  ]);
 
   // ==== Mapa nombreEmpresa -> empresa ====
   const empresasByNombre = useMemo(() => {
@@ -257,13 +399,28 @@ export default function NuevoMovimientoCaja({ show, onHide, onCreated }) {
 
   const limpiar = () => {
     setTipo("egresos");
-    setFecha(new Date().toISOString().slice(0, 10));
+    setFecha(
+      presetFecha || new Date().toISOString().slice(0, 10)
+    );
     setDescripcion("");
     setMonto("");
     setObservaciones("");
-    setProveedorId("");
-    setProyectoId("");
-    setCategoriaId("");
+    setProveedorId(
+      proveedorVarios?.id
+        ? String(proveedorVarios.id)
+        : ""
+    );
+    setProyectoId(
+      proyectoPredeterminado?.id
+        ? String(proyectoPredeterminado.id)
+        : ""
+    );
+
+    setCategoriaId(
+      categoriaVarios?.id
+        ? String(categoriaVarios.id)
+        : ""
+    );
     setImputacionId("");
     setBancoId("");
     setEsPagoMensual(false);
