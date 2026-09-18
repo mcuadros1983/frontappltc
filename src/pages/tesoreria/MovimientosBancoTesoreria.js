@@ -12,11 +12,13 @@ export default function BancoTesoreriaList() {
   const dataContext = useContext(Contexts.DataContext);
   const {
     proveedoresTabla = [],
+    clientes = [],
     bancosTabla = [],
     bancos = [],
     empresaSeleccionada,
     categoriasEgresoTabla = [],
     categoriasEgreso = [],
+    categoriasIngreso = [],
     proyectosTabla = [],
   } = dataContext || {};
 
@@ -25,15 +27,61 @@ export default function BancoTesoreriaList() {
     () => (categoriasEgresoTabla?.length ? categoriasEgresoTabla : categoriasEgreso) || [],
     [categoriasEgresoTabla, categoriasEgreso]
   );
+
   const catById = useMemo(() => {
     const m = new Map();
     categorias.forEach((c) => m.set(Number(c.id), c));
     return m;
   }, [categorias]);
-  const nombreCategoria = (m) =>
-    m?.categoriaegreso?.nombre ||
-    catById.get(Number(m.categoriaegreso_id))?.nombre ||
-    "";
+
+  // Categorías de ingreso por ID
+  const catIngresoById = useMemo(() => {
+    const m = new Map();
+
+    (categoriasIngreso || []).forEach((c) => {
+      m.set(Number(c.id), c);
+    });
+
+    return m;
+  }, [categoriasIngreso]);
+
+  // Clientes por ID
+  const clienteById = useMemo(() => {
+    const m = new Map();
+
+    (clientes || []).forEach((c) => {
+      m.set(
+        Number(c.id),
+        c
+      );
+    });
+
+    return m;
+  }, [clientes]);
+
+  // Nombre de categoría según el tipo de movimiento
+  const nombreCategoria = (mov) => {
+    const esIngreso =
+      String(mov?.tipo || "").toLowerCase() === "ingreso";
+
+    if (esIngreso) {
+      return (
+        mov?.categoriaingreso?.nombre ||
+        catIngresoById.get(
+          Number(mov?.categoriaingreso_id)
+        )?.nombre ||
+        ""
+      );
+    }
+
+    return (
+      mov?.categoriaegreso?.nombre ||
+      catById.get(
+        Number(mov?.categoriaegreso_id)
+      )?.nombre ||
+      ""
+    );
+  };
 
   // Proyectos (mostrar nombre)
   const projById = useMemo(() => {
@@ -122,6 +170,42 @@ export default function BancoTesoreriaList() {
       });
       const data = await res.json();
       const list = Array.isArray(data) ? data : [];
+
+      console.log(
+        "🏦 MOVIMIENTOS BANCO:",
+        list
+      );
+
+      console.log(
+        "💰 INGRESOS BANCO:",
+        list.filter(
+          (m) =>
+            String(m?.tipo || "")
+              .toLowerCase() === "ingreso"
+        )
+      );
+
+      console.log(
+        "🔎 DETALLE INGRESOS:",
+        list
+          .filter(
+            (m) =>
+              String(m?.tipo || "")
+                .toLowerCase() === "ingreso"
+          )
+          .map((m) => ({
+            id: m.id,
+            tipo: m.tipo,
+            descripcion: m.descripcion,
+            cliente_id: m.cliente_id,
+            clienteId: m.clienteId,
+            cliente: m.cliente,
+            Cliente: m.Cliente,
+            categoriaingreso_id: m.categoriaingreso_id,
+            proveedor_id: m.proveedor_id,
+          }))
+      );
+
       list.sort((a, b) => {
         if (a.fecha === b.fecha) return a.id - b.id;
         return (a.fecha || "").localeCompare(b.fecha || "");
@@ -308,21 +392,162 @@ export default function BancoTesoreriaList() {
     movsFiltrados,
   ]);
 
-  const nombreProveedorDeMovimiento = (m) => {
-    const ordenId = m?.ordenpago_id || m?.ordenpago?.id;
-    const orden = (ordenId && ordenesCache[ordenId]) || m?.ordenpago || null;
+  const nombreEntidadDeMovimiento = (m) => {
 
-    const emb = orden?.proveedor?.razonsocial || orden?.proveedor?.nombre || null;
-    if (emb) return emb;
+    const tipo =
+      String(m?.tipo || "")
+        .trim()
+        .toLowerCase();
 
-    const provId = orden?.proveedor_id ?? m?.proveedor_id ?? null;
-    if (provId) {
-      const p = proveedoresTabla.find((x) => Number(x.id) === Number(provId));
-      if (p) return p.razonsocial || p.nombre || `Proveedor #${p.id}`;
-      return `Proveedor #${provId}`;
+
+    // ============================================================
+    // INGRESO → CLIENTE
+    // ============================================================
+
+    if (tipo === "ingreso") {
+
+      /*
+       * Primero intentamos utilizar el cliente relacionado
+       * enviado directamente por el backend.
+       */
+
+      const clienteEmbebido =
+        m?.cliente ||
+        m?.Cliente ||
+        null;
+
+
+      if (clienteEmbebido) {
+
+        return (
+          clienteEmbebido.razonsocial ||
+          clienteEmbebido.razon_social ||
+          clienteEmbebido.nombre ||
+          clienteEmbebido.descripcion ||
+          ""
+        );
+      }
+
+
+      /*
+       * Si el backend solamente devuelve cliente_id,
+       * buscamos el cliente en DataContext.
+       */
+
+      const clienteId =
+        m?.cliente_id ??
+        m?.clienteId ??
+        null;
+
+
+      if (clienteId) {
+
+        const cliente =
+          clienteById.get(
+            Number(clienteId)
+          );
+
+
+        if (cliente) {
+
+          return (
+            cliente.razonsocial ||
+            cliente.razon_social ||
+            cliente.nombre ||
+            cliente.descripcion ||
+            `Cliente #${cliente.id}`
+          );
+        }
+
+
+        /*
+         * Esto además nos permite detectar que el movimiento
+         * tiene cliente_id pero el catálogo todavía no lo contiene.
+         */
+
+        return `Cliente #${clienteId}`;
+      }
+
+
+      return "";
     }
+
+
+    // ============================================================
+    // EGRESO → PROVEEDOR
+    // ============================================================
+
+    const ordenId =
+      m?.ordenpago_id ||
+      m?.ordenpago?.id;
+
+
+    const orden =
+      (
+        ordenId &&
+        ordenesCache[ordenId]
+      ) ||
+      m?.ordenpago ||
+      null;
+
+
+    /*
+     * Primero proveedor de la OP.
+     */
+
+    const proveedorEmbebido =
+      orden?.proveedor?.razonsocial ||
+      orden?.proveedor?.nombre ||
+      orden?.proveedor?.descripcion ||
+      m?.proveedor?.razonsocial ||
+      m?.proveedor?.nombre ||
+      m?.proveedor?.descripcion ||
+      null;
+
+
+    if (proveedorEmbebido) {
+      return proveedorEmbebido;
+    }
+
+
+    /*
+     * Después proveedor_id.
+     */
+
+    const proveedorId =
+      orden?.proveedor_id ??
+      m?.proveedor_id ??
+      null;
+
+
+    if (proveedorId) {
+
+      const proveedor =
+        proveedoresTabla.find(
+          (p) =>
+            Number(p.id) ===
+            Number(proveedorId)
+        );
+
+
+      if (proveedor) {
+
+        return (
+          proveedor.razonsocial ||
+          proveedor.nombre ||
+          proveedor.descripcion ||
+          `Proveedor #${proveedor.id}`
+        );
+      }
+
+
+      return `Proveedor #${proveedorId}`;
+    }
+
+
     return "";
   };
+
 
   const cambiarOrden = (campo) => {
 
@@ -391,7 +616,7 @@ export default function BancoTesoreriaList() {
 
         case "proveedor":
           return String(
-            nombreProveedorDeMovimiento(m) || ""
+            nombreEntidadDeMovimiento(m) || ""
           );
 
         case "ingreso":
@@ -464,6 +689,7 @@ export default function BancoTesoreriaList() {
     ordenTabla,
     ordenesCache,
     proveedoresTabla,
+    clienteById,
     categorias,
     proyectosTabla,
   ]);
@@ -825,7 +1051,7 @@ export default function BancoTesoreriaList() {
               style={{ cursor: "pointer", userSelect: "none" }}
               title="Ordenar por proveedor"
             >
-              Entidad / Proveedor{indicadorOrden("proveedor")}
+              Entidad{indicadorOrden("proveedor")}
             </th>
 
             <th
@@ -877,7 +1103,7 @@ export default function BancoTesoreriaList() {
                   <td>{m.descripcion || ""}</td>
                   <td>{nombreProyecto(m)}</td>
                   <td>{nombreCategoria(m)}</td>
-                  <td>{nombreProveedorDeMovimiento(m)}</td>
+                  <td>{nombreEntidadDeMovimiento(m)}</td>
                   <td className="text-end">{isIngreso ? fmtMoney(m.monto) : ""}</td>
                   <td className="text-end">{!isIngreso ? fmtMoney(m.monto) : ""}</td>
                   <td>
@@ -949,14 +1175,18 @@ export default function BancoTesoreriaList() {
         })()}
       />
 
-      <NuevoMovimientoBancoIngreso
-        show={showNuevoIngreso}
-        onHide={() => setShowNuevoIngreso(false)}
-        onCreated={() => {
-          loadMovs();
-          setShowNuevoIngreso(false);
-        }}
-      />
+      {showNuevoIngreso && (
+        <NuevoMovimientoBancoIngreso
+          show={true}
+          onHide={() => {
+            setShowNuevoIngreso(false);
+          }}
+          onCreated={() => {
+            loadMovs();
+            setShowNuevoIngreso(false);
+          }}
+        />
+      )}
     </Container>
   );
 }

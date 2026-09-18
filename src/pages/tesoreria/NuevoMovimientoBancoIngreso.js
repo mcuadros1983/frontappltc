@@ -278,10 +278,11 @@ export default function NuevoMovimientoBancoIngreso({ show, onHide, onCreated })
   };
 
   const handleClose = () => {
-    if (!enviando) {
-      limpiar();
-      onHide?.();
+    if (enviando) {
+      return;
     }
+
+    onHide?.();
   };
 
   // ====== UI ======
@@ -296,8 +297,8 @@ export default function NuevoMovimientoBancoIngreso({ show, onHide, onCreated })
           activeKey === "cobranza"
             ? handleSubmitCobranza
             : activeKey === "varios"
-            ? handleSubmitVarios
-            : (e) => e.preventDefault()
+              ? handleSubmitVarios
+              : (e) => e.preventDefault()
         }
       >
         <Modal.Header closeButton>
