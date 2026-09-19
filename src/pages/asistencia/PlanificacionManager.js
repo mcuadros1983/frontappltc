@@ -7,10 +7,13 @@ import {
   Form,
   Button,
   Alert,
-  Spinner,Table
+  Spinner, Table
 } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 import "./PlanificacionManager.css";
+import AsignarEmpleadoModal from "./AsignarEmpleadoModal";
+import EventoModal from "./EventoModal";
+
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -32,6 +35,15 @@ const getEmpleadoNombre = (e) => {
     "";
   const full = `${ap} ${no}`.trim();
   return full || `Empleado #${getEmpleadoId(e) || "—"}`;
+};
+
+const getEmpleadoDni = (item) => {
+  return (
+    item?.empleado?.cuil ||
+    item?.empleado?.numero ||
+    item?.empleado?.dni ||
+    "—"
+  );
 };
 
 const getEvConceptoId = (ev) =>
@@ -76,6 +88,14 @@ export default function PlanificacionManager() {
   const sucursalesCtx = dataContext?.sucursales || [];
   const conceptosCtx = dataContext?.conceptos || [];
 
+  const empleadosActivos = useMemo(() => {
+    return (empleadosCtx || []).filter((item) => {
+      const empleado =
+        item?.empleado ?? item;
+
+      return empleado?.fechabaja == null;
+    });
+  }, [empleadosCtx]);
   // filtros UI - Inicialización con fecha actual y 30 días después
   const today = new Date();
   const startDateDefault = toIsoDate(today);
@@ -87,11 +107,65 @@ export default function PlanificacionManager() {
   const [endDate, setEndDate] = useState(endDateDefault);
   const [sucursalId, setSucursalId] = useState("");
 
+  const [
+    filtroEmpleado,
+    setFiltroEmpleado,
+  ] = useState("");
+
+  const [
+    soloSinSucursal,
+    setSoloSinSucursal,
+  ] = useState(false);
+
+  const [
+    showDatosEmpleadoModal,
+    setShowDatosEmpleadoModal,
+  ] = useState(false);
+
+  const [
+    datosEmpleadoModalPayload,
+    setDatosEmpleadoModalPayload,
+  ] = useState(null);
+
+  const [
+    showEventoModal,
+    setShowEventoModal,
+  ] = useState(false);
+
+  const [
+    eventoModalPayload,
+    setEventoModalPayload,
+  ] = useState(null);
   // datos cargados dinámicamente
   const [events, setEvents] = useState([]); // eventos (códigos)
   const [vacaciones, setVacaciones] = useState([]); // vacaciones
   const [dateRange, setDateRange] = useState([]);
+  const [
+    mobileDayIndex,
+    setMobileDayIndex,
+  ] = useState(0);
+  const [
+    mobileSucursalAbierta,
+    setMobileSucursalAbierta,
+  ] = useState(null);
+  const [
+    mobileWeekStart,
+    setMobileWeekStart,
+  ] = useState(() => {
+    const hoy = new Date();
+    const dia = hoy.getDay();
 
+    // Lunes de la semana actual
+    const diferencia =
+      dia === 0 ? -6 : 1 - dia;
+
+    const lunes = new Date(hoy);
+    lunes.setDate(
+      hoy.getDate() + diferencia
+    );
+
+    return toIsoDate(lunes);
+  });
   // estados
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -101,7 +175,8 @@ export default function PlanificacionManager() {
 
   // datosempleado (sucursal_id, franco_am, franco_pm, etc.)
   const [datosEmpleadoList, setDatosEmpleadoList] = useState([]);
-
+  const [jornadas, setJornadas] =
+    useState([]);
   // ---------- cargar conceptos una vez ----------
   useEffect(() => {
     let mounted = true;
@@ -123,8 +198,8 @@ export default function PlanificacionManager() {
         const arr = Array.isArray(d?.items)
           ? d.items
           : Array.isArray(d)
-          ? d
-          : [];
+            ? d
+            : [];
         if (mounted) setConceptos(arr);
       } catch (e) {
         console.warn("No se pudieron cargar conceptos:", e);
@@ -136,36 +211,92 @@ export default function PlanificacionManager() {
     };
   }, [conceptosCtx]);
 
-  // ---------- cargar datosempleado una vez ----------
-  useEffect(() => {
-    let mounted = true;
-    const cargarDatosEmpleado = async () => {
-      try {
-        const r = await fetch(`${apiUrl}/datosempleado?limit=1000`, {
+  const cargarDatosEmpleado = async () => {
+    try {
+      const r = await fetch(
+        `${apiUrl}/datosempleado?limit=1000`,
+        {
           credentials: "include",
-        });
-        const d = await r.json().catch(() => null);
-        if (!r.ok)
+        }
+      );
+
+      const d = await r
+        .json()
+        .catch(() => null);
+
+      if (!r.ok) {
+        throw new Error(
+          d?.error ||
+          "No se pudieron obtener datosempleado."
+        );
+      }
+
+      const arr = Array.isArray(d?.items)
+        ? d.items
+        : Array.isArray(d)
+          ? d
+          : [];
+
+      setDatosEmpleadoList(arr);
+
+      return arr;
+    } catch (e) {
+      console.error(
+        "Error cargando datosempleado:",
+        e
+      );
+
+      setDatosEmpleadoList([]);
+
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    cargarDatosEmpleado();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const cargarJornadas = async () => {
+      try {
+        const r = await fetch(
+          `${apiUrl}/jornadas?limit=1000`,
+          {
+            credentials: "include",
+          }
+        );
+
+        const d = await r
+          .json()
+          .catch(() => null);
+
+        if (!r.ok) {
           throw new Error(
-            d?.error || "No se pudieron obtener datosempleado."
+            d?.error ||
+            "No se pudieron obtener jornadas."
           );
+        }
+
         const arr = Array.isArray(d?.items)
           ? d.items
           : Array.isArray(d)
-          ? d
-          : [];
-        if (mounted) {
-          setDatosEmpleadoList(arr);
-        }
+            ? d
+            : [];
+
+        setJornadas(arr);
       } catch (e) {
-        console.error("Error cargando datosempleado:", e);
-        if (mounted) setDatosEmpleadoList([]);
+        console.error(
+          "Error cargando jornadas:",
+          e
+        );
+
+        setJornadas([]);
       }
     };
-    cargarDatosEmpleado();
-    return () => {
-      mounted = false;
-    };
+
+    cargarJornadas();
   }, []);
 
   // ---------- maps derivados ----------
@@ -196,6 +327,219 @@ export default function PlanificacionManager() {
     return m;
   }, [datosEmpleadoList]);
 
+  const empleadosPlanificacion = useMemo(() => {
+    let lista = empleadosActivos.map((empleado) => {
+      const empleadoId =
+        getEmpleadoId(empleado);
+
+      const datosEmpleado =
+        datosEmpleadoMap.get(empleadoId) ||
+        null;
+
+      const sucursalAsignadaId =
+        Number(
+          datosEmpleado?.sucursal_id
+        ) || 0;
+
+      return {
+        empleado,
+        empleadoId,
+        datosEmpleado,
+        sucursalAsignadaId,
+        tieneSucursal:
+          sucursalAsignadaId > 0,
+      };
+    });
+
+    // FILTRO POR SUCURSAL
+    if (sucursalId) {
+      lista = lista.filter(
+        ({ sucursalAsignadaId }) =>
+          Number(sucursalAsignadaId) ===
+          Number(sucursalId)
+      );
+    }
+
+    // SOLO SIN SUCURSAL
+    if (soloSinSucursal) {
+      lista = lista.filter(
+        ({ tieneSucursal }) =>
+          !tieneSucursal
+      );
+    }
+
+    // BUSCADOR
+    const termino = filtroEmpleado
+      .trim()
+      .toLowerCase();
+
+    if (termino) {
+      lista = lista.filter(
+        ({ empleado }) => {
+          const nombre =
+            getEmpleadoNombre(
+              empleado
+            ).toLowerCase();
+
+          const dni = String(
+            getEmpleadoDni(empleado)
+          ).toLowerCase();
+
+          return (
+            nombre.includes(termino) ||
+            dni.includes(termino)
+          );
+        }
+      );
+    }
+
+    // ORDEN ALFABÉTICO
+    lista.sort((a, b) =>
+      getEmpleadoNombre(
+        a.empleado
+      ).localeCompare(
+        getEmpleadoNombre(b.empleado),
+        "es",
+        {
+          sensitivity: "base",
+        }
+      )
+    );
+
+    return lista;
+  }, [
+    empleadosActivos,
+    datosEmpleadoMap,
+    sucursalId,
+    soloSinSucursal,
+    filtroEmpleado,
+  ]);
+
+  const mobileWeekDays = useMemo(() => {
+    const inicio = new Date(
+      `${mobileWeekStart}T00:00:00`
+    );
+
+    const dias = [];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(inicio);
+      d.setDate(inicio.getDate() + i);
+
+      dias.push(toIsoDate(d));
+    }
+
+    return dias;
+  }, [mobileWeekStart]);
+  const cambiarSemanaMobile = (
+    cantidadSemanas
+  ) => {
+    const actual = new Date(
+      `${mobileWeekStart}T00:00:00`
+    );
+
+    actual.setDate(
+      actual.getDate() +
+      cantidadSemanas * 7
+    );
+
+    setMobileWeekStart(
+      toIsoDate(actual)
+    );
+    setMobileDayIndex(0);
+    setMobileSucursalAbierta(null)
+  };
+
+  const cambiarDiaMobile = (
+    direccion
+  ) => {
+    const nuevo =
+      mobileDayIndex + direccion;
+
+    // Lunes -> domingo de semana anterior
+    if (nuevo < 0) {
+      const actual = new Date(
+        `${mobileWeekStart}T00:00:00`
+      );
+
+      actual.setDate(
+        actual.getDate() - 7
+      );
+
+      setMobileWeekStart(
+        toIsoDate(actual)
+      );
+
+      setMobileDayIndex(6);
+      setMobileSucursalAbierta(null);
+
+      return;
+    }
+
+    // Domingo -> lunes de semana siguiente
+    if (nuevo > 6) {
+      const actual = new Date(
+        `${mobileWeekStart}T00:00:00`
+      );
+
+      actual.setDate(
+        actual.getDate() + 7
+      );
+
+      setMobileWeekStart(
+        toIsoDate(actual)
+      );
+
+      setMobileDayIndex(0);
+      setMobileSucursalAbierta(null);
+
+      return;
+    }
+
+    setMobileDayIndex(nuevo);
+    setMobileSucursalAbierta(null);
+  };
+  const toggleSucursalMobile = (
+    sucursalId
+  ) => {
+    setMobileSucursalAbierta(
+      (actual) =>
+        Number(actual) ===
+          Number(sucursalId)
+          ? null
+          : Number(sucursalId)
+    );
+  };
+  const irSemanaActualMobile = () => {
+    const hoy = new Date();
+    const dia = hoy.getDay();
+
+    const diferencia =
+      dia === 0 ? -6 : 1 - dia;
+
+    const lunes = new Date(hoy);
+
+    lunes.setDate(
+      hoy.getDate() + diferencia
+    );
+
+    setMobileWeekStart(
+      toIsoDate(lunes)
+    );
+
+    // Lun=0, Mar=1 ... Dom=6
+    const indiceHoy =
+      dia === 0
+        ? 6
+        : dia - 1;
+
+    setMobileDayIndex(
+      indiceHoy
+    );
+
+    setMobileSucursalAbierta(null);
+  };
+
   // sucursales filtradas
   const sucursalesFiltradas = useMemo(() => {
     if (sucursalId) {
@@ -216,6 +560,113 @@ export default function PlanificacionManager() {
     return Number(datos.sucursal_id) || 0;
   };
 
+  const abrirDatosEmpleado = (
+    empleado
+  ) => {
+    const empleadoId =
+      getEmpleadoId(empleado);
+
+    if (!empleadoId) return;
+
+    const datosEmpleado =
+      datosEmpleadoMap.get(
+        empleadoId
+      ) || null;
+
+    setDatosEmpleadoModalPayload({
+      empleado_id: empleadoId,
+
+      empleado_nombre:
+        getEmpleadoNombre(empleado),
+
+      empleado_dni:
+        getEmpleadoDni(empleado),
+
+      modo: datosEmpleado
+        ? "editar"
+        : "nuevo",
+
+      sucursal_id:
+        datosEmpleado?.sucursal_id ??
+        null,
+
+      jornada_id:
+        datosEmpleado?.jornada_id ??
+        null,
+
+      franco_am:
+        datosEmpleado?.franco_am ??
+        null,
+
+      franco_pm:
+        datosEmpleado?.franco_pm ??
+        null,
+
+      telefono:
+        datosEmpleado?.telefono ?? "",
+
+      tipo:
+        datosEmpleado?.tipo ??
+        "VENDEDOR",
+    });
+
+    setShowDatosEmpleadoModal(true);
+  };
+
+  const cerrarDatosEmpleadoModal =
+    async (changed = false) => {
+      setShowDatosEmpleadoModal(false);
+      setDatosEmpleadoModalPayload(null);
+
+      if (changed) {
+        await cargarDatosEmpleado();
+      }
+    };
+
+  const abrirNuevoEvento = (
+    empleado,
+    fechaEvento = null
+  ) => {
+    const empleadoId =
+      getEmpleadoId(empleado);
+
+    if (!empleadoId) return;
+
+    const datosEmpleado =
+      datosEmpleadoMap.get(
+        empleadoId
+      ) || null;
+
+    const sucursalAsignadaId =
+      Number(
+        datosEmpleado?.sucursal_id
+      ) || 0;
+
+    const fechaInicial =
+      fechaEvento ||
+      startDate ||
+      "";
+
+    setEventoModalPayload({
+      empleado_id: empleadoId,
+
+      sucursal_id:
+        sucursalAsignadaId || "",
+
+      concepto_id: "",
+
+      fecha_desde:
+        fechaInicial,
+
+      fecha_hasta:
+        fechaInicial,
+
+      observaciones: "",
+    });
+
+    setShowEventoModal(true);
+  };
+
   // Agrupamos empleados por sucursal
   const empleadosPorSucursal = useMemo(() => {
     const map = new Map();
@@ -224,7 +675,7 @@ export default function PlanificacionManager() {
       map.set(Number(s.id), []);
     }
     // meter cada empleado en su sucursal asignada
-    for (const e of empleadosCtx || []) {
+    for (const e of empleadosActivos || []) {
       const sid = getSucursalIdDeEmpleado(e);
       if (!sid) continue;
       if (!map.has(sid)) {
@@ -240,7 +691,11 @@ export default function PlanificacionManager() {
       map.set(sid, arr);
     }
     return map;
-  }, [sucursalesFiltradas, empleadosCtx, datosEmpleadoMap]);
+  }, [
+    sucursalesFiltradas,
+    empleadosActivos,
+    datosEmpleadoMap,
+  ]);
 
   // ---------- helpers de eventos / vacaciones ----------
   // arma calendario empleado
@@ -268,11 +723,15 @@ export default function PlanificacionManager() {
           eventsPerDay.set(key, {
             codes: [code],
             names: [name],
+            events: [ev],
           });
         } else {
-          const slot = eventsPerDay.get(key);
+          const slot =
+            eventsPerDay.get(key);
+
           slot.codes.push(code);
           slot.names.push(name);
+          slot.events.push(ev);
         }
         cur.setDate(cur.getDate() + 1);
       }
@@ -343,8 +802,8 @@ export default function PlanificacionManager() {
       const arrEv = Array.isArray(dEv?.items)
         ? dEv.items
         : Array.isArray(dEv)
-        ? dEv
-        : [];
+          ? dEv
+          : [];
 
       // vacaciones
       let urlVac = `${apiUrl}/asignacionesvacaciones?desde=${startDate}&hasta=${endDate}&limit=10000`;
@@ -359,8 +818,8 @@ export default function PlanificacionManager() {
       const arrVac = Array.isArray(dVac?.items)
         ? dVac.items
         : Array.isArray(dVac)
-        ? dVac
-        : [];
+          ? dVac
+          : [];
 
       setEvents(arrEv);
       setVacaciones(arrVac);
@@ -369,7 +828,7 @@ export default function PlanificacionManager() {
       console.error(err);
       setError(
         "Error al obtener la planificación: " +
-          (err?.message || "desconocido")
+        (err?.message || "desconocido")
       );
       setEvents([]);
       setVacaciones([]);
@@ -379,9 +838,270 @@ export default function PlanificacionManager() {
     }
   };
 
+  const cargarSemanaMobile =
+    async () => {
+      if (!mobileWeekDays.length) {
+        return;
+      }
+
+      const desde =
+        mobileWeekDays[0];
+
+      const hasta =
+        mobileWeekDays[
+        mobileWeekDays.length - 1
+        ];
+
+      setLoading(true);
+      setError("");
+
+      try {
+        let urlEv =
+          `${apiUrl}/eventos` +
+          `?start_date=${desde}` +
+          `&end_date=${hasta}` +
+          `&order=fecha_desde` +
+          `&dir=ASC` +
+          `&limit=10000`;
+
+        const rEv = await fetch(
+          urlEv,
+          {
+            credentials: "include",
+          }
+        );
+
+        const dEv = await rEv
+          .json()
+          .catch(() => null);
+
+        if (!rEv.ok) {
+          throw new Error(
+            dEv?.error ||
+            "No se pudieron obtener eventos."
+          );
+        }
+
+        const arrEv =
+          Array.isArray(dEv?.items)
+            ? dEv.items
+            : Array.isArray(dEv)
+              ? dEv
+              : [];
+
+        let urlVac =
+          `${apiUrl}/asignacionesvacaciones` +
+          `?desde=${desde}` +
+          `&hasta=${hasta}` +
+          `&limit=10000`;
+
+        const rVac = await fetch(
+          urlVac,
+          {
+            credentials: "include",
+          }
+        );
+
+        const dVac = await rVac
+          .json()
+          .catch(() => null);
+
+        if (!rVac.ok) {
+          throw new Error(
+            dVac?.error ||
+            "No se pudieron obtener vacaciones."
+          );
+        }
+
+        const arrVac =
+          Array.isArray(dVac?.items)
+            ? dVac.items
+            : Array.isArray(dVac)
+              ? dVac
+              : [];
+
+        setEvents(arrEv);
+        setVacaciones(arrVac);
+
+      } catch (err) {
+        console.error(err);
+
+        setError(
+          "Error al obtener la planificación: " +
+          (err?.message || "desconocido")
+        );
+
+        setEvents([]);
+        setVacaciones([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  useEffect(() => {
+    cargarSemanaMobile();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileWeekStart]);
+
+  const dotacionMobile = useMemo(() => {
+
+    return (sucursalesCtx || [])
+      .map((sucursal) => {
+
+        const sid =
+          Number(sucursal.id);
+
+        const empleadosSucursal =
+          empleadosActivos.filter(
+            (empleado) =>
+              Number(
+                datosEmpleadoMap.get(
+                  getEmpleadoId(
+                    empleado
+                  )
+                )?.sucursal_id
+              ) === sid
+          );
+
+        const dias =
+          mobileWeekDays.map(
+            (dateIso) => {
+
+              let disponiblesAM = 0;
+              let disponiblesPM = 0;
+
+              let francosAM = 0;
+              let francosPM = 0;
+
+              let vacacionesCount = 0;
+
+              const detalle = [];
+
+              for (
+                const empleado
+                of empleadosSucursal
+              ) {
+                const empleadoId =
+                  getEmpleadoId(
+                    empleado
+                  );
+
+                const {
+                  vacationDays,
+                } =
+                  buildCalendarioEmpleado(
+                    empleadoId
+                  );
+
+                const isVacation =
+                  vacationDays.has(
+                    dateIso
+                  );
+
+                const {
+                  isFrancoAM,
+                  isFrancoPM,
+                } =
+                  getFrancoInfo(
+                    empleadoId,
+                    dateIso
+                  );
+
+                const disponibleAM =
+                  !isVacation &&
+                  !isFrancoAM;
+
+                const disponiblePM =
+                  !isVacation &&
+                  !isFrancoPM;
+
+                if (disponibleAM) {
+                  disponiblesAM++;
+                } else if (isFrancoAM) {
+                  francosAM++;
+                }
+
+                if (disponiblePM) {
+                  disponiblesPM++;
+                } else if (isFrancoPM) {
+                  francosPM++;
+                }
+
+                if (isVacation) {
+                  vacacionesCount++;
+                }
+
+                detalle.push({
+                  empleado,
+                  empleadoId,
+                  isVacation,
+                  isFrancoAM,
+                  isFrancoPM,
+                  disponibleAM,
+                  disponiblePM,
+                });
+              }
+
+              return {
+                dateIso,
+
+                total:
+                  empleadosSucursal.length,
+
+                disponiblesAM,
+                disponiblesPM,
+
+                francosAM,
+                francosPM,
+
+                vacaciones:
+                  vacacionesCount,
+
+                detalle,
+              };
+            }
+          );
+
+        return {
+          sucursal,
+          empleadosSucursal,
+          dias,
+        };
+      })
+      .filter(
+        (item) =>
+          item.empleadosSucursal.length >
+          0
+      );
+
+  }, [
+    sucursalesCtx,
+    empleadosActivos,
+    datosEmpleadoMap,
+    mobileWeekDays,
+    vacaciones,
+  ]);
+
+  const cerrarEventoModal =
+    async (changed = false) => {
+      setShowEventoModal(false);
+      setEventoModalPayload(null);
+
+      if (changed) {
+        await Promise.all([
+          handleSearch(),
+          cargarSemanaMobile(),
+        ]);
+      }
+    };
+
   // ---------- render fila empleado ----------
   function renderEmpleadoRow(empleado) {
     const empId = getEmpleadoId(empleado);
+    const datosEmpleado =
+      datosEmpleadoMap.get(empId) || null;
+
     const { eventsPerDay, vacationDays } = buildCalendarioEmpleado(
       empId
     );
@@ -392,12 +1112,52 @@ export default function PlanificacionManager() {
           {getEmpleadoNombre(empleado)}
         </td>
 
+        <td
+          className="align-middle"
+          style={{
+            minWidth: 190,
+            width: 190,
+          }}
+        >
+          <div className="d-flex gap-1 justify-content-center flex-nowrap">
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              className="text-nowrap"
+              onClick={() =>
+                abrirNuevoEvento(
+                  empleado
+                )
+              }
+            >
+              + Evento
+            </Button>
+
+            <Button
+              type="button"
+              size="sm"
+              variant="outline-secondary"
+              className="text-nowrap"
+              onClick={() =>
+                abrirDatosEmpleado(empleado)
+              }
+            >
+              {datosEmpleado
+                ? "Editar"
+                : "Asignar"}
+            </Button>
+
+          </div>
+        </td>
+
         {dateRange.map((dateIso) => {
           // info base
           const dayInfo = eventsPerDay.get(dateIso) || {
             codes: [],
             names: [],
-          };
+            events: [],
+          }
 
           const codes = dayInfo.codes; // códigos cortos para mostrar
           const names = dayInfo.names; // nombres largos para tooltip
@@ -517,7 +1277,19 @@ export default function PlanificacionManager() {
           <Table bordered size="sm" className="planificacion-table">
             <thead>
               <tr className="text-center sticky-header">
-                <th className="fixed-column empleado-head">Empleado</th>
+                <th className="fixed-column empleado-head">
+                  Empleado
+                </th>
+
+                <th
+                  className="acciones-head"
+                  style={{
+                    minWidth: 190,
+                    width: 190,
+                  }}
+                >
+                  Acciones
+                </th>
 
                 {dateRange.map((dateIso) => {
                   const d = new Date(dateIso + "T00:00:00");
@@ -548,109 +1320,779 @@ export default function PlanificacionManager() {
 
   // ---------- render principal ----------
   return (
-  <Container fluid className="mt-3 cpm-page">
-    <Row>
-      <Col>
-        <Card className="cpm-card">
-          <Card.Header className="cpm-header">
-            <strong>Planificación de Eventos</strong>
-          </Card.Header>
+    <Container fluid className="mt-3 cpm-page">
+      <Row>
+        <Col>
+          <Card className="cpm-card">
+            <Card.Header className="cpm-header">
+              <strong>Planificación de Eventos</strong>
+            </Card.Header>
 
-          <Card.Body>
-            {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
+            <Card.Body>
+              {error && <Alert variant="danger" className="mb-3">{error}</Alert>}
 
-            {/* Filtros + Buscar */}
-            <Form onSubmit={handleSearch} className="mb-3 cpm-filters">
-              <Row className="g-2">
-                <Col xs={12} sm={6} md={3}>
-                  <Form.Label className="mb-1">Fecha Inicio</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    required
-                    className="form-control my-input"
-                  />
-                </Col>
+              {/* Filtros + Buscar */}
+              <Form
+                onSubmit={handleSearch}
+                className="mb-3 cpm-filters d-none d-md-block"
+              >
+                <Row className="g-2">
+                  <Col xs={12} sm={6} md={3}>
+                    <Form.Label className="mb-1">Fecha Inicio</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      required
+                      className="form-control my-input"
+                    />
+                  </Col>
 
-                <Col xs={12} sm={6} md={3}>
-                  <Form.Label className="mb-1">Fecha Fin</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    required
-                    className="form-control my-input"
-                  />
-                </Col>
+                  <Col xs={12} sm={6} md={3}>
+                    <Form.Label className="mb-1">Fecha Fin</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      required
+                      className="form-control my-input"
+                    />
+                  </Col>
 
-                <Col xs={12} sm={6} md={3}>
-                  <Form.Label className="mb-1">Sucursal</Form.Label>
-                  <Form.Select
-                    value={sucursalId}
-                    onChange={(e) => setSucursalId(e.target.value)}
-                    className="form-control my-input"
+                  <Col xs={12} sm={6} md={3}>
+                    <Form.Label className="mb-1">Sucursal</Form.Label>
+                    <Form.Select
+                      value={sucursalId}
+                      onChange={(e) => {
+                        setSucursalId(
+                          e.target.value
+                        );
+
+                        if (e.target.value) {
+                          setSoloSinSucursal(false);
+                        }
+                      }}
+                      className="form-control my-input"
+                    >
+                      <option value="">Todas</option>
+                      {(sucursalesCtx || []).map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.nombre}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Col>
+
+                  <Col xs={12} sm={6} md={3} className="d-flex align-items-end">
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="w-100 cpm-btn"
+                    >
+                      {loading ? (
+                        <Spinner animation="border" size="sm" className="me-1" />
+                      ) : (
+                        "Buscar"
+                      )}
+                    </Button>
+                  </Col>
+                </Row>
+
+                <Row className="g-2 mt-2">
+
+                  {/* BUSCAR EMPLEADO */}
+                  <Col xs={12} md={6}>
+                    <Form.Label className="mb-1">
+                      Empleado
+                    </Form.Label>
+
+                    <Form.Control
+                      type="search"
+                      value={filtroEmpleado}
+                      onChange={(e) =>
+                        setFiltroEmpleado(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Buscar por nombre o DNI..."
+                      style={{
+                        minHeight: 48,
+                      }}
+                    />
+                  </Col>
+
+                  {/* SIN SUCURSAL */}
+                  <Col
+                    xs={12}
+                    md={6}
+                    className="d-flex align-items-end"
                   >
-                    <option value="">Todas</option>
-                    {(sucursalesCtx || []).map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.nombre}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Col>
+                    <div
+                      className="border rounded px-3 d-flex align-items-center w-100"
+                      style={{
+                        minHeight: 48,
+                      }}
+                    >
+                      <Form.Check
+                        type="switch"
+                        id="solo-sin-sucursal"
+                        label="Solo empleados sin sucursal"
+                        checked={soloSinSucursal}
+                        onChange={(e) => {
+                          const checked =
+                            e.target.checked;
 
-                <Col xs={12} sm={6} md={3} className="d-flex align-items-end">
+                          setSoloSinSucursal(
+                            checked
+                          );
+
+                          if (checked) {
+                            setSucursalId("");
+                          }
+                        }}
+                      />
+                    </div>
+                  </Col>
+
+                </Row>
+
+              </Form>
+
+
+              {/* =========================
+    PLANIFICACION - MOBILE
+    ========================= */}
+
+              <div className="d-md-none mb-3">
+
+                {/* NAVEGACION SEMANAL */}
+
+                <div className="border rounded p-2 mb-3">
+
+                  <div className="d-flex align-items-center justify-content-between gap-2">
+
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={() =>
+                        cambiarSemanaMobile(-1)
+                      }
+                      style={{
+                        minWidth: 46,
+                        minHeight: 46,
+                      }}
+                    >
+                      ‹
+                    </Button>
+
+                    <div className="text-center flex-grow-1">
+
+                      <div className="fw-bold">
+                        Semana
+                      </div>
+
+                      <div className="small text-muted">
+                        {new Date(
+                          `${mobileWeekDays[0]}T00:00:00`
+                        ).toLocaleDateString(
+                          "es-AR",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                          }
+                        )}
+
+                        {" — "}
+
+                        {new Date(
+                          `${mobileWeekDays[
+                          mobileWeekDays.length - 1
+                          ]
+                          }T00:00:00`
+                        ).toLocaleDateString(
+                          "es-AR",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                          }
+                        )}
+                      </div>
+
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      onClick={() =>
+                        cambiarSemanaMobile(1)
+                      }
+                      style={{
+                        minWidth: 46,
+                        minHeight: 46,
+                      }}
+                    >
+                      ›
+                    </Button>
+
+                  </div>
+
                   <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-100 cpm-btn"
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="w-100 mt-1"
+                    onClick={
+                      irSemanaActualMobile
+                    }
                   >
-                    {loading ? (
-                      <Spinner animation="border" size="sm" className="me-1" />
-                    ) : (
-                      "Buscar"
-                    )}
+                    Ir a hoy
                   </Button>
+
+                </div>
+
+                <div className="d-flex gap-1 mb-3">
+
+                  {mobileWeekDays.map(
+                    (dateIso, index) => {
+
+                      const fecha =
+                        new Date(
+                          `${dateIso}T00:00:00`
+                        );
+
+                      const nombre =
+                        fecha
+                          .toLocaleDateString(
+                            "es-AR",
+                            {
+                              weekday: "short",
+                            }
+                          )
+                          .replace(".", "")
+                          .toUpperCase();
+
+                      const numero =
+                        fecha.getDate();
+
+                      const activo =
+                        index ===
+                        mobileDayIndex;
+
+                      return (
+                        <Button
+                          key={dateIso}
+                          type="button"
+                          variant={
+                            activo
+                              ? "primary"
+                              : "outline-secondary"
+                          }
+                          className="flex-fill px-1 py-2"
+                          onClick={() => {
+                            setMobileDayIndex(index);
+                            setMobileSucursalAbierta(null);
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize:
+                                "0.68rem",
+                            }}
+                          >
+                            {nombre}
+                          </div>
+
+                          <strong>
+                            {numero}
+                          </strong>
+
+                        </Button>
+                      );
+                    }
+                  )}
+
+                </div>
+
+                <div className="d-flex align-items-center justify-content-between mb-3">
+
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    onClick={() =>
+                      cambiarDiaMobile(-1)
+                    }
+                    style={{
+                      minWidth: 44,
+                      minHeight: 44,
+                    }}
+                  >
+                    ‹
+                  </Button>
+
+                  <div className="text-center">
+
+                    <div className="fw-bold">
+                      {new Date(
+                        `${mobileWeekDays[
+                        mobileDayIndex
+                        ]
+                        }T00:00:00`
+                      )
+                        .toLocaleDateString(
+                          "es-AR",
+                          {
+                            weekday: "long",
+                          }
+                        )
+                        .toUpperCase()}
+                    </div>
+
+                    <div className="small text-muted">
+                      {new Date(
+                        `${mobileWeekDays[
+                        mobileDayIndex
+                        ]
+                        }T00:00:00`
+                      ).toLocaleDateString(
+                        "es-AR",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        }
+                      )}
+                    </div>
+
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    onClick={() =>
+                      cambiarDiaMobile(1)
+                    }
+                    style={{
+                      minWidth: 44,
+                      minHeight: 44,
+                    }}
+                  >
+                    ›
+                  </Button>
+
+                </div>
+
+                {/* SUCURSALES */}
+
+                {loading ? (
+
+                  <div className="text-center py-4">
+                    <Spinner animation="border" />
+                  </div>
+
+                ) : dotacionMobile.length ? (
+
+                  <div className="d-grid gap-2">
+
+                    {dotacionMobile.map(
+                      ({
+                        sucursal,
+                        empleadosSucursal,
+                        dias,
+                      }) => {
+
+                        const dia =
+                          dias[
+                          mobileDayIndex
+                          ];
+
+                        if (!dia) {
+                          return null;
+                        }
+
+                        const estaAbierta =
+                          Number(
+                            mobileSucursalAbierta
+                          ) ===
+                          Number(sucursal.id);
+
+                        return (
+                          <Card
+                            key={sucursal.id}
+                            className="border shadow-sm"
+                          >
+
+                            <Card.Body className="p-3">
+
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                className="d-flex justify-content-between align-items-center mb-3"
+                                style={{
+                                  cursor: "pointer",
+                                }}
+                                onClick={() =>
+                                  toggleSucursalMobile(
+                                    sucursal.id
+                                  )
+                                }
+                                onKeyDown={(e) => {
+                                  if (
+                                    e.key === "Enter" ||
+                                    e.key === " "
+                                  ) {
+                                    e.preventDefault();
+
+                                    toggleSucursalMobile(
+                                      sucursal.id
+                                    );
+                                  }
+                                }}
+                              >
+                                <div>
+                                  <strong>
+                                    {sucursal.nombre}
+                                  </strong>
+
+                                  <div className="small text-muted">
+                                    {estaAbierta
+                                      ? "Ocultar detalle"
+                                      : "Ver empleados"}
+                                  </div>
+                                </div>
+
+                                <div className="text-end">
+                                  <small className="text-muted d-block">
+                                    {empleadosSucursal.length}{" "}
+                                    asignados
+                                  </small>
+
+                                  <span
+                                    style={{
+                                      fontSize: "1.1rem",
+                                    }}
+                                  >
+                                    {estaAbierta
+                                      ? "▲"
+                                      : "▼"}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <Row className="g-2">
+
+                                <Col xs={6}>
+
+                                  <div className="bg-light rounded p-2 text-center">
+
+                                    <small className="text-muted d-block">
+                                      MAÑANA
+                                    </small>
+
+                                    <div
+                                      className="fw-bold"
+                                      style={{
+                                        fontSize:
+                                          "2rem",
+                                        lineHeight: 1.1,
+                                      }}
+                                    >
+                                      {
+                                        dia.disponiblesAM
+                                      }
+                                    </div>
+
+                                    <small className="text-muted">
+                                      disponibles
+                                    </small>
+
+                                    {dia.francosAM >
+                                      0 && (
+                                        <div className="small mt-1">
+                                          {
+                                            dia.francosAM
+                                          }{" "}
+                                          franco
+                                        </div>
+                                      )}
+
+                                  </div>
+
+                                </Col>
+
+                                <Col xs={6}>
+
+                                  <div className="bg-light rounded p-2 text-center">
+
+                                    <small className="text-muted d-block">
+                                      TARDE
+                                    </small>
+
+                                    <div
+                                      className="fw-bold"
+                                      style={{
+                                        fontSize:
+                                          "2rem",
+                                        lineHeight: 1.1,
+                                      }}
+                                    >
+                                      {
+                                        dia.disponiblesPM
+                                      }
+                                    </div>
+
+                                    <small className="text-muted">
+                                      disponibles
+                                    </small>
+
+                                    {dia.francosPM >
+                                      0 && (
+                                        <div className="small mt-1">
+                                          {
+                                            dia.francosPM
+                                          }{" "}
+                                          franco
+                                        </div>
+                                      )}
+
+                                  </div>
+
+                                </Col>
+
+                              </Row>
+
+                              {dia.vacaciones >
+                                0 && (
+                                  <div className="text-center mt-2">
+
+                                    <span className="badge bg-danger">
+                                      {
+                                        dia.vacaciones
+                                      }{" "}
+                                      de vacaciones
+                                    </span>
+
+                                  </div>
+                                )}
+
+                              {estaAbierta && (
+
+                                <div className="border-top mt-3 pt-2">
+
+                                  <div className="small fw-bold mb-2">
+                                    Personal del día
+                                  </div>
+
+                                  <div className="d-grid gap-2">
+
+                                    {dia.detalle.map(
+                                      ({
+                                        empleado,
+                                        empleadoId,
+                                        isVacation,
+                                        isFrancoAM,
+                                        isFrancoPM,
+                                        disponibleAM,
+                                        disponiblePM,
+                                      }) => {
+
+                                        return (
+                                          <div
+                                            key={empleadoId}
+                                            className="border rounded p-2"
+                                          >
+
+                                            <div className="d-flex justify-content-between align-items-start gap-2">
+
+                                              <div>
+
+                                                <div className="fw-semibold">
+                                                  {getEmpleadoNombre(
+                                                    empleado
+                                                  )}
+                                                </div>
+
+                                                <div className="small mt-1">
+
+                                                  {isVacation ? (
+
+                                                    <span className="badge bg-danger">
+                                                      Vacaciones
+                                                    </span>
+
+                                                  ) : (
+
+                                                    <div className="d-flex flex-wrap gap-1">
+
+                                                      <span
+                                                        className={
+                                                          disponibleAM
+                                                            ? "badge bg-success"
+                                                            : "badge bg-secondary"
+                                                        }
+                                                      >
+                                                        AM{" "}
+                                                        {disponibleAM
+                                                          ? "Disponible"
+                                                          : "Franco"}
+                                                      </span>
+
+                                                      <span
+                                                        className={
+                                                          disponiblePM
+                                                            ? "badge bg-success"
+                                                            : "badge bg-secondary"
+                                                        }
+                                                      >
+                                                        PM{" "}
+                                                        {disponiblePM
+                                                          ? "Disponible"
+                                                          : "Franco"}
+                                                      </span>
+
+                                                    </div>
+
+                                                  )}
+
+                                                </div>
+
+                                              </div>
+
+                                            </div>
+
+                                            <div className="d-flex gap-2 mt-2">
+
+                                              <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="primary"
+                                                className="flex-fill"
+                                                onClick={() =>
+                                                  abrirNuevoEvento(
+                                                    empleado,
+                                                    dia.dateIso
+                                                  )
+                                                }
+                                              >
+                                                + Evento
+                                              </Button>
+
+                                              <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline-secondary"
+                                                className="flex-fill"
+                                                onClick={() =>
+                                                  abrirDatosEmpleado(
+                                                    empleado
+                                                  )
+                                                }
+                                              >
+                                                Editar
+                                              </Button>
+
+                                            </div>
+
+                                          </div>
+                                        );
+                                      }
+                                    )}
+
+                                  </div>
+
+                                </div>
+
+                              )}
+
+                            </Card.Body>
+
+                          </Card>
+                        );
+                      }
+                    )}
+
+                  </div>
+
+                ) : (
+
+                  <div className="text-center text-muted py-4">
+                    No hay empleados asignados
+                    a sucursales.
+                  </div>
+
+                )}
+
+              </div>
+
+
+              {/* LEYENDA DE COLORES */}
+              <Row className="mb-3 d-none d-md-flex">
+                <Col>
+                  <div className="d-flex flex-wrap gap-3 cpm-legend">
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="legend-box legend-weekend"></span>
+                      <span>Fin de semana</span>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="legend-box legend-vacaciones"></span>
+                      <span>Vacaciones</span>
+                    </div>
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="legend-box legend-franco"></span>
+                      <span>Franco (AM / PM)</span>
+                    </div>
+                  </div>
                 </Col>
               </Row>
-            </Form>
 
-            {/* LEYENDA DE COLORES */}
-            <Row className="mb-3">
-              <Col>
-                <div className="d-flex flex-wrap gap-3 cpm-legend">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="legend-box legend-weekend"></span>
-                    <span>Fin de semana</span>
-                  </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="legend-box legend-vacaciones"></span>
-                    <span>Vacaciones</span>
-                  </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="legend-box legend-franco"></span>
-                    <span>Franco (AM / PM)</span>
-                  </div>
+              {loading && (
+                <div className="text-center my-4 py-4">
+                  <Spinner animation="border" size="lg" />
                 </div>
-              </Col>
-            </Row>
+              )}
 
-            {loading && (
-              <div className="text-center my-4 py-4">
-                <Spinner animation="border" size="lg" />
-              </div>
-            )}
+              {!loading &&
+                dateRange.length > 0 && (
+                  <div className="d-none d-md-block">
+                    {sucursalesFiltradas.map((s) =>
+                      renderSucursalSection(s)
+                    )}
+                  </div>
+                )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
-            {!loading && dateRange.length > 0 && (
-              <div>
-                {sucursalesFiltradas.map((s) => renderSucursalSection(s))}
-              </div>
-            )}
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
-  </Container>
-);
+      {showDatosEmpleadoModal && (
+        <AsignarEmpleadoModal
+          show={showDatosEmpleadoModal}
+          onClose={
+            cerrarDatosEmpleadoModal
+          }
+          initialData={
+            datosEmpleadoModalPayload
+          }
+          sucursales={
+            sucursalesCtx
+          }
+          jornadas={jornadas}
+        />
+      )}
+
+      {showEventoModal && (
+        <EventoModal
+          show={showEventoModal}
+          onClose={cerrarEventoModal}
+          initialData={
+            eventoModalPayload
+          }
+          conceptos={conceptos}
+          sucursales={sucursalesCtx}
+          empleados={empleadosActivos}
+        />
+      )}
+
+
+    </Container>
+  );
 }

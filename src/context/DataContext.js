@@ -227,17 +227,68 @@ export default function DataContextProvider({ children }) {
         toArray(dataTarjetaDeCreditoTabla)
       );
 
-      const empleadosActivos =
-        toArray(dataEmpleadosTabla)
-          .filter(
-            (emp) =>
-              emp.empleado?.fechabaja ===
-              null
-          );
+      // Empleados disponibles para uso operativo en toda la aplicación.
+      // Si fechabaja tiene una fecha, el empleado ya no está activo.
+      // Se ordenan primero por apellido y luego por nombre.
+      const empleadosActivos = toArray(dataEmpleadosTabla)
+        .filter((item) => {
+          const empleado =
+            item?.empleado ?? item;
 
-      setEmpleados(
-        empleadosActivos
-      );
+          return empleado?.fechabaja == null;
+        })
+        .sort((a, b) => {
+          const apellidoA = String(
+            a?.clientePersona?.apellido ??
+            a?.empleado?.apellido ??
+            a?.apellido ??
+            ""
+          ).trim();
+
+          const apellidoB = String(
+            b?.clientePersona?.apellido ??
+            b?.empleado?.apellido ??
+            b?.apellido ??
+            ""
+          ).trim();
+
+          const comparacionApellido =
+            apellidoA.localeCompare(
+              apellidoB,
+              "es",
+              {
+                sensitivity: "base",
+              }
+            );
+
+          if (comparacionApellido !== 0) {
+            return comparacionApellido;
+          }
+
+          const nombreA = String(
+            a?.clientePersona?.nombre ??
+            a?.empleado?.nombre ??
+            a?.nombre ??
+            ""
+          ).trim();
+
+          const nombreB = String(
+            b?.clientePersona?.nombre ??
+            b?.empleado?.nombre ??
+            b?.nombre ??
+            ""
+          ).trim();
+
+          return nombreA.localeCompare(
+            nombreB,
+            "es",
+            {
+              sensitivity: "base",
+            }
+          );
+        });
+
+      setEmpleados(empleadosActivos);
 
       setUsuariosTabla(
         toArray(dataUsuariosTabla)
@@ -322,7 +373,7 @@ export default function DataContextProvider({ children }) {
       setCajaAbierta(
         dataCajaAbierta || null
       );
-      
+
     };
 
     console.log(

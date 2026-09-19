@@ -14,7 +14,7 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
   const [adicionalesVar, setAdicionalesVar] = useState([]);
   const [adicionalesFijos, setAdicionalesFijos] = useState([]);
   const [adelantosAdm, setAdelantosAdm] = useState([]);
-
+  const [prestamosEmpleado, setPrestamosEmpleado] = useState([]);
   const [sueldo, setSueldo] = useState("");
   const [aBanco, setABanco] = useState("");
 
@@ -110,6 +110,7 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
         setAdelantosAdm([]);
         setSueldo("");
         setABanco("");
+        setPrestamosEmpleado([]);
         setPosVars(0);
         setNegVarsAbs(0);
         setPosFijos(0);
@@ -160,6 +161,143 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
         const vars = Array.isArray(dataA) ? dataA : [];
         setAdicionalesVar(vars);
 
+        // 3.1) Préstamos del empleado
+        const rP = await fetch(
+          `${apiUrl}/empleados/${empleadoId}/prestamos?todos=1`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!rP.ok) {
+          throw new Error("No se pudieron cargar los préstamos del empleado.");
+        }
+
+        const dataP = await rP.json();
+
+        console.log(
+          "[PRESTAMOS] Respuesta backend:",
+          dataP
+        );
+
+        const prestamosRaw =
+          Array.isArray(dataP)
+            ? dataP
+            : [];
+
+        console.log(
+          "[PRESTAMOS] Préstamos recibidos:",
+          prestamosRaw
+        );
+
+        // Cuotas de préstamo que ya existen en ESTE período.
+        const cuotasPeriodo = new Map();
+
+        for (const v of vars) {
+          const prestamoId = Number(v.prestamo_id);
+
+          if (!prestamoId) continue;
+
+          cuotasPeriodo.set(prestamoId, v);
+        }
+
+
+
+        const prestamosPreparados = prestamosRaw
+          .filter((p) => {
+            // Nunca mostramos anulados.
+            if (p.estado === "anulado") return false;
+
+            const cuotaExistente = cuotasPeriodo.get(Number(p.id));
+
+            // Si tiene cuota en este período, debemos mostrarlo aunque
+            // actualmente esté cancelado.
+            if (cuotaExistente) return true;
+
+            // Para una cuota nueva solamente interesan pendientes/activos.
+            if (
+              p.estado !== "pendiente" &&
+              p.estado !== "activo"
+            ) {
+              return false;
+            }
+
+            // Si tiene fecha de primer descuento, todavía no debe
+            // aparecer antes de esa fecha.
+            if (
+              p.fecha_primer_descuento &&
+              periodoFechaHasta &&
+              String(p.fecha_primer_descuento) >
+              String(periodoFechaHasta)
+            ) {
+              return false;
+            }
+
+            return true;
+          })
+          .map((p) => {
+
+            const cuotaExistente =
+              cuotasPeriodo.get(Number(p.id)) || null;
+
+            const cuotaAnterior = cuotaExistente
+              ? Math.abs(Number(cuotaExistente.monto || 0))
+              : 0;
+
+            const saldoActual = Number(p.saldo || 0);
+
+            // Si estamos editando una cuota ya aplicada,
+            // ese importe vuelve a estar disponible para edición.
+            const saldoDisponible =
+              saldoActual + cuotaAnterior;
+
+            return {
+              id: Number(p.id),
+
+              numero:
+                p.numero ||
+                String(p.id),
+
+              saldo: saldoActual,
+
+              saldo_disponible: saldoDisponible,
+
+              descripcion:
+                cuotaExistente?.descripcion ||
+                "PRESTAMO",
+
+              monto:
+                cuotaExistente
+                  ? cuotaAnterior
+                  : saldoDisponible,
+
+              observaciones:
+                cuotaExistente?.observaciones ||
+                p.observaciones ||
+                (
+                  p.numero
+                    ? `Préstamo ${p.numero}`
+                    : `Préstamo #${p.id}`
+                ),
+
+              incluido: Boolean(cuotaExistente),
+
+              cuota_existente_id:
+                cuotaExistente?.id
+                  ? Number(cuotaExistente.id)
+                  : null,
+
+              estado: p.estado,
+            };
+          });
+
+        console.log(
+          "[PRESTAMOS] Préstamos que se mostrarán:",
+          prestamosPreparados
+        );
+
+        setPrestamosEmpleado(prestamosPreparados);
+
         // 4) Adelantos (rango del período)
         let adelantos = [];
         if (periodoFechaDesde && periodoFechaHasta) {
@@ -177,7 +315,10 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
         // 5) Acumuladores base (se corrigen luego con exclusiones)
         let _posVars = 0, _negVarsAbs = 0;
         for (const it of vars) {
+          if (it.prestamo_id) continue;
+
           const m = Number(it.monto || 0);
+
           if (m > 0) _posVars += m;
           else if (m < 0) _negVarsAbs += Math.abs(m);
         }
@@ -215,6 +356,7 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
     // Variables
     let _posVars = 0, _negVarsAbs = 0;
     adicionalesVar.forEach((it) => {
+      if (it.prestamo_id) return;
       if (exVars.has(Number(it.id))) return; // excluido
       const m = Number(it.monto || 0);
       if (m > 0) _posVars += m;
@@ -246,6 +388,27 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
     setAdelantosAbs(_adelantosAbs);
   }, [adicionalesVar, adicionalesFijos, adelantosAdm, exVars, exFijosRefs, exAdelantos]);
 
+  // Total de descuentos correspondientes a préstamos
+  const descuentosPrestamos = useMemo(() => {
+    return prestamosEmpleado.reduce(
+      (total, p) => {
+        if (!p.incluido) return total;
+
+        const monto = Number(p.monto || 0);
+
+        if (
+          !Number.isFinite(monto) ||
+          monto <= 0
+        ) {
+          return total;
+        }
+
+        return total + monto;
+      },
+      0
+    );
+  }, [prestamosEmpleado]);
+
   // Totales calculados en el front (incluye override de sueldo y banco)
   const totalHaberes = useMemo(() => {
     const s = Number(sueldo || 0);
@@ -253,13 +416,53 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
   }, [sueldo, posVars, posFijos]);
 
   const descuentos = useMemo(() => {
-    return Number(negVarsAbs || 0) + Number(negFijosAbs || 0) + Number(adelantosAbs || 0);
-  }, [negVarsAbs, negFijosAbs, adelantosAbs]);
+    return (
+      Number(negVarsAbs || 0) +
+      Number(negFijosAbs || 0) +
+      Number(adelantosAbs || 0) +
+      Number(descuentosPrestamos || 0)
+    );
+  }, [
+    negVarsAbs,
+    negFijosAbs,
+    adelantosAbs,
+    descuentosPrestamos,
+  ]);
 
   const aSucursal = useMemo(() => {
     const banco = Number(aBanco || 0);
     return totalHaberes - descuentos - banco;
   }, [totalHaberes, descuentos, aBanco]);
+
+  const togglePrestamo = (prestamoId) => {
+    setPrestamosEmpleado((prev) =>
+      prev.map((p) =>
+        Number(p.id) === Number(prestamoId)
+          ? {
+            ...p,
+            incluido: !p.incluido,
+          }
+          : p
+      )
+    );
+  };
+
+  const cambiarPrestamo = (
+    prestamoId,
+    campo,
+    valor
+  ) => {
+    setPrestamosEmpleado((prev) =>
+      prev.map((p) =>
+        Number(p.id) === Number(prestamoId)
+          ? {
+            ...p,
+            [campo]: valor,
+          }
+          : p
+      )
+    );
+  };
 
   // Guardar: snapshot + override (patch mínimo) + exclusiones
   const guardar = async () => {
@@ -284,11 +487,25 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
         adelantos: Array.from(exAdelantos).map(Number),
       };
 
+      const prestamos = prestamosEmpleado.map((p) => ({
+        prestamo_id: Number(p.id),
+
+        incluir: Boolean(p.incluido),
+
+        monto:
+          p.incluido
+            ? Number(p.monto || 0)
+            : 0,
+
+        descripcion:
+          String(p.descripcion || "PRESTAMO").trim(),
+      }));
+
       const r = await fetch(`${apiUrl}/liquidacion/${periodoId}/calcular?${qs.toString()}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ excluir }),
+        body: JSON.stringify({ excluir, prestamos }),
       });
 
       if (!r.ok) {
@@ -296,7 +513,7 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
         try {
           const x = await r.json();
           if (x?.error) msg = x.error;
-        } catch (_) {}
+        } catch (_) { }
         throw new Error(msg);
       }
 
@@ -572,6 +789,138 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
               </>
             )}
 
+            {/* Préstamos */}
+            <>
+              <h6 className="mb-2">Préstamos</h6>
+
+              <div className="table-responsive mb-3">
+                <Table bordered hover size="sm" striped>
+                  <thead>
+                    <tr>
+                      <th style={{ width: 40 }}></th>
+
+                      <th style={{ width: 100 }}>
+                        Nº
+                      </th>
+
+                      <th style={{ width: 140 }}>
+                        Saldo actual
+                      </th>
+
+                      <th>
+                        Descripción
+                      </th>
+
+                      <th style={{ width: 160 }}>
+                        Descuento del mes
+                      </th>
+
+                      <th>
+                        Observaciones
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {prestamosEmpleado.length > 0 ? (
+                      prestamosEmpleado.map((p) => (
+                        <tr key={p.id}>
+
+                          <td className="text-center">
+                            <Form.Check
+                              type="checkbox"
+                              checked={p.incluido}
+                              onChange={() =>
+                                togglePrestamo(p.id)
+                              }
+                              title={
+                                p.incluido
+                                  ? "Incluir descuento"
+                                  : "No incluir descuento"
+                              }
+                            />
+                          </td>
+
+                          <td>
+                            {p.numero || p.id}
+                          </td>
+
+                          <td>
+                            <Form.Control
+                              size="sm"
+                              type="text"
+                              value={`$${formatMonto(p.saldo)}`}
+                              readOnly
+                            />
+                          </td>
+
+                          <td>
+                            <Form.Control
+                              size="sm"
+                              type="text"
+                              value={p.descripcion}
+                              readOnly={!p.incluido}
+                              onChange={(e) =>
+                                cambiarPrestamo(
+                                  p.id,
+                                  "descripcion",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </td>
+
+                          <td>
+                            <Form.Control
+                              size="sm"
+                              type="number"
+                              min="0"
+                              max={p.saldo_disponible}
+                              step="0.01"
+                              value={p.monto}
+                              readOnly={!p.incluido}
+                              onChange={(e) =>
+                                cambiarPrestamo(
+                                  p.id,
+                                  "monto",
+                                  e.target.value
+                                )
+                              }
+                            />
+
+                            {p.cuota_existente_id && (
+                              <small className="text-muted">
+                                Cuota ya registrada
+                              </small>
+                            )}
+                          </td>
+
+                          <td>
+                            <Form.Control
+                              size="sm"
+                              type="text"
+                              value={p.observaciones || ""}
+                              readOnly
+                            />
+                          </td>
+
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="text-center text-muted"
+                        >
+                          No hay préstamos disponibles para este empleado y período.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
+              </div>
+            </>
+
             {/* Variables */}
             <Row>
               <Col>
@@ -589,28 +938,30 @@ export default function LiquidacionMensualModal({ show, onClose, empleados, peri
                       </tr>
                     </thead>
                     <tbody>
-                      {adicionalesVar.length ? (
-                        adicionalesVar.map((a) => {
-                          const id = Number(a.id);
-                          const checked = !exVars.has(id);
-                          return (
-                            <tr key={a.id}>
-                              <td className="text-center">
-                                <Form.Check
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => toggleVar(id)}
-                                  title={checked ? "Incluir" : "Excluido"}
-                                />
-                              </td>
-                              <td>{a.id}</td>
-                              <td>{a.descripcion || <span className="text-muted">—</span>}</td>
-                              <td>${formatMonto(a.monto)}</td>
-                              <td>{a.fecha || <span className="text-muted">—</span>}</td>
-                              <td>{a.observaciones || <span className="text-muted">—</span>}</td>
-                            </tr>
-                          );
-                        })
+                      {adicionalesVar.filter((a) => !a.prestamo_id).length ? (
+                        adicionalesVar
+                          .filter((a) => !a.prestamo_id)
+                          .map((a) => {
+                            const id = Number(a.id);
+                            const checked = !exVars.has(id);
+                            return (
+                              <tr key={a.id}>
+                                <td className="text-center">
+                                  <Form.Check
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => toggleVar(id)}
+                                    title={checked ? "Incluir" : "Excluido"}
+                                  />
+                                </td>
+                                <td>{a.id}</td>
+                                <td>{a.descripcion || <span className="text-muted">—</span>}</td>
+                                <td>${formatMonto(a.monto)}</td>
+                                <td>{a.fecha || <span className="text-muted">—</span>}</td>
+                                <td>{a.observaciones || <span className="text-muted">—</span>}</td>
+                              </tr>
+                            );
+                          })
                       ) : (
                         <tr>
                           <td colSpan={6} className="text-center">Sin adicionales para este período/empleado</td>

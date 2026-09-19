@@ -28,12 +28,9 @@ export default function AsignarEmpleadoModal({
   sucursales,
   jornadas,
 }) {
-  const isEdit = Boolean(
-    initialData?.sucursal_id ||
-    initialData?.jornada_id ||
-    initialData?.franco_am ||
-    initialData?.franco_pm
-  );
+  const isEdit =
+    initialData?.modo === "editar";
+
 
   const [sucursalId, setSucursalId] = useState(initialData?.sucursal_id ?? "");
   const [jornadaId, setJornadaId] = useState(initialData?.jornada_id ?? "");
@@ -163,11 +160,23 @@ export default function AsignarEmpleadoModal({
       onHide={() => onClose(false)}
       onExited={onExited}
       centered
+      fullscreen="sm-down"
+      scrollable
     >
-      <Modal.Header closeButton>
-        <Modal.Title className="fs-6 fw-semibold mb-0">
-          {isEdit ? "Editar asignación" : "Nueva asignación"}
-        </Modal.Title>
+      <Modal.Header closeButton className="py-3">
+        <div>
+          <Modal.Title className="fs-5 fw-semibold mb-0">
+            {isEdit
+              ? "Editar datos"
+              : "Asignar datos"}
+          </Modal.Title>
+
+          <small className="text-muted">
+            {isEdit
+              ? "Modificar datos del empleado"
+              : "Nueva asignación"}
+          </small>
+        </div>
       </Modal.Header>
 
       <Modal.Body>
@@ -178,21 +187,32 @@ export default function AsignarEmpleadoModal({
         )}
 
         <Row className="g-3">
-          {/* Sucursal */}
-          <Col md={12}>
+
+          {/* SUCURSAL */}
+          <Col xs={12}>
             <Form.Group>
-              <Form.Label className="small fw-semibold text-muted text-uppercase">
+              <Form.Label className="small fw-semibold mb-1">
                 Sucursal
               </Form.Label>
+
               <Form.Select
                 value={sucursalId ?? ""}
-                onChange={(e) => setSucursalId(e.target.value || "")}
-                size="sm"
-                className="form-control my-input"
+                onChange={(e) =>
+                  setSucursalId(
+                    e.target.value || ""
+                  )
+                }
+                style={{ minHeight: 48 }}
               >
-                <option value="">— Sin asignar —</option>
+                <option value="">
+                  — Sin asignar —
+                </option>
+
                 {sucursalOpts.map((s) => (
-                  <option key={s.id} value={s.id}>
+                  <option
+                    key={s.id}
+                    value={s.id}
+                  >
                     {s.nombre}
                   </option>
                 ))}
@@ -200,152 +220,241 @@ export default function AsignarEmpleadoModal({
             </Form.Group>
           </Col>
 
-          {/* Jornada */}
-          <Col md={12}>
+          {/* JORNADA */}
+          <Col xs={12}>
             <Form.Group>
-              <Form.Label className="small fw-semibold text-muted text-uppercase">
+              <Form.Label className="small fw-semibold mb-1">
                 Jornada
               </Form.Label>
+
               <Form.Select
                 value={jornadaId ?? ""}
-                onChange={(e) => setJornadaId(e.target.value || "")}
-                size="sm"
-                className="form-control my-input"
+                onChange={(e) =>
+                  setJornadaId(
+                    e.target.value || ""
+                  )
+                }
+                style={{ minHeight: 48 }}
               >
-                <option value="">— Sin asignar —</option>
+                <option value="">
+                  — Sin asignar —
+                </option>
+
                 {jornadaOpts.map((j) => (
-                  <option key={j.id} value={j.id}>
+                  <option
+                    key={j.id}
+                    value={j.id}
+                  >
                     {j.nombre}
                   </option>
                 ))}
               </Form.Select>
-              <Form.Text className="text-muted small">
-                La jornada define qué turnos / horarios aplica al empleado.
-              </Form.Text>
             </Form.Group>
           </Col>
 
-          {/* Teléfono */}
-          <Col md={12}>
+          {/* TIPO */}
+          <Col xs={12} md={6}>
             <Form.Group>
-              <Form.Label className="small fw-semibold text-muted text-uppercase">
-                Teléfono (10 dígitos)
-              </Form.Label>
-              <Form.Control
-                type="text"
-                inputMode="numeric"
-                pattern="\d*"
-                maxLength={10}
-                placeholder="Ej: 3515551234"
-                value={telefono}
-                onChange={(e) => {
-                  const onlyDigits = e.target.value
-                    .replace(/\D+/g, "")
-                    .slice(0, 10);
-                  setTelefono(onlyDigits);
-                }}
-                size="sm"
-              />
-              <Form.Text className="text-muted small">
-                Opcional. Solo números.
-              </Form.Text>
-            </Form.Group>
-          </Col>
-
-          {/* Tipo */}
-          <Col md={12}>
-            <Form.Group>
-              <Form.Label className="small fw-semibold text-muted text-uppercase">
+              <Form.Label className="small fw-semibold mb-1">
                 Tipo de empleado
               </Form.Label>
 
               <Form.Select
                 value={tipo}
-                onChange={(e) => setTipo(e.target.value)}
-                size="sm"
-                className="form-control my-input"
+                onChange={(e) =>
+                  setTipo(e.target.value)
+                }
+                style={{ minHeight: 48 }}
               >
-                <option value="VENDEDOR">Vendedor</option>
-                <option value="ENCARGADO">Encargado</option>
-              </Form.Select>
+                <option value="VENDEDOR">
+                  Vendedor
+                </option>
 
-              <Form.Text className="text-muted small">
-                Define el rol operativo del empleado.
+                <option value="ENCARGADO">
+                  Encargado
+                </option>
+              </Form.Select>
+            </Form.Group>
+          </Col>
+
+          {/* TELÉFONO */}
+          <Col xs={12} md={6}>
+            <Form.Group>
+              <Form.Label className="small fw-semibold mb-1">
+                Teléfono
+              </Form.Label>
+
+              <Form.Control
+                type="tel"
+                inputMode="numeric"
+                pattern="\d*"
+                maxLength={10}
+                placeholder="10 dígitos"
+                value={telefono}
+                onChange={(e) => {
+                  const onlyDigits =
+                    e.target.value
+                      .replace(/\D+/g, "")
+                      .slice(0, 10);
+
+                  setTelefono(onlyDigits);
+                }}
+                style={{ minHeight: 48 }}
+              />
+
+              <Form.Text className="text-muted">
+                Opcional. Solo números.
               </Form.Text>
             </Form.Group>
           </Col>
 
-          {/* Franco AM */}
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label className="small fw-semibold text-muted text-uppercase">
-                Franco AM
-              </Form.Label>
-              <Form.Select
-                value={francoAm ?? ""}
-                onChange={(e) => setFrancoAm(e.target.value || "")}
-                size="sm"
-                className="form-control my-input"
-              >
-                <option value="">— Sin franco —</option>
-                {daysOfWeek.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+          {/* FRANCOS */}
+          <Col xs={12}>
+            <div className="border-top pt-3 mt-1">
+              <div className="fw-semibold mb-2">
+                Francos
+              </div>
+
+              <Row className="g-2">
+
+                {/* FRANCO AM */}
+                <Col xs={6}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted mb-1">
+                      Turno AM
+                    </Form.Label>
+
+                    <Form.Select
+                      value={francoAm ?? ""}
+                      onChange={(e) =>
+                        setFrancoAm(
+                          e.target.value || ""
+                        )
+                      }
+                      style={{ minHeight: 48 }}
+                    >
+                      <option value="">
+                        Sin franco
+                      </option>
+
+                      {daysOfWeek.map((d) => (
+                        <option
+                          key={d.value}
+                          value={d.value}
+                        >
+                          {d.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                {/* FRANCO PM */}
+                <Col xs={6}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted mb-1">
+                      Turno PM
+                    </Form.Label>
+
+                    <Form.Select
+                      value={francoPm ?? ""}
+                      onChange={(e) =>
+                        setFrancoPm(
+                          e.target.value || ""
+                        )
+                      }
+                      style={{ minHeight: 48 }}
+                    >
+                      <option value="">
+                        Sin franco
+                      </option>
+
+                      {daysOfWeek.map((d) => (
+                        <option
+                          key={d.value}
+                          value={d.value}
+                        >
+                          {d.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+              </Row>
+            </div>
           </Col>
 
-          {/* Franco PM */}
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label className="small fw-semibold text-muted text-uppercase">
-                Franco PM
-              </Form.Label>
-              <Form.Select
-                value={francoPm ?? ""}
-                onChange={(e) => setFrancoPm(e.target.value || "")}
-                size="sm"
-                className="form-control my-input"
-              >
-                <option value="">— Sin franco —</option>
-                {daysOfWeek.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          </Col>
         </Row>
       </Modal.Body>
 
-      <Modal.Footer className="d-flex justify-content-between">
-        <Button
-          variant="outline-secondary"
-          onClick={() => onClose(false)}
-          disabled={saving}
-          size="sm"
-        >
-          Cancelar
-        </Button>
-        <Button
-          onClick={guardar}
-          disabled={saving || !initialData?.empleado_id}
-          size="sm"
-          variant="primary"
-        >
-          {saving ? (
-            <>
-              <Spinner size="sm" className="me-2" /> Guardando…
-            </>
-          ) : isEdit ? (
-            "Guardar cambios"
-          ) : (
-            "Asignar"
-          )}
-        </Button>
+      {/* EMPLEADO SELECCIONADO */}
+      <div className="bg-light rounded p-3 mb-3">
+        <small className="text-muted d-block mb-1">
+          Empleado
+        </small>
+
+        <div className="fw-bold fs-5">
+          {initialData?.empleado_nombre ||
+            `Empleado #${initialData?.empleado_id ?? "—"}`}
+        </div>
+
+        {initialData?.empleado_dni && (
+          <div className="text-muted small mt-1">
+            DNI / CUIL: {initialData.empleado_dni}
+          </div>
+        )}
+      </div>
+
+      <Modal.Footer className="p-3">
+
+        <Row className="g-2 w-100 m-0">
+
+          {/* GUARDAR PRIMERO EN MOBILE */}
+          <Col xs={12} md={{ span: 6, order: 2 }}>
+            <Button
+              onClick={guardar}
+              disabled={
+                saving ||
+                !initialData?.empleado_id
+              }
+              variant="primary"
+              className="w-100 fw-semibold"
+              style={{ minHeight: 48 }}
+            >
+              {saving ? (
+                <>
+                  <Spinner
+                    size="sm"
+                    className="me-2"
+                  />
+                  Guardando...
+                </>
+              ) : isEdit ? (
+                "Guardar cambios"
+              ) : (
+                "Asignar datos"
+              )}
+            </Button>
+          </Col>
+
+          {/* CANCELAR */}
+          <Col xs={12} md={{ span: 6, order: 1 }}>
+            <Button
+              variant="outline-secondary"
+              onClick={() =>
+                onClose(false)
+              }
+              disabled={saving}
+              className="w-100"
+              style={{ minHeight: 48 }}
+            >
+              Cancelar
+            </Button>
+          </Col>
+
+        </Row>
+
       </Modal.Footer>
     </Modal>
   );

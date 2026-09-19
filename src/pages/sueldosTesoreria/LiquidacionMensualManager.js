@@ -55,41 +55,90 @@ export default function LiquidacionMensualManager() {
   // ====== Handler WhatsApp: teléfonos + link firmado + abrir wa.me ======
   const enviarPorWhatsapp = useCallback(async (recibo) => {
     try {
-      // 1) Teléfonos del empleado
-      const r = await fetch(`${apiUrl}/empleados/${recibo.empleado_id}/telefonos`, { credentials: "include" });
-      const phones = await r.json();
-      if (!Array.isArray(phones) || !phones.length) {
-        alert("El empleado no tiene teléfonos cargados.");
+      console.log("==========================================");
+      console.log("[WHATSAPP] Iniciando envío");
+      console.log("[WHATSAPP] Recibo:", recibo);
+      console.log("[WHATSAPP] empleado_id:", recibo?.empleado_id);
+
+      // 1) Obtener los datos del empleado
+      const urlDatos =
+        `${apiUrl}/empleados/${recibo.empleado_id}/datos`;
+
+      console.log("[WHATSAPP] Consultando datos:", urlDatos);
+
+      const r = await fetch(urlDatos, {
+        credentials: "include",
+      });
+
+      const datosEmpleado = await r.json().catch(() => null);
+
+      console.log("[WHATSAPP] Status datos empleado:", r.status);
+      console.log("[WHATSAPP] Datos empleado:", datosEmpleado);
+
+      if (!r.ok) {
+        throw new Error(
+          datosEmpleado?.error ||
+          "No se pudieron obtener los datos del empleado."
+        );
+      }
+
+      // 2) Obtener teléfono
+      const telefono = String(
+        datosEmpleado?.telefono || ""
+      ).trim();
+
+      console.log("[WHATSAPP] Teléfono encontrado:", telefono);
+
+      if (!telefono) {
+        alert("El empleado no tiene teléfono cargado.");
         return;
       }
 
-      // 2) Link firmado del backend (usa PUBLIC_BASE_URL del backend)
-      const resp = await fetch(`${apiUrl}/links/recibo/${recibo.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({}) // { ttlSeconds: opcional }
-      });
-      const payload = await resp.json();
+      // 3) Generar link firmado del recibo
+      const resp = await fetch(
+        `${apiUrl}/links/recibo/${recibo.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({}),
+        }
+      );
+
+      const payload = await resp.json().catch(() => null);
+
+      console.log(
+        "[WHATSAPP] Respuesta generación link PDF:",
+        payload
+      );
+
       if (!resp.ok || !payload?.url) {
-        throw new Error(payload?.error || "No se pudo generar el link del PDF.");
+        throw new Error(
+          payload?.error ||
+          "No se pudo generar el link del PDF."
+        );
       }
+
       const pdfUrl = payload.url;
 
-      // 3) Si hay más de un teléfono, permití elegir
-      if (phones.length > 1) {
-        setPhonesSel(phones);
-        setReciboParaEnvio({ recibo, pdfUrl });
-        setShowPhones(true);
-        return;
-      }
+      console.log("[WHATSAPP] PDF URL:", pdfUrl);
 
-      // 4) Si hay uno solo, abrir directo
-      const seleccionado = phones[0];
-      abrirWhatsApp(recibo, seleccionado, pdfUrl);
+      // 4) Abrir WhatsApp
+      abrirWhatsApp(
+        recibo,
+        { telefono },
+        pdfUrl
+      );
+
     } catch (e) {
-      console.error(e);
-      alert(e.message || "No se pudo abrir WhatsApp.");
+      console.error("[WHATSAPP] ERROR:", e);
+
+      alert(
+        e.message ||
+        "No se pudo abrir WhatsApp."
+      );
     }
   }, [apiUrl]);
 
@@ -132,30 +181,172 @@ export default function LiquidacionMensualManager() {
   <meta charset="utf-8" />
   <title>Recibo ${detalle?.id ? `#${detalle.id}` : ""}</title>
   <style>
-    @page { size: A4; margin: 15mm; }
-    html, body { height: 100%; }
-    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
-           font-size: 11pt; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #111; }
-    .row { display: flex; gap: 16px; }
-    .col-6 { flex: 0 0 calc(50% - 8px); max-width: calc(50% - 8px); }
-    .col-4 { flex: 0 0 calc(33.333% - 10.66px); max-width: calc(33.333% - 10.66px); }
-    .no-break { break-inside: avoid; page-break-inside: avoid; }
-    h5 { margin: 0 0 4px 0; font-size: 18px; }
-    .muted { color: #6c757d; }
-    .small { font-size: 10pt; }
-    .sep { margin: 8px 0 16px; border: none; border-top: 1px solid #e5e7eb; }
-    .label { font-size: 10pt; color: #6c757d; margin-bottom: 4px; }
-    .field { border: 1px solid #e5e7eb; background: #f8f9fa; padding: 6px 8px; border-radius: 6px; }
-    .field.white { background: #fff; }
-    .summary { border: 1px solid #e5e7eb; background: #f8f9fa; padding: 8px 10px; border-radius: 6px; height: 100%; }
-    .summary .line { display: flex; justify-content: space-between; margin: 2px 0; }
-    .summary .strong { font-weight: 600; }
-    table { width: 100%; border-collapse: collapse; }
-    thead th { text-align: left; padding: 8px; background: #f3f4f6; border: 1px solid #e5e7eb; font-weight: 600; }
-    tbody td { padding: 8px; border: 1px solid #e5e7eb; }
-    .right { text-align: right; }
-    table, tr, td, th { break-inside: avoid; page-break-inside: avoid; }
-    .print-root { padding: 6px; }
+@page {
+  size: A4 portrait;
+  margin: 9mm;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, "Noto Sans";
+  font-size: 10pt;
+  line-height: 1.25;
+  color: #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-root {
+  padding: 2px;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.col-6 {
+  flex: 0 0 calc(50% - 5px);
+  max-width: calc(50% - 5px);
+}
+
+.col-4 {
+  flex: 0 0 calc(33.333% - 6.67px);
+  max-width: calc(33.333% - 6.67px);
+}
+
+.no-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* TÍTULOS */
+
+h5 {
+  margin: 0 0 3px 0;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+h6,
+.section-title {
+  margin: 8px 0 4px 0;
+  font-size: 10pt;
+  line-height: 1.2;
+}
+
+.muted {
+  color: #6c757d;
+}
+
+.small {
+  font-size: 9pt;
+}
+
+/* SEPARADORES */
+
+.sep {
+  margin: 5px 0 8px;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+.sep-compact {
+  margin: 3px 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* CAMPOS */
+
+.label {
+  font-size: 9pt;
+  color: #6c757d;
+  margin-bottom: 2px;
+}
+
+.field {
+  border: 1px solid #e5e7eb;
+  background: #f8f9fa;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.field.white {
+  background: #fff;
+}
+
+/* RESUMEN */
+
+.summary {
+  border: 1px solid #e5e7eb;
+  background: #f8f9fa;
+  padding: 5px 7px;
+  border-radius: 4px;
+  height: auto;
+}
+
+.summary .line {
+  display: flex;
+  justify-content: space-between;
+  margin: 1px 0;
+  line-height: 1.2;
+}
+
+.summary .strong {
+  font-weight: 600;
+}
+
+/* TABLAS */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 6px 0;
+  font-size: 9.5pt;
+}
+
+thead th {
+  text-align: left;
+  padding: 4px 6px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+tbody td {
+  padding: 4px 6px;
+  border: 1px solid #e5e7eb;
+  line-height: 1.2;
+}
+
+.right {
+  text-align: right;
+}
+
+/* Evitamos cortar una fila individual entre páginas,
+   pero permitimos que la tabla continúe en otra página. */
+
+tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* NOTA FINAL */
+
+.note {
+  margin-top: 5px;
+  font-size: 8.5pt;
+  line-height: 1.2;
+}
   </style>
 </head>
 <body>
@@ -180,35 +371,152 @@ export default function LiquidacionMensualManager() {
       />
     );
 
+
     let cleaned = false;
+
     const cleanup = () => {
       if (cleaned) return;
+
       cleaned = true;
-      try { root.unmount(); } catch { }
+
+      try {
+        root.unmount();
+      } catch (e) {
+        console.warn(
+          "[IMPRESION RECIBO] Error al desmontar React:",
+          e
+        );
+      }
+
       try {
         if (iframe && iframe.parentNode) {
           iframe.parentNode.removeChild(iframe);
         }
-      } catch { }
+      } catch (e) {
+        console.warn(
+          "[IMPRESION RECIBO] Error al eliminar iframe:",
+          e
+        );
+      }
     };
 
-    win.requestAnimationFrame(() => {
-      win.requestAnimationFrame(() => {
-        const afterPrint = () => {
-          win.removeEventListener("afterprint", afterPrint);
-          cleanup();
-        };
-        win.addEventListener("afterprint", afterPrint);
+    // ============================================
+    // ESPERAR RENDER COMPLETO ANTES DE IMPRIMIR
+    // ============================================
+
+    const items = detalle.Items || [];
+
+    const cantidadFijos = items.filter(
+      (it) => it.tipo === "FIJO"
+    ).length;
+
+    const cantidadNoFijos = items.filter(
+      (it) => it.tipo !== "FIJO"
+    ).length;
+
+    // ReciboPrint siempre genera al menos una fila
+    // por cada una de las dos tablas.
+    const filasEsperadas =
+      Math.max(cantidadFijos, 1) +
+      Math.max(cantidadNoFijos, 1);
+
+    let intentos = 0;
+    const maxIntentos = 50;
+
+    const esperarRenderEImprimir = () => {
+      intentos++;
+
+      const filasRenderizadas =
+        mount.querySelectorAll("tbody tr").length;
+
+      console.log(
+        "[IMPRESION RECIBO] Esperando render...",
+        {
+          intento: intentos,
+          filasEsperadas,
+          filasRenderizadas,
+          items: items.length,
+        }
+      );
+
+      // Todavía faltan filas.
+      if (
+        filasRenderizadas < filasEsperadas &&
+        intentos < maxIntentos
+      ) {
+        setTimeout(esperarRenderEImprimir, 50);
+        return;
+      }
+
+      // Después de 50 intentos seguimos sin tener
+      // todas las filas: no imprimimos algo incompleto.
+      if (filasRenderizadas < filasEsperadas) {
+        console.error(
+          "[IMPRESION RECIBO] Render incompleto.",
+          {
+            filasEsperadas,
+            filasRenderizadas,
+            items: items.length,
+          }
+        );
+
+        cleanup();
+
+        alert(
+          "No se pudo preparar completamente el recibo para imprimir. Intentá nuevamente."
+        );
+
+        return;
+      }
+
+      console.log(
+        "[IMPRESION RECIBO] Render completo.",
+        {
+          filasEsperadas,
+          filasRenderizadas,
+          items: items.length,
+          cantidadFijos,
+          cantidadNoFijos,
+        }
+      );
+
+      const afterPrint = () => {
+        win.removeEventListener(
+          "afterprint",
+          afterPrint
+        );
+
+        cleanup();
+      };
+
+      win.addEventListener(
+        "afterprint",
+        afterPrint
+      );
+
+      // Las filas ya existen.
+      // Damos 200 ms extra para que el navegador termine
+      // de calcular el layout/paginación.
+      setTimeout(() => {
+        if (cleaned) return;
 
         win.focus();
         win.print();
+      }, 200);
 
-        setTimeout(() => {
-          cleanup();
-          win.removeEventListener("afterprint", afterPrint);
-        }, 1200);
-      });
-    });
+      // Respaldo en caso de que el navegador
+      // no dispare el evento afterprint.
+      setTimeout(() => {
+        win.removeEventListener(
+          "afterprint",
+          afterPrint
+        );
+
+        cleanup();
+      }, 10000);
+    };
+
+    esperarRenderEImprimir();
   };
 
   const fetchPeriodos = useCallback(async () => {
@@ -240,7 +548,7 @@ export default function LiquidacionMensualManager() {
     } finally {
       setLoading(false);
     }
-  }, [ apiUrl]);
+  }, [apiUrl]);
 
   useEffect(() => { fetchRecibos(); }, [fetchRecibos]);
 
@@ -288,6 +596,28 @@ export default function LiquidacionMensualManager() {
       const r = await fetch(`${apiUrl}/liquidacion/recibo/${reciboId}/detalle`, { credentials: "include" });
       const data = await r.json().catch(() => null);
       if (!r.ok) throw new Error(data?.error || "No se pudo obtener el detalle del recibo.");
+
+      console.log(
+        "[DETALLE LIQUIDACION] Respuesta completa:",
+        data
+      );
+
+      console.log(
+        "[DETALLE LIQUIDACION] Items:",
+        data?.Items
+      );
+
+      console.table(
+        (data?.Items || []).map((it) => ({
+          id: it.id,
+          tipo: it.tipo,
+          referencia: it.referencia,
+          descripcion: it.descripcion,
+          monto_total: it.monto_total,
+          fuente_id: it.fuente_id,
+        }))
+      );
+
       setDetalle(data);
     } catch (e) {
       console.error(e);

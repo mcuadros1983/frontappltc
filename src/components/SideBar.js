@@ -2185,6 +2185,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Adelantos (Tes)
                     </Link>
                   )}
+
+
+                  {can("sueldos:adelantos.tesoreria") && (
+                    <Link to="/sueldostesoreria/prestamosempleados" className="nav-link" onClick={handleLinkClick}>
+                      Prestamos a Empleados
+                    </Link>
+                  )}
+
                 </div>
               </>
             )}

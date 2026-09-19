@@ -162,10 +162,11 @@ import TarjetaPlanPagoForm from "./pages/tesoreria/TarjetaPlanPagoForm.js";
 import OrdenPagoList from "./pages/comprasTesoreria/ordenPagoList.js";
 import PagoSueldosTesoreria from "./pages/sueldosTesoreria/pagoSueldosTesoreria.js";
 import AdelantosSueldosTesoreria from "./pages/sueldosTesoreria/adelantoSueldosTesoreria.js";
+import PrestamosEmpleadosManager from "./pages/sueldosTesoreria/PrestamoEmpleadoManager.js";
 import CtasCtesList from "./pages/comprasTesoreria/ctasCtesList.js";
 import NuevoMovimientoBancoExcel from "./pages/tesoreria/NuevoMovimientoBancoExcel.js";
 import MovimientosTarjetasTesoreria from "./pages/tesoreria/MovimientosTarjetaTesoreria.js";
-import AjustesComprobantesEgresoList  from "./pages/tesoreria/AjustesComprobantesEgresoList.js";
+import AjustesComprobantesEgresoList from "./pages/tesoreria/AjustesComprobantesEgresoList.js";
 import MovimientosChequesTesoreria from "./pages/tesoreria/MovimientosChequesTesoreria.js";
 import RegistroHacienda from "./pages/gmedias/RegistroHacienda.js";
 import MoivmientosCajaRetirosTesoreria from "./pages/tesoreria/MovimientosCajaRetirosTesoreria.js";
@@ -1045,7 +1046,7 @@ INTELIGENCIA COMERCIAL
                         <Route path="/tesoreria/movimientos-tarjetas-tesoreria" element={<MovimientosTarjetasTesoreria />} />
 
                         {/*Ajuste comprobante */}
-                        <Route path="/tesoreria/ajustes-comprobantes" element={<AjustesComprobantesEgresoList  />} />
+                        <Route path="/tesoreria/ajustes-comprobantes" element={<AjustesComprobantesEgresoList />} />
 
                         {/* Echeq Tesoreria */}
                         <Route path="/tesoreria/movimientos-echeq-tesoreria" element={<MovimientosChequesTesoreria />} />
@@ -1094,6 +1095,7 @@ INTELIGENCIA COMERCIAL
                         <Route path="/sueldostesoreria/asignaradicionalfijo" element={<EmpleadoAdicionalFijoManager />} />
                         <Route path="/sueldostesoreria/pagodesueldos" element={<PagoSueldosTesoreria />} />
                         <Route path="/sueldostesoreria/adelantos" element={<AdelantosSueldosTesoreria />} />
+                        <Route path="/sueldostesoreria/prestamosempleados" element={<PrestamosEmpleadosManager />} />
                         <Route path="/sueldostesoreria/importaritemsvariables" element={<AdicionalVariableImportManager />} />
                         <Route path="/sueldostesoreria/listaradicionalesvariables" element={<AdicionalVariableList />} />
                         <Route path="/sueldostesoreria/recibosimportmanager" element={<RecibosImportManager />} />
