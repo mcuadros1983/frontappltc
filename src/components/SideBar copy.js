@@ -59,9 +59,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
   const [movimientosOtros, setMovimientosOtros] = useState(false);
   const [sellStatics, setSellStatics] = useState(false);
   const [showGestionItems, setShowGestionItems] = useState(false);
+  const [showGestionOperativaItems, setShowGestionOperativaItems] = useState(false);
   const [showConfigItems, setShowConfigItems] = useState(false);
   const [showAuditoriaAtencionItems, setShowAuditoriaAtencionItems] = useState(false);
   const [showDocumentacionItems, setShowDocumentacionItems] = useState(false);
+  const [showInspeccionesItems, setShowInspeccionesItems] = useState(false);
+
+  const [showEvaluacionItems, setShowEvaluacionItems] = useState(false);
+
   const [tarjetacomunitem, setTarjetacomunitem] = useState(false);
   const [planPagoTarjetaItem, setPlanPagoTarjetaItem] = useState(false);
   const [empresaitem, setEmpresaitem] = useState(false);
@@ -84,6 +89,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
   const [movBancoItem, setMovBancoItem] = useState(false);
   const [movTarjetaItem, setMovTarjetaItem] = useState(false);
   const [registroChequeItem, setRegistroChequeItem] = useState(false);
+  const [registroAjusteItem, setRegistroAjusteItem] = useState(false);
   const [showStaticsItems, setShowStaticsItems] = useState(false);
   const [showIVAItems, setShowIVAItems] = useState(false);
   const [showAsistenciaItems, setShowAsistenciaItems] = useState(false);
@@ -103,6 +109,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
   const [showFidelizacionItems, setShowFidelizacionItems] = useState(false);
 
+
+  const [showLegajosItems, setShowLegajosItems] = useState(false);
+
+  const [showInteligenciaItems, setShowInteligenciaItems] = useState(false);
+
   const context = useContext(Contexts.UserContext); // lo seguís usando para logout si querés
   const { can, loading } = useSecurity();
 
@@ -112,16 +123,6 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
   const navigate = useNavigate();
 
-  // const handleLogout = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     await context.logout(); // hace fetch POST /logout
-  //     setSecUser(null);       // limpia SecurityContext para ProtectedRoute
-  //     navigate("/login", { replace: true });
-  //   } catch (err) {
-  //     alert(err?.message || "No se pudo cerrar sesión");
-  //   }
-  // };
 
   const handleLogout = async (e) => {
     e.preventDefault();
@@ -180,11 +181,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
         {/* ===== HOME: BLOQUE PRINCIPAL (sin restricciones por rol) ===== */}
         {showMainItems &&
           !showGestionItems &&
+          !showGestionOperativaItems &&
           !showReturnButton &&
           !showConfigItems &&
           !showAuditoriaAtencionItems &&
           !showDocumentacionItems &&
+          !showInspeccionesItems &&
+          !showEvaluacionItems &&
           !showFidelizacionItems &&
+          !showLegajosItems &&
+          !showInteligenciaItems &&
           !showConciliacionItems && (
             <>
               {/* CONFIGURACIÓN */}
@@ -217,6 +223,28 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   <Link to="#" className="nav-link">
                     <FiGift className="sb-ico" />
                     <span>Comercios Amigos</span>
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
+
+              {can("legajos:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowLegajosItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
+                  >
+                    <FiFolder className="sb-ico" />
+
+                    <span>Legajos</span>
+
                     <FiChevronsRight className="sb-right" />
                   </Link>
                 </Nav.Item>
@@ -283,8 +311,46 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 </Nav.Item>
               )}
 
+              {/* INSPECCIONES */}
+              {(
+                can("inspecciones:view") ||
+                can("inspecciones:create") ||
+                can("inspecciones:admin") ||
+                can("inspecciones:reportes")
+              ) && (
+                  <Nav.Item
+                    onClick={() => {
+                      setShowMainItems(false);
+                      setShowInspeccionesItems(true);
+                      setShowReturnButton(true);
+                    }}
+                    className="sb-top"
+                  >
+                    <Link to="#" className="nav-link">
+                      <FiShield className="sb-ico" />
+                      <span>Inspecciones</span>
+                      <FiChevronsRight className="sb-right" />
+                    </Link>
+                  </Nav.Item>
+                )}
 
-
+              {/* EVALUACIÓN */}
+              {can("evaluacion:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowEvaluacionItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link to="#" className="nav-link">
+                    <FiBarChart2 className="sb-ico" />
+                    <span>Evaluación</span>
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
               {/* ESTADÍSTICAS */}
               {can("statics:view") && (
@@ -303,6 +369,22 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   </Link>
                 </Nav.Item>
               )}
+
+              {/* INTELIGENCIA COMERCIAL */}
+              <Nav.Item
+                onClick={() => {
+                  setShowMainItems(false);
+                  setShowInteligenciaItems(true);
+                  setShowReturnButton(true);
+                }}
+                className="sb-top"
+              >
+                <Link to="#" className="nav-link">
+                  <FiBarChart2 className="sb-ico" />
+                  <span>Inteligencia Comercial</span>
+                  <FiChevronsRight className="sb-right" />
+                </Link>
+              </Nav.Item>
 
               {/* IVA */}
               {can("iva:view") && (
@@ -428,6 +510,23 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 </Nav.Item>
               )}
 
+              {can("gestion:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowGestionOperativaItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link to="#" className="nav-link">
+                    <FiFolder className="sb-ico" />
+                    <span>Gestión Administrativa</span>
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
+
 
               {/* Info Sucursales */}
               {can("infosuc:view") && (
@@ -489,6 +588,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
           <>
             {/* Volver genérico */}
             {!showGestionItems &&
+              !showGestionOperativaItems &&
               !showConfigItems &&
               !showConciliacionItems &&
               !showIVAItems &&
@@ -498,8 +598,12 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               !showSueldosItems &&
               !showAuditoriaAtencionItems &&
               !showDocumentacionItems &&
+              !showInspeccionesItems &&
+              !showEvaluacionItems &&
               !showFidelizacionItems &&
-              !showStaticsItems && (
+              !showLegajosItems &&
+              !showInteligenciaItems &&
+              !showConciliacionItems && (
                 <Nav.Item onClick={togglePreviousItems} className="sb-top">
                   <Link to="#" className="nav-link">
                     <FiArrowLeftCircle className="sb-ico" />
@@ -524,12 +628,64 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               </Nav.Item>
             )}
 
+            {showLegajosItems && (
+              <Nav.Item
+                onClick={() => {
+                  setShowMainItems(true);
+                  setShowLegajosItems(false);
+                  setShowReturnButton(false);
+                }}
+                className="sb-top"
+              >
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
+                  <FiArrowLeftCircle className="sb-ico" />
+
+                  <span>Volver</span>
+                </Link>
+              </Nav.Item>
+            )}
+
+            {showInteligenciaItems && (
+              <Nav.Item
+                onClick={() => {
+                  setShowMainItems(true);
+                  setShowInteligenciaItems(false);
+                  setShowReturnButton(false);
+                }}
+                className="sb-top"
+              >
+                <Link to="#" className="nav-link">
+                  <FiArrowLeftCircle className="sb-ico" />
+                  <span>Volver</span>
+                </Link>
+              </Nav.Item>
+            )}
+
             {/* Volver por secciones */}
             {showGestionItems && (
               <Nav.Item
                 onClick={() => {
                   setShowMainItems(true);
                   setShowGestionItems(false);
+                  setShowReturnButton(false);
+                }}
+                className="sb-top"
+              >
+                <Link to="#" className="nav-link">
+                  <FiArrowLeftCircle className="sb-ico" />
+                  <span>Volver</span>
+                </Link>
+              </Nav.Item>
+            )}
+
+            {showGestionOperativaItems && (
+              <Nav.Item
+                onClick={() => {
+                  setShowMainItems(true);
+                  setShowGestionOperativaItems(false);
                   setShowReturnButton(false);
                 }}
                 className="sb-top"
@@ -594,6 +750,38 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 onClick={() => {
                   setShowMainItems(true);
                   setShowDocumentacionItems(false);
+                  setShowReturnButton(false);
+                }}
+                className="sb-top"
+              >
+                <Link to="#" className="nav-link">
+                  <FiArrowLeftCircle className="sb-ico" />
+                  <span>Volver</span>
+                </Link>
+              </Nav.Item>
+            )}
+
+            {showInspeccionesItems && (
+              <Nav.Item
+                onClick={() => {
+                  setShowMainItems(true);
+                  setShowInspeccionesItems(false);
+                  setShowReturnButton(false);
+                }}
+                className="sb-top"
+              >
+                <Link to="#" className="nav-link">
+                  <FiArrowLeftCircle className="sb-ico" />
+                  <span>Volver</span>
+                </Link>
+              </Nav.Item>
+            )}
+
+            {showEvaluacionItems && (
+              <Nav.Item
+                onClick={() => {
+                  setShowMainItems(true);
+                  setShowEvaluacionItems(false);
                   setShowReturnButton(false);
                 }}
                 className="sb-top"
@@ -701,6 +889,33 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               </Nav.Item>
             )}
 
+            {/* ======= GESTIÓN OPERATIVA ======= */}
+            {showGestionOperativaItems && (
+              <>
+                <Link to="/gestion" className="nav-link" onClick={handleLinkClick}>
+                  Dashboard
+                </Link>
+                <Link to="/gestion/kanban" className="nav-link" onClick={handleLinkClick}>
+                  Kanban
+                </Link>
+                <Link to="/gestion/tareas" className="nav-link" onClick={handleLinkClick}>
+                  Tareas
+                </Link>
+                <Link to="/gestion/proyectos" className="nav-link" onClick={handleLinkClick}>
+                  Proyectos
+                </Link>
+                <Link to="/gestion/calendario" className="nav-link" onClick={handleLinkClick}>
+                  Calendario
+                </Link>
+                {can("gestion.supervision:view") && (
+                  <Link to="/gestion/supervisor" className="nav-link" onClick={handleLinkClick}>
+                    Supervisor
+                  </Link>
+                )}
+
+              </>
+            )}
+
             {/* ======= CONTENIDO CONFIGURACIÓN ======= */}
             {showConfigItems && (
               <>
@@ -788,6 +1003,18 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 <Link to="/registros" className="nav-link" onClick={handleLinkClick}>
                   Registros
                 </Link>
+
+                {can("notification:view") && (
+                  <Link to="/notification" className="nav-link" onClick={handleLinkClick}>
+                    Centro de Notificaciones
+                  </Link>
+                )}
+
+                {can("scheduler:view") && (
+                  <Link to="/scheduler" className="nav-link" onClick={handleLinkClick}>
+                    Scheduler
+                  </Link>
+                )}
               </>
             )}
 
@@ -874,58 +1101,120 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               </>
             )}
 
-            {/* ======= CONCILIACIÓN ======= */}
-            {/* {showConciliacionItems && (
+            {/* ======= INSPECCIONES ======= */}
+            {showInspeccionesItems && (
               <>
-                <Nav.Item onClick={() => setRubroItem(!rubroItem)}>
-                  <Link to="#" className="nav-link">
-                    Rubros <Caret open={rubroItem} />
+                {can("inspecciones:view") && (
+                  <Link
+                    to="/inspecciones"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Inspecciones
                   </Link>
-                </Nav.Item>
-                <Collapse in={rubroItem}>
-                  <div className="ml-3 sb-sub">
-                    <Link to="/conciliacion-rubros/new" className="nav-link" onClick={handleLinkClick}>
-                      Crear Rubro
-                    </Link>
-                    <Link to="/conciliacion-rubros" className="nav-link" onClick={handleLinkClick}>
-                      Listar Rubros
-                    </Link>
-                  </div>
-                </Collapse>
+                )}
 
-                <Nav.Item onClick={() => setCuentaItem(!cuentaItem)}>
-                  <Link to="#" className="nav-link">
-                    Cuentas <Caret open={cuentaItem} />
+                {can("inspecciones:create") && (
+                  <Link
+                    to="/inspecciones/nueva"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Nueva Inspección
                   </Link>
-                </Nav.Item>
-                <Collapse in={cuentaItem}>
-                  <div className="ml-3 sb-sub">
-                    <Link to="/conciliacion-cuentas/new" className="nav-link" onClick={handleLinkClick}>
-                      Crear Cuenta
-                    </Link>
-                    <Link to="/conciliacion-cuentas" className="nav-link" onClick={handleLinkClick}>
-                      Listar Cuentas
-                    </Link>
-                  </div>
-                </Collapse>
+                )}
 
-                <Nav.Item onClick={() => setCriterioItem(!criterioItem)}>
-                  <Link to="#" className="nav-link">
-                    Criterios <Caret open={criterioItem} />
+                {can("inspecciones:view") && (
+                  <Link
+                    to="/inspecciones/notificaciones"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Notificaciones
                   </Link>
-                </Nav.Item>
-                <Collapse in={criterioItem}>
-                  <div className="ml-3 sb-sub">
-                    <Link to="/conciliacion-criterios/new" className="nav-link" onClick={handleLinkClick}>
-                      Crear Criterio
-                    </Link>
-                    <Link to="/conciliacion-criterios" className="nav-link" onClick={handleLinkClick}>
-                      Listar Criterios
-                    </Link>
-                  </div>
-                </Collapse>
+                )}
+
+                {can("inspecciones:reportes") && (
+                  <Link
+                    to="/inspecciones/dashboard"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Dashboard
+                  </Link>
+                )}
+
+                {can("inspecciones:admin") && (
+                  <Link
+                    to="/inspecciones/plantillas"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Plantillas
+                  </Link>
+                )}
               </>
-            )} */}
+            )}
+
+            {/* ======= EVALUACIÓN ======= */}
+
+            {showEvaluacionItems && (
+              <>
+                {can("evaluacion:view") && (
+                  <Link to="/evaluacion/dashboard" className="nav-link" onClick={handleLinkClick}>
+                    Dashboard
+                  </Link>
+                )}
+
+                {can("evaluacion:view") && (
+                  <Link to="/evaluaciones" className="nav-link" onClick={handleLinkClick}>
+                    Evaluaciones
+                  </Link>
+                )}
+
+                {can("evaluacion:view") && (
+                  <Link to="/evaluacion/reportes/empleado" className="nav-link" onClick={handleLinkClick}>
+                    Empleados
+                  </Link>
+                )}
+
+                {can("evaluacion:view") && (
+                  <Link to="/evaluacion/reportes/supervisor" className="nav-link" onClick={handleLinkClick}>
+                    Supervisores
+                  </Link>
+                )}
+
+                {can("evaluacion:view") && (
+                  <Link to="/evaluacion/reportes/mystery" className="nav-link" onClick={handleLinkClick}>
+                    Mystery
+                  </Link>
+                )}
+
+                {can("evaluacion:view") && (
+                  <Link to="/evaluacion/metas" className="nav-link" onClick={handleLinkClick}>
+                    Metas
+                  </Link>
+                )}
+
+                {can("evaluacion:view") && (
+                  <Link to="/evaluacion/avisos" className="nav-link" onClick={handleLinkClick}>
+                    Avisos
+                  </Link>
+                )}
+
+                {can("evaluacion:view") && (
+                  <Link to="/evaluacion/reportes" className="nav-link" onClick={handleLinkClick}>
+                    Reportes
+                  </Link>
+                )}
+
+                {can("evaluacion:admin") && (
+                  <Link to="/evaluacion/configuracion" className="nav-link" onClick={handleLinkClick}>
+                    Configuración
+                  </Link>
+                )}
+              </>
+            )}
 
             {/* ======= GESTIÓN DE MEDIAS ======= */}
             {showGestionItems && (
@@ -1228,9 +1517,20 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 )}
 
                 {can("fidelizacion:cupones") && (
-                  <Link to="/fidelizacion/validar-cupon" className="nav-link" onClick={handleLinkClick}>
-                    Validar Cupón
-                  </Link>
+                  <>
+                    <Link to="/fidelizacion/cupones" className="nav-link" onClick={handleLinkClick}>
+                      Cupones Generados
+                    </Link>
+                    <Link to="/fidelizacion/canjes-cupones" className="nav-link" onClick={handleLinkClick}>
+                      Canjes de Cupones
+                    </Link>
+                    <Link to="/fidelizacion/clientes" className="nav-link" onClick={handleLinkClick}>
+                      Clientes Registrados
+                    </Link>
+                    <Link to="/fidelizacion/validar-cupon" className="nav-link" onClick={handleLinkClick}>
+                      Validar Cupón
+                    </Link>
+                  </>
                 )}
 
                 {can("fidelizacion:puntos") && (
@@ -1256,6 +1556,113 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     Alertas Fraude
                   </Link>
                 )}
+              </>
+            )}
+
+            {showLegajosItems && (
+              <>
+
+                {can("legajos:conceptos.view") && (
+                  <Link
+                    to="/motor-conceptos"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Conceptos
+                  </Link>
+                )}
+
+                {can("legajos:registros.view") && (
+                  <Link
+                    to="/motor-conceptos/registros"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Registros
+                  </Link>
+                )}
+
+                {can("motorconceptos:gestion.empleados.view") && (
+                  <Link
+                    to="/motor-conceptos/documentacion/empleados"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Gestión Empleados
+                  </Link>
+                )}
+
+                {can("motorconceptos:gestion.empresas.view") && (
+                  <Link
+                    to="/motor-conceptos/documentacion/empresas"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Gestión Empresas
+                  </Link>
+                )}
+
+                {can("motorconceptos:gestion.sucursales.view") && (
+                  <Link
+                    to="/motor-conceptos/documentacion/sucursales"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Gestión Sucursales
+                  </Link>
+                )}
+
+
+
+                {/* {can("legajos:reportes.view") && (
+                  <Link
+                    to="/motor-conceptos/reportes/registros"
+                    className="nav-link"
+                    onClick={handleLinkClick}
+                  >
+                    Reportes
+                  </Link>
+                )} */}
+
+              </>
+            )}
+
+
+
+            {/* ======= INTELIGENCIA COMERCIAL ======= */}
+            {showInteligenciaItems && (
+              <>
+                <Link
+                  to="/inteligencia/dashboard"
+                  className="nav-link"
+                  onClick={handleLinkClick}
+                >
+                  Dashboard
+                </Link>
+
+                <Link
+                  to="/inteligencia/eventos"
+                  className="nav-link"
+                  onClick={handleLinkClick}
+                >
+                  Eventos
+                </Link>
+
+                <Link
+                  to="/inteligencia/snapshots"
+                  className="nav-link"
+                  onClick={handleLinkClick}
+                >
+                  Snapshots
+                </Link>
+
+                <Link
+                  to="/inteligencia/clima"
+                  className="nav-link"
+                  onClick={handleLinkClick}
+                >
+                  Clima
+                </Link>
               </>
             )}
 
@@ -1577,6 +1984,34 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   </>
                 )}
 
+                {/* Registro de Ajustes */}
+                {can("tesoreria:view") && (
+                  <>
+                    <Nav.Item
+                      onClick={() =>
+                        setRegistroAjusteItem(!registroAjusteItem)
+                      }
+                    >
+                      <Link to="#" className="nav-link">
+                        Registro de Ajustes{" "}
+                        <Caret open={registroAjusteItem} />
+                      </Link>
+                    </Nav.Item>
+
+                    <Collapse in={registroAjusteItem}>
+                      <div className="ml-3 sb-sub">
+                        <Link
+                          to="/tesoreria/ajustes-comprobantes"
+                          className="nav-link"
+                          onClick={handleLinkClick}
+                        >
+                          Registros de ajustes
+                        </Link>
+                      </div>
+                    </Collapse>
+                  </>
+                )}
+
                 {/* Gastos Estimados */}
                 {(can("tesoreria:gastosEstimados.view") || can("tesoreria:gastosEstimados.import")) && (
                   <>
@@ -1675,6 +2110,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                             Situación Financiera
                           </Link>
                         )}
+                        {/* {can("facturacion:compras.situacionFinanciera.view") && (
+                          <Link to="/tesoreria/pagos-programados" className="nav-link" onClick={handleLinkClick}>
+                            Pagos Programados
+                          </Link>
+                        )} */}
                       </div>
                     </Collapse>
                   </>
@@ -1745,16 +2185,29 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Adelantos (Tes)
                     </Link>
                   )}
+
+
+                  {can("sueldos:adelantos.tesoreria") && (
+                    <Link to="/sueldostesoreria/prestamosempleados" className="nav-link" onClick={handleLinkClick}>
+                      Prestamos a Empleados
+                    </Link>
+                  )}
+
                 </div>
               </>
             )}
 
             {/* ======= RINDE (si no estás en otra sub-sección) ======= */}
             {!showGestionItems &&
+              !showGestionOperativaItems &&
               !showConfigItems &&
               !showAuditoriaAtencionItems &&
               !showDocumentacionItems &&
+              !showInspeccionesItems &&
+              !showEvaluacionItems &&
               !showFidelizacionItems &&
+              !showInteligenciaItems &&
+              !showLegajosItems &&
               !showConciliacionItems &&
               !showIVAItems &&
               !showAsistenciaItems &&
@@ -2074,6 +2527,44 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         Fabrica y Ach
                       </Link>
                     )}
+
+                    {can("inventario:movimientosOtros.view") && (
+                      <Link to="/fabrica/produccion-lotes" className="nav-link" onClick={handleLinkClick}>
+                        Produccion
+                      </Link>
+                    )}
+
+                    {can("inventario:movimientosOtros.view") && (
+                      <Link
+                        to="/fabrica/stock"
+                        className="nav-link"
+                        onClick={handleLinkClick}
+                      >
+                        Stock Fabrica
+                      </Link>
+                    )}
+
+                    {can("inventario:movimientosOtros.view") && (
+                      <Link
+                        to="/fabrica/transferencias"
+                        className="nav-link"
+                        onClick={handleLinkClick}
+                      >
+                        Transferencias
+                      </Link>
+                    )}
+
+                    {can("inventario:movimientosOtros.view") && (
+                      <Link
+                        to="/fabrica/transferir"
+                        className="nav-link"
+                        onClick={handleLinkClick}
+                      >
+                        Nueva Transferencia
+                      </Link>
+                    )}
+
+
                   </div>
                 </Collapse>
               </>

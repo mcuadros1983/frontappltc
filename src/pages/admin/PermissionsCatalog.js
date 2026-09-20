@@ -273,6 +273,7 @@ export const PERMISSION_CATEGORIES = [
       "sueldos:liquidacion.run",
       "sueldos:pago.tesoreria",
       "sueldos:adelantos.tesoreria",
+      "sueldos:prestamos.tesoreria",
     ],
   },
   {

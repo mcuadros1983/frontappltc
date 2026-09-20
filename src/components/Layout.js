@@ -56,7 +56,7 @@ const Layout = ({ children }) => {
             onClick={toggleCollapseSidebar}
             style={{
               position: 'absolute',
-              top: '80px',
+              top: '70px',
               left: isSidebarCollapsed ? '0' : '200px',
               zIndex: 1000,
               borderRadius: '0 5px 5px 0',
@@ -64,9 +64,12 @@ const Layout = ({ children }) => {
               color: 'white',
               border: 'none',
               width: '30px',
-              height: '40px',
+              height: '30px',
               padding: 0,
-              fontSize: '1.2rem',
+              fontSize: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             {isSidebarCollapsed ? '▶' : '◀'}
