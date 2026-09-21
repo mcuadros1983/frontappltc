@@ -16,6 +16,7 @@ import {
   Spinner,
   Card,
   Badge,
+  Pagination,
 } from "react-bootstrap";
 
 import {
@@ -128,6 +129,15 @@ export function VacacionesManager() {
 
   const [loading, setLoading] =
     useState(false);
+
+  // =========================
+  // PAGINACIÓN
+  // =========================
+  const [paginaActual, setPaginaActual] =
+    useState(1);
+
+  const [registrosPorPagina, setRegistrosPorPagina] =
+    useState(10);
 
   const [sortConfig, setSortConfig] =
     useState({
@@ -529,6 +539,67 @@ export function VacacionesManager() {
     sucursalesMap,
   ]);
 
+  // =========================
+  // PAGINACIÓN
+  // =========================
+
+  const totalRegistros = listaOrdenada.length;
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(
+      totalRegistros / registrosPorPagina
+    )
+  );
+
+  const indiceInicio =
+    (paginaActual - 1) * registrosPorPagina;
+
+  const indiceFin =
+    indiceInicio + registrosPorPagina;
+
+  const listaPaginada = useMemo(() => {
+    return listaOrdenada.slice(
+      indiceInicio,
+      indiceFin
+    );
+  }, [
+    listaOrdenada,
+    indiceInicio,
+    indiceFin,
+  ]);
+
+  const desdeRegistro =
+    totalRegistros === 0
+      ? 0
+      : indiceInicio + 1;
+
+  const hastaRegistro = Math.min(
+    indiceFin,
+    totalRegistros
+  );
+
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [
+    filtroEmpleado,
+    filtroSucursal,
+    filtroPeriodos,
+    filtroDesde,
+    filtroHasta,
+    soloSinAsignar,
+    registrosPorPagina,
+  ]);
+
+  useEffect(() => {
+    if (paginaActual > totalPaginas) {
+      setPaginaActual(totalPaginas);
+    }
+  }, [
+    paginaActual,
+    totalPaginas,
+  ]);
+
   const renderSortIndicator = (
     colKey
   ) => {
@@ -601,6 +672,207 @@ export function VacacionesManager() {
     filtroHasta ||
     filtroPeriodos.length !== 1 ||
     filtroPeriodos[0] !== periodoActual;
+
+  const renderPaginacion = () => {
+    if (totalRegistros === 0) {
+      return null;
+    }
+
+    const paginas = [];
+
+    const inicio = Math.max(
+      1,
+      paginaActual - 2
+    );
+
+    const fin = Math.min(
+      totalPaginas,
+      paginaActual + 2
+    );
+
+    for (
+      let pagina = inicio;
+      pagina <= fin;
+      pagina++
+    ) {
+      paginas.push(
+        <Pagination.Item
+          key={pagina}
+          active={pagina === paginaActual}
+          onClick={() =>
+            setPaginaActual(pagina)
+          }
+        >
+          {pagina}
+        </Pagination.Item>
+      );
+    }
+
+    return (
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 mt-3">
+
+        {/* INFORMACIÓN */}
+
+        <div className="small text-muted">
+          Mostrando{" "}
+          <strong>
+            {desdeRegistro}
+          </strong>
+          {" - "}
+          <strong>
+            {hastaRegistro}
+          </strong>
+          {" de "}
+          <strong>
+            {totalRegistros}
+          </strong>
+          {" registros"}
+        </div>
+
+
+        {/* PAGINACIÓN */}
+
+        <Pagination className="mb-0">
+
+          <Pagination.First
+            disabled={
+              paginaActual === 1
+            }
+            onClick={() =>
+              setPaginaActual(1)
+            }
+          />
+
+          <Pagination.Prev
+            disabled={
+              paginaActual === 1
+            }
+            onClick={() =>
+              setPaginaActual(
+                (prev) =>
+                  Math.max(1, prev - 1)
+              )
+            }
+          />
+
+          {inicio > 1 && (
+            <>
+              <Pagination.Item
+                onClick={() =>
+                  setPaginaActual(1)
+                }
+              >
+                1
+              </Pagination.Item>
+
+              {inicio > 2 && (
+                <Pagination.Ellipsis
+                  disabled
+                />
+              )}
+            </>
+          )}
+
+          {paginas}
+
+          {fin < totalPaginas && (
+            <>
+              {fin <
+                totalPaginas - 1 && (
+                  <Pagination.Ellipsis
+                    disabled
+                  />
+                )}
+
+              <Pagination.Item
+                onClick={() =>
+                  setPaginaActual(
+                    totalPaginas
+                  )
+                }
+              >
+                {totalPaginas}
+              </Pagination.Item>
+            </>
+          )}
+
+          <Pagination.Next
+            disabled={
+              paginaActual ===
+              totalPaginas
+            }
+            onClick={() =>
+              setPaginaActual(
+                (prev) =>
+                  Math.min(
+                    totalPaginas,
+                    prev + 1
+                  )
+              )
+            }
+          />
+
+          <Pagination.Last
+            disabled={
+              paginaActual ===
+              totalPaginas
+            }
+            onClick={() =>
+              setPaginaActual(
+                totalPaginas
+              )
+            }
+          />
+
+        </Pagination>
+
+
+        {/* CANTIDAD POR PÁGINA */}
+
+        <div className="d-flex align-items-center gap-2">
+
+          <small className="text-muted">
+            Mostrar
+          </small>
+
+          <Form.Select
+            size="sm"
+            value={
+              registrosPorPagina
+            }
+            onChange={(e) => {
+              setRegistrosPorPagina(
+                Number(e.target.value)
+              );
+
+              setPaginaActual(1);
+            }}
+            style={{
+              width: 80,
+            }}
+          >
+            <option value={10}>
+              10
+            </option>
+
+            <option value={20}>
+              20
+            </option>
+
+            <option value={50}>
+              50
+            </option>
+
+            <option value={100}>
+              100
+            </option>
+          </Form.Select>
+
+        </div>
+
+      </div>
+    );
+  };
 
   return (
     <Container
@@ -868,8 +1140,8 @@ export function VacacionesManager() {
 
       {!loading && (
         <div className="d-md-none">
-          {listaOrdenada.length ? (
-            listaOrdenada.map((v) => {
+          {listaPaginada.length ? (
+            listaPaginada.map((v) => {
               const tomados =
                 calcularDiasTomados(
                   v.fecha_desde,
@@ -1062,6 +1334,12 @@ export function VacacionesManager() {
         </div>
       )}
 
+      {!loading && (
+        <div className="d-md-none mb-4">
+          {renderPaginacion()}
+        </div>
+      )}
+
       {/* =========================
           DESKTOP
           ========================= */}
@@ -1174,7 +1452,7 @@ export function VacacionesManager() {
             </thead>
 
             <tbody>
-              {listaOrdenada.map((v) => {
+              {listaPaginada.map((v) => {
                 const tomados =
                   calcularDiasTomados(
                     v.fecha_desde,
@@ -1309,6 +1587,9 @@ export function VacacionesManager() {
                 )}
             </tbody>
           </Table>
+
+          {renderPaginacion()}
+
         </div>
       )}
 

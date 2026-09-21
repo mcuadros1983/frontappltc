@@ -1,13 +1,22 @@
 // src/components/SideBar.js
+
 import { useContext, useState } from "react";
 import { useSecurity } from "../security/SecurityContext";
 import { Nav } from "react-bootstrap";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate
+} from "react-router-dom";
 import Collapse from "react-bootstrap/Collapse";
 import Contexts from "../context/Contexts";
 import "../styles/SideBar.css";
 
-// Icons
+
+// ======================================================
+// ICONOS
+// ======================================================
+
 import {
   FiHome,
   FiBookOpen,
@@ -26,6 +35,8 @@ import {
   FiShield,
   FiMessageCircle,
   FiGift,
+
+  // Nuevos para el buscador
   FiSearch,
   FiX
 } from "react-icons/fi";
@@ -36,6 +47,10 @@ import { MdPointOfSale } from "react-icons/md";
 import { BsBuildings } from "react-icons/bs";
 
 
+// ======================================================
+// CARET
+// ======================================================
+
 const Caret = ({ open }) => (
   <span className="sb-caret">
     {open ? <FiChevronDown /> : <FiChevronRight />}
@@ -43,18 +58,33 @@ const Caret = ({ open }) => (
 );
 
 
+// ======================================================
+// SIDEBAR
+// ======================================================
+
 const SideBar = ({ toggleSidebar, isMobile }) => {
+
+  // ====================================================
+  // ESTADOS ORIGINALES
+  // ====================================================
 
   const [showMainItems, setShowMainItems] = useState(true);
   const [showReturnButton, setShowReturnButton] = useState(false);
 
   const [useritem, setUseritem] = useState(false);
   const [bankitem, setBankitem] = useState(false);
-  const [categoriaanimalitem, setCategoriaanimalitem] = useState(false);
+
+  const [
+    categoriaanimalitem,
+    setCategoriaanimalitem
+  ] = useState(false);
+
   const [proditem, setProditem] = useState(false);
   const [sucitem, setSucitem] = useState(false);
   const [custitem, setCustitem] = useState(false);
+
   const [waypitem, setWaypayitem] = useState(false);
+
   const [sellitem, setSellitem] = useState(false);
   const [debtitem, setDebtitem] = useState(false);
   const [ctacteitem, setCtacteitem] = useState(false);
@@ -66,176 +96,284 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
   const [infoCaja, setInfoCaja] = useState(false);
   const [infoRinde, setInfoRinde] = useState(false);
 
-  const [maintenanceItem, setMaintenanceItem] = useState(false);
-  const [customerOneShotItem, setCustomerOneShotItem] = useState(false);
-  const [movimientosOtros, setMovimientosOtros] = useState(false);
+  const [
+    maintenanceItem,
+    setMaintenanceItem
+  ] = useState(false);
+
+  const [
+    customerOneShotItem,
+    setCustomerOneShotItem
+  ] = useState(false);
+
+  const [
+    movimientosOtros,
+    setMovimientosOtros
+  ] = useState(false);
+
   const [sellStatics, setSellStatics] = useState(false);
 
-  const [showGestionItems, setShowGestionItems] = useState(false);
-  const [showGestionOperativaItems, setShowGestionOperativaItems] = useState(false);
-  const [showConfigItems, setShowConfigItems] = useState(false);
-  const [showAuditoriaAtencionItems, setShowAuditoriaAtencionItems] = useState(false);
-  const [showDocumentacionItems, setShowDocumentacionItems] = useState(false);
-  const [showInspeccionesItems, setShowInspeccionesItems] = useState(false);
-  const [showEvaluacionItems, setShowEvaluacionItems] = useState(false);
 
-  const [tarjetacomunitem, setTarjetacomunitem] = useState(false);
-  const [planPagoTarjetaItem, setPlanPagoTarjetaItem] = useState(false);
+  // ====================================================
+  // SECCIONES PRINCIPALES
+  // ====================================================
+
+  const [
+    showGestionItems,
+    setShowGestionItems
+  ] = useState(false);
+
+  const [
+    showGestionOperativaItems,
+    setShowGestionOperativaItems
+  ] = useState(false);
+
+  const [
+    showConfigItems,
+    setShowConfigItems
+  ] = useState(false);
+
+  const [
+    showAuditoriaAtencionItems,
+    setShowAuditoriaAtencionItems
+  ] = useState(false);
+
+  const [
+    showDocumentacionItems,
+    setShowDocumentacionItems
+  ] = useState(false);
+
+  const [
+    showInspeccionesItems,
+    setShowInspeccionesItems
+  ] = useState(false);
+
+  const [
+    showEvaluacionItems,
+    setShowEvaluacionItems
+  ] = useState(false);
+
+
+  // ====================================================
+  // CONFIGURACIÓN
+  // ====================================================
+
+  const [
+    tarjetacomunitem,
+    setTarjetacomunitem
+  ] = useState(false);
+
+  const [
+    planPagoTarjetaItem,
+    setPlanPagoTarjetaItem
+  ] = useState(false);
+
   const [empresaitem, setEmpresaitem] = useState(false);
   const [formapagoitem, setFormapagoitem] = useState(false);
   const [frigorificoitem, setFrigorificoitem] = useState(false);
   const [imputacionitem, setImputacionitem] = useState(false);
   const [marcatarjetaitem, setMarcatarjetaitem] = useState(false);
   const [tipotarjetaitem, setTipotarjetaitem] = useState(false);
-  const [tipocomprobanteitem, setTipocomprobanteitem] = useState(false);
+
+  const [
+    tipocomprobanteitem,
+    setTipocomprobanteitem
+  ] = useState(false);
+
   const [ptoventaitem, setPtoventaitem] = useState(false);
   const [proveedoritem, setProveedoritem] = useState(false);
   const [proyectoitem, setProyectoitem] = useState(false);
 
-  const [showConciliacionItems, setShowConciliacionItems] = useState(false);
+
+  // ====================================================
+  // CONCILIACIÓN
+  // ====================================================
+
+  const [
+    showConciliacionItems,
+    setShowConciliacionItems
+  ] = useState(false);
+
   const [rubroItem, setRubroItem] = useState(false);
   const [cuentaItem, setCuentaItem] = useState(false);
   const [criterioItem, setCriterioItem] = useState(false);
 
+
+  // ====================================================
+  // IVA
+  // ====================================================
+
   const [libroIvaItem, setLibroIvaItem] = useState(false);
+
+
+  // ====================================================
+  // TESORERÍA
+  // ====================================================
 
   const [cajaItem, setCajaItem] = useState(false);
   const [movCajaItem, setMovCajaItem] = useState(false);
   const [movBancoItem, setMovBancoItem] = useState(false);
   const [movTarjetaItem, setMovTarjetaItem] = useState(false);
-  const [registroChequeItem, setRegistroChequeItem] = useState(false);
-  const [registroAjusteItem, setRegistroAjusteItem] = useState(false);
 
-  const [showStaticsItems, setShowStaticsItems] = useState(false);
-  const [showIVAItems, setShowIVAItems] = useState(false);
-  const [showAsistenciaItems, setShowAsistenciaItems] = useState(false);
-  const [showCajaItems, setShowCajaItems] = useState(false);
-  const [showFacturacionItems, setShowFacturacionItems] = useState(false);
+  const [
+    registroChequeItem,
+    setRegistroChequeItem
+  ] = useState(false);
 
-  const [categoriaTesoreriaItem, setCategoriaTesoreriaItem] = useState(false);
-  const [ventasFacturacionItem, setVentasFacturacionItem] = useState(false);
-  const [comprasFacturacionItem, setComprasFacturacionItem] = useState(false);
+  const [
+    registroAjusteItem,
+    setRegistroAjusteItem
+  ] = useState(false);
 
-  const [showSueldosItems, setShowSueldosItems] = useState(false);
-  const [pagoSueldosItem, setPagoSueldosItem] = useState(false);
-  const [gastosEstimadosItem, setGastosEstimadosItem] = useState(false);
 
-  // presentes en tu código original
+  // ====================================================
+  // MÓDULOS
+  // ====================================================
+
+  const [
+    showStaticsItems,
+    setShowStaticsItems
+  ] = useState(false);
+
+  const [
+    showIVAItems,
+    setShowIVAItems
+  ] = useState(false);
+
+  const [
+    showAsistenciaItems,
+    setShowAsistenciaItems
+  ] = useState(false);
+
+  const [
+    showCajaItems,
+    setShowCajaItems
+  ] = useState(false);
+
+  const [
+    showFacturacionItems,
+    setShowFacturacionItems
+  ] = useState(false);
+
+
+  // ====================================================
+  // TESORERÍA / FACTURACIÓN
+  // ====================================================
+
+  const [
+    categoriaTesoreriaItem,
+    setCategoriaTesoreriaItem
+  ] = useState(false);
+
+  const [
+    ventasFacturacionItem,
+    setVentasFacturacionItem
+  ] = useState(false);
+
+  const [
+    comprasFacturacionItem,
+    setComprasFacturacionItem
+  ] = useState(false);
+
+
+  // ====================================================
+  // SUELDOS
+  // ====================================================
+
+  const [
+    showSueldosItems,
+    setShowSueldosItems
+  ] = useState(false);
+
+  const [
+    pagoSueldosItem,
+    setPagoSueldosItem
+  ] = useState(false);
+
+  const [
+    gastosEstimadosItem,
+    setGastosEstimadosItem
+  ] = useState(false);
+
+
+  // ====================================================
+  // PRESENTES EN EL CÓDIGO ORIGINAL
+  // Compatibilidad futura
+  // ====================================================
+
   const [messageItem, setMessageItem] = useState(false);
   const [scheduleItem, setScheduleItem] = useState(false);
 
-  const [showFidelizacionItems, setShowFidelizacionItems] = useState(false);
-  const [showLegajosItems, setShowLegajosItems] = useState(false);
-  const [showInteligenciaItems, setShowInteligenciaItems] = useState(false);
+
+  // ====================================================
+  // FIDELIZACIÓN
+  // ====================================================
+
+  const [
+    showFidelizacionItems,
+    setShowFidelizacionItems
+  ] = useState(false);
 
 
-  // =========================================================
-  // NUEVO: BUSCADOR DEL SIDEBAR
-  // =========================================================
+  // ====================================================
+  // LEGAJOS
+  // ====================================================
+
+  const [
+    showLegajosItems,
+    setShowLegajosItems
+  ] = useState(false);
+
+
+  // ====================================================
+  // INTELIGENCIA COMERCIAL
+  // ====================================================
+
+  const [
+    showInteligenciaItems,
+    setShowInteligenciaItems
+  ] = useState(false);
+
+
+  // ====================================================
+  // NUEVO: BUSCADOR
+  // ====================================================
 
   const [menuSearch, setMenuSearch] = useState("");
 
 
+  // ====================================================
+  // CONTEXTOS
+  // ====================================================
+
   const context = useContext(Contexts.UserContext);
 
-  const { can, loading } = useSecurity();
-  const { setUser: setSecUser } = useSecurity();
+  const {
+    can,
+    loading
+  } = useSecurity();
+
+  const {
+    setUser: setSecUser
+  } = useSecurity();
+
+
+  // ====================================================
+  // ROUTER
+  // ====================================================
 
   const navigate = useNavigate();
 
-
-  // =========================================================
-  // NUEVO: RUTA ACTUAL
-  // =========================================================
-
+  // NUEVO:
+  // únicamente para saber cuál es la ruta activa.
   const location = useLocation();
 
 
-  // =========================================================
-  // NUEVO: NORMALIZAR TEXTO PARA EL BUSCADOR
-  //
-  // Permite que:
-  // "prestamo" encuentre "Préstamos"
-  // "tesoreria" encuentre "Tesorería"
-  // =========================================================
-
-  const normalizeSearchText = (value = "") =>
-    String(value)
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-
-
-  const normalizedMenuSearch = normalizeSearchText(menuSearch);
-
-  const searchActive = normalizedMenuSearch.length > 0;
-
-
-  // =========================================================
-  // NUEVO: SABER SI UN TEXTO COINCIDE CON LA BÚSQUEDA
-  // =========================================================
-
-  const matchesSearch = (...values) => {
-
-    if (!searchActive) {
-      return true;
-    }
-
-    const text = values
-      .map((value) => normalizeSearchText(value))
-      .join(" ");
-
-    return text.includes(normalizedMenuSearch);
-  };
-
-
-  // =========================================================
-  // NUEVO: SABER SI UNA RUTA ES LA RUTA ACTUAL
-  // =========================================================
-
-  const isActiveRoute = (route) => {
-
-    if (!route || route === "#") {
-      return false;
-    }
-
-    const current =
-      location.pathname.replace(/\/+$/, "") || "/";
-
-    const target =
-      String(route).replace(/\/+$/, "") || "/";
-
-    return current === target;
-  };
-
-
-  // =========================================================
-  // NUEVO: CLASE PARA LINKS
-  //
-  // Ejemplo:
-  //
-  // className={getLinkClassName("/agenda", "sb-top")}
-  //
-  // Si estamos en /agenda agregará:
-  //
-  // sb-current-route
-  // =========================================================
-
-  const getLinkClassName = (route, extraClass = "") => {
-
-    return [
-      "nav-link",
-      extraClass,
-      isActiveRoute(route) ? "sb-current-route" : ""
-    ]
-      .filter(Boolean)
-      .join(" ");
-  };
-
+  // ====================================================
+  // LOGOUT
+  // ====================================================
 
   const handleLogout = async (e) => {
-
     e.preventDefault();
 
     try {
@@ -254,24 +392,37 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
         err?.message ||
         "No se pudo cerrar sesión"
       );
+
     }
   };
 
 
+  // ====================================================
+  // SECURITY LOADING
+  // ====================================================
+
   if (loading) return null;
 
+
+  // ====================================================
+  // FUNCIONES ORIGINALES
+  // ====================================================
 
   const toggleMainItems = () => {
 
     setShowMainItems(!showMainItems);
+
     setShowReturnButton(true);
+
   };
 
 
   const togglePreviousItems = () => {
 
     setShowMainItems(true);
+
     setShowReturnButton(false);
+
   };
 
 
@@ -281,10 +432,116 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
       window.innerWidth < 993 ||
       isMobile
     ) {
+
       toggleSidebar?.();
+
     }
+
   };
 
+
+  // ====================================================
+  // NUEVO:
+  // NORMALIZACIÓN PARA BÚSQUEDA
+  //
+  // Permite por ejemplo:
+  // "prestamos" -> "Préstamos"
+  // "tesoreria" -> "Tesorería"
+  // ====================================================
+
+  const normalizeSearchText = (value = "") =>
+    String(value)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+
+  const normalizedMenuSearch =
+    normalizeSearchText(menuSearch);
+
+
+  const searchActive =
+    normalizedMenuSearch.length > 0;
+
+
+  // ====================================================
+  // NUEVO:
+  // COMPROBAR COINCIDENCIA DEL BUSCADOR
+  // ====================================================
+
+  const matchesSearch = (...values) => {
+
+    if (!searchActive) {
+      return true;
+    }
+
+    const text = values
+      .map((value) =>
+        normalizeSearchText(value)
+      )
+      .join(" ");
+
+    return text.includes(
+      normalizedMenuSearch
+    );
+
+  };
+
+
+  // ====================================================
+  // NUEVO:
+  // RUTA ACTUAL
+  // ====================================================
+
+  const isActiveRoute = (route) => {
+
+    if (
+      !route ||
+      route === "#"
+    ) {
+      return false;
+    }
+
+    const current =
+      location.pathname.replace(/\/+$/, "") ||
+      "/";
+
+    const target =
+      String(route).replace(/\/+$/, "") ||
+      "/";
+
+    return current === target;
+
+  };
+
+
+  // ====================================================
+  // NUEVO:
+  // CLASE PARA LINKS
+  // ====================================================
+
+  const getLinkClassName = (
+    route,
+    extraClass = ""
+  ) => {
+
+    return [
+      "nav-link",
+      extraClass,
+      isActiveRoute(route)
+        ? "sb-current-route"
+        : ""
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+  };
+
+
+  // ====================================================
+  // JSX
+  // ====================================================
 
   return (
 
@@ -293,9 +550,10 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
       className="flex-column sidebar sb-root"
     >
 
-      {/* =====================================================
-          HEADER ORIGINAL
-          ===================================================== */}
+
+      {/* =================================================
+          HEADER
+          ================================================= */}
 
       <div className="sb-header">
 
@@ -311,52 +569,64 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
         </div>
 
+      </div>
 
-        {/* ===================================================
-            NUEVO: BUSCADOR
-            =================================================== */}
 
-        <div className="sb-search">
+      {/* =================================================
+          BUSCADOR
+          NUEVO
+          ================================================= */}
 
-          <FiSearch className="sb-search-icon" />
+      <div className="sb-search">
 
-          <input
-            type="text"
-            value={menuSearch}
-            onChange={(e) =>
-              setMenuSearch(e.target.value)
+        <FiSearch className="sb-search-icon" />
+
+        <input
+          type="text"
+          value={menuSearch}
+          onChange={(e) =>
+            setMenuSearch(e.target.value)
+          }
+          placeholder="Buscar..."
+          className="sb-search-input"
+          autoComplete="off"
+        />
+
+        {menuSearch && (
+
+          <button
+            type="button"
+            className="sb-search-clear"
+            onClick={() =>
+              setMenuSearch("")
             }
-            placeholder="Buscar..."
-            className="sb-search-input"
-            autoComplete="off"
-          />
+            title="Limpiar búsqueda"
+          >
+            <FiX />
+          </button>
 
-          {menuSearch && (
-            <button
-              type="button"
-              className="sb-search-clear"
-              onClick={() =>
-                setMenuSearch("")
-              }
-              title="Limpiar búsqueda"
-            >
-              <FiX />
-            </button>
-          )}
-
-        </div>
+        )}
 
       </div>
 
 
+      {/* =================================================
+          CUERPO DEL SIDEBAR
+          ================================================= */}
+
       <div className="sb-body">
 
-        {/* ===================================================
+
+        {/* =================================================
+            LA PARTE 2 COMIENZA AQUÍ
+            INICIO + MENÚ PRINCIPAL
+            ================================================= */}
+
+        {/* =================================================
             INICIO
-            =================================================== */}
+            ================================================= */}
 
         <Nav.Item>
-
           <Link
             to="/dashboard"
             className={getLinkClassName(
@@ -365,22 +635,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
             )}
             onClick={handleLinkClick}
           >
-
             <FiHome className="sb-ico" />
-
             <span>Inicio</span>
-
           </Link>
-
         </Nav.Item>
 
 
-        {/* ===================================================
-            A PARTIR DE AQUÍ CONTINÚA LA PARTE 2
-            HOME: BLOQUE PRINCIPAL ORIGINAL
-            =================================================== */}
+        {/* =================================================
+            HOME: BLOQUE PRINCIPAL
+            ================================================= */}
 
-        {/* ===== HOME: BLOQUE PRINCIPAL (sin restricciones por rol) ===== */}
         {showMainItems &&
           !showGestionItems &&
           !showGestionOperativaItems &&
@@ -396,223 +660,224 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
           !showConciliacionItems && (
             <>
 
-              {/* CONFIGURACIÓN */}
-              {can("config:view") &&
-                matchesSearch(
-                  "Configuración",
-                  "Usuarios",
-                  "Bancos",
-                  "Categorias Animales",
-                  "Tarjetas Deb Cred",
-                  "Planes de Tarjetas",
-                  "Empresas",
-                  "Formas de Pago",
-                  "Frigoríficos",
-                  "Imputación contable",
-                  "Marca de Tarjetas",
-                  "Tipos de Tarjeta",
-                  "Tipos de Comprobantes",
-                  "Puntos de Venta",
-                  "Proveedores",
-                  "Proyectos",
-                  "Periodos",
-                  "Sincronizar",
-                  "Registros",
-                  "Centro de Notificaciones",
-                  "Scheduler"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowConfigItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
-                  >
-                    <Link to="#" className="nav-link">
-                      <FiSettings className="sb-ico" />
-                      <span>Configuración</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
 
+              {/* =============================================
+                  CONFIGURACIÓN
+                  permiso real: config:view
+                  ============================================= */}
 
-              {/* COMERCIOS AMIGOS */}
-              {can("fidelizacion:view") &&
-                matchesSearch(
-                  "Comercios Amigos",
-                  "Fidelización",
-                  "Dashboard",
-                  "Comercios Asociados",
-                  "Campañas",
-                  "Premios Clientes",
-                  "Cupones",
-                  "Canjes",
-                  "Clientes Registrados",
-                  "Validar Cupón",
-                  "Puntos Comercio",
-                  "Premios Comercios",
-                  "Canjes Comercios",
-                  "Alertas Fraude"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowFidelizacionItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
-                  >
-                    <Link to="#" className="nav-link">
-                      <FiGift className="sb-ico" />
-                      <span>Comercios Amigos</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
-
-
-              {/* LEGAJOS */}
-              {can("legajos:view") &&
-                matchesSearch(
-                  "Legajos",
-                  "Conceptos",
-                  "Registros",
-                  "Gestión Empleados",
-                  "Gestión Empresas",
-                  "Gestión Sucursales"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowLegajosItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
-                  >
-                    <Link
-                      to="#"
-                      className="nav-link"
-                    >
-                      <FiFolder className="sb-ico" />
-
-                      <span>Legajos</span>
-
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
-
-
-              {/* AGENDA */}
-              {can("agenda:view") &&
-                matchesSearch(
-                  "Agenda",
-                  "Calendario"
-                ) && (
+              {can("config:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowConfigItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
                   <Link
-                    to="/agenda"
-                    className={getLinkClassName(
-                      "/agenda",
-                      "sb-top"
-                    )}
-                    onClick={handleLinkClick}
+                    to="#"
+                    className="nav-link"
                   >
-                    <FiCalendar className="sb-ico" />
-                    <span>Agenda</span>
+                    <FiSettings className="sb-ico" />
+
+                    <span>
+                      Configuración
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
                   </Link>
-                )}
+                </Nav.Item>
+              )}
 
 
-              {/* PERMISOS */}
-              {can("permisos:view") &&
-                matchesSearch(
-                  "Permisos"
-                ) && (
+              {/* =============================================
+                  COMERCIOS AMIGOS
+                  permiso real: fidelizacion:view
+                  ============================================= */}
+
+              {can("fidelizacion:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowFidelizacionItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
                   <Link
-                    to="/permisos"
-                    className={getLinkClassName(
-                      "/permisos",
-                      "sb-top"
-                    )}
-                    onClick={handleLinkClick}
+                    to="#"
+                    className="nav-link"
                   >
-                    <FiShield className="sb-ico" />
-                    <span>Permisos</span>
+                    <FiGift className="sb-ico" />
+
+                    <span>
+                      Comercios Amigos
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
                   </Link>
-                )}
+                </Nav.Item>
+              )}
 
 
-              {/* BOT WHATSAPP */}
-              {can("doc:view") &&
-                matchesSearch(
-                  "Bot WhatsApp",
-                  "WhatsApp",
-                  "Promociones",
-                  "Productos IA",
-                  "Conversaciones",
-                  "Sucursales IA",
-                  "Beneficios",
-                  "Eventos"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowAuditoriaAtencionItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  LEGAJOS
+                  permiso real: legajos:view
+                  ============================================= */}
+
+              {can("legajos:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowLegajosItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiMessageCircle className="sb-ico" />
-                      <span>Bot WhatsApp</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <FiFolder className="sb-ico" />
+
+                    <span>
+                      Legajos
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* DOCUMENTACIÓN */}
-              {can("doc:view") &&
-                matchesSearch(
-                  "Documentación",
-                  "Documentos",
-                  "Crear Documentos",
-                  "Categorias",
-                  "Subcategorias"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowDocumentacionItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  AGENDA
+                  permiso real: agenda:view
+                  ruta real: /agenda
+                  ============================================= */}
+
+              {can("agenda:view") && (
+                <Link
+                  to="/agenda"
+                  className={getLinkClassName(
+                    "/agenda",
+                    "sb-top"
+                  )}
+                  onClick={handleLinkClick}
+                >
+                  <FiCalendar className="sb-ico" />
+
+                  <span>
+                    Agenda
+                  </span>
+                </Link>
+              )}
+
+
+              {/* =============================================
+                  PERMISOS
+                  permiso real: permisos:view
+                  ruta real: /permisos
+                  ============================================= */}
+
+              {can("permisos:view") && (
+                <Link
+                  to="/permisos"
+                  className={getLinkClassName(
+                    "/permisos",
+                    "sb-top"
+                  )}
+                  onClick={handleLinkClick}
+                >
+                  <FiShield className="sb-ico" />
+
+                  <span>
+                    Permisos
+                  </span>
+                </Link>
+              )}
+
+
+              {/* =============================================
+                  BOT WHATSAPP
+
+                  El archivo real usa doc:view
+                  para mostrar este módulo.
+                  ============================================= */}
+
+              {can("doc:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowAuditoriaAtencionItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiBookOpen className="sb-ico" />
-                      <span>Documentación</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <FiMessageCircle className="sb-ico" />
+
+                    <span>
+                      Bot WhatsApp
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* INSPECCIONES */}
+              {/* =============================================
+                  DOCUMENTACIÓN
+
+                  permiso real: doc:view
+                  ============================================= */}
+
+              {can("doc:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowDocumentacionItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
+                  >
+                    <FiBookOpen className="sb-ico" />
+
+                    <span>
+                      Documentación
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
+
+
+              {/* =============================================
+                  INSPECCIONES
+
+                  permisos reales:
+                  inspecciones:view
+                  inspecciones:create
+                  inspecciones:admin
+                  inspecciones:reportes
+                  ============================================= */}
+
               {(
                 can("inspecciones:view") ||
                 can("inspecciones:create") ||
                 can("inspecciones:admin") ||
                 can("inspecciones:reportes")
-              ) &&
-                matchesSearch(
-                  "Inspecciones",
-                  "Nueva Inspección",
-                  "Plantillas",
-                  "Notificaciones",
-                  "Reportes"
-                ) && (
+              ) && (
                   <Nav.Item
                     onClick={() => {
                       setShowMainItems(false);
@@ -621,187 +886,211 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     }}
                     className="sb-top"
                   >
-                    <Link to="#" className="nav-link">
+                    <Link
+                      to="#"
+                      className="nav-link"
+                    >
                       <FiShield className="sb-ico" />
-                      <span>Inspecciones</span>
+
+                      <span>
+                        Inspecciones
+                      </span>
+
                       <FiChevronsRight className="sb-right" />
                     </Link>
                   </Nav.Item>
                 )}
 
 
-              {/* EVALUACIÓN */}
-              {can("evaluacion:view") &&
-                matchesSearch(
-                  "Evaluación",
-                  "Evaluaciones",
-                  "Metas",
-                  "Mystery",
-                  "Supervisores"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowEvaluacionItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  EVALUACIÓN
+                  permiso real: evaluacion:view
+                  ============================================= */}
+
+              {can("evaluacion:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowEvaluacionItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiBarChart2 className="sb-ico" />
-                      <span>Evaluación</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <FiBarChart2 className="sb-ico" />
+
+                    <span>
+                      Evaluación
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* ESTADÍSTICAS */}
-              {can("statics:view") &&
-                matchesSearch(
-                  "Estadísticas",
-                  "Precios Históricos",
-                  "Ventas Comparativo",
-                  "Ventas entre Rangos",
-                  "Gráfico Comparativo",
-                  "Ventas Totales",
-                  "Ventas por Cliente",
-                  "Ventas Anuladas",
-                  "Ventas con Dcto",
-                  "Ventas por Art",
-                  "Ventas por Usuario",
-                  "Kg por Sucursal",
-                  "Cantidad Tickets",
-                  "Stock"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowStaticsItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  ESTADÍSTICAS
+                  permiso real: statics:view
+                  ============================================= */}
+
+              {can("statics:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowStaticsItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiBarChart2 className="sb-ico" />
-                      <span>Estadísticas</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <FiBarChart2 className="sb-ico" />
+
+                    <span>
+                      Estadísticas
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* INTELIGENCIA COMERCIAL */}
-              {matchesSearch(
-                "Inteligencia Comercial",
-                "Dashboard",
-                "Eventos",
-                "Snapshots",
-                "Clima"
-              ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowInteligenciaItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  INTELIGENCIA COMERCIAL
+
+                  IMPORTANTE:
+                  El archivo real NO tiene can(...)
+                  alrededor de este acceso.
+                  Lo conservamos exactamente así.
+                  ============================================= */}
+
+              <Nav.Item
+                onClick={() => {
+                  setShowMainItems(false);
+                  setShowInteligenciaItems(true);
+                  setShowReturnButton(true);
+                }}
+                className="sb-top"
+              >
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
+                  <FiBarChart2 className="sb-ico" />
+
+                  <span>
+                    Inteligencia Comercial
+                  </span>
+
+                  <FiChevronsRight className="sb-right" />
+                </Link>
+              </Nav.Item>
+
+
+              {/* =============================================
+                  IVA
+                  permiso real: iva:view
+                  ============================================= */}
+
+              {can("iva:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowIVAItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiBarChart2 className="sb-ico" />
-                      <span>Inteligencia Comercial</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <TbReceiptTax className="sb-ico" />
+
+                    <span>
+                      IVA
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* IVA */}
-              {can("iva:view") &&
-                matchesSearch(
-                  "IVA",
-                  "Libro IVA",
-                  "Compras Proyectadas",
-                  "Proyección IVA"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowIVAItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  RRHH
+                  permiso real: rrhh:view
+                  ============================================= */}
+
+              {can("rrhh:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowAsistenciaItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <TbReceiptTax className="sb-ico" />
-                      <span>IVA</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <FiUsers className="sb-ico" />
+
+                    <span>
+                      RRHH
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* RRHH */}
-              {can("rrhh:view") &&
-                matchesSearch(
-                  "RRHH",
-                  "Recursos Humanos",
-                  "Empleados",
-                  "Asistencia",
-                  "Horarios",
-                  "Jornadas",
-                  "Vacaciones"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowAsistenciaItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  TESORERÍA
+                  permiso real: tesoreria:view
+                  ============================================= */}
+
+              {can("tesoreria:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowCajaItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiUsers className="sb-ico" />
-                      <span>RRHH</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <LuWallet className="sb-ico" />
+
+                    <span>
+                      Tesorería
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* TESORERÍA */}
-              {can("tesoreria:view") &&
-                matchesSearch(
-                  "Tesorería",
-                  "Caja",
-                  "Bancos",
-                  "Movimientos Bancarios",
-                  "Tarjetas",
-                  "Cheques",
-                  "eCheq",
-                  "Categorías",
-                  "Gastos Estimados",
-                  "Retiros Sucursales"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowCajaItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
-                  >
-                    <Link to="#" className="nav-link">
-                      <LuWallet className="sb-ico" />
-                      <span>Tesorería</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+              {/* =============================================
+                  CONCILIACIÓN TARJETAS
 
+                  Está comentado en el archivo real.
+                  Lo conservamos comentado.
+                  ============================================= */}
 
-              {/* CONCILIACIÓN TARJETAS
-                  Se mantiene comentado exactamente como en el original. */}
               {/*
               <Nav.Item
                 onClick={() => {
@@ -811,283 +1100,337 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <LuWallet className="sb-ico" />
-                  <span>Conciliación Tarjetas</span>
+
+                  <span>
+                    Conciliación Tarjetas
+                  </span>
+
                   <FiChevronsRight className="sb-right" />
                 </Link>
               </Nav.Item>
               */}
 
 
-              {/* FACTURACIÓN */}
-              {can("facturacion:view") &&
-                matchesSearch(
-                  "Facturación",
-                  "Ventas",
-                  "Compras",
-                  "Clientes",
-                  "Proveedores"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowFacturacionItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  FACTURACIÓN
+                  permiso real: facturacion:view
+                  ============================================= */}
+
+              {can("facturacion:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowFacturacionItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <MdPointOfSale className="sb-ico" />
-                      <span>Facturación</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <MdPointOfSale className="sb-ico" />
+
+                    <span>
+                      Facturación
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* SUELDOS */}
-              {can("sueldos:view") &&
-                matchesSearch(
-                  "Sueldos",
-                  "Liquidación Mensual",
-                  "Adicionales Fijos",
-                  "Adicionales Variables",
-                  "Vales",
-                  "Adelantos",
-                  "Préstamos a Empleados",
-                  "Pago de Sueldos",
-                  "Recibos"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowSueldosItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  SUELDOS
+                  permiso real: sueldos:view
+                  ============================================= */}
+
+              {can("sueldos:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowSueldosItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiUsers className="sb-ico" />
-                      <span>Sueldos</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <FiUsers className="sb-ico" />
+
+                    <span>
+                      Sueldos
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* GESTIÓN DE MEDIAS */}
-              {can("gmedias:view") &&
-                matchesSearch(
-                  "Gestión de Medias",
-                  "Hacienda",
-                  "Productos",
-                  "Sucursales",
-                  "Clientes",
-                  "Formas de Pago",
-                  "Ventas",
-                  "Cuenta Corriente",
-                  "Stock",
-                  "Órdenes",
-                  "Recibos"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowGestionItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  GESTIÓN DE MEDIAS
+                  permiso real: gmedias:view
+                  ============================================= */}
+
+              {can("gmedias:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowGestionItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiLayers className="sb-ico" />
-                      <span>Gestión de Medias</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <FiLayers className="sb-ico" />
+
+                    <span>
+                      Gestión de Medias
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* GESTIÓN ADMINISTRATIVA */}
-              {can("gestion:view") &&
-                matchesSearch(
-                  "Gestión Administrativa",
-                  "Dashboard",
-                  "Kanban",
-                  "Tareas",
-                  "Proyectos",
-                  "Calendario",
-                  "Supervisor"
-                ) && (
-                  <Nav.Item
-                    onClick={() => {
-                      setShowMainItems(false);
-                      setShowGestionOperativaItems(true);
-                      setShowReturnButton(true);
-                    }}
-                    className="sb-top"
+              {/* =============================================
+                  GESTIÓN ADMINISTRATIVA
+                  permiso real: gestion:view
+                  ============================================= */}
+
+              {can("gestion:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowGestionOperativaItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <FiFolder className="sb-ico" />
-                      <span>Gestión Administrativa</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <FiFolder className="sb-ico" />
+
+                    <span>
+                      Gestión Administrativa
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* INFO SUCURSALES */}
-              {can("infosuc:view") &&
-                matchesSearch(
-                  "Info Sucursales",
-                  "Información Caja",
-                  "Información Rinde",
-                  "Sucursales"
-                ) && (
-                  <Nav.Item
-                    onClick={toggleMainItems}
-                    className="sb-top"
+              {/* =============================================
+                  INFO SUCURSALES
+                  permiso real: infosuc:view
+
+                  IMPORTANTE:
+                  Conservamos toggleMainItems porque así
+                  funciona el archivo original.
+                  ============================================= */}
+
+              {can("infosuc:view") && (
+                <Nav.Item
+                  onClick={toggleMainItems}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
                   >
-                    <Link to="#" className="nav-link">
-                      <BsBuildings className="sb-ico" />
-                      <span>Info Sucursales</span>
-                      <FiChevronsRight className="sb-right" />
-                    </Link>
-                  </Nav.Item>
-                )}
+                    <BsBuildings className="sb-ico" />
+
+                    <span>
+                      Info Sucursales
+                    </span>
+
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-              {/* MANTENIMIENTO */}
-              {can("mantenimiento:view") &&
-                matchesSearch(
-                  "Mantenimiento",
-                  "Equipos",
-                  "Mantenimientos",
-                  "Órdenes",
-                  "Preventivo"
-                ) && (
-                  <>
-                    <Nav.Item
-                      onClick={() =>
-                        setMaintenanceItem(!maintenanceItem)
-                      }
-                      aria-expanded={maintenanceItem}
-                      className="sb-top"
-                    >
-                      <Link
-                        to="#"
-                        className="nav-link"
-                      >
-                        <FiTool className="sb-ico" />
-                        <span>Mantenimiento</span>
+              {/* =============================================
+                  MANTENIMIENTO
+                  permiso principal real:
+                  mantenimiento:view
+                  ============================================= */}
 
-                        <Caret
-                          open={
-                            maintenanceItem ||
-                            searchActive
-                          }
-                        />
-                      </Link>
-                    </Nav.Item>
+              {can("mantenimiento:view") && (
+                <Nav.Item
+                  onClick={() =>
+                    setMaintenanceItem(
+                      !maintenanceItem
+                    )
+                  }
+                  aria-expanded={maintenanceItem}
+                  className="sb-top"
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
+                  >
+                    <FiTool className="sb-ico" />
 
-                    <Collapse
-                      in={
+                    <span>
+                      Mantenimiento
+                    </span>
+
+                    <Caret
+                      open={
                         maintenanceItem ||
                         searchActive
                       }
-                    >
-                      <div className="ml-3 sb-sub">
-
-                        {can("mantenimiento:view.equipos") &&
-                          matchesSearch(
-                            "Mantenimiento",
-                            "Equipos"
-                          ) && (
-                            <Link
-                              to="/equipos"
-                              className={getLinkClassName(
-                                "/equipos"
-                              )}
-                              onClick={handleLinkClick}
-                            >
-                              Equipos
-                            </Link>
-                          )}
+                    />
+                  </Link>
+                </Nav.Item>
+              )}
 
 
-                        {can("mantenimiento:view.mantenimientos") &&
-                          matchesSearch(
-                            "Mantenimiento",
-                            "Mantenimientos"
-                          ) && (
-                            <Link
-                              to="/mantenimientos"
-                              className={getLinkClassName(
-                                "/mantenimientos"
-                              )}
-                              onClick={handleLinkClick}
-                            >
-                              Mantenimientos
-                            </Link>
-                          )}
+              {/* =============================================
+                  SUBMENÚ MANTENIMIENTO
+
+                  Única adaptación:
+                  durante una búsqueda se abre el Collapse.
+                  Rutas y permisos permanecen intactos.
+                  ============================================= */}
+
+              <Collapse
+                in={
+                  maintenanceItem ||
+                  searchActive
+                }
+              >
+                <div className="ml-3 sb-sub">
 
 
-                        {can("mantenimiento:view.ordenes") &&
-                          matchesSearch(
-                            "Mantenimiento",
-                            "Órdenes",
-                            "Ordenes"
-                          ) && (
-                            <Link
-                              to="/ordenes-mantenimiento"
-                              className={getLinkClassName(
-                                "/ordenes-mantenimiento"
-                              )}
-                              onClick={handleLinkClick}
-                            >
-                              Órdenes
-                            </Link>
-                          )}
+                  {can("mantenimiento:view.equipos") &&
+                    matchesSearch(
+                      "Equipos",
+                      "Mantenimiento"
+                    ) && (
+                      <Link
+                        to="/equipos"
+                        className={getLinkClassName(
+                          "/equipos"
+                        )}
+                        onClick={handleLinkClick}
+                      >
+                        Equipos
+                      </Link>
+                    )}
 
 
-                        {can("mantenimiento:view.preventivo") &&
-                          matchesSearch(
-                            "Mantenimiento",
-                            "Preventivo"
-                          ) && (
-                            <Link
-                              to="/mantenimiento-preventivo"
-                              className={getLinkClassName(
-                                "/mantenimiento-preventivo"
-                              )}
-                              onClick={handleLinkClick}
-                            >
-                              Preventivo
-                            </Link>
-                          )}
+                  {can("mantenimiento:view.mantenimientos") &&
+                    matchesSearch(
+                      "Mantenimientos",
+                      "Mantenimiento"
+                    ) && (
+                      <Link
+                        to="/mantenimientos"
+                        className={getLinkClassName(
+                          "/mantenimientos"
+                        )}
+                        onClick={handleLinkClick}
+                      >
+                        Mantenimientos
+                      </Link>
+                    )}
 
-                      </div>
-                    </Collapse>
-                  </>
-                )}
+
+                  {can("mantenimiento:view.ordenes") &&
+                    matchesSearch(
+                      "Órdenes",
+                      "Ordenes",
+                      "Mantenimiento"
+                    ) && (
+                      <Link
+                        to="/ordenes-mantenimiento"
+                        className={getLinkClassName(
+                          "/ordenes-mantenimiento"
+                        )}
+                        onClick={handleLinkClick}
+                      >
+                        Órdenes
+                      </Link>
+                    )}
+
+
+                  {can("mantenimiento:view.preventivo") &&
+                    matchesSearch(
+                      "Preventivo",
+                      "Mantenimiento"
+                    ) && (
+                      <Link
+                        to="/mantenimiento-preventivo"
+                        className={getLinkClassName(
+                          "/mantenimiento-preventivo"
+                        )}
+                        onClick={handleLinkClick}
+                      >
+                        Preventivo
+                      </Link>
+                    )}
+
+                </div>
+              </Collapse>
 
             </>
           )}
 
 
-        {/* ===================================================
-            A PARTIR DE AQUÍ CONTINÚA LA PARTE 3
-            BOTONES VOLVER + CONTENIDO DE LOS SUBMENÚS
-            =================================================== */}
+        {/* =================================================
+            LA PARTE 3 COMIENZA AQUÍ
 
-        {/* ====== BOTONES VOLVER (según sub menú) ====== */}
+            BOTONES VOLVER
+            +
+            GESTIÓN ADMINISTRATIVA
+            +
+            CONFIGURACIÓN
+            ================================================= */}
+
+        {/* =================================================
+            PARTE 3
+            BOTONES VOLVER
+            GESTIÓN ADMINISTRATIVA
+            CONFIGURACIÓN
+            ================================================= */}
+
+
+        {/* =================================================
+            BOTONES VOLVER
+            ================================================= */}
+
         {showReturnButton && (
           <>
-            {/* Volver genérico */}
+
+            {/* =============================================
+                VOLVER GENÉRICO
+
+                Se agrega !showStaticsItems para evitar
+                duplicar "Volver" cuando estamos dentro
+                de Estadísticas.
+                ============================================= */}
+
             {!showGestionItems &&
               !showGestionOperativaItems &&
               !showConfigItems &&
-              !showStaticsItems &&
               !showConciliacionItems &&
               !showIVAItems &&
               !showAsistenciaItems &&
@@ -1101,19 +1444,31 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
               !showFidelizacionItems &&
               !showLegajosItems &&
               !showInteligenciaItems &&
-              !showConciliacionItems && (
+              !showStaticsItems && (
+
                 <Nav.Item
                   onClick={togglePreviousItems}
                   className="sb-top"
                 >
-                  <Link to="#" className="nav-link">
+                  <Link
+                    to="#"
+                    className="nav-link"
+                  >
                     <FiArrowLeftCircle className="sb-ico" />
-                    <span>Volver</span>
+
+                    <span>
+                      Volver
+                    </span>
                   </Link>
                 </Nav.Item>
+
               )}
 
-            {/* COMERCIOS AMIGOS */}
+
+            {/* =============================================
+                VOLVER - COMERCIOS AMIGOS
+                ============================================= */}
+
             {showFidelizacionItems && (
               <Nav.Item
                 onClick={() => {
@@ -1123,14 +1478,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* LEGAJOS */}
+
+            {/* =============================================
+                VOLVER - LEGAJOS
+                ============================================= */}
+
             {showLegajosItems && (
               <Nav.Item
                 onClick={() => {
@@ -1140,14 +1505,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* INTELIGENCIA COMERCIAL */}
+
+            {/* =============================================
+                VOLVER - INTELIGENCIA COMERCIAL
+                ============================================= */}
+
             {showInteligenciaItems && (
               <Nav.Item
                 onClick={() => {
@@ -1157,14 +1532,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* GESTIÓN DE MEDIAS */}
+
+            {/* =============================================
+                VOLVER - GESTIÓN DE MEDIAS
+                ============================================= */}
+
             {showGestionItems && (
               <Nav.Item
                 onClick={() => {
@@ -1174,14 +1559,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* GESTIÓN ADMINISTRATIVA */}
+
+            {/* =============================================
+                VOLVER - GESTIÓN ADMINISTRATIVA
+                ============================================= */}
+
             {showGestionOperativaItems && (
               <Nav.Item
                 onClick={() => {
@@ -1191,14 +1586,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* ESTADÍSTICAS */}
+
+            {/* =============================================
+                VOLVER - ESTADÍSTICAS
+                ============================================= */}
+
             {showStaticsItems && (
               <Nav.Item
                 onClick={() => {
@@ -1208,14 +1613,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* CONFIGURACIÓN */}
+
+            {/* =============================================
+                VOLVER - CONFIGURACIÓN
+                ============================================= */}
+
             {showConfigItems && (
               <Nav.Item
                 onClick={() => {
@@ -1225,14 +1640,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* BOT WHATSAPP */}
+
+            {/* =============================================
+                VOLVER - BOT WHATSAPP
+                ============================================= */}
+
             {showAuditoriaAtencionItems && (
               <Nav.Item
                 onClick={() => {
@@ -1242,14 +1667,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* DOCUMENTACIÓN */}
+
+            {/* =============================================
+                VOLVER - DOCUMENTACIÓN
+                ============================================= */}
+
             {showDocumentacionItems && (
               <Nav.Item
                 onClick={() => {
@@ -1259,14 +1694,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* INSPECCIONES */}
+
+            {/* =============================================
+                VOLVER - INSPECCIONES
+                ============================================= */}
+
             {showInspeccionesItems && (
               <Nav.Item
                 onClick={() => {
@@ -1276,14 +1721,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* EVALUACIÓN */}
+
+            {/* =============================================
+                VOLVER - EVALUACIÓN
+                ============================================= */}
+
             {showEvaluacionItems && (
               <Nav.Item
                 onClick={() => {
@@ -1293,14 +1748,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* CONCILIACIÓN */}
+
+            {/* =============================================
+                VOLVER - CONCILIACIÓN
+                ============================================= */}
+
             {showConciliacionItems && (
               <Nav.Item
                 onClick={() => {
@@ -1310,14 +1775,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* IVA */}
+
+            {/* =============================================
+                VOLVER - IVA
+                ============================================= */}
+
             {showIVAItems && (
               <Nav.Item
                 onClick={() => {
@@ -1327,14 +1802,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* RRHH */}
+
+            {/* =============================================
+                VOLVER - RRHH
+                ============================================= */}
+
             {showAsistenciaItems && (
               <Nav.Item
                 onClick={() => {
@@ -1344,14 +1829,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* TESORERÍA */}
+
+            {/* =============================================
+                VOLVER - TESORERÍA
+                ============================================= */}
+
             {showCajaItems && (
               <Nav.Item
                 onClick={() => {
@@ -1361,14 +1856,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* FACTURACIÓN */}
+
+            {/* =============================================
+                VOLVER - FACTURACIÓN
+                ============================================= */}
+
             {showFacturacionItems && (
               <Nav.Item
                 onClick={() => {
@@ -1378,14 +1883,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
 
-            {/* SUELDOS */}
+
+            {/* =============================================
+                VOLVER - SUELDOS
+                ============================================= */}
+
             {showSueldosItems && (
               <Nav.Item
                 onClick={() => {
@@ -1395,12 +1910,19 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 }}
                 className="sb-top"
               >
-                <Link to="#" className="nav-link">
+                <Link
+                  to="#"
+                  className="nav-link"
+                >
                   <FiArrowLeftCircle className="sb-ico" />
-                  <span>Volver</span>
+
+                  <span>
+                    Volver
+                  </span>
                 </Link>
               </Nav.Item>
             )}
+
 
 
             {/* =================================================
@@ -1409,22 +1931,32 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showGestionOperativaItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiFolder className="sb-section-title-icon" />
                   <span>Gestión Administrativa</span>
                 </div>
+
+
+                {/* Ruta real: /gestion */}
+
                 {matchesSearch(
                   "Dashboard",
                   "Gestión Administrativa"
                 ) && (
                     <Link
                       to="/gestion"
-                      className={getLinkClassName("/gestion")}
+                      className={getLinkClassName(
+                        "/gestion"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Dashboard
                     </Link>
                   )}
+
+
+                {/* Ruta real: /gestion/kanban */}
 
                 {matchesSearch(
                   "Kanban",
@@ -1432,12 +1964,17 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/gestion/kanban"
-                      className={getLinkClassName("/gestion/kanban")}
+                      className={getLinkClassName(
+                        "/gestion/kanban"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Kanban
                     </Link>
                   )}
+
+
+                {/* Ruta real: /gestion/tareas */}
 
                 {matchesSearch(
                   "Tareas",
@@ -1445,12 +1982,17 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/gestion/tareas"
-                      className={getLinkClassName("/gestion/tareas")}
+                      className={getLinkClassName(
+                        "/gestion/tareas"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Tareas
                     </Link>
                   )}
+
+
+                {/* Ruta real: /gestion/proyectos */}
 
                 {matchesSearch(
                   "Proyectos",
@@ -1458,12 +2000,17 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/gestion/proyectos"
-                      className={getLinkClassName("/gestion/proyectos")}
+                      className={getLinkClassName(
+                        "/gestion/proyectos"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Proyectos
                     </Link>
                   )}
+
+
+                {/* Ruta real: /gestion/calendario */}
 
                 {matchesSearch(
                   "Calendario",
@@ -1471,29 +2018,37 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/gestion/calendario"
-                      className={getLinkClassName("/gestion/calendario")}
+                      className={getLinkClassName(
+                        "/gestion/calendario"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Calendario
                     </Link>
                   )}
 
+
+                {/* Permiso y ruta reales */}
+
                 {can("gestion.supervision:view") &&
                   matchesSearch(
                     "Supervisor",
-                    "Supervisión",
                     "Gestión Administrativa"
                   ) && (
                     <Link
                       to="/gestion/supervisor"
-                      className={getLinkClassName("/gestion/supervisor")}
+                      className={getLinkClassName(
+                        "/gestion/supervisor"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Supervisor
                     </Link>
                   )}
+
               </>
             )}
+
 
 
             {/* =================================================
@@ -1502,74 +2057,108 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showConfigItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiSettings className="sb-section-title-icon" />
                   <span>Configuración</span>
                 </div>
-                {/* USUARIOS */}
-                {matchesSearch(
-                  "Usuarios",
-                  "Crear Usuario",
-                  "Listar Usuarios"
-                ) && (
-                    <>
-                      <Nav.Item
-                        onClick={() => setUseritem(!useritem)}
-                      >
-                        <Link to="#" className="nav-link">
-                          Usuarios{" "}
-                          <Caret
-                            open={useritem || searchActive}
-                          />
+
+
+                {/* =============================================
+                    USUARIOS
+                    ============================================= */}
+
+                <Nav.Item
+                  onClick={() =>
+                    setUseritem(!useritem)
+                  }
+                >
+                  <Link
+                    to="#"
+                    className="nav-link"
+                  >
+                    Usuarios
+
+                    <Caret
+                      open={
+                        useritem ||
+                        searchActive
+                      }
+                    />
+                  </Link>
+                </Nav.Item>
+
+
+                <Collapse
+                  in={
+                    useritem ||
+                    searchActive
+                  }
+                >
+                  <div className="ml-3 sb-sub">
+
+
+                    {matchesSearch(
+                      "Crear Usuario",
+                      "Usuarios",
+                      "Configuración"
+                    ) && (
+                        <Link
+                          to="/users/new"
+                          className={getLinkClassName(
+                            "/users/new"
+                          )}
+                          onClick={handleLinkClick}
+                        >
+                          Crear Usuario
                         </Link>
-                      </Nav.Item>
+                      )}
 
-                      <Collapse
-                        in={useritem || searchActive}
-                      >
-                        <div className="ml-3 sb-sub">
 
-                          {matchesSearch(
-                            "Crear Usuario",
-                            "Usuarios"
-                          ) && (
-                              <Link
-                                to="/users/new"
-                                className={getLinkClassName("/users/new")}
-                                onClick={handleLinkClick}
-                              >
-                                Crear Usuario
-                              </Link>
-                            )}
+                    {matchesSearch(
+                      "Listar Usuarios",
+                      "Usuarios",
+                      "Configuración"
+                    ) && (
+                        <Link
+                          to="/users"
+                          className={getLinkClassName(
+                            "/users"
+                          )}
+                          onClick={handleLinkClick}
+                        >
+                          Listar Usuarios
+                        </Link>
+                      )}
 
-                          {matchesSearch(
-                            "Listar Usuarios",
-                            "Usuarios"
-                          ) && (
-                              <Link
-                                to="/users"
-                                className={getLinkClassName("/users")}
-                                onClick={handleLinkClick}
-                              >
-                                Listar Usuarios
-                              </Link>
-                            )}
+                  </div>
+                </Collapse>
 
-                        </div>
-                      </Collapse>
-                    </>
+
+                {/* =============================================
+                    RESTO DE CONFIGURACIÓN
+
+                    El archivo original NO tiene can(...)
+                    individual en estos links.
+                    No agregamos ninguno.
+                    ============================================= */}
+
+
+                {matchesSearch(
+                  "Bancos",
+                  "Configuración"
+                ) && (
+                    <Link
+                      to="/banks"
+                      className={getLinkClassName(
+                        "/banks"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Bancos
+                    </Link>
                   )}
 
-
-                {matchesSearch("Bancos", "Configuración") && (
-                  <Link
-                    to="/banks"
-                    className={getLinkClassName("/banks")}
-                    onClick={handleLinkClick}
-                  >
-                    Bancos
-                  </Link>
-                )}
 
                 {matchesSearch(
                   "Categorias Animales",
@@ -1578,12 +2167,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/categorias-animales"
-                      className={getLinkClassName("/categorias-animales")}
+                      className={getLinkClassName(
+                        "/categorias-animales"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Categorias Animales
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Tarjetas Deb Cred",
@@ -1592,12 +2184,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/tarjetas-comunes"
-                      className={getLinkClassName("/tarjetas-comunes")}
+                      className={getLinkClassName(
+                        "/tarjetas-comunes"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Tarjetas Deb/Cred
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Planes de Tarjetas",
@@ -1606,22 +2201,31 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/tarjeta-planes"
-                      className={getLinkClassName("/tarjeta-planes")}
+                      className={getLinkClassName(
+                        "/tarjeta-planes"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Planes de Tarjetas
                     </Link>
                   )}
 
-                {matchesSearch("Empresas", "Configuración") && (
-                  <Link
-                    to="/empresas"
-                    className={getLinkClassName("/empresas")}
-                    onClick={handleLinkClick}
-                  >
-                    Empresas
-                  </Link>
-                )}
+
+                {matchesSearch(
+                  "Empresas",
+                  "Configuración"
+                ) && (
+                    <Link
+                      to="/empresas"
+                      className={getLinkClassName(
+                        "/empresas"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Empresas
+                    </Link>
+                  )}
+
 
                 {matchesSearch(
                   "Formas de Pago",
@@ -1629,12 +2233,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/formas-pago-tesoreria"
-                      className={getLinkClassName("/formas-pago-tesoreria")}
+                      className={getLinkClassName(
+                        "/formas-pago-tesoreria"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Formas de Pago
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Frigoríficos",
@@ -1643,12 +2250,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/frigorificos"
-                      className={getLinkClassName("/frigorificos")}
+                      className={getLinkClassName(
+                        "/frigorificos"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Frigoríficos
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Imputación contable",
@@ -1657,12 +2267,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/imputaciones-contables"
-                      className={getLinkClassName("/imputaciones-contables")}
+                      className={getLinkClassName(
+                        "/imputaciones-contables"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Imputación contable
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Marca de Tarjetas",
@@ -1671,12 +2284,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/marcas-tarjeta"
-                      className={getLinkClassName("/marcas-tarjeta")}
+                      className={getLinkClassName(
+                        "/marcas-tarjeta"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Marca de Tarjetas
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Tipos de Tarjeta",
@@ -1685,12 +2301,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/tipos-tarjeta"
-                      className={getLinkClassName("/tipos-tarjeta")}
+                      className={getLinkClassName(
+                        "/tipos-tarjeta"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Tipos de Tarjeta
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Tipos de Comprobantes",
@@ -1699,12 +2318,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/tipos-comprobantes"
-                      className={getLinkClassName("/tipos-comprobantes")}
+                      className={getLinkClassName(
+                        "/tipos-comprobantes"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Tipos de Comprobantes
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Puntos de Venta",
@@ -1712,12 +2334,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/ptos-venta"
-                      className={getLinkClassName("/ptos-venta")}
+                      className={getLinkClassName(
+                        "/ptos-venta"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Puntos de Venta
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Proveedores",
@@ -1725,12 +2350,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/proveedores"
-                      className={getLinkClassName("/proveedores")}
+                      className={getLinkClassName(
+                        "/proveedores"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Proveedores
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Proyectos",
@@ -1738,12 +2366,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/proyectos"
-                      className={getLinkClassName("/proyectos")}
+                      className={getLinkClassName(
+                        "/proyectos"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Proyectos
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Periodos",
@@ -1752,12 +2383,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/periodoliquidacion"
-                      className={getLinkClassName("/periodoliquidacion")}
+                      className={getLinkClassName(
+                        "/periodoliquidacion"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Periodos
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Sincronizar",
@@ -1766,12 +2400,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/sync"
-                      className={getLinkClassName("/sync")}
+                      className={getLinkClassName(
+                        "/sync"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Sincronizar
                     </Link>
                   )}
+
 
                 {matchesSearch(
                   "Registros",
@@ -1779,12 +2416,22 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 ) && (
                     <Link
                       to="/registros"
-                      className={getLinkClassName("/registros")}
+                      className={getLinkClassName(
+                        "/registros"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Registros
                     </Link>
                   )}
+
+
+                {/* =============================================
+                    CENTRO DE NOTIFICACIONES
+
+                    permiso real:
+                    notification:view
+                    ============================================= */}
 
                 {can("notification:view") &&
                   matchesSearch(
@@ -1794,12 +2441,22 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   ) && (
                     <Link
                       to="/notification"
-                      className={getLinkClassName("/notification")}
+                      className={getLinkClassName(
+                        "/notification"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Centro de Notificaciones
                     </Link>
                   )}
+
+
+                {/* =============================================
+                    SCHEDULER
+
+                    permiso real:
+                    scheduler:view
+                    ============================================= */}
 
                 {can("scheduler:view") &&
                   matchesSearch(
@@ -1808,14 +2465,35 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   ) && (
                     <Link
                       to="/scheduler"
-                      className={getLinkClassName("/scheduler")}
+                      className={getLinkClassName(
+                        "/scheduler"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Scheduler
                     </Link>
                   )}
+
               </>
             )}
+
+
+            {/* =================================================
+                LA PARTE 4 COMIENZA AQUÍ
+
+                BOT WHATSAPP
+                DOCUMENTACIÓN
+                INSPECCIONES
+                EVALUACIÓN
+                ================================================= */}
+
+            {/* =================================================
+                PARTE 4
+                BOT WHATSAPP
+                DOCUMENTACIÓN
+                INSPECCIONES
+                EVALUACIÓN
+                ================================================= */}
 
 
             {/* =================================================
@@ -1824,10 +2502,13 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showAuditoriaAtencionItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiMessageCircle className="sb-section-title-icon" />
                   <span>Bot WhatsApp</span>
                 </div>
+
+
                 {can("doc:create") &&
                   matchesSearch(
                     "Promociones",
@@ -1835,27 +2516,33 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   ) && (
                     <Link
                       to="/promociones"
-                      className={getLinkClassName("/promociones")}
+                      className={getLinkClassName(
+                        "/promociones"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Promociones
                     </Link>
                   )}
 
+
                 {can("doc:create") &&
                   matchesSearch(
-                    "Productos IA",
-                    "Productos",
+                    "Productos Meta",
+                    "Producto Meta",
                     "Bot WhatsApp"
                   ) && (
                     <Link
                       to="/bot/product-meta"
-                      className={getLinkClassName("/bot/product-meta")}
+                      className={getLinkClassName(
+                        "/bot/product-meta"
+                      )}
                       onClick={handleLinkClick}
                     >
-                      Productos (IA)
+                      Productos Meta
                     </Link>
                   )}
+
 
                 {can("doc:create") &&
                   matchesSearch(
@@ -1864,72 +2551,72 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   ) && (
                     <Link
                       to="/bot/conversations"
-                      className={getLinkClassName("/bot/conversations")}
+                      className={getLinkClassName(
+                        "/bot/conversations"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Conversaciones
                     </Link>
                   )}
 
+
                 {can("doc:create") &&
                   matchesSearch(
-                    "Sucursales IA",
-                    "Sucursales",
+                    "Sucursales Meta",
+                    "Sucursal Meta",
                     "Bot WhatsApp"
                   ) && (
                     <Link
                       to="/bot/branch-meta"
-                      className={getLinkClassName("/bot/branch-meta")}
+                      className={getLinkClassName(
+                        "/bot/branch-meta"
+                      )}
                       onClick={handleLinkClick}
                     >
-                      Sucursales (IA)
+                      Sucursales Meta
                     </Link>
                   )}
 
+
                 {can("doc:create") &&
                   matchesSearch(
-                    "Beneficios",
+                    "Beneficios Meta",
+                    "Beneficio Meta",
                     "Bot WhatsApp"
                   ) && (
                     <Link
                       to="/bot/benefit-meta"
-                      className={getLinkClassName("/bot/benefit-meta")}
+                      className={getLinkClassName(
+                        "/bot/benefit-meta"
+                      )}
                       onClick={handleLinkClick}
                     >
-                      Beneficios
+                      Beneficios Meta
                     </Link>
                   )}
 
+
                 {can("doc:create") &&
                   matchesSearch(
-                    "Eventos",
+                    "Eventos Meta",
+                    "Evento Meta",
                     "Bot WhatsApp"
                   ) && (
                     <Link
                       to="/bot/event-meta"
-                      className={getLinkClassName("/bot/event-meta")}
+                      className={getLinkClassName(
+                        "/bot/event-meta"
+                      )}
                       onClick={handleLinkClick}
                     >
-                      Eventos
+                      Eventos Meta
                     </Link>
                   )}
 
-                {/* Próximos módulos - se mantienen comentados */}
-                {/*
-                <Nav.Link as={Link} to="/bot/conversations">
-                  Conversaciones
-                </Nav.Link>
-
-                <Nav.Link as={Link} to="/bot/handoffs">
-                  Atención Humana
-                </Nav.Link>
-
-                <Nav.Link as={Link} to="/bot/settings">
-                  Configuración
-                </Nav.Link>
-                */}
               </>
             )}
+
 
 
             {/* =================================================
@@ -1938,10 +2625,13 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showDocumentacionItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiBookOpen className="sb-section-title-icon" />
                   <span>Documentación</span>
                 </div>
+
+
                 {can("doc:view") &&
                   matchesSearch(
                     "Documentos",
@@ -1949,65 +2639,72 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   ) && (
                     <Link
                       to="/documentos"
-                      className={getLinkClassName("/documentos")}
+                      className={getLinkClassName(
+                        "/documentos"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Documentos
                     </Link>
                   )}
 
+
                 {can("doc:create") &&
                   matchesSearch(
-                    "Crear Documentos",
+                    "Nuevo Documento",
+                    "Crear Documento",
                     "Documentación"
                   ) && (
                     <Link
                       to="/documentos/nuevo"
-                      className={getLinkClassName("/documentos/nuevo")}
+                      className={getLinkClassName(
+                        "/documentos/nuevo"
+                      )}
                       onClick={handleLinkClick}
                     >
-                      Crear Documentos
+                      Nuevo Documento
                     </Link>
                   )}
 
+
                 {can("doc:categorias") &&
                   matchesSearch(
-                    "Categorias",
                     "Categorías",
+                    "Categorias",
                     "Documentación"
                   ) && (
                     <Link
                       to="/documentos/categorias"
-                      className={getLinkClassName("/documentos/categorias")}
+                      className={getLinkClassName(
+                        "/documentos/categorias"
+                      )}
                       onClick={handleLinkClick}
                     >
-                      Categorias
+                      Categorías
                     </Link>
                   )}
 
+
                 {can("doc:subcategorias") &&
                   matchesSearch(
-                    "Subcategorias",
                     "Subcategorías",
+                    "Subcategorias",
                     "Documentación"
                   ) && (
                     <Link
                       to="/documentos/subcategorias"
-                      className={getLinkClassName("/documentos/subcategorias")}
+                      className={getLinkClassName(
+                        "/documentos/subcategorias"
+                      )}
                       onClick={handleLinkClick}
                     >
-                      Subcategorias
+                      Subcategorías
                     </Link>
                   )}
+
               </>
             )}
 
-
-            {/* =================================================
-                A PARTIR DE AQUÍ CONTINÚA LA PARTE 4
-                INSPECCIONES + EVALUACIÓN + COMERCIOS AMIGOS
-                + LEGAJOS + INTELIGENCIA COMERCIAL
-                ================================================= */}
 
 
             {/* =================================================
@@ -2016,74 +2713,53 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showInspeccionesItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiShield className="sb-section-title-icon" />
                   <span>Inspecciones</span>
                 </div>
+
+
                 {can("inspecciones:view") &&
                   matchesSearch(
                     "Inspecciones",
-                    "Inspección"
+                    "Listado de Inspecciones"
                   ) && (
                     <Link
                       to="/inspecciones"
-                      className={getLinkClassName("/inspecciones")}
+                      className={getLinkClassName(
+                        "/inspecciones"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Inspecciones
                     </Link>
                   )}
 
+
                 {can("inspecciones:create") &&
                   matchesSearch(
                     "Nueva Inspección",
                     "Nueva Inspeccion",
+                    "Crear Inspección",
                     "Inspecciones"
                   ) && (
                     <Link
                       to="/inspecciones/nueva"
-                      className={getLinkClassName("/inspecciones/nueva")}
+                      className={getLinkClassName(
+                        "/inspecciones/nueva"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Nueva Inspección
                     </Link>
                   )}
 
-                {can("inspecciones:admin") &&
-                  matchesSearch(
-                    "Plantillas",
-                    "Inspecciones"
-                  ) && (
-                    <Link
-                      to="/inspecciones/plantillas"
-                      className={getLinkClassName(
-                        "/inspecciones/plantillas"
-                      )}
-                      onClick={handleLinkClick}
-                    >
-                      Plantillas
-                    </Link>
-                  )}
-
-                {can("inspecciones:admin") &&
-                  matchesSearch(
-                    "Notificaciones",
-                    "Inspecciones"
-                  ) && (
-                    <Link
-                      to="/inspecciones/notificaciones"
-                      className={getLinkClassName(
-                        "/inspecciones/notificaciones"
-                      )}
-                      onClick={handleLinkClick}
-                    >
-                      Notificaciones
-                    </Link>
-                  )}
 
                 {can("inspecciones:reportes") &&
                   matchesSearch(
                     "Reportes",
+                    "Reportes Inspecciones",
                     "Inspecciones"
                   ) && (
                     <Link
@@ -2096,8 +2772,29 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Reportes
                     </Link>
                   )}
+
+
+                {can("inspecciones:admin") &&
+                  matchesSearch(
+                    "Configuración",
+                    "Configuracion",
+                    "Administración",
+                    "Inspecciones"
+                  ) && (
+                    <Link
+                      to="/inspecciones/configuracion"
+                      className={getLinkClassName(
+                        "/inspecciones/configuracion"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Configuración
+                    </Link>
+                  )}
+
               </>
             )}
+
 
 
             {/* =================================================
@@ -2106,26 +2803,132 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showEvaluacionItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiBarChart2 className="sb-section-title-icon" />
                   <span>Evaluación</span>
                 </div>
+
+
+                {/* =============================================
+                    DASHBOARD
+                    ============================================= */}
+
+                {can("evaluacion:view") &&
+                  matchesSearch(
+                    "Dashboard",
+                    "Evaluación"
+                  ) && (
+                    <Link
+                      to="/evaluacion/dashboard"
+                      className={getLinkClassName(
+                        "/evaluacion/dashboard"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    EVALUACIONES
+                    ============================================= */}
+
                 {can("evaluacion:view") &&
                   matchesSearch(
                     "Evaluaciones",
-                    "Evaluación",
-                    "Evaluacion"
+                    "Evaluación"
                   ) && (
                     <Link
                       to="/evaluaciones"
-                      className={getLinkClassName("/evaluaciones")}
+                      className={getLinkClassName(
+                        "/evaluaciones"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Evaluaciones
                     </Link>
                   )}
 
-                {can("evaluacion:admin") &&
+
+                {/* =============================================
+                    REPORTE POR EMPLEADO
+                    ============================================= */}
+
+                {can("evaluacion:view") &&
+                  matchesSearch(
+                    "Reporte Empleado",
+                    "Reporte por Empleado",
+                    "Evaluación"
+                  ) && (
+                    <Link
+                      to="/evaluacion/reportes/empleado"
+                      className={getLinkClassName(
+                        "/evaluacion/reportes/empleado"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Reporte Empleado
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    REPORTE SUPERVISOR
+
+                    Ruta real:
+                    /evaluacion/reportes/supervisor
+                    ============================================= */}
+
+                {can("evaluacion:view") &&
+                  matchesSearch(
+                    "Reporte Supervisor",
+                    "Supervisor",
+                    "Evaluación"
+                  ) && (
+                    <Link
+                      to="/evaluacion/reportes/supervisor"
+                      className={getLinkClassName(
+                        "/evaluacion/reportes/supervisor"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Reporte Supervisor
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    MYSTERY SHOPPER
+
+                    Ruta real:
+                    /evaluacion/reportes/mystery
+                    ============================================= */}
+
+                {can("evaluacion:view") &&
+                  matchesSearch(
+                    "Mystery",
+                    "Mystery Shopper",
+                    "Evaluación"
+                  ) && (
+                    <Link
+                      to="/evaluacion/reportes/mystery"
+                      className={getLinkClassName(
+                        "/evaluacion/reportes/mystery"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Mystery Shopper
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    METAS
+                    ============================================= */}
+
+                {can("evaluacion:view") &&
                   matchesSearch(
                     "Metas",
                     "Evaluación"
@@ -2141,39 +2944,89 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     </Link>
                   )}
 
-                {can("evaluacion:admin") &&
+
+                {/* =============================================
+                    AVISOS
+                    ============================================= */}
+
+                {can("evaluacion:view") &&
                   matchesSearch(
-                    "Mystery",
+                    "Avisos",
                     "Evaluación"
                   ) && (
                     <Link
-                      to="/evaluacion/mystery"
+                      to="/evaluacion/avisos"
                       className={getLinkClassName(
-                        "/evaluacion/mystery"
+                        "/evaluacion/avisos"
                       )}
                       onClick={handleLinkClick}
                     >
-                      Mystery
+                      Avisos
                     </Link>
                   )}
 
-                {can("evaluacion:admin") &&
+
+                {/* =============================================
+                    REPORTES
+                    ============================================= */}
+
+                {can("evaluacion:view") &&
                   matchesSearch(
-                    "Supervisores",
+                    "Reportes",
+                    "Reportes Evaluación",
                     "Evaluación"
                   ) && (
                     <Link
-                      to="/evaluacion/supervisores"
+                      to="/evaluacion/reportes"
                       className={getLinkClassName(
-                        "/evaluacion/supervisores"
+                        "/evaluacion/reportes"
                       )}
                       onClick={handleLinkClick}
                     >
-                      Supervisores
+                      Reportes
                     </Link>
                   )}
+
+
+                {/* =============================================
+                    CONFIGURACIÓN
+                    ============================================= */}
+
+                {can("evaluacion:admin") &&
+                  matchesSearch(
+                    "Configuración",
+                    "Configuracion",
+                    "Evaluación"
+                  ) && (
+                    <Link
+                      to="/evaluacion/configuracion"
+                      className={getLinkClassName(
+                        "/evaluacion/configuracion"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Configuración
+                    </Link>
+                  )}
+
               </>
             )}
+
+
+            {/* =================================================
+                LA PARTE 5 COMIENZA AQUÍ
+
+                COMERCIOS AMIGOS
+                LEGAJOS
+                INTELIGENCIA COMERCIAL
+                ================================================= */}
+
+            {/* =================================================
+                PARTE 5
+                COMERCIOS AMIGOS
+                LEGAJOS
+                INTELIGENCIA COMERCIAL
+                ================================================= */}
 
 
             {/* =================================================
@@ -2182,10 +3035,23 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showFidelizacionItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiGift className="sb-section-title-icon" />
                   <span>Comercios Amigos</span>
                 </div>
+
+
+                {/* =============================================
+                    DASHBOARD
+
+                    permiso real:
+                    fidelizacion:view
+
+                    ruta real:
+                    /fidelizacion/dashboard
+                    ============================================= */}
+
                 {can("fidelizacion:view") &&
                   matchesSearch(
                     "Dashboard",
@@ -2203,11 +3069,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    COMERCIOS ASOCIADOS
+                    ============================================= */}
+
                 {can("fidelizacion:comercios") &&
                   matchesSearch(
                     "Comercios Asociados",
                     "Comercios",
-                    "Fidelización"
+                    "Comercios Amigos"
                   ) && (
                     <Link
                       to="/fidelizacion/comercios"
@@ -2220,11 +3091,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    CAMPAÑAS
+                    ============================================= */}
+
                 {can("fidelizacion:campanias") &&
                   matchesSearch(
                     "Campañas",
                     "Campanias",
-                    "Fidelización"
+                    "Comercios Amigos"
                   ) && (
                     <Link
                       to="/fidelizacion/campanias"
@@ -2237,11 +3113,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    PREMIOS CLIENTES
+                    ============================================= */}
+
                 {can("fidelizacion:premios") &&
                   matchesSearch(
                     "Premios Clientes",
                     "Premios",
-                    "Fidelización"
+                    "Comercios Amigos"
                   ) && (
                     <Link
                       to="/fidelizacion/premios-clientes"
@@ -2255,14 +3136,21 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {/* CUPONES */}
+                {/* =============================================
+                    CUPONES
+
+                    IMPORTANTE:
+                    El permiso fidelizacion:cupones habilita
+                    CUATRO opciones en el archivo original.
+                    ============================================= */}
 
                 {can("fidelizacion:cupones") && (
                   <>
+
                     {matchesSearch(
                       "Cupones Generados",
                       "Cupones",
-                      "Fidelización"
+                      "Comercios Amigos"
                     ) && (
                         <Link
                           to="/fidelizacion/cupones"
@@ -2275,11 +3163,12 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       )}
 
+
                     {matchesSearch(
                       "Canjes de Cupones",
                       "Canjes",
                       "Cupones",
-                      "Fidelización"
+                      "Comercios Amigos"
                     ) && (
                         <Link
                           to="/fidelizacion/canjes-cupones"
@@ -2292,10 +3181,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       )}
 
+
                     {matchesSearch(
                       "Clientes Registrados",
                       "Clientes",
-                      "Fidelización"
+                      "Comercios Amigos"
                     ) && (
                         <Link
                           to="/fidelizacion/clientes"
@@ -2308,11 +3198,12 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       )}
 
+
                     {matchesSearch(
                       "Validar Cupón",
                       "Validar Cupon",
                       "Cupones",
-                      "Fidelización"
+                      "Comercios Amigos"
                     ) && (
                         <Link
                           to="/fidelizacion/validar-cupon"
@@ -2324,15 +3215,20 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           Validar Cupón
                         </Link>
                       )}
+
                   </>
                 )}
 
+
+                {/* =============================================
+                    PUNTOS COMERCIO
+                    ============================================= */}
 
                 {can("fidelizacion:puntos") &&
                   matchesSearch(
                     "Puntos Comercio",
                     "Puntos",
-                    "Fidelización"
+                    "Comercios Amigos"
                   ) && (
                     <Link
                       to="/fidelizacion/puntos-comercio"
@@ -2346,12 +3242,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
+                {/* =============================================
+                    PREMIOS COMERCIOS
+                    ============================================= */}
+
                 {can("fidelizacion:premiosComercio") &&
                   matchesSearch(
                     "Premios Comercios",
-                    "Premios",
-                    "Comercios",
-                    "Fidelización"
+                    "Premios Comercio",
+                    "Comercios Amigos"
                   ) && (
                     <Link
                       to="/fidelizacion/premios-comercios"
@@ -2365,12 +3264,17 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
+                {/* =============================================
+                    CANJES COMERCIOS
+
+                    Esta opción existe en el archivo real.
+                    ============================================= */}
+
                 {can("fidelizacion:canjesComercio") &&
                   matchesSearch(
                     "Canjes Comercios",
-                    "Canjes",
-                    "Comercios",
-                    "Fidelización"
+                    "Canjes Comercio",
+                    "Comercios Amigos"
                   ) && (
                     <Link
                       to="/fidelizacion/canjes-comercios"
@@ -2384,12 +3288,17 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
+                {/* =============================================
+                    ALERTAS FRAUDE
+
+                    Esta opción también existe en el archivo real.
+                    ============================================= */}
+
                 {can("fidelizacion:fraude") &&
                   matchesSearch(
                     "Alertas Fraude",
                     "Fraude",
-                    "Alertas",
-                    "Fidelización"
+                    "Comercios Amigos"
                   ) && (
                     <Link
                       to="/fidelizacion/alertas-fraude"
@@ -2401,8 +3310,10 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Alertas Fraude
                     </Link>
                   )}
+
               </>
             )}
+
 
 
             {/* =================================================
@@ -2411,10 +3322,23 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showLegajosItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiFolder className="sb-section-title-icon" />
                   <span>Legajos</span>
                 </div>
+
+
+                {/* =============================================
+                    CONCEPTOS
+
+                    permiso real:
+                    legajos:conceptos.view
+
+                    ruta real:
+                    /motor-conceptos
+                    ============================================= */}
+
                 {can("legajos:conceptos.view") &&
                   matchesSearch(
                     "Conceptos",
@@ -2431,6 +3355,10 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    REGISTROS
+                    ============================================= */}
 
                 {can("legajos:registros.view") &&
                   matchesSearch(
@@ -2449,9 +3377,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {can(
-                  "motorconceptos:gestion.empleados.view"
-                ) &&
+                {/* =============================================
+                    GESTIÓN EMPLEADOS
+
+                    IMPORTANTE:
+                    El permiso NO comienza con legajos:
+                    en el archivo real utiliza
+                    motorconceptos:gestion.empleados.view
+                    ============================================= */}
+
+                {can("motorconceptos:gestion.empleados.view") &&
                   matchesSearch(
                     "Gestión Empleados",
                     "Gestion Empleados",
@@ -2470,9 +3405,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {can(
-                  "motorconceptos:gestion.empresas.view"
-                ) &&
+                {/* =============================================
+                    GESTIÓN EMPRESAS
+                    ============================================= */}
+
+                {can("motorconceptos:gestion.empresas.view") &&
                   matchesSearch(
                     "Gestión Empresas",
                     "Gestion Empresas",
@@ -2491,9 +3428,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {can(
-                  "motorconceptos:gestion.sucursales.view"
-                ) &&
+                {/* =============================================
+                    GESTIÓN SUCURSALES
+                    ============================================= */}
+
+                {can("motorconceptos:gestion.sucursales.view") &&
                   matchesSearch(
                     "Gestión Sucursales",
                     "Gestion Sucursales",
@@ -2512,28 +3451,49 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {/*
-                =================================================
-                REPORTES
+                {/* =============================================
+                    REPORTES
 
-                Este bloque permanece comentado porque también
-                estaba comentado en el Sidebar original.
-                =================================================
+                    Está comentado en el archivo original.
+                    Lo mantenemos comentado.
+                    ============================================= */}
+
+                {/*
+                {can("legajos:reportes.view") && (
+                  <Link
+                    to="/motor-conceptos/reportes/registros"
+                    className={getLinkClassName(
+                      "/motor-conceptos/reportes/registros"
+                    )}
+                    onClick={handleLinkClick}
+                  >
+                    Reportes
+                  </Link>
+                )}
                 */}
+
               </>
             )}
 
 
+
             {/* =================================================
                 INTELIGENCIA COMERCIAL
+
+                IMPORTANTE:
+                El archivo original no aplica can(...)
+                individual a estas opciones.
                 ================================================= */}
 
             {showInteligenciaItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiBarChart2 className="sb-section-title-icon" />
                   <span>Inteligencia Comercial</span>
                 </div>
+
+
                 {matchesSearch(
                   "Dashboard",
                   "Inteligencia Comercial"
@@ -2596,20 +3556,26 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Clima
                     </Link>
                   )}
+
               </>
             )}
 
 
             {/* =================================================
-                A PARTIR DE AQUÍ CONTINÚA LA PARTE 5
+                LA PARTE 6 COMIENZA AQUÍ
 
                 ESTADÍSTICAS
                 IVA
-                RRHH
-                TESORERÍA
-                FACTURACIÓN
-                SUELDOS
+                RRHH / ASISTENCIA
                 ================================================= */}
+
+            {/* =================================================
+                PARTE 6
+                ESTADÍSTICAS
+                IVA
+                RRHH / ASISTENCIA
+                ================================================= */}
+
 
             {/* =================================================
                 ESTADÍSTICAS
@@ -2617,10 +3583,17 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showStaticsItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiBarChart2 className="sb-section-title-icon" />
                   <span>Estadísticas</span>
                 </div>
+
+
+                {/* =============================================
+                    PRECIOS HISTÓRICOS
+                    ============================================= */}
+
                 {can("stats:prices.historic.view") &&
                   matchesSearch(
                     "Precios Históricos",
@@ -2629,177 +3602,270 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   ) && (
                     <Link
                       to="/precioshistoricos"
-                      className={getLinkClassName("/precioshistoricos")}
+                      className={getLinkClassName(
+                        "/precioshistoricos"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Precios Históricos
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    VENTAS COMPARATIVO
+                    ============================================= */}
+
                 {can("stats:sales.comparative.view") &&
                   matchesSearch(
                     "Ventas Comparativo",
+                    "Ventas",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/totalcomparativo"
-                      className={getLinkClassName("/sells/totalcomparativo")}
+                      className={getLinkClassName(
+                        "/sells/totalcomparativo"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Ventas Comparativo
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    VENTAS ENTRE RANGOS
+                    ============================================= */}
+
                 {can("stats:sales.range.view") &&
                   matchesSearch(
                     "Ventas entre Rangos",
                     "Rangos",
+                    "Ventas",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/comparativorangos"
-                      className={getLinkClassName("/sells/comparativorangos")}
+                      className={getLinkClassName(
+                        "/sells/comparativorangos"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Ventas entre Rangos
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    GRÁFICO COMPARATIVO
+                    ============================================= */}
+
                 {can("stats:sales.chart.view") &&
                   matchesSearch(
                     "Gráfico Comparativo",
                     "Grafico Comparativo",
+                    "Ventas",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/graficoventas"
-                      className={getLinkClassName("/sells/graficoventas")}
+                      className={getLinkClassName(
+                        "/sells/graficoventas"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Gráfico Comparativo
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    VENTAS TOTALES
+                    ============================================= */}
+
                 {can("stats:sales.total.view") &&
                   matchesSearch(
                     "Ventas Totales",
+                    "Ventas",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/total"
-                      className={getLinkClassName("/sells/total")}
+                      className={getLinkClassName(
+                        "/sells/total"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Ventas Totales
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    VENTAS POR CLIENTE
+                    ============================================= */}
+
                 {can("stats:sales.byCustomer.view") &&
                   matchesSearch(
                     "Ventas por Cliente",
                     "Cliente",
+                    "Ventas",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/customers"
-                      className={getLinkClassName("/sells/customers")}
+                      className={getLinkClassName(
+                        "/sells/customers"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Ventas por Cliente
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    VENTAS ANULADAS
+                    ============================================= */}
+
                 {can("stats:sales.deleted.view") &&
                   matchesSearch(
                     "Ventas Anuladas",
                     "Anuladas",
+                    "Ventas",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/deleted"
-                      className={getLinkClassName("/sells/deleted")}
+                      className={getLinkClassName(
+                        "/sells/deleted"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Ventas Anuladas
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    VENTAS CON DESCUENTO
+                    ============================================= */}
+
                 {can("stats:sales.discount.view") &&
                   matchesSearch(
                     "Ventas con Dcto",
+                    "Ventas con Descuento",
                     "Descuento",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/discount"
-                      className={getLinkClassName("/sells/discount")}
+                      className={getLinkClassName(
+                        "/sells/discount"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Ventas con Dcto
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    VENTAS POR ARTÍCULO
+                    ============================================= */}
+
                 {can("stats:sales.byArticle.view") &&
                   matchesSearch(
                     "Ventas por Art",
                     "Ventas por Artículo",
-                    "Articulo",
+                    "Ventas por Articulo",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/articles"
-                      className={getLinkClassName("/sells/articles")}
+                      className={getLinkClassName(
+                        "/sells/articles"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Ventas por Art
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    VENTAS POR USUARIO
+                    ============================================= */}
+
                 {can("stats:sales.byUser.view") &&
                   matchesSearch(
                     "Ventas por Usuario",
                     "Usuario",
+                    "Ventas",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/user"
-                      className={getLinkClassName("/sells/user")}
+                      className={getLinkClassName(
+                        "/sells/user"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Ventas por Usuario
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    KG POR SUCURSAL
+                    ============================================= */}
+
                 {can("stats:sales.kgByBranch.view") &&
                   matchesSearch(
                     "Kg por Sucursal",
-                    "Kilos",
+                    "Kilos por Sucursal",
                     "Sucursal",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/kg_branch"
-                      className={getLinkClassName("/sells/kg_branch")}
+                      className={getLinkClassName(
+                        "/sells/kg_branch"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Kg por Sucursal
                     </Link>
                   )}
 
+
+                {/* =============================================
+                    CANTIDAD DE TICKETS
+                    ============================================= */}
+
                 {can("stats:sales.ticketCount.view") &&
                   matchesSearch(
                     "Cantidad Tickets",
                     "Tickets",
+                    "Ventas",
                     "Estadísticas"
                   ) && (
                     <Link
                       to="/sells/quantity"
-                      className={getLinkClassName("/sells/quantity")}
+                      className={getLinkClassName(
+                        "/sells/quantity"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Cantidad Tickets
                     </Link>
                   )}
+
+
+                {/* =============================================
+                    STOCK
+                    ============================================= */}
 
                 {can("stats:inventory.stock.view") &&
                   matchesSearch(
@@ -2809,14 +3875,18 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   ) && (
                     <Link
                       to="/inventory/stock"
-                      className={getLinkClassName("/inventory/stock")}
+                      className={getLinkClassName(
+                        "/inventory/stock"
+                      )}
                       onClick={handleLinkClick}
                     >
                       Stock
                     </Link>
                   )}
+
               </>
             )}
+
 
 
             {/* =================================================
@@ -2825,30 +3895,44 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showIVAItems && (
               <>
+
                 <div className="sb-section-title">
                   <TbReceiptTax className="sb-section-title-icon" />
                   <span>IVA</span>
                 </div>
-                {/* LIBROS IVA */}
+
+
+                {/* =============================================
+                    LIBROS IVA
+
+                    Permisos reales:
+                    iva:libro.create
+                    iva:libro.view
+                    ============================================= */}
 
                 {(can("iva:libro.create") ||
                   can("iva:libro.view")) &&
                   matchesSearch(
                     "Libros IVA",
                     "Crear Libro IVA",
-                    "Listar Libros IVA"
+                    "Listar Libros IVA",
+                    "IVA"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
-                          setLibroIvaItem(!libroIvaItem)
+                          setLibroIvaItem(
+                            !libroIvaItem
+                          )
                         }
                       >
                         <Link
                           to="#"
                           className="nav-link"
                         >
-                          Libros IVA{" "}
+                          Libros IVA
+
                           <Caret
                             open={
                               libroIvaItem ||
@@ -2858,6 +3942,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           libroIvaItem ||
@@ -2865,6 +3950,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         }
                       >
                         <div className="ml-3 sb-sub">
+
 
                           {can("iva:libro.create") &&
                             matchesSearch(
@@ -2881,6 +3967,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                                 Crear Libro IVA
                               </Link>
                             )}
+
 
                           {can("iva:libro.view") &&
                             matchesSearch(
@@ -2900,11 +3987,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
 
-                {/* COMPRAS PROYECTADAS */}
+                {/* =============================================
+                    COMPRAS PROYECTADAS
+                    ============================================= */}
 
                 {can("iva:compras.proyectadas.view") &&
                   matchesSearch(
@@ -2924,7 +4014,9 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {/* PROYECCIÓN DEL IVA */}
+                {/* =============================================
+                    PROYECCIÓN DEL IVA
+                    ============================================= */}
 
                 {can("iva:proyeccion.view") &&
                   matchesSearch(
@@ -2942,8 +4034,10 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Proyección del IVA
                     </Link>
                   )}
+
               </>
             )}
+
 
 
             {/* =================================================
@@ -2952,15 +4046,23 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showAsistenciaItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiUsers className="sb-section-title-icon" />
                   <span>RRHH</span>
                 </div>
+
+
+                {/* =============================================
+                    DASHBOARD ASISTENCIA
+                    ============================================= */}
+
                 {can("asistencia:dashboard.view") &&
                   matchesSearch(
                     "Dashboard Asistencia",
-                    "Asistencia",
-                    "RRHH"
+                    "Dashboard",
+                    "RRHH",
+                    "Asistencia"
                   ) && (
                     <Link
                       to="/dashboardasistencias"
@@ -2974,11 +4076,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
+                {/* =============================================
+                    CONCEPTOS
+                    ============================================= */}
+
                 {can("asistencia:concepto.manage") &&
                   matchesSearch(
                     "Conceptos",
-                    "Asistencia",
-                    "RRHH"
+                    "RRHH",
+                    "Asistencia"
                   ) && (
                     <Link
                       to="/asistencias/conceptos"
@@ -2992,11 +4098,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
+                {/* =============================================
+                    EVENTOS
+                    ============================================= */}
+
                 {can("asistencia:evento.manage") &&
                   matchesSearch(
                     "Eventos",
-                    "Asistencia",
-                    "RRHH"
+                    "RRHH",
+                    "Asistencia"
                   ) && (
                     <Link
                       to="/asistencias/eventos"
@@ -3010,16 +4120,20 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {can("asistencia:vacacion.manage") &&
+                {/* =============================================
+                    VACACIONES
+                    ============================================= */}
+
+                {can("asistencia:vacacion.view") &&
                   matchesSearch(
                     "Vacaciones",
-                    "Asistencia",
-                    "RRHH"
+                    "RRHH",
+                    "Asistencia"
                   ) && (
                     <Link
-                      to="/asistencias/vacaciones"
+                      to="/asistencias/listarvacaciones"
                       className={getLinkClassName(
-                        "/asistencias/vacaciones"
+                        "/asistencias/listarvacaciones"
                       )}
                       onClick={handleLinkClick}
                     >
@@ -3028,12 +4142,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {can("asistencia:planificacion.view") &&
+                {/* =============================================
+                    PLANIFICACIÓN
+                    ============================================= */}
+
+                {can("asistencia:planificacion.manage") &&
                   matchesSearch(
                     "Planificación",
                     "Planificacion",
-                    "Asistencia",
-                    "RRHH"
+                    "RRHH",
+                    "Asistencia"
                   ) && (
                     <Link
                       to="/asistencias/planificacion"
@@ -3045,8 +4163,162 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Planificación
                     </Link>
                   )}
+
+
+                {/* =============================================
+                    HORARIOS
+                    ============================================= */}
+
+                {can("asistencia:horario.manage") &&
+                  matchesSearch(
+                    "Horarios",
+                    "RRHH",
+                    "Asistencia"
+                  ) && (
+                    <Link
+                      to="/asistencias/horarios"
+                      className={getLinkClassName(
+                        "/asistencias/horarios"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Horarios
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    ASIGNAR DATOS A EMPLEADO
+                    ============================================= */}
+
+                {can("asistencia:asignacion.manage") &&
+                  matchesSearch(
+                    "Asignar Datos a Empleado",
+                    "Asignar Empleado",
+                    "Empleado",
+                    "RRHH",
+                    "Asistencia"
+                  ) && (
+                    <Link
+                      to="/asistencias/asignarempleado"
+                      className={getLinkClassName(
+                        "/asistencias/asignarempleado"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Asignar Datos a Empleado
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    HUELLAS NAVEGADOR
+                    ============================================= */}
+
+                {can("asistencia:fingerprint.manage") &&
+                  matchesSearch(
+                    "Huellas Navegador",
+                    "Huellas",
+                    "Fingerprint",
+                    "RRHH",
+                    "Asistencia"
+                  ) && (
+                    <Link
+                      to="/asistencias/huellanavegador"
+                      className={getLinkClassName(
+                        "/asistencias/huellanavegador"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Huellas Navegador
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    LISTAR ASISTENCIAS
+                    ============================================= */}
+
+                {can("asistencia:view") &&
+                  matchesSearch(
+                    "Listar Asistencias",
+                    "Asistencias",
+                    "RRHH"
+                  ) && (
+                    <Link
+                      to="/asistencias"
+                      className={getLinkClassName(
+                        "/asistencias"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Listar Asistencias
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    JORNADAS
+                    ============================================= */}
+
+                {can("asistencia:jornada.manage") &&
+                  matchesSearch(
+                    "Jornadas",
+                    "RRHH",
+                    "Asistencia"
+                  ) && (
+                    <Link
+                      to="/jornadasasistencias"
+                      className={getLinkClassName(
+                        "/jornadasasistencias"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Jornadas
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    PARÁMETROS
+                    ============================================= */}
+
+                {can("asistencia:parametro.manage") &&
+                  matchesSearch(
+                    "Parámetros",
+                    "Parametros",
+                    "RRHH",
+                    "Asistencia"
+                  ) && (
+                    <Link
+                      to="/parametrosasistencias"
+                      className={getLinkClassName(
+                        "/parametrosasistencias"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Parámetros
+                    </Link>
+                  )}
+
               </>
             )}
+
+
+            {/* =================================================
+                LA PARTE 7 COMIENZA AQUÍ
+
+                TESORERÍA
+                FACTURACIÓN
+                SUELDOS
+                ================================================= */}
+
+            {/* =================================================
+                PARTE 7
+                TESORERÍA
+                FACTURACIÓN
+                SUELDOS
+                ================================================= */}
 
 
             {/* =================================================
@@ -3055,20 +4327,120 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showCajaItems && (
               <>
+
                 <div className="sb-section-title">
                   <LuWallet className="sb-section-title-icon" />
                   <span>Tesorería</span>
                 </div>
-                {/* CAJA */}
 
-                {(can("tesoreria:caja.view") ||
-                  can("tesoreria:caja.movimientos")) &&
+
+                {/* =============================================
+                    CATEGORÍAS TESORERÍA
+                    ============================================= */}
+
+                {can("tesoreria:categoria.manage") &&
                   matchesSearch(
-                    "Caja",
-                    "Movimientos Caja",
+                    "Categorías",
+                    "Categorias",
+                    "Categorías Ingreso",
+                    "Categorías Egreso",
                     "Tesorería"
                   ) && (
                     <>
+
+                      <Nav.Item
+                        onClick={() =>
+                          setCategoriaTesoreriaItem(
+                            !categoriaTesoreriaItem
+                          )
+                        }
+                      >
+                        <Link
+                          to="#"
+                          className="nav-link"
+                        >
+                          Categorías
+
+                          <Caret
+                            open={
+                              categoriaTesoreriaItem ||
+                              searchActive
+                            }
+                          />
+                        </Link>
+                      </Nav.Item>
+
+
+                      <Collapse
+                        in={
+                          categoriaTesoreriaItem ||
+                          searchActive
+                        }
+                      >
+                        <div className="ml-3 sb-sub">
+
+                          {matchesSearch(
+                            "Categorías Ingreso",
+                            "Categorias Ingreso",
+                            "Tesorería"
+                          ) && (
+                              <Link
+                                to="/categoriaingreso"
+                                className={getLinkClassName(
+                                  "/categoriaingreso"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Categorías Ingreso
+                              </Link>
+                            )}
+
+
+                          {matchesSearch(
+                            "Categorías Egreso",
+                            "Categorias Egreso",
+                            "Tesorería"
+                          ) && (
+                              <Link
+                                to="/categoriaegreso"
+                                className={getLinkClassName(
+                                  "/categoriaegreso"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Categorías Egreso
+                              </Link>
+                            )}
+
+                        </div>
+                      </Collapse>
+
+                    </>
+                  )}
+
+
+
+                {/* =============================================
+                    CAJA
+
+                    Permisos reales:
+                    tesoreria:caja.open
+                    tesoreria:caja.view
+                    tesoreria:retiros.view
+                    ============================================= */}
+
+                {(can("tesoreria:caja.open") ||
+                  can("tesoreria:caja.view") ||
+                  can("tesoreria:retiros.view")) &&
+                  matchesSearch(
+                    "Caja",
+                    "Apertura de Caja",
+                    "Movimientos de Caja",
+                    "Registro de Retiros",
+                    "Tesorería"
+                  ) && (
+                    <>
+
                       <Nav.Item
                         onClick={() =>
                           setCajaItem(!cajaItem)
@@ -3078,7 +4450,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Caja{" "}
+                          Caja
+
                           <Caret
                             open={
                               cajaItem ||
@@ -3088,6 +4461,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           cajaItem ||
@@ -3096,120 +4470,87 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       >
                         <div className="ml-3 sb-sub">
 
-                          {can("tesoreria:caja.view") &&
+
+                          {can("tesoreria:caja.open") &&
                             matchesSearch(
+                              "Apertura de Caja",
                               "Caja",
                               "Tesorería"
                             ) && (
                               <Link
-                                to="/tesoreria/caja"
+                                to="/tesoreria/cajas/apertura"
                                 className={getLinkClassName(
-                                  "/tesoreria/caja"
+                                  "/tesoreria/cajas/apertura"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Caja
+                                Apertura de Caja
                               </Link>
                             )}
 
-                          {can("tesoreria:caja.movimientos") &&
+
+                          {can("tesoreria:caja.view") &&
                             matchesSearch(
-                              "Movimientos Caja",
+                              "Movimientos de Caja",
                               "Caja",
                               "Tesorería"
                             ) && (
                               <Link
-                                to="/tesoreria/movimientos-caja"
+                                to="/tesoreria/movimientos-caja-tesoreria"
                                 className={getLinkClassName(
-                                  "/tesoreria/movimientos-caja"
+                                  "/tesoreria/movimientos-caja-tesoreria"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Movimientos Caja
+                                Movimientos de Caja
+                              </Link>
+                            )}
+
+
+                          {can("tesoreria:retiros.view") &&
+                            matchesSearch(
+                              "Registro de Retiros",
+                              "Retiros",
+                              "Sucursal",
+                              "Tesorería"
+                            ) && (
+                              <Link
+                                to="/tesoreria/retirossucursales"
+                                className={getLinkClassName(
+                                  "/tesoreria/retirossucursales"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Registro de Retiros
                               </Link>
                             )}
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
 
-                {/* MOVIMIENTOS BANCARIOS */}
 
-                {can("tesoreria:bancos.movimientos") &&
+                {/* =============================================
+                    BANCOS
+                    ============================================= */}
+
+                {(can("tesoreria:banco.view") ||
+                  can("tesoreria:banco.import")) &&
                   matchesSearch(
-                    "Movimientos Bancarios",
                     "Bancos",
-                    "Tesorería"
-                  ) && (
-                    <Link
-                      to="/tesoreria/movimientos-banco"
-                      className={getLinkClassName(
-                        "/tesoreria/movimientos-banco"
-                      )}
-                      onClick={handleLinkClick}
-                    >
-                      Movimientos Bancarios
-                    </Link>
-                  )}
-
-
-                {/* TARJETAS */}
-
-                {can("tesoreria:tarjetas.view") &&
-                  matchesSearch(
-                    "Movimientos Tarjetas",
-                    "Tarjetas",
-                    "Tesorería"
-                  ) && (
-                    <Link
-                      to="/tesoreria/movimientos-tarjeta"
-                      className={getLinkClassName(
-                        "/tesoreria/movimientos-tarjeta"
-                      )}
-                      onClick={handleLinkClick}
-                    >
-                      Movimientos Tarjetas
-                    </Link>
-                  )}
-
-
-                {/* CHEQUES / ECHEQ */}
-
-                {can("tesoreria:cheques.view") &&
-                  matchesSearch(
-                    "Cheques",
-                    "eCheq",
-                    "Echeq",
-                    "Tesorería"
-                  ) && (
-                    <Link
-                      to="/tesoreria/echeqs"
-                      className={getLinkClassName(
-                        "/tesoreria/echeqs"
-                      )}
-                      onClick={handleLinkClick}
-                    >
-                      Cheques / eCheq
-                    </Link>
-                  )}
-
-
-                {/* AJUSTES DE COMPROBANTES */}
-
-                {can("tesoreria:ajustes.view") &&
-                  matchesSearch(
-                    "Ajustes",
-                    "Ajustes Comprobantes",
-                    "Registros de ajustes",
+                    "Movimientos bancarios",
+                    "Movimientos bancarios Excel",
                     "Tesorería"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
-                          setRegistroAjusteItem(
-                            !registroAjusteItem
+                          setMovBancoItem(
+                            !movBancoItem
                           )
                         }
                       >
@@ -3217,56 +4558,161 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Ajustes de Comprobantes{" "}
+                          Bancos
+
                           <Caret
                             open={
-                              registroAjusteItem ||
+                              movBancoItem ||
                               searchActive
                             }
                           />
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
-                          registroAjusteItem ||
+                          movBancoItem ||
                           searchActive
                         }
                       >
                         <div className="ml-3 sb-sub">
 
-                          {matchesSearch(
-                            "Registros de ajustes",
-                            "Ajustes",
-                            "Tesorería"
-                          ) && (
+
+                          {can("tesoreria:banco.view") &&
+                            matchesSearch(
+                              "Movimientos bancarios",
+                              "Bancos",
+                              "Tesorería"
+                            ) && (
                               <Link
-                                to="/tesoreria/ajustes-comprobantes"
+                                to="/tesoreria/movimientos-banco-tesoreria"
                                 className={getLinkClassName(
-                                  "/tesoreria/ajustes-comprobantes"
+                                  "/tesoreria/movimientos-banco-tesoreria"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Registros de ajustes
+                                Movimientos bancarios
+                              </Link>
+                            )}
+
+
+                          {can("tesoreria:banco.import") &&
+                            matchesSearch(
+                              "Movimientos bancarios Excel",
+                              "Importar Excel",
+                              "Bancos",
+                              "Tesorería"
+                            ) && (
+                              <Link
+                                to="/tesoreria/movimientos-banco-tesoreria-excel"
+                                className={getLinkClassName(
+                                  "/tesoreria/movimientos-banco-tesoreria-excel"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Movimientos bancarios Excel
                               </Link>
                             )}
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
 
-                {/* GASTOS ESTIMADOS */}
+
+                {/* =============================================
+                    TARJETAS
+                    ============================================= */}
+
+                {can("tesoreria:tarjeta.view") &&
+                  matchesSearch(
+                    "Tarjetas",
+                    "Movimientos TC TD",
+                    "Tarjeta Crédito",
+                    "Tarjeta Débito",
+                    "Tesorería"
+                  ) && (
+                    <Link
+                      to="/tesoreria/movimientos-tarjetas-tesoreria"
+                      className={getLinkClassName(
+                        "/tesoreria/movimientos-tarjetas-tesoreria"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Movimientos TC/TD
+                    </Link>
+                  )}
+
+
+
+                {/* =============================================
+                    CHEQUES / ECHEQ
+                    ============================================= */}
+
+                {can("tesoreria:cheque.view") &&
+                  matchesSearch(
+                    "Cheques",
+                    "Echeq",
+                    "Cheques Echeq",
+                    "Tesorería"
+                  ) && (
+                    <Link
+                      to="/tesoreria/movimientos-echeq-tesoreria"
+                      className={getLinkClassName(
+                        "/tesoreria/movimientos-echeq-tesoreria"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Cheques / Echeq
+                    </Link>
+                  )}
+
+
+
+                {/* =============================================
+                    AJUSTES
+
+                    En el archivo real usa:
+                    tesoreria:view
+                    ============================================= */}
+
+                {can("tesoreria:view") &&
+                  matchesSearch(
+                    "Registros de ajustes",
+                    "Ajustes",
+                    "Comprobantes",
+                    "Tesorería"
+                  ) && (
+                    <Link
+                      to="/tesoreria/ajustes-comprobantes"
+                      className={getLinkClassName(
+                        "/tesoreria/ajustes-comprobantes"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Registros de ajustes
+                    </Link>
+                  )}
+
+
+
+                {/* =============================================
+                    GASTOS ESTIMADOS
+                    ============================================= */}
 
                 {(can("tesoreria:gastosEstimados.view") ||
                   can("tesoreria:gastosEstimados.import")) &&
                   matchesSearch(
                     "Gastos Estimados",
+                    "Listar Gastos Estimados",
                     "Importar Gastos Estimados",
                     "Tesorería"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setGastosEstimadosItem(
@@ -3278,7 +4724,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Gastos Estimados{" "}
+                          Gastos Estimados
+
                           <Caret
                             open={
                               gastosEstimadosItem ||
@@ -3288,6 +4735,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           gastosEstimadosItem ||
@@ -3295,6 +4743,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         }
                       >
                         <div className="ml-3 sb-sub">
+
 
                           {can("tesoreria:gastosEstimados.view") &&
                             matchesSearch(
@@ -3311,6 +4760,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                                 Listar Gastos Estimados
                               </Link>
                             )}
+
 
                           {can("tesoreria:gastosEstimados.import") &&
                             matchesSearch(
@@ -3330,27 +4780,13 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
-
-                {/* VENCIMIENTOS
-                    Se mantiene comentado como en el original. */}
-
-                {/*
-                {can("tesoreria:vencimientos.view") && (
-                  <Link
-                    to="/vencimientos"
-                    className={getLinkClassName("/vencimientos")}
-                    onClick={handleLinkClick}
-                  >
-                    Vencimientos
-                  </Link>
-                )}
-                */}
-
               </>
             )}
+
 
 
             {/* =================================================
@@ -3359,20 +4795,27 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showFacturacionItems && (
               <>
+
                 <div className="sb-section-title">
                   <MdPointOfSale className="sb-section-title-icon" />
                   <span>Facturación</span>
                 </div>
-                {/* VENTAS */}
+
+
+                {/* =============================================
+                    VENTAS
+                    ============================================= */}
 
                 {(can("facturacion:ventas.clientes.view") ||
                   can("facturacion:ventas.facturar")) &&
                   matchesSearch(
                     "Ventas",
                     "Clientes",
-                    "Facturación"
+                    "Facturación",
+                    "Facturacion"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setVentasFacturacionItem(
@@ -3384,7 +4827,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Ventas{" "}
+                          Ventas
+
                           <Caret
                             open={
                               ventasFacturacionItem ||
@@ -3394,6 +4838,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           ventasFacturacionItem ||
@@ -3401,6 +4846,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         }
                       >
                         <div className="ml-3 sb-sub">
+
 
                           {can("facturacion:ventas.clientes.view") &&
                             matchesSearch(
@@ -3419,9 +4865,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               </Link>
                             )}
 
+
                           {can("facturacion:ventas.facturar") &&
                             matchesSearch(
                               "Facturación",
+                              "Facturacion",
                               "Ventas"
                             ) && (
                               <Link
@@ -3437,11 +4885,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
 
-                {/* COMPRAS */}
+
+                {/* =============================================
+                    COMPRAS
+                    ============================================= */}
 
                 {(can("facturacion:compras.proveedores.view") ||
                   can("facturacion:compras.facturar") ||
@@ -3452,11 +4904,12 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     "Compras",
                     "Proveedores",
                     "Facturación",
-                    "Pagos",
-                    "Cuenta Corriente",
+                    "Pagos a Proveedores",
+                    "Cuentas Corrientes",
                     "Situación Financiera"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setComprasFacturacionItem(
@@ -3468,7 +4921,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Compras{" "}
+                          Compras
+
                           <Caret
                             open={
                               comprasFacturacionItem ||
@@ -3478,6 +4932,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           comprasFacturacionItem ||
@@ -3486,10 +4941,12 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       >
                         <div className="ml-3 sb-sub">
 
+
                           {can("facturacion:compras.proveedores.view") &&
                             matchesSearch(
                               "Proveedores",
-                              "Compras"
+                              "Compras",
+                              "Facturación"
                             ) && (
                               <Link
                                 to="/comprasfacturacion/proveedores"
@@ -3502,9 +4959,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               </Link>
                             )}
 
+
                           {can("facturacion:compras.facturar") &&
                             matchesSearch(
                               "Facturación",
+                              "Facturacion",
                               "Compras"
                             ) && (
                               <Link
@@ -3518,38 +4977,42 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               </Link>
                             )}
 
+
                           {can("facturacion:compras.pagos") &&
                             matchesSearch(
+                              "Pagos a Proveedores",
                               "Pagos",
                               "Compras"
                             ) && (
                               <Link
-                                to="/comprasfacturacion/pagos"
+                                to="/comprasfacturacion/ordendepago"
                                 className={getLinkClassName(
-                                  "/comprasfacturacion/pagos"
+                                  "/comprasfacturacion/ordendepago"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Pagos
+                                Pagos a Proveedores
                               </Link>
                             )}
 
+
                           {can("facturacion:compras.ctacte.view") &&
                             matchesSearch(
-                              "Cuenta Corriente",
-                              "Cta Cte",
+                              "Ctas Ctes Proveedores",
+                              "Cuentas Corrientes Proveedores",
                               "Compras"
                             ) && (
                               <Link
-                                to="/comprasfacturacion/ctacte"
+                                to="/comprasfacturacion/ctasctes"
                                 className={getLinkClassName(
-                                  "/comprasfacturacion/ctacte"
+                                  "/comprasfacturacion/ctasctes"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Cuenta Corriente
+                                Ctas. Ctes. Proveedores
                               </Link>
                             )}
+
 
                           {can("facturacion:compras.situacionFinanciera.view") &&
                             matchesSearch(
@@ -3558,9 +5021,9 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               "Compras"
                             ) && (
                               <Link
-                                to="/comprasfacturacion/situacionfinanciera"
+                                to="/sitfinanciera"
                                 className={getLinkClassName(
-                                  "/comprasfacturacion/situacionfinanciera"
+                                  "/sitfinanciera"
                                 )}
                                 onClick={handleLinkClick}
                               >
@@ -3570,11 +5033,33 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
+
+                {/* =============================================
+                    PAGOS PROGRAMADOS
+
+                    Está comentado en el archivo original.
+                    Se mantiene fuera del menú.
+                    ============================================= */}
+
+                {/*
+                <Link
+                  to="/tesoreria/pagos-programados"
+                  className={getLinkClassName(
+                    "/tesoreria/pagos-programados"
+                  )}
+                  onClick={handleLinkClick}
+                >
+                  Pagos Programados
+                </Link>
+                */}
+
               </>
             )}
+
 
 
             {/* =================================================
@@ -3583,14 +5068,168 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showSueldosItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiUsers className="sb-section-title-icon" />
                   <span>Sueldos</span>
                 </div>
+
+
+                {/* =============================================
+                    OPCIONES COMENTADAS EN EL ARCHIVO ORIGINAL
+
+                    No las reactivamos.
+                    ============================================= */}
+
+                {/*
+                {can("sueldos:telefono.assign") && (
+                  <Link
+                    to="/sueldostesoreria/asignartelefono"
+                    className={getLinkClassName(
+                      "/sueldostesoreria/asignartelefono"
+                    )}
+                    onClick={handleLinkClick}
+                  >
+                    Asignar Teléfono
+                  </Link>
+                )}
+
+
+                {can("sueldos:datosEmpleado.assign") && (
+                  <Link
+                    to="/sueldostesoreria/asignardatosempleado"
+                    className={getLinkClassName(
+                      "/sueldostesoreria/asignardatosempleado"
+                    )}
+                    onClick={handleLinkClick}
+                  >
+                    Asignar Datos Empleado
+                  </Link>
+                )}
+                */}
+
+
+                {/* =============================================
+                    TIPOS DE ADICIONAL FIJOS
+                    ============================================= */}
+
+                {can("sueldos:adicionalFijo.tipo.manage") &&
+                  matchesSearch(
+                    "Tipos de adicional fijos",
+                    "Adicional Fijo",
+                    "Sueldos"
+                  ) && (
+                    <Link
+                      to="/sueldostesoreria/adicionalfijotipo"
+                      className={getLinkClassName(
+                        "/sueldostesoreria/adicionalfijotipo"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Tipos de adicional fijos
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    ASIGNAR ADICIONAL FIJO
+                    ============================================= */}
+
+                {can("sueldos:adicionalFijo.assign") &&
+                  matchesSearch(
+                    "Asignar Adicional Fijo",
+                    "Adicional Fijo",
+                    "Sueldos"
+                  ) && (
+                    <Link
+                      to="/sueldostesoreria/asignaradicionalfijo"
+                      className={getLinkClassName(
+                        "/sueldostesoreria/asignaradicionalfijo"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Asignar Adicional Fijo
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    IMPORTAR ITEMS RECIBO
+                    ============================================= */}
+
+                {can("sueldos:recibo.items.import") &&
+                  matchesSearch(
+                    "Importar items Recibo",
+                    "Items Recibo",
+                    "Recibos",
+                    "Sueldos"
+                  ) && (
+                    <Link
+                      to="/sueldostesoreria/recibosimportmanager"
+                      className={getLinkClassName(
+                        "/sueldostesoreria/recibosimportmanager"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Importar items Recibo
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    IMPORTAR VALES Y ADELANTOS
+                    ============================================= */}
+
+                {can("sueldos:variables.import") &&
+                  matchesSearch(
+                    "Importar Vales y Adelantos",
+                    "Vales",
+                    "Adelantos",
+                    "Sueldos"
+                  ) && (
+                    <Link
+                      to="/sueldostesoreria/importaritemsvariables"
+                      className={getLinkClassName(
+                        "/sueldostesoreria/importaritemsvariables"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Importar Vales y Adelantos
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    LISTAR ADICIONALES VARIABLES
+                    ============================================= */}
+
+                {can("sueldos:variables.view") &&
+                  matchesSearch(
+                    "Listar Adicionales Variables",
+                    "Adicionales Variables",
+                    "Sueldos"
+                  ) && (
+                    <Link
+                      to="/sueldostesoreria/listaradicionalesvariables"
+                      className={getLinkClassName(
+                        "/sueldostesoreria/listaradicionalesvariables"
+                      )}
+                      onClick={handleLinkClick}
+                    >
+                      Listar Adicionales Variables
+                    </Link>
+                  )}
+
+
+                {/* =============================================
+                    LIQUIDACIÓN MENSUAL
+                    ============================================= */}
+
                 {can("sueldos:liquidacion.run") &&
                   matchesSearch(
                     "Liquidación Mensual",
                     "Liquidacion Mensual",
+                    "Liquidación",
                     "Sueldos"
                   ) && (
                     <Link
@@ -3605,10 +5244,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
+                {/* =============================================
+                    PAGO DE SUELDOS
+                    ============================================= */}
+
                 {can("sueldos:pago.tesoreria") &&
                   matchesSearch(
                     "Pago de Sueldos",
-                    "Pago de Sueldos Tes",
+                    "Pago de Sueldos Tesorería",
                     "Sueldos"
                   ) && (
                     <Link
@@ -3623,10 +5266,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
+                {/* =============================================
+                    ADELANTOS
+                    ============================================= */}
+
                 {can("sueldos:adelantos.tesoreria") &&
                   matchesSearch(
                     "Adelantos",
-                    "Adelantos Tes",
+                    "Adelantos Tesorería",
                     "Sueldos"
                   ) && (
                     <Link
@@ -3641,12 +5288,31 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   )}
 
 
-                {can("sueldos:adelantos.tesoreria") &&
+                {/* =============================================
+                    PRÉSTAMOS A EMPLEADOS
+
+                    CORRECCIÓN INTENCIONAL:
+
+                    En el SideBar fuente aparece protegido
+                    nuevamente con:
+                    sueldos:adelantos.tesoreria
+
+                    Pero para este módulo habíamos definido
+                    el permiso específico:
+
+                    sueldos:prestamos.tesoreria
+
+                    Conservamos la ruta real y usamos
+                    el permiso específico.
+                    ============================================= */}
+
+                {can("sueldos:prestamos.tesoreria") &&
                   matchesSearch(
                     "Prestamos a Empleados",
                     "Préstamos a Empleados",
                     "Prestamos",
                     "Préstamos",
+                    "Empleados",
                     "Sueldos"
                   ) && (
                     <Link
@@ -3665,756 +5331,21 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
 
             {/* =================================================
-                A PARTIR DE AQUÍ CONTINÚA LA PARTE 6
+                LA PARTE 8 COMIENZA AQUÍ
 
-                RINDE
-                INFO DE CAJA
                 GESTIÓN DE MEDIAS
-                RESTO DEL SIDEBAR
-                CIERRE DEL COMPONENTE
+                INFO SUCURSALES
+                REVISIÓN MOVIMIENTOS
+                FOOTER / CIERRE DEL COMPONENTE
                 ================================================= */}
 
             {/* =================================================
+                PARTE 8
+                GESTIÓN DE MEDIAS
                 INFO SUCURSALES
+                REVISIÓN MOVIMIENTOS
+                FOOTER
                 ================================================= */}
-
-            {!showMainItems &&
-              !showGestionItems &&
-              !showGestionOperativaItems &&
-              !showConfigItems &&
-              !showAuditoriaAtencionItems &&
-              !showDocumentacionItems &&
-              !showInspeccionesItems &&
-              !showEvaluacionItems &&
-              !showFidelizacionItems &&
-              !showInteligenciaItems &&
-              !showLegajosItems &&
-              !showConciliacionItems &&
-              !showIVAItems &&
-              !showAsistenciaItems &&
-              !showCajaItems &&
-              !showFacturacionItems &&
-              !showSueldosItems &&
-              !showStaticsItems && (
-                <>
-
-                  <div className="sb-section-title">
-                    <BsBuildings className="sb-section-title-icon" />
-                    <span>Info Sucursales</span>
-                  </div>
-
-                  {/* =============================================
-                      VENTAS RINDE
-                      ============================================= */}
-
-                  {(can(
-                    "stats:sales.comparative.view",
-                    "stats:sales.total.view",
-                    "stats:sales.byCustomer.view",
-                    "stats:sales.deleted.view",
-                    "stats:sales.discount.view",
-                    "stats:sales.byArticle.view",
-                    "stats:sales.byUser.view",
-                    "stats:sales.kgByBranch.view",
-                    "stats:sales.ticketCount.view"
-                  )) &&
-                    matchesSearch(
-                      "Ventas Rinde",
-                      "Ventas Comparativo",
-                      "Ventas Totales",
-                      "Ventas por Cliente",
-                      "Ventas Anuladas",
-                      "Ventas con Dcto",
-                      "Ventas por Art",
-                      "Ventas por Usuario",
-                      "Kg por Sucursal",
-                      "Cantidad Tickets"
-                    ) && (
-                      <>
-                        <Nav.Item
-                          onClick={() =>
-                            setSellRinde(!sellRinde)
-                          }
-                        >
-                          <Link
-                            to="#"
-                            className="nav-link"
-                          >
-                            Ventas Rinde{" "}
-                            <Caret
-                              open={
-                                sellRinde ||
-                                searchActive
-                              }
-                            />
-                          </Link>
-                        </Nav.Item>
-
-                        <Collapse
-                          in={
-                            sellRinde ||
-                            searchActive
-                          }
-                        >
-                          <div className="ml-3 sb-sub">
-
-                            {can("stats:sales.comparative.view") &&
-                              matchesSearch(
-                                "Ventas Comparativo",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/totalcomparativo"
-                                  className={getLinkClassName(
-                                    "/sells/totalcomparativo"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ventas Comparativo
-                                </Link>
-                              )}
-
-                            {can("stats:sales.total.view") &&
-                              matchesSearch(
-                                "Ventas Totales",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/total"
-                                  className={getLinkClassName(
-                                    "/sells/total"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ventas Totales
-                                </Link>
-                              )}
-
-                            {can("stats:sales.byCustomer.view") &&
-                              matchesSearch(
-                                "Ventas por Cliente",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/customers"
-                                  className={getLinkClassName(
-                                    "/sells/customers"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ventas por Cliente
-                                </Link>
-                              )}
-
-                            {can("stats:sales.deleted.view") &&
-                              matchesSearch(
-                                "Ventas Anuladas",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/deleted"
-                                  className={getLinkClassName(
-                                    "/sells/deleted"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ventas Anuladas
-                                </Link>
-                              )}
-
-                            {can("stats:sales.discount.view") &&
-                              matchesSearch(
-                                "Ventas con Dcto",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/discount"
-                                  className={getLinkClassName(
-                                    "/sells/discount"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ventas con Dcto
-                                </Link>
-                              )}
-
-                            {can("stats:sales.byArticle.view") &&
-                              matchesSearch(
-                                "Ventas por Art",
-                                "Ventas por Artículo",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/articles"
-                                  className={getLinkClassName(
-                                    "/sells/articles"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ventas por Art
-                                </Link>
-                              )}
-
-                            {can("stats:sales.byUser.view") &&
-                              matchesSearch(
-                                "Ventas por Usuario",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/user"
-                                  className={getLinkClassName(
-                                    "/sells/user"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ventas por Usuario
-                                </Link>
-                              )}
-
-                            {can("stats:sales.kgByBranch.view") &&
-                              matchesSearch(
-                                "Kg por Sucursal",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/kg_branch"
-                                  className={getLinkClassName(
-                                    "/sells/kg_branch"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Kg por Sucursal
-                                </Link>
-                              )}
-
-                            {can("stats:sales.ticketCount.view") &&
-                              matchesSearch(
-                                "Cantidad Tickets",
-                                "Ventas Rinde"
-                              ) && (
-                                <Link
-                                  to="/sells/quantity"
-                                  className={getLinkClassName(
-                                    "/sells/quantity"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Cantidad Tickets
-                                </Link>
-                              )}
-
-                          </div>
-                        </Collapse>
-                      </>
-                    )}
-
-
-                  {/* =============================================
-                      INFO DE CAJA
-                      ============================================= */}
-
-                  {(can(
-                    "tesoreria:info.cajas.view",
-                    "tesoreria:info.gastos.view",
-                    "tesoreria:info.retiros.view",
-                    "tesoreria:info.vales.view",
-                    "tesoreria:info.cupones.view",
-                    "tesoreria:info.sueldos.view",
-                    "tesoreria:info.ingresos.view",
-                    "tesoreria:info.cierresZ.view",
-                    "tesoreria:info.ctacte.cliente.view",
-                    "tesoreria:info.ctacte.sucursal.view",
-                    "tesoreria:info.ctacte.detalle.view",
-                    "tesoreria:info.caja.detalle.view"
-                  )) &&
-                    matchesSearch(
-                      "Info de Caja",
-                      "Cajas",
-                      "Gastos",
-                      "Retiros",
-                      "Vales",
-                      "Cupones",
-                      "Sueldos",
-                      "Ingresos",
-                      "Cierres Z",
-                      "Cta Cte Cliente",
-                      "Ctas Ctes Suc",
-                      "Detalle Cta Cte",
-                      "Detalle de Caja"
-                    ) && (
-                      <>
-                        <Nav.Item
-                          onClick={() =>
-                            setInfoCaja(!infoCaja)
-                          }
-                        >
-                          <Link
-                            to="#"
-                            className="nav-link"
-                          >
-                            Info de Caja{" "}
-                            <Caret
-                              open={
-                                infoCaja ||
-                                searchActive
-                              }
-                            />
-                          </Link>
-                        </Nav.Item>
-
-                        <Collapse
-                          in={
-                            infoCaja ||
-                            searchActive
-                          }
-                        >
-                          <div className="ml-3 sb-sub">
-
-                            {can("tesoreria:info.cajas.view") &&
-                              matchesSearch(
-                                "Cajas",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/register"
-                                  className={getLinkClassName(
-                                    "/info/register"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Cajas
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.gastos.view") &&
-                              matchesSearch(
-                                "Gastos",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/expenses"
-                                  className={getLinkClassName(
-                                    "/info/expenses"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Gastos
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.retiros.view") &&
-                              matchesSearch(
-                                "Retiros",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/withdrawals"
-                                  className={getLinkClassName(
-                                    "/info/withdrawals"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Retiros
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.vales.view") &&
-                              matchesSearch(
-                                "Vales",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/vouchers"
-                                  className={getLinkClassName(
-                                    "/info/vouchers"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Vales
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.cupones.view") &&
-                              matchesSearch(
-                                "Cupones",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/creditcard"
-                                  className={getLinkClassName(
-                                    "/info/creditcard"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Cupones
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.sueldos.view") &&
-                              matchesSearch(
-                                "Sueldos",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/salaries"
-                                  className={getLinkClassName(
-                                    "/info/salaries"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Sueldos
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.ingresos.view") &&
-                              matchesSearch(
-                                "Ingresos",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/incomes"
-                                  className={getLinkClassName(
-                                    "/info/incomes"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ingresos
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.cierresZ.view") &&
-                              matchesSearch(
-                                "Cierres Z",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/cierrez"
-                                  className={getLinkClassName(
-                                    "/info/cierrez"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Cierres Z
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.ctacte.cliente.view") &&
-                              matchesSearch(
-                                "Cta Cte Cliente",
-                                "Cuenta Corriente Cliente",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/balanceaccount"
-                                  className={getLinkClassName(
-                                    "/info/balanceaccount"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Cta. Cte. Cliente
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.ctacte.sucursal.view") &&
-                              matchesSearch(
-                                "Ctas Ctes Suc",
-                                "Cuentas Corrientes Sucursales",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/balanceaccountbranch"
-                                  className={getLinkClassName(
-                                    "/info/balanceaccountbranch"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Ctas. Ctes. Suc.
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.ctacte.detalle.view") &&
-                              matchesSearch(
-                                "Detalle Cta Cte",
-                                "Detalle Cuenta Corriente",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/balanceaccountdetail"
-                                  className={getLinkClassName(
-                                    "/info/balanceaccountdetail"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Detalle Cta. Cte.
-                                </Link>
-                              )}
-
-                            {can("tesoreria:info.caja.detalle.view") &&
-                              matchesSearch(
-                                "Detalle de Caja",
-                                "Info de Caja"
-                              ) && (
-                                <Link
-                                  to="/info/detail"
-                                  className={getLinkClassName(
-                                    "/info/detail"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Detalle de Caja
-                                </Link>
-                              )}
-
-                          </div>
-                        </Collapse>
-                      </>
-                    )}
-
-
-                  {/* =============================================
-                      INFO DE RINDE
-                      ============================================= */}
-
-                  {(can(
-                    "rinde:formula.view",
-                    "rinde:formula.create",
-                    "rinde:percent.view",
-                    "rinde:percent.update",
-                    "rinde:prices.view",
-                    "rinde:prices.update",
-                    "inventario:inventarios.view",
-                    "inventario:inventarios.create",
-                    "inventario:movimientosInternos.view",
-                    "inventario:movimientosOtros.view",
-                    "inventario:movimientosOtros.create",
-                    "rinde:calculo.run",
-                    "rinde:list.view",
-                    "rinde:list.comparative.view",
-                    "rindeGeneral:calculo.run",
-                    "rindeGeneral:list.view",
-                    "rindeGeneral:list.global.view",
-                    "inventario:stock.control.view"
-                  )) &&
-                    matchesSearch(
-                      "Info de Rinde",
-                      "Formulas",
-                      "Crear Formulas",
-                      "Porcentajes",
-                      "Actualizar %",
-                      "Precios",
-                      "Actualizar Precios",
-                      "Inventarios",
-                      "Crear Inventario",
-                      "Mov Internos",
-                      "Fabrica y Ach",
-                      "Rinde"
-                    ) && (
-                      <>
-                        <Nav.Item
-                          onClick={() =>
-                            setInfoRinde(!infoRinde)
-                          }
-                        >
-                          <Link
-                            to="#"
-                            className="nav-link"
-                          >
-                            Info de Rinde{" "}
-                            <Caret
-                              open={
-                                infoRinde ||
-                                searchActive
-                              }
-                            />
-                          </Link>
-                        </Nav.Item>
-
-                        <Collapse
-                          in={
-                            infoRinde ||
-                            searchActive
-                          }
-                        >
-                          <div className="ml-3 sb-sub">
-
-                            {can("rinde:formula.view") &&
-                              matchesSearch(
-                                "Formulas",
-                                "Fórmulas",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/formulas"
-                                  className={getLinkClassName(
-                                    "/formulas"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Formulas
-                                </Link>
-                              )}
-
-                            {can("rinde:formula.create") &&
-                              matchesSearch(
-                                "Crear Formulas",
-                                "Crear Fórmulas",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/formulas/create"
-                                  className={getLinkClassName(
-                                    "/formulas/create"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Crear Formulas
-                                </Link>
-                              )}
-
-                            {can("rinde:percent.view") &&
-                              matchesSearch(
-                                "Porcentajes",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/percent"
-                                  className={getLinkClassName(
-                                    "/percent"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Porcentajes
-                                </Link>
-                              )}
-
-                            {can("rinde:percent.update") &&
-                              matchesSearch(
-                                "Actualizar %",
-                                "Porcentajes",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/percent_update"
-                                  className={getLinkClassName(
-                                    "/percent_update"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Actualizar %
-                                </Link>
-                              )}
-
-                            {can("rinde:prices.view") &&
-                              matchesSearch(
-                                "Precios",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/prices"
-                                  className={getLinkClassName(
-                                    "/prices"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Precios
-                                </Link>
-                              )}
-
-                            {can("rinde:prices.update") &&
-                              matchesSearch(
-                                "Actualizar Precios",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/prices_update"
-                                  className={getLinkClassName(
-                                    "/prices_update"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Actualizar Precios
-                                </Link>
-                              )}
-
-                            {can("inventario:inventarios.view") &&
-                              matchesSearch(
-                                "Inventarios",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/inventory/inventories"
-                                  className={getLinkClassName(
-                                    "/inventory/inventories"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Inventarios
-                                </Link>
-                              )}
-
-                            {can("inventario:inventarios.create") &&
-                              matchesSearch(
-                                "Crear Inventario",
-                                "Inventarios",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/inventory/create"
-                                  className={getLinkClassName(
-                                    "/inventory/create"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Crear Inventario
-                                </Link>
-                              )}
-
-                            {can("inventario:movimientosInternos.view") &&
-                              matchesSearch(
-                                "Mov Internos",
-                                "Movimientos Internos",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/inventory/movements"
-                                  className={getLinkClassName(
-                                    "/inventory/movements"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Mov. Internos
-                                </Link>
-                              )}
-
-                            {can("inventario:movimientosOtros.view") &&
-                              matchesSearch(
-                                "Fabrica y Ach",
-                                "Fábrica",
-                                "Achuras",
-                                "Info de Rinde"
-                              ) && (
-                                <Link
-                                  to="/inventory/movementsotherslist"
-                                  className={getLinkClassName(
-                                    "/inventory/movementsotherslist"
-                                  )}
-                                  onClick={handleLinkClick}
-                                >
-                                  Fabrica y Ach
-                                </Link>
-                              )}
-
-
-                            {/* Continúan las opciones de Rinde
-                                en la Parte 7 */}
-
-                          </div>
-                        </Collapse>
-                      </>
-                    )}
-
-                </>
-              )}
 
 
             {/* =================================================
@@ -4423,64 +5354,12 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
             {showGestionItems && (
               <>
+
                 <div className="sb-section-title">
                   <FiLayers className="sb-section-title-icon" />
                   <span>Gestión de Medias</span>
                 </div>
-                {/* REGISTRO DE HACIENDA */}
 
-                {can("gmedias:registro.view") &&
-                  matchesSearch(
-                    "Registro Hacienda",
-                    "Hacienda",
-                    "Gestión de Medias"
-                  ) && (
-                    <Link
-                      to="/registrohacienda"
-                      className={getLinkClassName(
-                        "/registrohacienda"
-                      )}
-                      onClick={handleLinkClick}
-                    >
-                      Registro Hacienda
-                    </Link>
-                  )}
-
-
-                {/* =================================================
-                    VENTAS MEDIAS
-
-                    Continúa en la Parte 7.
-                    ================================================= */}
-
-              </>
-            )}
-
-
-            {/* =================================================
-                A PARTIR DE AQUÍ CONTINÚA LA PARTE 7
-
-                RESTO DE INFO DE RINDE
-                VENTAS MEDIAS
-                PRODUCTOS
-                SUCURSALES
-                CLIENTES
-                FORMAS DE PAGO
-                COBRANZAS
-                CUENTAS CORRIENTES
-                STOCK
-                ORDENES
-                INGRESOS
-                REVISIÓN MOVIMIENTOS
-                CERRAR SESIÓN
-                ================================================= */}
-
-            {/* =================================================
-                GESTIÓN DE MEDIAS
-                ================================================= */}
-
-            {showGestionItems && (
-              <>
 
                 {/* =============================================
                     REGISTRO DE HACIENDA
@@ -4508,14 +5387,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     VENTAS MEDIAS
                     ============================================= */}
 
-                {(can("gmedias:ventas.view") ||
-                  can("gmedias:ventas.create")) &&
+                {(can("gmedias:venta.create") ||
+                  can("gmedias:venta.view")) &&
                   matchesSearch(
                     "Ventas Medias",
-                    "Ventas",
+                    "Crear Venta",
+                    "Listar Ventas",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setSellitem(!sellitem)
@@ -4525,7 +5406,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Ventas Medias{" "}
+                          Ventas Medias
+
                           <Caret
                             open={
                               sellitem ||
@@ -4535,6 +5417,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           sellitem ||
@@ -4543,25 +5426,9 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       >
                         <div className="ml-3 sb-sub">
 
-                          {can("gmedias:ventas.view") &&
+                          {can("gmedias:venta.create") &&
                             matchesSearch(
-                              "Ventas",
-                              "Ventas Medias"
-                            ) && (
-                              <Link
-                                to="/sells"
-                                className={getLinkClassName(
-                                  "/sells"
-                                )}
-                                onClick={handleLinkClick}
-                              >
-                                Ventas
-                              </Link>
-                            )}
-
-                          {can("gmedias:ventas.create") &&
-                            matchesSearch(
-                              "Nueva Venta",
+                              "Crear Venta",
                               "Ventas Medias"
                             ) && (
                               <Link
@@ -4571,27 +5438,58 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Nueva Venta
+                                Crear Venta
+                              </Link>
+                            )}
+
+
+                          {can("gmedias:venta.view") &&
+                            matchesSearch(
+                              "Listar Ventas",
+                              "Ventas Medias"
+                            ) && (
+                              <Link
+                                to="/sells"
+                                className={getLinkClassName(
+                                  "/sells"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Listar Ventas
                               </Link>
                             )}
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
 
                 {/* =============================================
                     PRODUCTOS
+
+                    ATENCIÓN:
+                    Los permisos reales son producto,
+                    en singular.
                     ============================================= */}
 
-                {(can("gmedias:productos.view") ||
-                  can("gmedias:productos.create")) &&
+                {(can("gmedias:producto.create") ||
+                  can("gmedias:producto.view") ||
+                  can("gmedias:producto.update") ||
+                  can("gmedias:producto.update.tropa") ||
+                  can("gmedias:producto.verify.tropa")) &&
                   matchesSearch(
                     "Productos",
+                    "Crear Productos",
+                    "Listar Productos",
+                    "Actualizar",
+                    "Actualizar por Tropa",
+                    "Verificar por Tropa",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setProditem(!proditem)
@@ -4601,7 +5499,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Productos{" "}
+                          Productos
+
                           <Caret
                             open={
                               proditem ||
@@ -4611,6 +5510,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           proditem ||
@@ -4619,7 +5519,25 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       >
                         <div className="ml-3 sb-sub">
 
-                          {can("gmedias:productos.view") &&
+
+                          {can("gmedias:producto.create") &&
+                            matchesSearch(
+                              "Crear Productos",
+                              "Productos"
+                            ) && (
+                              <Link
+                                to="/products/new"
+                                className={getLinkClassName(
+                                  "/products/new"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Crear Productos
+                              </Link>
+                            )}
+
+
+                          {can("gmedias:producto.view") &&
                             matchesSearch(
                               "Listar Productos",
                               "Productos"
@@ -4635,24 +5553,62 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               </Link>
                             )}
 
-                          {can("gmedias:productos.create") &&
+
+                          {can("gmedias:producto.update") &&
                             matchesSearch(
-                              "Nuevo Producto",
+                              "Actualizar",
                               "Productos"
                             ) && (
                               <Link
-                                to="/products/new"
+                                to="/products_update"
                                 className={getLinkClassName(
-                                  "/products/new"
+                                  "/products_update"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Nuevo Producto
+                                Actualizar
+                              </Link>
+                            )}
+
+
+                          {can("gmedias:producto.update.tropa") &&
+                            matchesSearch(
+                              "Actualizar por Tropa",
+                              "Productos",
+                              "Tropa"
+                            ) && (
+                              <Link
+                                to="/products_update_tropa"
+                                className={getLinkClassName(
+                                  "/products_update_tropa"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Actualizar por Tropa
+                              </Link>
+                            )}
+
+
+                          {can("gmedias:producto.verify.tropa") &&
+                            matchesSearch(
+                              "Verificar por Tropa",
+                              "Productos",
+                              "Tropa"
+                            ) && (
+                              <Link
+                                to="/products/verificar-tropa"
+                                className={getLinkClassName(
+                                  "/products/verificar-tropa"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Verificar por Tropa
                               </Link>
                             )}
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -4661,13 +5617,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     SUCURSALES
                     ============================================= */}
 
-                {(can("gmedias:sucursales.view") ||
-                  can("gmedias:sucursales.create")) &&
+                {can("gmedias:sucursal.view") &&
                   matchesSearch(
                     "Sucursales",
+                    "Listar Sucursales",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setSucitem(!sucitem)
@@ -4677,7 +5634,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Sucursales{" "}
+                          Sucursales
+
                           <Caret
                             open={
                               sucitem ||
@@ -4687,6 +5645,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           sucitem ||
@@ -4695,11 +5654,10 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       >
                         <div className="ml-3 sb-sub">
 
-                          {can("gmedias:sucursales.view") &&
-                            matchesSearch(
-                              "Listar Sucursales",
-                              "Sucursales"
-                            ) && (
+                          {matchesSearch(
+                            "Listar Sucursales",
+                            "Sucursales"
+                          ) && (
                               <Link
                                 to="/branches"
                                 className={getLinkClassName(
@@ -4711,24 +5669,9 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               </Link>
                             )}
 
-                          {can("gmedias:sucursales.create") &&
-                            matchesSearch(
-                              "Nueva Sucursal",
-                              "Sucursales"
-                            ) && (
-                              <Link
-                                to="/branches/new"
-                                className={getLinkClassName(
-                                  "/branches/new"
-                                )}
-                                onClick={handleLinkClick}
-                              >
-                                Nueva Sucursal
-                              </Link>
-                            )}
-
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -4737,13 +5680,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     CLIENTES
                     ============================================= */}
 
-                {(can("gmedias:clientes.view") ||
-                  can("gmedias:clientes.create")) &&
+                {(can("gmedias:cliente.create") ||
+                  can("gmedias:cliente.view")) &&
                   matchesSearch(
                     "Clientes",
+                    "Crear Cliente",
+                    "Listar Clientes",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setCustitem(!custitem)
@@ -4753,7 +5699,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Clientes{" "}
+                          Clientes
+
                           <Caret
                             open={
                               custitem ||
@@ -4763,6 +5710,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           custitem ||
@@ -4771,7 +5719,24 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       >
                         <div className="ml-3 sb-sub">
 
-                          {can("gmedias:clientes.view") &&
+                          {can("gmedias:cliente.create") &&
+                            matchesSearch(
+                              "Crear Cliente",
+                              "Clientes"
+                            ) && (
+                              <Link
+                                to="/customers/new"
+                                className={getLinkClassName(
+                                  "/customers/new"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Crear Cliente
+                              </Link>
+                            )}
+
+
+                          {can("gmedias:cliente.view") &&
                             matchesSearch(
                               "Listar Clientes",
                               "Clientes"
@@ -4787,24 +5752,9 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               </Link>
                             )}
 
-                          {can("gmedias:clientes.create") &&
-                            matchesSearch(
-                              "Nuevo Cliente",
-                              "Clientes"
-                            ) && (
-                              <Link
-                                to="/customers/new"
-                                className={getLinkClassName(
-                                  "/customers/new"
-                                )}
-                                onClick={handleLinkClick}
-                              >
-                                Nuevo Cliente
-                              </Link>
-                            )}
-
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -4813,13 +5763,16 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     FORMAS DE PAGO
                     ============================================= */}
 
-                {(can("gmedias:formasPago.view") ||
-                  can("gmedias:formasPago.create")) &&
+                {(can("gmedias:formaPago.create") ||
+                  can("gmedias:formaPago.view")) &&
                   matchesSearch(
                     "Formas de Pago",
+                    "Crear Forma Pago",
+                    "Listar Formas Pago",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setWaypayitem(!waypitem)
@@ -4829,7 +5782,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Formas de Pago{" "}
+                          Formas de Pago
+
                           <Caret
                             open={
                               waypitem ||
@@ -4839,6 +5793,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           waypitem ||
@@ -4847,40 +5802,42 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       >
                         <div className="ml-3 sb-sub">
 
-                          {can("gmedias:formasPago.view") &&
+                          {can("gmedias:formaPago.create") &&
                             matchesSearch(
-                              "Listar Formas de Pago",
+                              "Crear Forma Pago",
                               "Formas de Pago"
                             ) && (
                               <Link
-                                to="/waypayments"
+                                to="/waypays/new"
                                 className={getLinkClassName(
-                                  "/waypayments"
+                                  "/waypays/new"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Listar Formas de Pago
+                                Crear Forma Pago
                               </Link>
                             )}
 
-                          {can("gmedias:formasPago.create") &&
+
+                          {can("gmedias:formaPago.view") &&
                             matchesSearch(
-                              "Nueva Forma de Pago",
+                              "Listar Formas Pago",
                               "Formas de Pago"
                             ) && (
                               <Link
-                                to="/waypayments/new"
+                                to="/waypays"
                                 className={getLinkClassName(
-                                  "/waypayments/new"
+                                  "/waypays"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Nueva Forma de Pago
+                                Listar Formas Pago
                               </Link>
                             )}
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -4889,74 +5846,56 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     COBRANZAS
                     ============================================= */}
 
-                {(can("gmedias:cobranzas.view") ||
-                  can("gmedias:cobranzas.create")) &&
+                {can("gmedias:cobranza.view") &&
                   matchesSearch(
                     "Cobranzas",
+                    "Listar Cobranzas",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
-                          setReceiptitem(!receiptitem)
+                          setDebtitem(!debtitem)
                         }
                       >
                         <Link
                           to="#"
                           className="nav-link"
                         >
-                          Cobranzas{" "}
+                          Cobranzas
+
                           <Caret
                             open={
-                              receiptitem ||
+                              debtitem ||
                               searchActive
                             }
                           />
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
-                          receiptitem ||
+                          debtitem ||
                           searchActive
                         }
                       >
                         <div className="ml-3 sb-sub">
 
-                          {can("gmedias:cobranzas.view") &&
-                            matchesSearch(
-                              "Cobranzas",
-                              "Listar Cobranzas"
-                            ) && (
-                              <Link
-                                to="/receipts"
-                                className={getLinkClassName(
-                                  "/receipts"
-                                )}
-                                onClick={handleLinkClick}
-                              >
-                                Cobranzas
-                              </Link>
+                          <Link
+                            to="/debts"
+                            className={getLinkClassName(
+                              "/debts"
                             )}
-
-                          {can("gmedias:cobranzas.create") &&
-                            matchesSearch(
-                              "Nueva Cobranza",
-                              "Cobranzas"
-                            ) && (
-                              <Link
-                                to="/receipts/new"
-                                className={getLinkClassName(
-                                  "/receipts/new"
-                                )}
-                                onClick={handleLinkClick}
-                              >
-                                Nueva Cobranza
-                              </Link>
-                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Listar Cobranzas
+                          </Link>
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -4969,11 +5908,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   can("gmedias:ctacte.view")) &&
                   matchesSearch(
                     "Cuentas Corrientes",
-                    "Cuenta Corriente",
                     "Saldos",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setCtacteitem(!ctacteitem)
@@ -4983,7 +5922,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Cuentas Corrientes{" "}
+                          Cuentas Corrientes
+
                           <Caret
                             open={
                               ctacteitem ||
@@ -4993,6 +5933,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
                           ctacteitem ||
@@ -5000,6 +5941,25 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                         }
                       >
                         <div className="ml-3 sb-sub">
+
+                          {/*
+                          IMPORTANTE:
+                          En el archivo fuente este link está
+                          comentado. NO lo reactivamos.
+
+                          {can("gmedias:ctacte.registros") && (
+                            <Link
+                              to="/accounts/new"
+                              className={getLinkClassName(
+                                "/accounts/new"
+                              )}
+                              onClick={handleLinkClick}
+                            >
+                              Registros
+                            </Link>
+                          )}
+                          */}
+
 
                           {can("gmedias:ctacte.view") &&
                             matchesSearch(
@@ -5017,22 +5977,9 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               </Link>
                             )}
 
-                          {/*
-                          {can("gmedias:ctacte.registros") && (
-                            <Link
-                              to="/accounts/new"
-                              className={getLinkClassName(
-                                "/accounts/new"
-                              )}
-                              onClick={handleLinkClick}
-                            >
-                              Registros
-                            </Link>
-                          )}
-                          */}
-
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -5050,6 +5997,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setStockitem(!stockitem)
@@ -5059,7 +6007,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Stock{" "}
+                          Stock
+
                           <Caret
                             open={
                               stockitem ||
@@ -5068,6 +6017,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           />
                         </Link>
                       </Nav.Item>
+
 
                       <Collapse
                         in={
@@ -5093,6 +6043,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                               </Link>
                             )}
 
+
                           {can("gmedias:stock.central.view") &&
                             matchesSearch(
                               "Stock Central",
@@ -5111,6 +6062,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -5125,11 +6077,13 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   matchesSearch(
                     "Ordenes",
                     "Órdenes",
-                    "Nueva Orden",
-                    "Importar Excel",
+                    "Crear Orden",
+                    "Listar Ordenes",
+                    "Crear Orden Excel",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
                           setOrditem(!orditem)
@@ -5139,7 +6093,8 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           to="#"
                           className="nav-link"
                         >
-                          Ordenes{" "}
+                          <span>Ordenes</span>
+
                           <Caret
                             open={
                               orditem ||
@@ -5148,6 +6103,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           />
                         </Link>
                       </Nav.Item>
+
 
                       <Collapse
                         in={
@@ -5159,7 +6115,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
 
                           {can("gmedias:orden.create") &&
                             matchesSearch(
-                              "Nueva Orden",
+                              "Crear Orden",
                               "Ordenes"
                             ) && (
                               <Link
@@ -5169,14 +6125,15 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Nueva Orden
+                                Crear Orden
                               </Link>
                             )}
 
+
                           {can("gmedias:orden.view") &&
                             matchesSearch(
-                              "Ordenes",
-                              "Listado Ordenes"
+                              "Listar Ordenes",
+                              "Ordenes"
                             ) && (
                               <Link
                                 to="/orders"
@@ -5185,13 +6142,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Ordenes
+                                Listar Ordenes
                               </Link>
                             )}
 
+
                           {can("gmedias:orden.import.excel") &&
                             matchesSearch(
-                              "Importar Productos Excel",
+                              "Crear Orden Excel",
                               "Excel",
                               "Ordenes"
                             ) && (
@@ -5202,12 +6160,13 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Importar Productos Excel
+                                Crear Orden Excel
                               </Link>
                             )}
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -5216,74 +6175,100 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     INGRESOS
                     ============================================= */}
 
-                {(can("gmedias:ingresos.view") ||
-                  can("gmedias:ingresos.create")) &&
+                {(can("gmedias:ingreso.create") ||
+                  can("gmedias:ingreso.view") ||
+                  can("gmedias:ingreso.productos.view")) &&
                   matchesSearch(
                     "Ingresos",
+                    "Crear Ingreso",
+                    "Listar Ingresos",
+                    "Productos",
                     "Gestión de Medias"
                   ) && (
                     <>
+
                       <Nav.Item
                         onClick={() =>
-                          setDebtitem(!debtitem)
+                          setReceiptitem(!receiptitem)
                         }
                       >
                         <Link
                           to="#"
                           className="nav-link"
                         >
-                          Ingresos{" "}
+                          Ingresos
+
                           <Caret
                             open={
-                              debtitem ||
+                              receiptitem ||
                               searchActive
                             }
                           />
                         </Link>
                       </Nav.Item>
 
+
                       <Collapse
                         in={
-                          debtitem ||
+                          receiptitem ||
                           searchActive
                         }
                       >
                         <div className="ml-3 sb-sub">
 
-                          {can("gmedias:ingresos.view") &&
+                          {can("gmedias:ingreso.create") &&
                             matchesSearch(
-                              "Ingresos",
-                              "Listar Ingresos"
-                            ) && (
-                              <Link
-                                to="/debts"
-                                className={getLinkClassName(
-                                  "/debts"
-                                )}
-                                onClick={handleLinkClick}
-                              >
-                                Ingresos
-                              </Link>
-                            )}
-
-                          {can("gmedias:ingresos.create") &&
-                            matchesSearch(
-                              "Nuevo Ingreso",
+                              "Crear Ingreso",
                               "Ingresos"
                             ) && (
                               <Link
-                                to="/debts/new"
+                                to="/receipts/new"
                                 className={getLinkClassName(
-                                  "/debts/new"
+                                  "/receipts/new"
                                 )}
                                 onClick={handleLinkClick}
                               >
-                                Nuevo Ingreso
+                                Crear Ingreso
+                              </Link>
+                            )}
+
+
+                          {can("gmedias:ingreso.view") &&
+                            matchesSearch(
+                              "Listar Ingresos",
+                              "Ingresos"
+                            ) && (
+                              <Link
+                                to="/receipts"
+                                className={getLinkClassName(
+                                  "/receipts"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Listar Ingresos
+                              </Link>
+                            )}
+
+
+                          {can("gmedias:ingreso.productos.view") &&
+                            matchesSearch(
+                              "Productos",
+                              "Ingresos"
+                            ) && (
+                              <Link
+                                to="/receipts/products"
+                                className={getLinkClassName(
+                                  "/receipts/products"
+                                )}
+                                onClick={handleLinkClick}
+                              >
+                                Productos
                               </Link>
                             )}
 
                         </div>
                       </Collapse>
+
                     </>
                   )}
 
@@ -5291,63 +6276,560 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
             )}
 
 
+
             {/* =================================================
-                REVISIÓN MOVIMIENTOS
+                INFO SUCURSALES
+
+                Se muestra cuando salimos del menú principal
+                mediante toggleMainItems().
                 ================================================= */}
 
-            {(can("inventario:movimientosInternos.view") ||
-              can("inventario:movimientosOtros.view")) &&
-              matchesSearch(
-                "Revisión Movimientos",
-                "Revision Movimientos",
-                "Mov Internos",
-                "Fabrica y Ach",
-                "Produccion",
-                "Stock Fabrica",
-                "Transferencias",
-                "Nueva Transferencia"
-              ) && (
+            {!showMainItems &&
+              !showGestionItems &&
+              !showGestionOperativaItems &&
+              !showConfigItems &&
+              !showAuditoriaAtencionItems &&
+              !showDocumentacionItems &&
+              !showInspeccionesItems &&
+              !showEvaluacionItems &&
+              !showFidelizacionItems &&
+              !showLegajosItems &&
+              !showInteligenciaItems &&
+              !showStaticsItems &&
+              !showIVAItems &&
+              !showAsistenciaItems &&
+              !showCajaItems &&
+              !showFacturacionItems &&
+              !showSueldosItems &&
+              !showConciliacionItems && (
                 <>
+
+                  <div className="sb-section-title">
+                    <BsBuildings className="sb-section-title-icon" />
+                    <span>Info Sucursales</span>
+                  </div>
+
+
+                  {/* ===========================================
+                      VENTAS RINDE
+                      =========================================== */}
+
                   <Nav.Item
                     onClick={() =>
-                      setMovimientosOtros(
-                        !movimientosOtros
-                      )
+                      setSellRinde(!sellRinde)
                     }
-                    className="sb-top"
                   >
                     <Link
                       to="#"
                       className="nav-link"
                     >
-                      <FiFolder className="sb-ico" />
-
-                      <span>
-                        Revisión Movimientos
-                      </span>
+                      Ventas Rinde
 
                       <Caret
                         open={
-                          movimientosOtros ||
+                          sellRinde ||
                           searchActive
                         }
                       />
                     </Link>
                   </Nav.Item>
 
+
                   <Collapse
                     in={
-                      movimientosOtros ||
+                      sellRinde ||
                       searchActive
                     }
                   >
                     <div className="ml-3 sb-sub">
 
+
+                      {can("stats:sales.comparative.view") &&
+                        matchesSearch(
+                          "Ventas Comparativo",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/totalcomparativo"
+                            className={getLinkClassName(
+                              "/sells/totalcomparativo"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Ventas Comparativo
+                          </Link>
+                        )}
+
+
+                      {can("stats:sales.total.view") &&
+                        matchesSearch(
+                          "Ventas Totales",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/total"
+                            className={getLinkClassName(
+                              "/sells/total"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Ventas Totales
+                          </Link>
+                        )}
+
+
+                      {can("stats:sales.byCustomer.view") &&
+                        matchesSearch(
+                          "Ventas por Cliente",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/customers"
+                            className={getLinkClassName(
+                              "/sells/customers"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Ventas por Cliente
+                          </Link>
+                        )}
+
+
+                      {can("stats:sales.deleted.view") &&
+                        matchesSearch(
+                          "Ventas Anuladas",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/deleted"
+                            className={getLinkClassName(
+                              "/sells/deleted"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Ventas Anuladas
+                          </Link>
+                        )}
+
+
+                      {can("stats:sales.discount.view") &&
+                        matchesSearch(
+                          "Ventas con Dcto",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/discount"
+                            className={getLinkClassName(
+                              "/sells/discount"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Ventas con Dcto
+                          </Link>
+                        )}
+
+
+                      {can("stats:sales.byArticle.view") &&
+                        matchesSearch(
+                          "Ventas por Art",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/articles"
+                            className={getLinkClassName(
+                              "/sells/articles"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Ventas por Art
+                          </Link>
+                        )}
+
+
+                      {can("stats:sales.byUser.view") &&
+                        matchesSearch(
+                          "Ventas por Usuario",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/user"
+                            className={getLinkClassName(
+                              "/sells/user"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Ventas por Usuario
+                          </Link>
+                        )}
+
+
+                      {can("stats:sales.kgByBranch.view") &&
+                        matchesSearch(
+                          "Kg por Sucursal",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/kg_branch"
+                            className={getLinkClassName(
+                              "/sells/kg_branch"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Kg por Sucursal
+                          </Link>
+                        )}
+
+
+                      {can("stats:sales.ticketCount.view") &&
+                        matchesSearch(
+                          "Cantidad Tickets",
+                          "Ventas Rinde"
+                        ) && (
+                          <Link
+                            to="/sells/quantity"
+                            className={getLinkClassName(
+                              "/sells/quantity"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Cantidad Tickets
+                          </Link>
+                        )}
+
+                    </div>
+                  </Collapse>
+
+
+                  {/* ===========================================
+                      INFO DE CAJA
+                      =========================================== */}
+
+                  <Nav.Item
+                    onClick={() =>
+                      setInfoCaja(!infoCaja)
+                    }
+                  >
+                    <Link
+                      to="#"
+                      className="nav-link"
+                    >
+                      Info de Caja
+
+                      <Caret
+                        open={
+                          infoCaja ||
+                          searchActive
+                        }
+                      />
+                    </Link>
+                  </Nav.Item>
+
+
+                  <Collapse
+                    in={
+                      infoCaja ||
+                      searchActive
+                    }
+                  >
+                    <div className="ml-3 sb-sub">
+
+
+                      {can("tesoreria:info.cajas.view") &&
+                        matchesSearch("Cajas", "Info de Caja") && (
+                          <Link
+                            to="/info/register"
+                            className={getLinkClassName("/info/register")}
+                            onClick={handleLinkClick}
+                          >
+                            Cajas
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.gastos.view") &&
+                        matchesSearch("Gastos", "Info de Caja") && (
+                          <Link
+                            to="/info/expenses"
+                            className={getLinkClassName("/info/expenses")}
+                            onClick={handleLinkClick}
+                          >
+                            Gastos
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.retiros.view") &&
+                        matchesSearch("Retiros", "Info de Caja") && (
+                          <Link
+                            to="/info/withdrawals"
+                            className={getLinkClassName("/info/withdrawals")}
+                            onClick={handleLinkClick}
+                          >
+                            Retiros
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.vales.view") &&
+                        matchesSearch("Vales", "Info de Caja") && (
+                          <Link
+                            to="/info/vouchers"
+                            className={getLinkClassName("/info/vouchers")}
+                            onClick={handleLinkClick}
+                          >
+                            Vales
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.cupones.view") &&
+                        matchesSearch("Cupones", "Info de Caja") && (
+                          <Link
+                            to="/info/creditcard"
+                            className={getLinkClassName("/info/creditcard")}
+                            onClick={handleLinkClick}
+                          >
+                            Cupones
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.sueldos.view") &&
+                        matchesSearch("Sueldos", "Info de Caja") && (
+                          <Link
+                            to="/info/salaries"
+                            className={getLinkClassName("/info/salaries")}
+                            onClick={handleLinkClick}
+                          >
+                            Sueldos
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.ingresos.view") &&
+                        matchesSearch("Ingresos", "Info de Caja") && (
+                          <Link
+                            to="/info/incomes"
+                            className={getLinkClassName("/info/incomes")}
+                            onClick={handleLinkClick}
+                          >
+                            Ingresos
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.cierresZ.view") &&
+                        matchesSearch("Cierres Z", "Info de Caja") && (
+                          <Link
+                            to="/info/cierrez"
+                            className={getLinkClassName("/info/cierrez")}
+                            onClick={handleLinkClick}
+                          >
+                            Cierres Z
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.ctacte.cliente.view") &&
+                        matchesSearch("Cta Cte Cliente", "Info de Caja") && (
+                          <Link
+                            to="/info/balanceaccount"
+                            className={getLinkClassName("/info/balanceaccount")}
+                            onClick={handleLinkClick}
+                          >
+                            Cta. Cte. Cliente
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.ctacte.sucursal.view") &&
+                        matchesSearch("Ctas Ctes Suc", "Info de Caja") && (
+                          <Link
+                            to="/info/balanceaccountbranch"
+                            className={getLinkClassName(
+                              "/info/balanceaccountbranch"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Ctas. Ctes. Suc.
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.ctacte.detalle.view") &&
+                        matchesSearch("Detalle Cta Cte", "Info de Caja") && (
+                          <Link
+                            to="/info/balanceaccountdetail"
+                            className={getLinkClassName(
+                              "/info/balanceaccountdetail"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Detalle Cta. Cte.
+                          </Link>
+                        )}
+
+
+                      {can("tesoreria:info.caja.detalle.view") &&
+                        matchesSearch("Detalle de Caja", "Info de Caja") && (
+                          <Link
+                            to="/info/detail"
+                            className={getLinkClassName("/info/detail")}
+                            onClick={handleLinkClick}
+                          >
+                            Detalle de Caja
+                          </Link>
+                        )}
+
+                    </div>
+                  </Collapse>
+
+
+                  {/* ===========================================
+                      INFO DE RINDE
+                      =========================================== */}
+
+                  <Nav.Item
+                    onClick={() =>
+                      setInfoRinde(!infoRinde)
+                    }
+                  >
+                    <Link
+                      to="#"
+                      className="nav-link"
+                    >
+                      Info de Rinde
+
+                      <Caret
+                        open={
+                          infoRinde ||
+                          searchActive
+                        }
+                      />
+                    </Link>
+                  </Nav.Item>
+
+
+                  <Collapse
+                    in={
+                      infoRinde ||
+                      searchActive
+                    }
+                  >
+                    <div className="ml-3 sb-sub">
+
+
+                      {can("rinde:formula.view") &&
+                        matchesSearch("Formulas", "Info de Rinde") && (
+                          <Link
+                            to="/formulas"
+                            className={getLinkClassName("/formulas")}
+                            onClick={handleLinkClick}
+                          >
+                            Formulas
+                          </Link>
+                        )}
+
+
+                      {can("rinde:formula.create") &&
+                        matchesSearch("Crear Formulas", "Info de Rinde") && (
+                          <Link
+                            to="/formulas/create"
+                            className={getLinkClassName("/formulas/create")}
+                            onClick={handleLinkClick}
+                          >
+                            Crear Formulas
+                          </Link>
+                        )}
+
+
+                      {can("rinde:percent.view") &&
+                        matchesSearch("Porcentajes", "Info de Rinde") && (
+                          <Link
+                            to="/percent"
+                            className={getLinkClassName("/percent")}
+                            onClick={handleLinkClick}
+                          >
+                            Porcentajes
+                          </Link>
+                        )}
+
+
+                      {can("rinde:percent.update") &&
+                        matchesSearch("Actualizar %", "Info de Rinde") && (
+                          <Link
+                            to="/percent_update"
+                            className={getLinkClassName("/percent_update")}
+                            onClick={handleLinkClick}
+                          >
+                            Actualizar %
+                          </Link>
+                        )}
+
+
+                      {can("rinde:prices.view") &&
+                        matchesSearch("Precios", "Info de Rinde") && (
+                          <Link
+                            to="/prices"
+                            className={getLinkClassName("/prices")}
+                            onClick={handleLinkClick}
+                          >
+                            Precios
+                          </Link>
+                        )}
+
+
+                      {can("rinde:prices.update") &&
+                        matchesSearch(
+                          "Actualizar Precios",
+                          "Info de Rinde"
+                        ) && (
+                          <Link
+                            to="/prices_update"
+                            className={getLinkClassName("/prices_update")}
+                            onClick={handleLinkClick}
+                          >
+                            Actualizar Precios
+                          </Link>
+                        )}
+
+
+                      {can("inventario:inventarios.view") &&
+                        matchesSearch("Inventarios", "Info de Rinde") && (
+                          <Link
+                            to="/inventory/inventories"
+                            className={getLinkClassName(
+                              "/inventory/inventories"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Inventarios
+                          </Link>
+                        )}
+
+
+                      {can("inventario:inventarios.create") &&
+                        matchesSearch(
+                          "Crear Inventario",
+                          "Info de Rinde"
+                        ) && (
+                          <Link
+                            to="/inventory/create"
+                            className={getLinkClassName(
+                              "/inventory/create"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Crear Inventario
+                          </Link>
+                        )}
+
+
                       {can("inventario:movimientosInternos.view") &&
                         matchesSearch(
                           "Mov Internos",
                           "Movimientos Internos",
-                          "Revisión Movimientos"
+                          "Info de Rinde"
                         ) && (
                           <Link
                             to="/inventory/movements"
@@ -5360,12 +6842,11 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           </Link>
                         )}
 
+
                       {can("inventario:movimientosOtros.view") &&
                         matchesSearch(
                           "Fabrica y Ach",
-                          "Fábrica",
-                          "Achuras",
-                          "Revisión Movimientos"
+                          "Info de Rinde"
                         ) && (
                           <Link
                             to="/inventory/movementsotherslist"
@@ -5378,111 +6859,330 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                           </Link>
                         )}
 
-                      {can("inventario:movimientosOtros.view") &&
+
+                      {can("inventario:movimientosOtros.create") &&
                         matchesSearch(
-                          "Produccion",
-                          "Producción",
-                          "Fabrica",
-                          "Revisión Movimientos"
+                          "Crear Fabrica y Ach",
+                          "Info de Rinde"
                         ) && (
                           <Link
-                            to="/fabrica/produccion-lotes"
+                            to="/inventory/movementsothers"
                             className={getLinkClassName(
-                              "/fabrica/produccion-lotes"
+                              "/inventory/movementsothers"
                             )}
                             onClick={handleLinkClick}
                           >
-                            Produccion
+                            Crear Fabrica y Ach
                           </Link>
                         )}
 
-                      {can("inventario:movimientosOtros.view") &&
+
+                      {can("rinde:calculo.run") &&
                         matchesSearch(
-                          "Stock Fabrica",
-                          "Stock Fábrica",
-                          "Revisión Movimientos"
+                          "Calculo Rinde",
+                          "Cálculo Rinde",
+                          "Info de Rinde"
                         ) && (
                           <Link
-                            to="/fabrica/stock"
+                            to="/inventory/performance"
                             className={getLinkClassName(
-                              "/fabrica/stock"
+                              "/inventory/performance"
                             )}
                             onClick={handleLinkClick}
                           >
-                            Stock Fabrica
+                            Calculo Rinde
                           </Link>
                         )}
 
-                      {can("inventario:movimientosOtros.view") &&
-                        matchesSearch(
-                          "Transferencias",
-                          "Fabrica",
-                          "Revisión Movimientos"
-                        ) && (
+
+                      {can("rinde:list.view") &&
+                        matchesSearch("Rendimientos", "Info de Rinde") && (
                           <Link
-                            to="/fabrica/transferencias"
+                            to="/inventory/performancelist"
                             className={getLinkClassName(
-                              "/fabrica/transferencias"
+                              "/inventory/performancelist"
                             )}
                             onClick={handleLinkClick}
                           >
-                            Transferencias
+                            Rendimientos
                           </Link>
                         )}
 
-                      {can("inventario:movimientosOtros.view") &&
+
+                      {can("rinde:list.comparative.view") &&
                         matchesSearch(
-                          "Nueva Transferencia",
-                          "Transferir",
-                          "Fabrica",
-                          "Revisión Movimientos"
+                          "Rendimientos Comparativos",
+                          "Info de Rinde"
                         ) && (
                           <Link
-                            to="/fabrica/transferir"
+                            to="/inventory/performancelistcomparative"
                             className={getLinkClassName(
-                              "/fabrica/transferir"
+                              "/inventory/performancelistcomparative"
                             )}
                             onClick={handleLinkClick}
                           >
-                            Nueva Transferencia
+                            Rendimientos Comparativos
+                          </Link>
+                        )}
+
+
+                      {can("rindeGeneral:calculo.run") &&
+                        matchesSearch(
+                          "Calculo Rinde Consolidado",
+                          "Info de Rinde"
+                        ) && (
+                          <Link
+                            to="/inventory/performancegeneral/"
+                            className={getLinkClassName(
+                              "/inventory/performancegeneral/"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Calculo Rinde Consolidado
+                          </Link>
+                        )}
+
+
+                      {can("rindeGeneral:list.view") &&
+                        matchesSearch(
+                          "Rendimientos Consolidados",
+                          "Info de Rinde"
+                        ) && (
+                          <Link
+                            to="/inventory/performancegenerallist/"
+                            className={getLinkClassName(
+                              "/inventory/performancegenerallist/"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Rendimientos Consolidados
+                          </Link>
+                        )}
+
+
+                      {can("rindeGeneral:list.global.view") &&
+                        matchesSearch(
+                          "Rendimientos Gral",
+                          "Info de Rinde"
+                        ) && (
+                          <Link
+                            to="/inventory/performancelistgral"
+                            className={getLinkClassName(
+                              "/inventory/performancelistgral"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Rendimientos Gral
+                          </Link>
+                        )}
+
+
+                      {can("inventario:stock.control.view") &&
+                        matchesSearch(
+                          "Control Stock",
+                          "Info de Rinde"
+                        ) && (
+                          <Link
+                            to="/inventory/stock"
+                            className={getLinkClassName(
+                              "/inventory/stock"
+                            )}
+                            onClick={handleLinkClick}
+                          >
+                            Control Stock
                           </Link>
                         )}
 
                     </div>
                   </Collapse>
+
+
+                  {/* ===========================================
+                      REVISIÓN MOVIMIENTOS
+                      =========================================== */}
+
+                  {(can("inventario:movimientosInternos.view") ||
+                    can("inventario:movimientosOtros.view")) &&
+                    matchesSearch(
+                      "Revisión Movimientos",
+                      "Revision Movimientos",
+                      "Movimientos Internos",
+                      "Fabrica",
+                      "Produccion",
+                      "Stock Fabrica",
+                      "Transferencias",
+                      "Nueva Transferencia"
+                    ) && (
+                      <>
+
+                        <Nav.Item
+                          onClick={() =>
+                            setMovimientosOtros(
+                              !movimientosOtros
+                            )
+                          }
+                        >
+                          <Link
+                            to="#"
+                            className="nav-link"
+                          >
+                            Revisión Movimientos
+
+                            <Caret
+                              open={
+                                movimientosOtros ||
+                                searchActive
+                              }
+                            />
+                          </Link>
+                        </Nav.Item>
+
+
+                        <Collapse
+                          in={
+                            movimientosOtros ||
+                            searchActive
+                          }
+                        >
+                          <div className="ml-3 sb-sub">
+
+
+                            {can("inventario:movimientosInternos.view") &&
+                              matchesSearch(
+                                "Mov Internos",
+                                "Revisión Movimientos"
+                              ) && (
+                                <Link
+                                  to="/inventory/movements"
+                                  className={getLinkClassName(
+                                    "/inventory/movements"
+                                  )}
+                                  onClick={handleLinkClick}
+                                >
+                                  Mov. Internos
+                                </Link>
+                              )}
+
+
+                            {can("inventario:movimientosOtros.view") &&
+                              matchesSearch(
+                                "Fabrica y Ach",
+                                "Revisión Movimientos"
+                              ) && (
+                                <Link
+                                  to="/inventory/movementsotherslist"
+                                  className={getLinkClassName(
+                                    "/inventory/movementsotherslist"
+                                  )}
+                                  onClick={handleLinkClick}
+                                >
+                                  Fabrica y Ach
+                                </Link>
+                              )}
+
+
+                            {can("inventario:movimientosOtros.view") &&
+                              matchesSearch(
+                                "Produccion",
+                                "Producción",
+                                "Fabrica",
+                                "Revisión Movimientos"
+                              ) && (
+                                <Link
+                                  to="/fabrica/produccion-lotes"
+                                  className={getLinkClassName(
+                                    "/fabrica/produccion-lotes"
+                                  )}
+                                  onClick={handleLinkClick}
+                                >
+                                  Produccion
+                                </Link>
+                              )}
+
+
+                            {can("inventario:movimientosOtros.view") &&
+                              matchesSearch(
+                                "Stock Fabrica",
+                                "Stock Fábrica",
+                                "Revisión Movimientos"
+                              ) && (
+                                <Link
+                                  to="/fabrica/stock"
+                                  className={getLinkClassName(
+                                    "/fabrica/stock"
+                                  )}
+                                  onClick={handleLinkClick}
+                                >
+                                  Stock Fabrica
+                                </Link>
+                              )}
+
+
+                            {can("inventario:movimientosOtros.view") &&
+                              matchesSearch(
+                                "Transferencias",
+                                "Fabrica",
+                                "Revisión Movimientos"
+                              ) && (
+                                <Link
+                                  to="/fabrica/transferencias"
+                                  className={getLinkClassName(
+                                    "/fabrica/transferencias"
+                                  )}
+                                  onClick={handleLinkClick}
+                                >
+                                  Transferencias
+                                </Link>
+                              )}
+
+
+                            {can("inventario:movimientosOtros.view") &&
+                              matchesSearch(
+                                "Nueva Transferencia",
+                                "Transferir",
+                                "Fabrica",
+                                "Revisión Movimientos"
+                              ) && (
+                                <Link
+                                  to="/fabrica/transferir"
+                                  className={getLinkClassName(
+                                    "/fabrica/transferir"
+                                  )}
+                                  onClick={handleLinkClick}
+                                >
+                                  Nueva Transferencia
+                                </Link>
+                              )}
+
+                          </div>
+                        </Collapse>
+
+                      </>
+                    )}
+
                 </>
               )}
 
           </>
         )}
 
+
       </div>
 
 
-      {/* =====================================================
-          CERRAR SESIÓN
-          ===================================================== */}
+      {/* =================================================
+          FOOTER
+          ================================================= */}
 
       <div className="sb-footer">
 
-        <Nav.Item>
-
-          <button
-            className="nav-link"
-            style={{
-              color: "white",
-              whiteSpace: "nowrap",
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer"
-            }}
-            onClick={handleLogout}
-          >
-            CERRAR SESIÓN
-          </button>
-
-        </Nav.Item>
+        <button
+          className="nav-link"
+          style={{ color: "white", whiteSpace: "nowrap", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+          onClick={handleLogout}
+        >
+          CERRAR SESIÓN
+        </button>
 
       </div>
 
@@ -5490,4 +7190,5 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
   );
 };
 
-export default SideBar; 
+
+export default SideBar;
