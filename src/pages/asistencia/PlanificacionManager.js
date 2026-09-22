@@ -89,7 +89,7 @@ export default function PlanificacionManager() {
 
   const empleadosCtx = dataContext?.empleados || [];
   const sucursalesCtx = dataContext?.sucursales || [];
-  const conceptosCtx = dataContext?.conceptos || [];
+  const conceptosCtx = dataContext?.conceptos;
 
   const empleadosActivos = useMemo(() => {
     return (empleadosCtx || []).filter((item) => {
@@ -196,39 +196,59 @@ export default function PlanificacionManager() {
   const [datosEmpleadoList, setDatosEmpleadoList] = useState([]);
   const [jornadas, setJornadas] =
     useState([]);
-  // ---------- cargar conceptos una vez ----------
+  const [
+    ventas7DiasPorSucursal,
+    setVentas7DiasPorSucursal,
+  ] = useState({});
+
+  const [
+    loadingVentas7Dias,
+    setLoadingVentas7Dias,
+  ] = useState(false);
+  // ---------- cargar conceptos ----------
   useEffect(() => {
     let mounted = true;
+
     const cargarConceptos = async () => {
-      if (conceptosCtx?.length) {
-        setConceptos(conceptosCtx);
-        return;
-      }
       try {
         const r = await fetch(
           `${apiUrl}/conceptos?limit=1000&order=nombre&dir=ASC`,
-          { credentials: "include" }
+          {
+            credentials: "include",
+          }
         );
+
         const d = await r.json().catch(() => null);
-        if (!r.ok)
+
+        if (!r.ok) {
           throw new Error(
             d?.error || "No se pudieron obtener conceptos."
           );
+        }
+
         const arr = Array.isArray(d?.items)
           ? d.items
           : Array.isArray(d)
             ? d
             : [];
-        if (mounted) setConceptos(arr);
+
+        if (mounted) {
+          setConceptos(arr);
+        }
       } catch (e) {
-        console.warn("No se pudieron cargar conceptos:", e);
+        console.warn(
+          "No se pudieron cargar conceptos:",
+          e
+        );
       }
     };
+
     cargarConceptos();
+
     return () => {
       mounted = false;
     };
-  }, [conceptosCtx]);
+  }, [apiUrl]);
 
   const cargarDatosEmpleado = async () => {
     try {
@@ -271,8 +291,117 @@ export default function PlanificacionManager() {
     }
   };
 
+  const cargarVentasUltimos7Dias =
+    async () => {
+
+      setLoadingVentas7Dias(true);
+
+      try {
+
+        // Hoy
+        const hasta = new Date();
+
+        // Incluyendo hoy son 7 días:
+        // hoy + los 6 anteriores
+        const desde = new Date();
+
+        desde.setDate(
+          desde.getDate() - 6
+        );
+
+        const fechaDesde =
+          toIsoDate(desde);
+
+        const fechaHasta =
+          toIsoDate(hasta);
+
+        const response = await fetch(
+          `${apiUrl}/ventas/filtradas`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              fechaDesde,
+              fechaHasta,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "Error al obtener ventas"
+          );
+        }
+
+        const data =
+          await response.json();
+
+        const ventas =
+          Array.isArray(data)
+            ? data
+            : [];
+
+        // ---------------------------------
+        // TOTAL POR SUCURSAL
+        // ---------------------------------
+
+        const totales = {};
+
+        for (const venta of ventas) {
+
+          const sid =
+            Number(
+              venta.sucursal_id
+            );
+
+          if (!sid) {
+            continue;
+          }
+
+          const monto =
+            Number(
+              venta.monto || 0
+            );
+
+          if (!totales[sid]) {
+            totales[sid] = 0;
+          }
+
+          totales[sid] += monto;
+        }
+
+        setVentas7DiasPorSucursal(
+          totales
+        );
+
+      } catch (err) {
+
+        console.error(
+          "Error cargando ventas de los últimos 7 días:",
+          err
+        );
+
+        setVentas7DiasPorSucursal(
+          {}
+        );
+
+      } finally {
+
+        setLoadingVentas7Dias(false);
+
+      }
+    };
+
   useEffect(() => {
+
     cargarDatosEmpleado();
+
+    cargarVentasUltimos7Dias();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -335,6 +464,111 @@ export default function PlanificacionManager() {
       code: c?.codigo || `${conceptId}`,
       name: c?.nombre || c?.descripcion || c?.codigo || `${conceptId}`,
     };
+  };
+
+  // Indica si un evento corresponde al concepto FINDE
+  const esEventoFinde = (evento) => {
+    const concepto =
+      conceptosMap.get(
+        getEvConceptoId(evento)
+      );
+
+    const nombre = String(
+      concepto?.nombre || ""
+    )
+      .trim()
+      .toUpperCase();
+
+    return nombre === "FINDE";
+  };
+
+  const getSemanaRango = (dateIso) => {
+    const fecha = new Date(
+      `${dateIso}T00:00:00`
+    );
+
+    const dia = fecha.getDay();
+
+    // Diferencia hasta el lunes
+    const diferenciaLunes =
+      dia === 0
+        ? -6
+        : 1 - dia;
+
+    const lunes = new Date(fecha);
+
+    lunes.setDate(
+      fecha.getDate() +
+      diferenciaLunes
+    );
+
+    const domingo =
+      new Date(lunes);
+
+    domingo.setDate(
+      lunes.getDate() + 6
+    );
+
+    return {
+      desde: toIsoDate(lunes),
+      hasta: toIsoDate(domingo),
+    };
+  };
+
+  const tieneFindeEnSemana = (
+    empId,
+    dateIso
+  ) => {
+
+    const empleadoId =
+      Number(empId);
+
+    const {
+      desde,
+      hasta,
+    } = getSemanaRango(
+      dateIso
+    );
+
+    return (events || []).some(
+      (evento) => {
+
+        if (
+          getEvEmpleadoId(evento) !==
+          empleadoId
+        ) {
+          return false;
+        }
+
+        if (
+          !esEventoFinde(evento)
+        ) {
+          return false;
+        }
+
+        const eventoDesde =
+          evento.fecha_desde;
+
+        const eventoHasta =
+          evento.fecha_hasta ||
+          evento.fecha_desde;
+
+        if (
+          !eventoDesde ||
+          !eventoHasta
+        ) {
+          return false;
+        }
+
+        // El evento FINDE pertenece a esta
+        // semana si su período se superpone
+        // con lunes-domingo.
+        return (
+          eventoDesde <= hasta &&
+          eventoHasta >= desde
+        );
+      }
+    );
   };
 
   // empleado_id -> datosEmpleado (sucursal_id, franco_am, franco_pm)
@@ -933,15 +1167,96 @@ export default function PlanificacionManager() {
   }
 
   // Franco AM/PM info
-  function getFrancoInfo(empId, dateIso) {
-    const datos = datosEmpleadoMap.get(Number(empId));
-    if (!datos) {
-      return { isFrancoAM: false, isFrancoPM: false };
+  function getFrancoInfo(
+    empId,
+    dateIso
+  ) {
+
+    const empleadoId =
+      Number(empId);
+
+    const w =
+      weekdayNumber1to7(
+        dateIso
+      );
+
+    // =====================================
+    // ¿HAY FINDE EN ESTA SEMANA?
+    // =====================================
+
+    const tieneFinde =
+      tieneFindeEnSemana(
+        empleadoId,
+        dateIso
+      );
+
+    if (tieneFinde) {
+
+      // SÁBADO
+      //
+      // AM trabaja
+      // PM franco
+      if (w === 6) {
+        return {
+          isFrancoAM: false,
+          isFrancoPM: true,
+          tieneFinde: true,
+        };
+      }
+
+      // DOMINGO
+      //
+      // AM franco
+      // PM franco
+      if (w === 7) {
+        return {
+          isFrancoAM: true,
+          isFrancoPM: true,
+          tieneFinde: true,
+        };
+      }
+
+      // LUNES A VIERNES
+      //
+      // Durante esta semana especial
+      // NO usamos el franco habitual
+      // registrado del empleado.
+      return {
+        isFrancoAM: false,
+        isFrancoPM: false,
+        tieneFinde: true,
+      };
     }
-    const w = weekdayNumber1to7(dateIso); // 1..7
-    const isFrancoAM = Number(datos.franco_am) === w;
-    const isFrancoPM = Number(datos.franco_pm) === w;
-    return { isFrancoAM, isFrancoPM };
+
+
+    // =====================================
+    // SEMANA NORMAL
+    // =====================================
+
+    const datos =
+      datosEmpleadoMap.get(
+        empleadoId
+      );
+
+    if (!datos) {
+      return {
+        isFrancoAM: false,
+        isFrancoPM: false,
+        tieneFinde: false,
+      };
+    }
+
+    const isFrancoAM =
+      Number(datos.franco_am) === w;
+
+    const isFrancoPM =
+      Number(datos.franco_pm) === w;
+
+    return {
+      isFrancoAM,
+      isFrancoPM,
+      tieneFinde: false,
+    };
   }
 
   // ---------- buscar eventos + vacaciones ----------
@@ -1351,7 +1666,11 @@ export default function PlanificacionManager() {
           const isVacation = vacationDays.has(dateIso);
 
           // francos?
-          const { isFrancoAM, isFrancoPM } = getFrancoInfo(
+          const {
+            isFrancoAM,
+            isFrancoPM,
+            tieneFinde,
+          } = getFrancoInfo(
             empId,
             dateIso
           );
@@ -1360,13 +1679,36 @@ export default function PlanificacionManager() {
           const dow = new Date(dateIso + "T00:00:00").getDay(); // 0..6
           const isWeekend = dow === 0 || dow === 6;
 
+          const esSabadoFinde =
+            tieneFinde &&
+            dow === 6;
+
           // --- COLOR fondo ---
           let backgroundColor = "";
+
           if (isVacation) {
+
             backgroundColor = "red";
-          } else if (isFrancoAM || isFrancoPM) {
+
+          } else if (esSabadoFinde) {
+
+            // Semana con cambio de franco FINDE:
+            // el sábado se muestra visualmente
+            // completamente azul.
+            //
+            // El texto "PM" indica que el
+            // franco corresponde solo a la tarde.
             backgroundColor = "blue";
+
+          } else if (
+            isFrancoAM ||
+            isFrancoPM
+          ) {
+
+            backgroundColor = "blue";
+
           } else if (isWeekend) {
+
             backgroundColor = "yellow";
           }
 
@@ -1461,10 +1803,47 @@ export default function PlanificacionManager() {
     const sid = Number(s.id);
     const lista = empleadosPorSucursal.get(sid) || [];
 
+    const ventas7Dias =
+      Number(
+        ventas7DiasPorSucursal[sid] ||
+        0
+      );
+
+    const ventas7DiasTexto =
+      ventas7Dias.toLocaleString(
+        "es-AR",
+        {
+          style: "currency",
+          currency: "ARS",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      );
+
     if (!lista.length) {
       return (
         <div key={sid} className="mb-4">
-          <h5 className="mb-2">{s.nombre}</h5>
+          {/* <h5 className="mb-2">{s.nombre}</h5> */}
+          <h5 className="mb-2 d-flex align-items-center gap-3">
+
+            <span>
+              {s.nombre}
+            </span>
+
+            <span
+              className="text-success"
+              style={{
+                fontSize: "0.9rem",
+                fontWeight: 600,
+              }}
+            >
+              {loadingVentas7Dias
+                ? "Ventas: cargando..."
+                : `Ventas últimos 7 días: ${ventas7DiasTexto}`
+              }
+            </span>
+
+          </h5>
           <Alert variant="secondary" className="py-2">
             No hay empleados asignados a esta sucursal.
           </Alert>
@@ -1474,7 +1853,27 @@ export default function PlanificacionManager() {
 
     return (
       <div key={sid} className="table-wrapper mb-4">
-        <h5 className="mb-2">{s.nombre}</h5>
+        {/* <h5 className="mb-2">{s.nombre}</h5> */}
+        <h5 className="mb-2 d-flex align-items-center gap-3">
+
+          <span>
+            {s.nombre}
+          </span>
+
+          <span
+            className="text-success"
+            style={{
+              fontSize: "0.9rem",
+              fontWeight: 600,
+            }}
+          >
+            {loadingVentas7Dias
+              ? "Ventas: cargando..."
+              : `Ventas últimos 7 días: ${ventas7DiasTexto}`
+            }
+          </span>
+
+        </h5>
 
         <div className="table-scroll">
           <Table bordered size="sm" className="planificacion-table">
