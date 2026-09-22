@@ -26,7 +26,7 @@ const OrderFromExcel = () => {
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
-
+ 
   const handleUpload = async () => {
     if (!file || !categoria || !subcategoria) {
       setUploadSuccess(false);

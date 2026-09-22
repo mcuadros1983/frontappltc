@@ -7,7 +7,10 @@ import {
   Form,
   Button,
   Alert,
-  Spinner, Table
+  Spinner,
+  Table,
+  Modal,
+  ListGroup,
 } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 import "./PlanificacionManager.css";
@@ -118,6 +121,11 @@ export default function PlanificacionManager() {
   ] = useState(false);
 
   const [
+    ocultarSucursalesVacias,
+    setOcultarSucursalesVacias,
+  ] = useState(false);
+
+  const [
     showDatosEmpleadoModal,
     setShowDatosEmpleadoModal,
   ] = useState(false);
@@ -136,6 +144,17 @@ export default function PlanificacionManager() {
     eventoModalPayload,
     setEventoModalPayload,
   ] = useState(null);
+
+  const [
+    eventosSeleccionDia,
+    setEventosSeleccionDia,
+  ] = useState([]);
+
+  const [
+    showSeleccionEvento,
+    setShowSeleccionEvento,
+  ] = useState(false);
+
   // datos cargados dinámicamente
   const [events, setEvents] = useState([]); // eventos (códigos)
   const [vacaciones, setVacaciones] = useState([]); // vacaciones
@@ -551,6 +570,29 @@ export default function PlanificacionManager() {
     return sucursalesCtx || [];
   }, [sucursalId, sucursalesCtx]);
 
+  // Sucursales que se mostrarán en la planificación.
+  // Cuando está activo "Solo empleados sin sucursal",
+  // agregamos una sección virtual con id 0.
+  // const sucursalesPlanificacion =
+  //   useMemo(() => {
+
+  //     if (soloSinSucursal) {
+  //       return [
+  //         {
+  //           id: 0,
+  //           nombre: "Sin sucursal",
+  //           esSinSucursal: true,
+  //         },
+  //       ];
+  //     }
+
+  //     return sucursalesFiltradas;
+
+  //   }, [
+  //     soloSinSucursal,
+  //     sucursalesFiltradas,
+  //   ]);
+
   // empleado -> sucursal usando datosEmpleadoMap
   const getSucursalIdDeEmpleado = (empleado) => {
     const id = getEmpleadoId(empleado);
@@ -667,35 +709,172 @@ export default function PlanificacionManager() {
     setShowEventoModal(true);
   };
 
+  const abrirEditarEvento = (evento) => {
+    if (!evento?.id) {
+      return;
+    }
+
+    setEventoModalPayload({
+      id: evento.id,
+
+      fecha_desde:
+        evento.fecha_desde || "",
+
+      fecha_hasta:
+        evento.fecha_hasta || "",
+
+      concepto_id: Number(
+        evento.concepto_id ??
+        evento.concepto
+      ),
+
+      empleado_id: Number(
+        evento.empleado_id ??
+        evento.empleado
+      ),
+
+      sucursal_id: Number(
+        evento.sucursal_id ??
+        evento.sucursal
+      ),
+
+      observaciones:
+        evento.observaciones || "",
+    });
+
+    setShowEventoModal(true);
+  };
+
+  const manejarDobleClickEvento = (
+    eventosDelDia
+  ) => {
+    if (
+      !Array.isArray(eventosDelDia) ||
+      eventosDelDia.length === 0
+    ) {
+      return;
+    }
+
+    // Un solo evento:
+    // abrimos directamente.
+    if (eventosDelDia.length === 1) {
+      abrirEditarEvento(
+        eventosDelDia[0]
+      );
+
+      return;
+    }
+
+    // Más de un evento:
+    // mostramos selector.
+    setEventosSeleccionDia(
+      eventosDelDia
+    );
+
+    setShowSeleccionEvento(true);
+  };
+
   // Agrupamos empleados por sucursal
+  // utilizando la lista YA FILTRADA por:
+  // - empleado
+  // - sucursal
+  // - sin sucursal
   const empleadosPorSucursal = useMemo(() => {
     const map = new Map();
-    // inicializar con las sucursales filtradas
+
+    // Inicializamos las sucursales visibles
     for (const s of sucursalesFiltradas) {
       map.set(Number(s.id), []);
     }
-    // meter cada empleado en su sucursal asignada
-    for (const e of empleadosActivos || []) {
-      const sid = getSucursalIdDeEmpleado(e);
-      if (!sid) continue;
+
+    // Clave especial para empleados sin sucursal
+    map.set(0, []);
+
+    // IMPORTANTE:
+    // usamos empleadosPlanificacion,
+    // NO empleadosActivos
+    for (const item of empleadosPlanificacion) {
+      const {
+        empleado,
+        sucursalAsignadaId,
+      } = item;
+
+      const sid =
+        Number(sucursalAsignadaId) || 0;
+
       if (!map.has(sid)) {
         map.set(sid, []);
       }
-      map.get(sid).push(e);
+
+      map.get(sid).push(empleado);
     }
-    // ordenar empleados por nombre
+
+    // Orden alfabético
     for (const [sid, arr] of map.entries()) {
       arr.sort((a, b) =>
-        getEmpleadoNombre(a).localeCompare(getEmpleadoNombre(b))
+        getEmpleadoNombre(a).localeCompare(
+          getEmpleadoNombre(b),
+          "es",
+          {
+            sensitivity: "base",
+          }
+        )
       );
+
       map.set(sid, arr);
     }
+
     return map;
   }, [
     sucursalesFiltradas,
-    empleadosActivos,
-    datosEmpleadoMap,
+    empleadosPlanificacion,
   ]);
+
+  // Sucursales que finalmente se muestran
+  // en la planificación.
+  const sucursalesPlanificacion =
+    useMemo(() => {
+
+      // Modo especial:
+      // empleados que todavía no tienen sucursal.
+      if (soloSinSucursal) {
+        return [
+          {
+            id: 0,
+            nombre: "Sin sucursal",
+            esSinSucursal: true,
+          },
+        ];
+      }
+
+      let lista = [
+        ...sucursalesFiltradas
+      ];
+
+      // Si está activo el filtro,
+      // quitamos las sucursales que
+      // no tengan empleados visibles.
+      if (ocultarSucursalesVacias) {
+        lista = lista.filter(
+          (sucursal) => {
+            const empleados =
+              empleadosPorSucursal.get(
+                Number(sucursal.id)
+              ) || [];
+
+            return empleados.length > 0;
+          }
+        );
+      }
+
+      return lista;
+
+    }, [
+      soloSinSucursal,
+      sucursalesFiltradas,
+      ocultarSucursalesVacias,
+      empleadosPorSucursal,
+    ]);
 
   // ---------- helpers de eventos / vacaciones ----------
   // arma calendario empleado
@@ -1162,6 +1341,12 @@ export default function PlanificacionManager() {
           const codes = dayInfo.codes; // códigos cortos para mostrar
           const names = dayInfo.names; // nombres largos para tooltip
 
+          const eventosDelDia =
+            dayInfo.events || [];
+
+          const tieneEventos =
+            eventosDelDia.length > 0;
+
           // vacaciones?
           const isVacation = vacationDays.has(dateIso);
 
@@ -1232,9 +1417,27 @@ export default function PlanificacionManager() {
           return (
             <td
               key={dateIso}
-              className="franco-cell"
-              style={{ backgroundColor }}
-              title={tooltipText || ""} // <-- tooltip nativo
+              className={`franco-cell ${tieneEventos
+                ? "evento-editable-cell"
+                : ""
+                }`}
+              style={{
+                backgroundColor,
+                cursor: tieneEventos
+                  ? "pointer"
+                  : "default",
+              }}
+              title={
+                tieneEventos
+                  ? `${tooltipText || ""}${tooltipText ? " | " : ""
+                  }Doble click para editar`
+                  : tooltipText || ""
+              }
+              onDoubleClick={() =>
+                manejarDobleClickEvento(
+                  eventosDelDia
+                )
+              }
             >
               <div className="celda-wrapper">
                 {labels.length > 0 && (
@@ -1424,7 +1627,7 @@ export default function PlanificacionManager() {
                   {/* SIN SUCURSAL */}
                   <Col
                     xs={12}
-                    md={6}
+                    md={3}
                     className="d-flex align-items-end"
                   >
                     <div
@@ -1450,6 +1653,32 @@ export default function PlanificacionManager() {
                             setSucursalId("");
                           }
                         }}
+                      />
+                    </div>
+                  </Col>
+
+                  {/* OCULTAR SUCURSALES VACÍAS */}
+                  <Col
+                    xs={12}
+                    md={3}
+                    className="d-flex align-items-end"
+                  >
+                    <div
+                      className="border rounded px-3 d-flex align-items-center w-100"
+                      style={{
+                        minHeight: 48,
+                      }}
+                    >
+                      <Form.Check
+                        type="switch"
+                        id="ocultar-sucursales-vacias"
+                        label="Ocultar sucursales vacías"
+                        checked={ocultarSucursalesVacias}
+                        onChange={(e) =>
+                          setOcultarSucursalesVacias(
+                            e.target.checked
+                          )
+                        }
                       />
                     </div>
                   </Col>
@@ -2053,9 +2282,12 @@ export default function PlanificacionManager() {
               {!loading &&
                 dateRange.length > 0 && (
                   <div className="d-none d-md-block">
-                    {sucursalesFiltradas.map((s) =>
-                      renderSucursalSection(s)
+
+                    {sucursalesPlanificacion.map(
+                      (s) =>
+                        renderSucursalSection(s)
                     )}
+
                   </div>
                 )}
             </Card.Body>
@@ -2079,19 +2311,107 @@ export default function PlanificacionManager() {
         />
       )}
 
+
+
+      {/* =========================================
+    SELECTOR CUANDO HAY VARIOS EVENTOS
+    EN EL MISMO DÍA
+    ========================================= */}
+
+      <Modal
+        show={showSeleccionEvento}
+        onHide={() => {
+          setShowSeleccionEvento(false);
+          setEventosSeleccionDia([]);
+        }}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Seleccionar evento
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+
+          <div className="text-muted mb-3">
+            Hay más de un evento en este día.
+            Seleccione cuál desea editar.
+          </div>
+
+          <ListGroup>
+
+            {eventosSeleccionDia.map((evento) => {
+
+              const concepto =
+                conceptosMap.get(
+                  getEvConceptoId(evento)
+                );
+
+              return (
+                <ListGroup.Item
+                  key={evento.id}
+                  action
+                  onClick={() => {
+
+                    setShowSeleccionEvento(false);
+
+                    setEventosSeleccionDia([]);
+
+                    abrirEditarEvento(evento);
+                  }}
+                >
+
+                  <div className="fw-semibold">
+                    {concepto?.nombre ||
+                      concepto?.descripcion ||
+                      concepto?.codigo ||
+                      `Evento #${evento.id}`}
+                  </div>
+
+                  <small className="text-muted">
+                    {evento.fecha_desde}
+
+                    {evento.fecha_hasta &&
+                      evento.fecha_hasta !==
+                      evento.fecha_desde && (
+                        <>
+                          {" → "}
+                          {evento.fecha_hasta}
+                        </>
+                      )}
+                  </small>
+
+                  {evento.observaciones && (
+                    <div className="small mt-1">
+                      {evento.observaciones}
+                    </div>
+                  )}
+
+                </ListGroup.Item>
+              );
+            })}
+
+          </ListGroup>
+
+        </Modal.Body>
+      </Modal>
+
+
+      {/* =========================================
+    MODAL CREAR / EDITAR EVENTO
+    ========================================= */}
+
       {showEventoModal && (
         <EventoModal
           show={showEventoModal}
           onClose={cerrarEventoModal}
-          initialData={
-            eventoModalPayload
-          }
+          initialData={eventoModalPayload}
           conceptos={conceptos}
           sucursales={sucursalesCtx}
           empleados={empleadosActivos}
         />
       )}
-
 
     </Container>
   );
