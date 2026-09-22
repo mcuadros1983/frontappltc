@@ -205,6 +205,13 @@ export default function PlanificacionManager() {
     loadingVentas7Dias,
     setLoadingVentas7Dias,
   ] = useState(false);
+
+  const [
+    ordenSucursales,
+    setOrdenSucursales,
+  ] = useState("nombre");
+
+
   // ---------- cargar conceptos ----------
   useEffect(() => {
     let mounted = true;
@@ -1066,49 +1073,84 @@ export default function PlanificacionManager() {
 
   // Sucursales que finalmente se muestran
   // en la planificación.
-  const sucursalesPlanificacion =
-    useMemo(() => {
-
-      // Modo especial:
-      // empleados que todavía no tienen sucursal.
-      if (soloSinSucursal) {
-        return [
-          {
-            id: 0,
-            nombre: "Sin sucursal",
-            esSinSucursal: true,
-          },
-        ];
-      }
-
-      let lista = [
-        ...sucursalesFiltradas
+  const sucursalesPlanificacion = useMemo(() => {
+    // Modo especial:
+    // empleados que todavía no tienen sucursal.
+    if (soloSinSucursal) {
+      return [
+        {
+          id: 0,
+          nombre: "Sin sucursal",
+          esSinSucursal: true,
+        },
       ];
+    }
 
-      // Si está activo el filtro,
-      // quitamos las sucursales que
-      // no tengan empleados visibles.
-      if (ocultarSucursalesVacias) {
-        lista = lista.filter(
-          (sucursal) => {
-            const empleados =
-              empleadosPorSucursal.get(
-                Number(sucursal.id)
-              ) || [];
+    let lista = [...sucursalesFiltradas];
 
-            return empleados.length > 0;
+    // Ocultar sucursales sin empleados visibles
+    if (ocultarSucursalesVacias) {
+      lista = lista.filter((sucursal) => {
+        const empleados =
+          empleadosPorSucursal.get(
+            Number(sucursal.id)
+          ) || [];
+
+        return empleados.length > 0;
+      });
+    }
+
+    // ==========================================
+    // ORDEN DE SUCURSALES
+    // ==========================================
+
+    if (ordenSucursales === "ventas") {
+      // Mayor venta últimos 7 días -> menor venta
+      lista.sort((a, b) => {
+        const ventasA = Number(
+          ventas7DiasPorSucursal[Number(a.id)] || 0
+        );
+
+        const ventasB = Number(
+          ventas7DiasPorSucursal[Number(b.id)] || 0
+        );
+
+        // Primero mayor venta
+        if (ventasB !== ventasA) {
+          return ventasB - ventasA;
+        }
+
+        // Si tienen la misma venta, orden alfabético
+        return String(a.nombre || "").localeCompare(
+          String(b.nombre || ""),
+          "es",
+          {
+            sensitivity: "base",
           }
         );
-      }
+      });
+    } else {
+      // Orden alfabético por nombre
+      lista.sort((a, b) =>
+        String(a.nombre || "").localeCompare(
+          String(b.nombre || ""),
+          "es",
+          {
+            sensitivity: "base",
+          }
+        )
+      );
+    }
 
-      return lista;
-
-    }, [
-      soloSinSucursal,
-      sucursalesFiltradas,
-      ocultarSucursalesVacias,
-      empleadosPorSucursal,
-    ]);
+    return lista;
+  }, [
+    soloSinSucursal,
+    sucursalesFiltradas,
+    ocultarSucursalesVacias,
+    empleadosPorSucursal,
+    ordenSucursales,
+    ventas7DiasPorSucursal,
+  ]);
 
   // ---------- helpers de eventos / vacaciones ----------
   // arma calendario empleado
@@ -2082,6 +2124,30 @@ export default function PlanificacionManager() {
                     </div>
                   </Col>
 
+                </Row>
+
+                <Row className="g-2 mt-2">
+                  <Col xs={12} sm={6} md={3}>
+                    <Form.Label className="mb-1">
+                      Ordenar sucursales por
+                    </Form.Label>
+
+                    <Form.Select
+                      value={ordenSucursales}
+                      onChange={(e) =>
+                        setOrdenSucursales(e.target.value)
+                      }
+                      className="form-control my-input"
+                    >
+                      <option value="nombre">
+                        Nombre de sucursal
+                      </option>
+
+                      <option value="ventas">
+                        Ventas últimos 7 días
+                      </option>
+                    </Form.Select>
+                  </Col>
                 </Row>
 
               </Form>
