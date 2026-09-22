@@ -55,7 +55,13 @@ export default function ConceptoManager() {
 
   const abrirNuevo = () => { setEditItem(null); setShowModal(true); };
   const abrirEditar = (row) => {
-    setEditItem({ id: row.id, nombre: row.nombre || "", codigo: row.codigo || "" });
+    setEditItem({
+      id: row.id,
+      nombre: row.nombre || "",
+      codigo: row.codigo || "",
+      cambia_sucursal: Boolean(row.cambia_sucursal),
+    });
+
     setShowModal(true);
   };
   const cerrarModal = (changed = false) => {
@@ -113,18 +119,46 @@ export default function ConceptoManager() {
               <th style={{ width: 90 }}>ID</th>
               <th>Nombre</th>
               <th style={{ width: 220 }}>Código</th>
-              <th style={{ width: 200 }}>Acciones</th>
+
+              <th
+                style={{
+                  width: 170,
+                  textAlign: "center",
+                }}
+              >
+                Cambia sucursal
+              </th>
+
+              <th style={{ width: 200 }}>
+                Acciones
+              </th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={4} className="text-center"><Spinner size="sm" className="me-2" /> Cargando…</td></tr>
+              <tr><td colSpan={5} className="text-center"><Spinner size="sm" className="me-2" /> Cargando…</td></tr>
             ) : rowsFiltradas.length ? (
               rowsFiltradas.map((it) => (
                 <tr key={it.id} onDoubleClick={() => abrirEditar(it)} style={{ cursor: "pointer" }}>
                   <td>{it.id}</td>
                   <td>{it.nombre}</td>
-                  <td className="text-monospace">{it.codigo}</td>
+
+                  <td className="text-monospace">
+                    {it.codigo}
+                  </td>
+
+                  <td className="text-center">
+                    {it.cambia_sucursal ? (
+                      <span className="badge bg-success">
+                        Sí
+                      </span>
+                    ) : (
+                      <span className="text-muted">
+                        No
+                      </span>
+                    )}
+                  </td>
+
                   <td>
                     <div className="d-flex gap-2">
                       <Button size="sm" variant="outline-primary" onClick={() => abrirEditar(it)}>

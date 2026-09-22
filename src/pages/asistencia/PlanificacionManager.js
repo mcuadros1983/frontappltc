@@ -587,6 +587,108 @@ export default function PlanificacionManager() {
     return m;
   }, [datosEmpleadoList]);
 
+  // ======================================================
+  // SUCURSAL EFECTIVA DEL EMPLEADO EN UNA FECHA
+  // ======================================================
+  // Si existe un evento cuyo concepto cambia sucursal
+  // y la fecha está dentro del período del evento,
+  // usamos sucursal_destino_id.
+  //
+  // Caso contrario usamos la sucursal habitual
+  // registrada en DatosEmpleado.
+  const getSucursalEmpleadoEnFecha = (
+    empleadoId,
+    dateIso
+  ) => {
+    const empId = Number(empleadoId);
+
+    if (!empId || !dateIso) {
+      return 0;
+    }
+
+    const cambioTemporal = (events || []).find(
+      (evento) => {
+        if (
+          getEvEmpleadoId(evento) !== empId
+        ) {
+          return false;
+        }
+
+        const concepto =
+          conceptosMap.get(
+            getEvConceptoId(evento)
+          );
+
+        if (!concepto?.cambia_sucursal) {
+          return false;
+        }
+
+        const destinoId =
+          Number(
+            evento.sucursal_destino_id
+          );
+
+        if (!destinoId) {
+          return false;
+        }
+
+        const desde =
+          String(
+            evento.fecha_desde || ""
+          ).slice(0, 10);
+
+        const hasta =
+          String(
+            evento.fecha_hasta ||
+            evento.fecha_desde ||
+            ""
+          ).slice(0, 10);
+
+        if (!desde || !hasta) {
+          return false;
+        }
+
+        return (
+          dateIso >= desde &&
+          dateIso <= hasta
+        );
+      }
+    );
+
+    if (cambioTemporal) {
+      return Number(
+        cambioTemporal.sucursal_destino_id
+      );
+    }
+
+    const datos =
+      datosEmpleadoMap.get(empId);
+
+    return Number(
+      datos?.sucursal_id
+    ) || 0;
+  };
+
+  const getInicialesSucursal = (sucursalId) => {
+    const sucursal = (sucursalesCtx || []).find(
+      (s) =>
+        Number(s.id) === Number(sucursalId)
+    );
+
+    if (!sucursal?.nombre) {
+      return "";
+    }
+
+    const nombre = String(
+      sucursal.nombre
+    )
+      .trim()
+      .toUpperCase();
+
+    // Tomamos las primeras 2 letras
+    return nombre.slice(0, 2);
+  };
+
   const empleadosPlanificacion = useMemo(() => {
     let lista = empleadosActivos.map((empleado) => {
       const empleadoId =
@@ -979,6 +1081,13 @@ export default function PlanificacionManager() {
         evento.sucursal
       ),
 
+      sucursal_destino_id:
+        evento.sucursal_destino_id
+          ? Number(
+            evento.sucursal_destino_id
+          )
+          : "",
+
       observaciones:
         evento.observaciones || "",
     });
@@ -1023,34 +1132,67 @@ export default function PlanificacionManager() {
   const empleadosPorSucursal = useMemo(() => {
     const map = new Map();
 
-    // Inicializamos las sucursales visibles
+    // Inicializamos sucursales visibles.
     for (const s of sucursalesFiltradas) {
-      map.set(Number(s.id), []);
+      map.set(
+        Number(s.id),
+        []
+      );
     }
 
-    // Clave especial para empleados sin sucursal
+    // Empleados sin sucursal.
     map.set(0, []);
 
-    // IMPORTANTE:
-    // usamos empleadosPlanificacion,
-    // NO empleadosActivos
     for (const item of empleadosPlanificacion) {
       const {
         empleado,
-        sucursalAsignadaId,
+        empleadoId,
       } = item;
 
-      const sid =
-        Number(sucursalAsignadaId) || 0;
+      // Sucursales en las que este empleado
+      // aparece durante el rango visible.
+      const sucursalesEmpleado =
+        new Set();
 
-      if (!map.has(sid)) {
-        map.set(sid, []);
+      if (dateRange.length) {
+        for (const dateIso of dateRange) {
+          const sid =
+            getSucursalEmpleadoEnFecha(
+              empleadoId,
+              dateIso
+            );
+
+          sucursalesEmpleado.add(
+            Number(sid) || 0
+          );
+        }
+      } else {
+        // Antes de ejecutar una búsqueda,
+        // usamos su sucursal habitual.
+        const datos =
+          datosEmpleadoMap.get(
+            empleadoId
+          );
+
+        sucursalesEmpleado.add(
+          Number(
+            datos?.sucursal_id
+          ) || 0
+        );
       }
 
-      map.get(sid).push(empleado);
+      for (const sid of sucursalesEmpleado) {
+        if (!map.has(sid)) {
+          map.set(sid, []);
+        }
+
+        map.get(sid).push(
+          empleado
+        );
+      }
     }
 
-    // Orden alfabético
+    // Orden alfabético.
     for (const [sid, arr] of map.entries()) {
       arr.sort((a, b) =>
         getEmpleadoNombre(a).localeCompare(
@@ -1069,6 +1211,10 @@ export default function PlanificacionManager() {
   }, [
     sucursalesFiltradas,
     empleadosPlanificacion,
+    dateRange,
+    events,
+    conceptosMap,
+    datosEmpleadoMap,
   ]);
 
   // Sucursales que finalmente se muestran
@@ -1326,8 +1472,13 @@ export default function PlanificacionManager() {
 
     try {
       // eventos
-      let urlEv = `${apiUrl}/eventos?start_date=${startDate}&end_date=${endDate}&order=fecha_desde&dir=ASC&limit=10000`;
-      if (sucursalId) urlEv += `&sucursal_id=${sucursalId}`;
+      const urlEv =
+        `${apiUrl}/eventos` +
+        `?start_date=${startDate}` +
+        `&end_date=${endDate}` +
+        `&order=fecha_desde` +
+        `&dir=ASC` +
+        `&limit=10000`;
 
       const rEv = await fetch(urlEv, { credentials: "include" });
       const dEv = await rEv.json().catch(() => null);
@@ -1633,7 +1784,10 @@ export default function PlanificacionManager() {
     };
 
   // ---------- render fila empleado ----------
-  function renderEmpleadoRow(empleado) {
+  function renderEmpleadoRow(
+    empleado,
+    sucursalRenderId
+  ) {
     const empId = getEmpleadoId(empleado);
     const datosEmpleado =
       datosEmpleadoMap.get(empId) || null;
@@ -1688,6 +1842,16 @@ export default function PlanificacionManager() {
         </td>
 
         {dateRange.map((dateIso) => {
+
+          const sucursalEfectivaId =
+            getSucursalEmpleadoEnFecha(
+              empId,
+              dateIso
+            );
+
+          const perteneceASucursal =
+            Number(sucursalEfectivaId) ===
+            Number(sucursalRenderId);
           // info base
           const dayInfo = eventsPerDay.get(dateIso) || {
             codes: [],
@@ -1725,6 +1889,52 @@ export default function PlanificacionManager() {
             tieneFinde &&
             dow === 6;
 
+
+          // El empleado aparece en esta tabla porque
+          // pertenece a esta sucursal en algún día
+          // del rango.
+          //
+          // Si ESTE día pertenece a otra sucursal,
+          // dejamos la celda vacía.
+          if (!perteneceASucursal) {
+            const sucursalDestino =
+              (sucursalesCtx || []).find(
+                (s) =>
+                  Number(s.id) ===
+                  Number(sucursalEfectivaId)
+              );
+
+            const inicialesDestino =
+              getInicialesSucursal(
+                sucursalEfectivaId
+              );
+
+            return (
+              <td
+                key={dateIso}
+                className="franco-cell"
+                style={{
+                  backgroundColor: "#f3f3f3",
+                }}
+                title={
+                  sucursalDestino?.nombre
+                    ? `Asignado temporalmente a ${sucursalDestino.nombre}`
+                    : "Asignado a otra sucursal este día"
+                }
+              >
+                <div className="celda-wrapper">
+                  <span
+                    className="fw-bold text-muted"
+                    style={{
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    {inicialesDestino || "—"}
+                  </span>
+                </div>
+              </td>
+            );
+          }
           // --- COLOR fondo ---
           let backgroundColor = "";
 
@@ -1769,7 +1979,31 @@ export default function PlanificacionManager() {
             }
           }
 
-          const eventCodes = codes.length ? codes.join("-") : "";
+          // const eventCodes = codes.length ? codes.join("-") : "";
+
+          // En la sucursal destino no mostramos visualmente
+          // el evento que produce el cambio de sucursal.
+          const codesVisibles = dayInfo.events
+            .map((evento, index) => {
+              const concepto =
+                conceptosMap.get(
+                  getEvConceptoId(evento)
+                );
+
+              // Si este evento es el que cambia temporalmente
+              // la sucursal, no mostramos su código.
+              if (concepto?.cambia_sucursal) {
+                return null;
+              }
+
+              return dayInfo.codes[index];
+            })
+            .filter(Boolean);
+
+          const eventCodes =
+            codesVisibles.length
+              ? codesVisibles.join("-")
+              : "";
 
           // --- TEXTO para tooltip (title) ---
           // armamos descripciones humanas:
@@ -1955,7 +2189,14 @@ export default function PlanificacionManager() {
               </tr>
             </thead>
 
-            <tbody>{lista.map((emp) => renderEmpleadoRow(emp))}</tbody>
+            <tbody>
+              {lista.map((emp) =>
+                renderEmpleadoRow(
+                  emp,
+                  sid
+                )
+              )}
+            </tbody>
           </Table>
         </div>
       </div>
@@ -2875,6 +3116,7 @@ export default function PlanificacionManager() {
           conceptos={conceptos}
           sucursales={sucursalesCtx}
           empleados={empleadosActivos}
+          datosEmpleado={datosEmpleadoList}
         />
       )}
 

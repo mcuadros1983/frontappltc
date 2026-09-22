@@ -8,6 +8,9 @@ export default function ConceptoModal({ show, onClose, initialData }) {
 
   const [nombre, setNombre] = useState(initialData?.nombre || "");
   const [codigo, setCodigo] = useState(initialData?.codigo || "");
+  const [cambiaSucursal, setCambiaSucursal] = useState(
+    Boolean(initialData?.cambia_sucursal)
+  );
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
 
@@ -16,6 +19,9 @@ export default function ConceptoModal({ show, onClose, initialData }) {
     setErr(null);
     setNombre(initialData?.nombre || "");
     setCodigo(initialData?.codigo || "");
+    setCambiaSucursal(
+      Boolean(initialData?.cambia_sucursal)
+    );
   }, [show, initialData]);
 
   const validar = () => {
@@ -35,6 +41,7 @@ export default function ConceptoModal({ show, onClose, initialData }) {
       const payload = {
         nombre: String(nombre).trim(),
         codigo: String(codigo).trim(),
+        cambia_sucursal: cambiaSucursal,
       };
 
       let r, data;
@@ -76,6 +83,7 @@ export default function ConceptoModal({ show, onClose, initialData }) {
     setSaving(false);
     setNombre("");
     setCodigo("");
+    setCambiaSucursal(false);
   };
 
   return (
@@ -108,6 +116,25 @@ export default function ConceptoModal({ show, onClose, initialData }) {
           />
           <Form.Text className="text-muted">
             Debe ser único. Ejemplos: VAC-2025, SUSP-001, FERIADO-NAC.
+          </Form.Text>
+        </Form.Group>
+
+        <Form.Group className="mt-3">
+          <Form.Check
+            type="checkbox"
+            id="concepto-cambia-sucursal"
+            label="Este concepto cambia temporalmente la sucursal del empleado"
+            checked={cambiaSucursal}
+            onChange={(e) =>
+              setCambiaSucursal(e.target.checked)
+            }
+          />
+
+          <Form.Text className="text-muted">
+            Al utilizar este concepto en un evento,
+            se deberá indicar una sucursal destino.
+            El cambio será válido únicamente durante
+            las fechas del evento.
           </Form.Text>
         </Form.Group>
       </Modal.Body>

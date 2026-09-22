@@ -47,6 +47,7 @@ export default function EventoModal({
   conceptos,
   sucursales,
   empleados,
+  datosEmpleado = [],
 }) {
   const isEdit = Boolean(initialData?.id);
 
@@ -56,7 +57,10 @@ export default function EventoModal({
   const [conceptoId, setConceptoId] = useState("");
   const [empleadoId, setEmpleadoId] = useState("");
   const [sucursalId, setSucursalId] = useState("");
-
+  const [
+    sucursalDestinoId,
+    setSucursalDestinoId,
+  ] = useState("");
   const [observaciones, setObservaciones] = useState("");
 
   // Buscador de empleados
@@ -67,6 +71,7 @@ export default function EventoModal({
     useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [err, setErr] = useState(null);
 
   const conceptosOpts = useMemo(() => {
@@ -80,6 +85,17 @@ export default function EventoModal({
 
     return list;
   }, [conceptos]);
+
+  const conceptoSeleccionado = useMemo(() => {
+    if (!conceptoId) return null;
+
+    return conceptosOpts.find(
+      (c) => Number(c.id) === Number(conceptoId)
+    ) || null;
+  }, [conceptosOpts, conceptoId]);
+
+  const cambiaSucursal =
+    Boolean(conceptoSeleccionado?.cambia_sucursal);
 
   const sucursalesOpts = useMemo(() => {
     const list = [...(sucursales || [])];
@@ -143,6 +159,19 @@ export default function EventoModal({
       .slice(0, 20);
   }, [empleadosOpts, busquedaEmpleado]);
 
+  const datosEmpleadoMap = useMemo(() => {
+    const map = new Map();
+
+    for (const item of datosEmpleado || []) {
+      map.set(
+        Number(item.empleado_id),
+        item
+      );
+    }
+
+    return map;
+  }, [datosEmpleado]);
+
   useEffect(() => {
     if (!show) return;
 
@@ -168,6 +197,10 @@ export default function EventoModal({
       initialData?.sucursal_id || ""
     );
 
+    setSucursalDestinoId(
+      initialData?.sucursal_destino_id || ""
+    );
+
     setObservaciones(
       initialData?.observaciones || ""
     );
@@ -183,6 +216,26 @@ export default function EventoModal({
 
     setEmpleadoId(id);
 
+    // Buscar la configuración habitual
+    // del empleado.
+    const datos =
+      datosEmpleadoMap.get(
+        Number(id)
+      );
+
+    // Cargar automáticamente
+    // su sucursal habitual.
+    const sucursalHabitualId =
+      Number(datos?.sucursal_id) || "";
+
+    setSucursalId(
+      sucursalHabitualId
+    );
+
+    // Al cambiar de empleado eliminamos
+    // cualquier destino temporal anterior.
+    setSucursalDestinoId("");
+
     setBusquedaEmpleado("");
 
     setMostrarResultados(false);
@@ -190,7 +243,13 @@ export default function EventoModal({
 
   const quitarEmpleado = () => {
     setEmpleadoId("");
+
+    setSucursalId("");
+
+    setSucursalDestinoId("");
+
     setBusquedaEmpleado("");
+
     setMostrarResultados(true);
   };
 
@@ -222,6 +281,20 @@ export default function EventoModal({
       return "Debés seleccionar una sucursal.";
     }
 
+    if (
+      cambiaSucursal &&
+      !Number(sucursalDestinoId)
+    ) {
+      return "Debés seleccionar la sucursal destino.";
+    }
+
+    if (
+      cambiaSucursal &&
+      Number(sucursalDestinoId) === Number(sucursalId)
+    ) {
+      return "La sucursal destino debe ser diferente de la sucursal actual.";
+    }
+
     return null;
   };
 
@@ -240,9 +313,20 @@ export default function EventoModal({
       const payload = {
         fecha_desde: fechaDesde,
         fecha_hasta: fechaHasta,
-        concepto_id: Number(conceptoId),
-        empleado_id: Number(empleadoId),
-        sucursal_id: Number(sucursalId),
+
+        concepto_id:
+          Number(conceptoId),
+
+        empleado_id:
+          Number(empleadoId),
+
+        sucursal_id:
+          Number(sucursalId),
+
+        sucursal_destino_id:
+          cambiaSucursal
+            ? Number(sucursalDestinoId)
+            : null,
 
         observaciones: observaciones
           ? String(observaciones).trim()
@@ -314,9 +398,62 @@ export default function EventoModal({
     }
   };
 
+  const eliminarEvento = async () => {
+    if (!isEdit || !initialData?.id) {
+      return;
+    }
+
+    const confirmar = window.confirm(
+      "¿Está seguro de que desea eliminar este evento?"
+    );
+
+    if (!confirmar) {
+      return;
+    }
+
+    setDeleting(true);
+    setErr(null);
+
+    try {
+      const r = await fetch(
+        `${apiUrl}/eventos/${initialData.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      const data = await r
+        .json()
+        .catch(() => null);
+
+      if (!r.ok) {
+        throw new Error(
+          data?.error ||
+          "No se pudo eliminar el evento."
+        );
+      }
+
+      // true indica a PlanificacionManager
+      // que hubo una modificación y debe recargar.
+      onClose(true);
+
+    } catch (e) {
+      console.error(e);
+
+      setErr(
+        e.message ||
+        "Error al eliminar el evento."
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const onExited = () => {
     setErr(null);
     setSaving(false);
+    setDeleting(false);
 
     setFechaDesde("");
     setFechaHasta("");
@@ -326,6 +463,8 @@ export default function EventoModal({
     setSucursalId("");
 
     setObservaciones("");
+
+    setSucursalDestinoId("");
 
     setBusquedaEmpleado("");
     setMostrarResultados(false);
@@ -502,11 +641,25 @@ export default function EventoModal({
 
           <Form.Select
             value={conceptoId}
-            onChange={(e) =>
+            onChange={(e) => {
+              const nuevoConceptoId =
+                e.target.value;
+
               setConceptoId(
-                e.target.value
-              )
-            }
+                nuevoConceptoId
+              );
+
+              const nuevoConcepto =
+                conceptosOpts.find(
+                  (c) =>
+                    Number(c.id) ===
+                    Number(nuevoConceptoId)
+                );
+
+              if (!nuevoConcepto?.cambia_sucursal) {
+                setSucursalDestinoId("");
+              }
+            }}
             disabled={saving}
             style={{
               minHeight: 46,
@@ -573,6 +726,57 @@ export default function EventoModal({
                 />
 
               </Form.Group>
+
+              {cambiaSucursal && (
+                <Form.Group className="mb-3">
+
+                  <Form.Label className="fw-semibold">
+                    <BsGeoAlt className="me-2" />
+                    Sucursal destino
+                  </Form.Label>
+
+                  <Form.Select
+                    value={sucursalDestinoId}
+                    onChange={(e) =>
+                      setSucursalDestinoId(
+                        e.target.value
+                      )
+                    }
+                    disabled={saving}
+                    style={{
+                      minHeight: 46,
+                    }}
+                  >
+
+                    <option value="">
+                      — Seleccione sucursal destino —
+                    </option>
+
+                    {sucursalesOpts
+                      .filter(
+                        (s) =>
+                          Number(s.id) !==
+                          Number(sucursalId)
+                      )
+                      .map((s) => (
+                        <option
+                          key={s.id}
+                          value={s.id}
+                        >
+                          {s.nombre}
+                        </option>
+                      ))}
+
+                  </Form.Select>
+
+                  <Form.Text className="text-muted">
+                    El empleado será asignado temporalmente
+                    a esta sucursal solamente durante el
+                    período indicado.
+                  </Form.Text>
+
+                </Form.Group>
+              )}
             </Col>
 
             <Col xs={12} sm={6}>
@@ -619,7 +823,10 @@ export default function EventoModal({
                 e.target.value
               )
             }
-            disabled={saving}
+            disabled={
+              saving ||
+              Boolean(empleadoId)
+            }
             style={{
               minHeight: 46,
             }}
@@ -675,13 +882,37 @@ export default function EventoModal({
 
       <Modal.Footer className="d-flex flex-column flex-sm-row gap-2">
 
+        {isEdit && (
+          <Button
+            variant="outline-danger"
+            className="w-100 order-3 order-sm-1"
+            onClick={eliminarEvento}
+            disabled={saving || deleting}
+            style={{
+              minHeight: 46,
+            }}
+          >
+            {deleting ? (
+              <>
+                <Spinner
+                  size="sm"
+                  className="me-2"
+                />
+                Eliminando…
+              </>
+            ) : (
+              "Eliminar evento"
+            )}
+          </Button>
+        )}
+
         <Button
           variant="outline-secondary"
           className="w-100 order-2 order-sm-1"
           onClick={() =>
             onClose(false)
           }
-          disabled={saving}
+          disabled={saving || deleting}
           style={{
             minHeight: 46,
           }}
@@ -694,11 +925,16 @@ export default function EventoModal({
           onClick={guardar}
           disabled={
             saving ||
+            deleting ||
             !fechaDesde ||
             !fechaHasta ||
             !conceptoId ||
             !empleadoId ||
-            !sucursalId
+            !sucursalId ||
+            (
+              cambiaSucursal &&
+              !sucursalDestinoId
+            )
           }
           style={{
             minHeight: 46,
