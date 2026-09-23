@@ -39,13 +39,17 @@ export default function EmpleadoAdicionalFijoManager() {
     // cargar catálogo de tipos para filtro
     const fetchTiposCatalogo = useCallback(async () => {
         try {
-            const r = await fetch(`${apiUrl}/adicionalfijotipo`, { credentials: "include" });
+            const r = await fetch(
+                `${apiUrl}/adicionalfijotipo`,
+                { credentials: "include" }
+            );
+
             const data = await r.json();
             setTipos(data || []);
         } catch (e) {
             console.error(e);
         }
-    }, [apiUrl]);
+    }, []);
 
     // traer TODAS las asignaciones al montar (sin filtrar)
     const fetchAsignaciones = useCallback(async () => {
@@ -98,7 +102,7 @@ export default function EmpleadoAdicionalFijoManager() {
         } finally {
             setLoading(false);
         }
-    }, [apiUrl, fechaRef]);
+    }, []);
 
     useEffect(() => {
         fetchTiposCatalogo();
@@ -156,11 +160,25 @@ export default function EmpleadoAdicionalFijoManager() {
     }, [rows, filtroEmpleadoId, filtroTipoId]);
 
     // Abrir / cerrar modales
-    const abrirAsignar = () => setShowAssign(true);
+    const abrirAsignar = () => {
+        setSelectedAsignacion(null);
+        setShowAssign(true);
+    };
+
+    const abrirEditar = (asignacion) => {
+        setSelectedAsignacion(asignacion);
+        setShowAssign(true);
+    };
     const cerrarAsignar = (changed) => {
         setShowAssign(false);
-        if (changed) fetchAsignaciones();
+        setSelectedAsignacion(null);
+
+        if (changed) {
+            fetchAsignaciones();
+        }
     };
+
+
 
     const abrirCerrar = (asignacion) => {
         setSelectedAsignacion(asignacion);
@@ -170,6 +188,52 @@ export default function EmpleadoAdicionalFijoManager() {
         setShowCerrar(false);
         setSelectedAsignacion(null);
         if (changed) fetchAsignaciones();
+    };
+
+    const eliminarAsignacion = async (asignacion) => {
+        const confirmar = window.confirm(
+            `¿Está seguro de eliminar la asignación "${asignacion?.AdicionalFijoTipo?.descripcion || "seleccionada"}"?`
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setErr(null);
+
+            const r = await fetch(
+                `${apiUrl}/empleadoadicionalfijo/${asignacion.id}`,
+                {
+                    method: "DELETE",
+                    credentials: "include",
+                }
+            );
+
+            const data = await r
+                .json()
+                .catch(() => null);
+
+            if (!r.ok) {
+                throw new Error(
+                    data?.error ||
+                    "No se pudo eliminar la asignación."
+                );
+            }
+
+            await fetchAsignaciones();
+
+        } catch (e) {
+            console.error(e);
+
+            setErr(
+                e.message ||
+                "No se pudo eliminar la asignación."
+            );
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -285,14 +349,32 @@ export default function EmpleadoAdicionalFijoManager() {
                                         </td>
                                         <td>
                                             <div className="d-flex flex-wrap gap-2">
+
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline-primary"
+                                                    onClick={() => abrirEditar(a)}
+                                                >
+                                                    Editar
+                                                </Button>
+
                                                 <Button
                                                     size="sm"
                                                     variant="outline-danger"
+                                                    onClick={() => eliminarAsignacion(a)}
+                                                >
+                                                    Eliminar
+                                                </Button>
+
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline-secondary"
                                                     onClick={() => abrirCerrar(a)}
                                                     disabled={!!a.vigencia_hasta}
                                                 >
                                                     Cerrar
                                                 </Button>
+
                                             </div>
                                         </td>
                                     </tr>
@@ -314,6 +396,7 @@ export default function EmpleadoAdicionalFijoManager() {
                     onClose={cerrarAsignar}
                     empleados={empleados}
                     tipos={tipos}
+                    asignacion={selectedAsignacion}
                 />
             )}
 

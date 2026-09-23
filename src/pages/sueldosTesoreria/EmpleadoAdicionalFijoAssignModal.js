@@ -8,7 +8,15 @@ const apiUrl = process.env.REACT_APP_API_URL;
  * Seleccionás empleado y tipo dentro del modal.
  * Al abrir SIEMPRE resetea los campos a vacío.
  */
-export default function EmpleadoAdicionalFijoAssignModal({ show, onClose, empleados, tipos }) {
+export default function EmpleadoAdicionalFijoAssignModal({
+  show,
+  onClose,
+  empleados,
+  tipos,
+  asignacion = null,
+}) {
+  const isEdit = Boolean(asignacion?.id);
+
   const [empleadoId, setEmpleadoId] = useState("");
   const [tipoId, setTipoId] = useState("");
   const [vigenciaDesde, setVigenciaDesde] = useState("");
@@ -19,14 +27,37 @@ export default function EmpleadoAdicionalFijoAssignModal({ show, onClose, emplea
 
   // Reset estricto al abrir
   useEffect(() => {
-    if (show) {
-      setErr(null);
+    if (!show) return;
+
+    setErr(null);
+
+    if (asignacion?.id) {
+      setEmpleadoId(
+        String(asignacion.empleado_id || "")
+      );
+
+      setTipoId(
+        String(
+          asignacion.adicionalfijotipo_id || ""
+        )
+      );
+
+      setVigenciaDesde(
+        asignacion.vigencia_desde || ""
+      );
+
+      setMontoOverride(
+        asignacion.monto_override != null
+          ? String(asignacion.monto_override)
+          : ""
+      );
+    } else {
       setEmpleadoId("");
       setTipoId("");
       setVigenciaDesde("");
       setMontoOverride("");
     }
-  }, [show]);
+  }, [show, asignacion]);
 
   // Limpia definitivamente al terminar de cerrar (por si hay animaciones)
   const handleExited = () => {
@@ -61,10 +92,20 @@ export default function EmpleadoAdicionalFijoAssignModal({ show, onClose, emplea
         monto_override: montoOverride !== "" ? Number(montoOverride) : null,
       };
 
-      const r = await fetch(`${apiUrl}/empleadoadicionalfijo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload), credentials: "include",
+      const url = isEdit
+        ? `${apiUrl}/empleadoadicionalfijo/${asignacion.id}`
+        : `${apiUrl}/empleadoadicionalfijo`;
+
+      const r = await fetch(url, {
+        method: isEdit ? "PUT" : "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify(payload),
+
+        credentials: "include",
       });
 
       if (!r.ok) {
@@ -89,7 +130,11 @@ export default function EmpleadoAdicionalFijoAssignModal({ show, onClose, emplea
       centered
     >
       <Modal.Header closeButton>
-        <Modal.Title>Asignar adicional fijo</Modal.Title>
+        <Modal.Title>
+          {isEdit
+            ? "Editar adicional fijo"
+            : "Asignar adicional fijo"}
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {err && <div className="alert alert-danger py-2">{err}</div>}
@@ -140,7 +185,7 @@ export default function EmpleadoAdicionalFijoAssignModal({ show, onClose, emplea
             onChange={(e) => setVigenciaDesde(e.target.value)}
           />
         </Form.Group>
-{/* */}
+        {/* */}
         {/* <Form.Group>
           <Form.Label>Monto override (opcional)</Form.Label>
           <Form.Control
@@ -163,7 +208,7 @@ export default function EmpleadoAdicionalFijoAssignModal({ show, onClose, emplea
               Guardando…
             </>
           ) : (
-            "Asignar"
+            isEdit ? "Guardar cambios" : "Asignar"
           )}
         </Button>
       </Modal.Footer>
