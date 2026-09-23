@@ -6,7 +6,11 @@ import React, {
 import {
     Table,
     Button,
-    Container
+    Container,
+    Form,
+    Row,
+    Col,
+    Card
 } from "react-bootstrap";
 
 import {
@@ -17,19 +21,35 @@ import {
     produccionLoteApi
 } from "../../services/produccionLoteApi";
 
+
 export default function ProduccionLoteList() {
 
     const navigate = useNavigate();
 
-    const [rows, setRows] = useState([]);
-    const [rowsFiltrados, setRowsFiltrados] = useState([]);
+    const [rows, setRows] =
+        useState([]);
 
-    const [filtroLote, setFiltroLote] = useState("");
-    const [fechaDesde, setFechaDesde] = useState("");
-    const [fechaHasta, setFechaHasta] = useState("");
+    const [rowsFiltrados, setRowsFiltrados] =
+        useState([]);
 
-    const [paginaActual, setPaginaActual] = useState(1);
+    const [filtroLote, setFiltroLote] =
+        useState("");
+
+    const [fechaDesde, setFechaDesde] =
+        useState("");
+
+    const [fechaHasta, setFechaHasta] =
+        useState("");
+
+    const [paginaActual, setPaginaActual] =
+        useState(1);
+
     const registrosPorPagina = 20;
+
+
+    // ============================================================
+    // CARGAR LOTES
+    // ============================================================
 
     const cargar = async () => {
 
@@ -38,69 +58,115 @@ export default function ProduccionLoteList() {
             const data =
                 await produccionLoteApi.list();
 
-            setRows(data);
-            setRowsFiltrados(data);
+            const lista =
+                Array.isArray(data)
+                    ? data
+                    : [];
+
+            setRows(lista);
+
+            setRowsFiltrados(lista);
 
         } catch (error) {
+
             console.error(error);
+
+            setRows([]);
+            setRowsFiltrados([]);
+
         }
 
     };
+
+
+    // ============================================================
+    // FILTROS
+    // ============================================================
 
     const filtrar = () => {
 
-        let resultado = [...rows];
+        let resultado =
+            [...rows];
+
 
         if (filtroLote) {
 
-            resultado = resultado.filter(
-                row =>
-                    row.numero_lote
-                        ?.toLowerCase()
-                        .includes(
-                            filtroLote.toLowerCase()
+            resultado =
+                resultado.filter(
+                    (row) =>
+                        String(
+                            row.numero_lote || ""
                         )
-            );
+                            .toLowerCase()
+                            .includes(
+                                filtroLote
+                                    .toLowerCase()
+                            )
+                );
 
         }
+
 
         if (fechaDesde) {
 
-            resultado = resultado.filter(
-                row =>
-                    row.fecha_produccion >=
-                    fechaDesde
-            );
+            resultado =
+                resultado.filter(
+                    (row) =>
+                        row.fecha_produccion >=
+                        fechaDesde
+                );
 
         }
+
 
         if (fechaHasta) {
 
-            resultado = resultado.filter(
-                row =>
-                    row.fecha_produccion <=
-                    fechaHasta
-            );
+            resultado =
+                resultado.filter(
+                    (row) =>
+                        row.fecha_produccion <=
+                        fechaHasta
+                );
 
         }
 
+
+        setRowsFiltrados(
+            resultado
+        );
+
         setPaginaActual(1);
 
-        setRowsFiltrados(resultado);
-
     };
+
 
     const limpiarFiltros = () => {
 
         setFiltroLote("");
+
         setFechaDesde("");
+
         setFechaHasta("");
 
-        setRowsFiltrados(rows);
+        setRowsFiltrados(
+            rows
+        );
 
         setPaginaActual(1);
 
     };
+
+
+    // ============================================================
+    // EFECTOS
+    // ============================================================
+
+    useEffect(() => {
+
+        cargar();
+
+    }, []);
+
 
     useEffect(() => {
 
@@ -109,9 +175,14 @@ export default function ProduccionLoteList() {
     }, [
         filtroLote,
         fechaDesde,
-        fechaHasta
+        fechaHasta,
+        rows
     ]);
 
+
+    // ============================================================
+    // PAGINACIÓN
+    // ============================================================
 
     const indiceUltimo =
         paginaActual *
@@ -121,22 +192,27 @@ export default function ProduccionLoteList() {
         indiceUltimo -
         registrosPorPagina;
 
+
     const registrosPagina =
         rowsFiltrados.slice(
             indicePrimero,
             indiceUltimo
         );
 
+
     const totalPaginas =
-        Math.ceil(
-            rowsFiltrados.length /
-            registrosPorPagina
+        Math.max(
+            1,
+            Math.ceil(
+                rowsFiltrados.length /
+                registrosPorPagina
+            )
         );
 
 
-    useEffect(() => {
-        cargar();
-    }, []);
+    // ============================================================
+    // ELIMINAR
+    // ============================================================
 
     const eliminar = async (id) => {
 
@@ -144,246 +220,406 @@ export default function ProduccionLoteList() {
             !window.confirm(
                 "¿Eliminar lote?"
             )
-        )
+        ) {
             return;
+        }
 
-        await produccionLoteApi.remove(id);
 
-        cargar();
+        try {
+
+            await produccionLoteApi.remove(
+                id
+            );
+
+            await cargar();
+
+        } catch (error) {
+
+            console.error(error);
+
+            alert(
+                "Error al eliminar el lote"
+            );
+
+        }
+
     };
 
+
+    // ============================================================
+    // RENDER
+    // ============================================================
+
     return (
+
         <Container fluid>
 
-            <div className="d-flex justify-content-between mb-3">
+            <Card>
 
-                <h3>
-                    Producción Fábrica
-                </h3>
+                {/* ====================================================
+                    ENCABEZADO
+                ==================================================== */}
 
-                <div className="row mb-3">
+                <Card.Header>
 
-                    <div className="col-md-3">
+                    <div
+                        className="d-flex justify-content-between align-items-center"
+                    >
 
-                        <input
-                            className="form-control"
-                            placeholder="Número de lote"
-                            value={filtroLote}
-                            onChange={(e) =>
-                                setFiltroLote(
-                                    e.target.value
-                                )
-                            }
-                        />
+                        <h3 className="mb-0">
+                            Producción Fábrica
+                        </h3>
 
-                    </div>
-
-                    <div className="col-md-2">
-
-                        <input
-                            type="date"
-                            className="form-control"
-                            value={fechaDesde}
-                            onChange={(e) =>
-                                setFechaDesde(
-                                    e.target.value
-                                )
-                            }
-                        />
-
-                    </div>
-
-                    <div className="col-md-2">
-
-                        <input
-                            type="date"
-                            className="form-control"
-                            value={fechaHasta}
-                            onChange={(e) =>
-                                setFechaHasta(
-                                    e.target.value
-                                )
-                            }
-                        />
-
-                    </div>
-
-                    <div className="col-md-2">
 
                         <Button
-                            variant="secondary"
-                            onClick={
-                                limpiarFiltros
+                            variant="primary"
+                            onClick={() =>
+                                navigate(
+                                    "/fabrica/produccion-lotes/nuevo"
+                                )
                             }
                         >
-                            Limpiar
+                            Nuevo
                         </Button>
 
                     </div>
 
-                    <div className="col-md-3 text-end">
+                </Card.Header>
+
+
+                <Card.Body>
+
+                    {/* ====================================================
+                        FILTROS
+                    ==================================================== */}
+
+                    <Row className="mb-3">
+
+                        <Col md={3}>
+
+                            <Form.Label>
+                                Número de lote
+                            </Form.Label>
+
+                            <Form.Control
+                                placeholder="Número de lote"
+                                value={filtroLote}
+                                onChange={(e) =>
+                                    setFiltroLote(
+                                        e.target.value
+                                    )
+                                }
+                            />
+
+                        </Col>
+
+
+                        <Col md={2}>
+
+                            <Form.Label>
+                                Fecha Desde
+                            </Form.Label>
+
+                            <Form.Control
+                                type="date"
+                                value={fechaDesde}
+                                onChange={(e) =>
+                                    setFechaDesde(
+                                        e.target.value
+                                    )
+                                }
+                            />
+
+                        </Col>
+
+
+                        <Col md={2}>
+
+                            <Form.Label>
+                                Fecha Hasta
+                            </Form.Label>
+
+                            <Form.Control
+                                type="date"
+                                value={fechaHasta}
+                                onChange={(e) =>
+                                    setFechaHasta(
+                                        e.target.value
+                                    )
+                                }
+                            />
+
+                        </Col>
+
+
+                        <Col
+                            md={3}
+                            className="d-flex align-items-end"
+                        >
+
+                            <Button
+                                variant="secondary"
+                                onClick={
+                                    limpiarFiltros
+                                }
+                            >
+                                Limpiar
+                            </Button>
+
+                        </Col>
+
+                    </Row>
+
+
+                    {/* ====================================================
+                        CONTADOR
+                    ==================================================== */}
+
+                    <div className="mb-2">
 
                         <strong>
-
-                            Registros:
-                            {" "}
+                            Registros:{" "}
                             {rowsFiltrados.length}
-
                         </strong>
 
                     </div>
 
-                </div>
+
+                    {/* ====================================================
+                        TABLA
+                    ==================================================== */}
+
+                    <Table
+                        striped
+                        bordered
+                        hover
+                        responsive
+                    >
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Lote
+                                </th>
+
+                                <th>
+                                    Cant. Productos
+                                </th>
+
+                                <th>
+                                    Total Kg
+                                </th>
+
+                                <th>
+                                    Fecha Producción
+                                </th>
+
+                                <th>
+                                    Estado
+                                </th>
+
+                                <th>
+                                    Acciones
+                                </th>
+
+                            </tr>
+
+                        </thead>
 
 
-                <Button
-                    onClick={() =>
-                        navigate(
-                            "/fabrica/produccion-lotes/nuevo"
-                        )
-                    }
-                >
-                    Nuevo
-                </Button>
+                        <tbody>
 
-            </div>
+                            {registrosPagina.map(
+                                (row) => (
 
-            <Table
-                striped
-                bordered
-                hover
-            >
+                                    <tr
+                                        key={row.id}
+                                    >
 
-                <thead>
+                                        {/* LOTE */}
 
-                    <tr>
-                        <th>Lote</th>
-                        <th>Cant. Productos</th>
-                        <th>Total Kg</th>
-                        <th>Fecha</th>
-                        <th>Estado</th>
+                                        <td>
 
-                        <th>Acciones</th>
-                    </tr>
+                                            <strong>
+                                                {
+                                                    row.numero_lote
+                                                }
+                                            </strong>
 
-                </thead>
+                                        </td>
 
-                <tbody>
 
-                    {registrosPagina.map((row) => (
+                                        {/* CANTIDAD PRODUCTOS */}
 
-                        <tr key={row.id}>
+                                        <td>
 
-                            <td>
-                                {row.numero_lote}
-                            </td>
+                                            {
+                                                row.detalles
+                                                    ?.length ||
+                                                0
+                                            }
 
-                            <td>
-                                {row.detalles?.length || 0}
-                            </td>
+                                        </td>
 
-                            <td>
-                                {
-                                    (
-                                        row.detalles?.reduce(
-                                            (total, item) =>
-                                                total +
-                                                Number(item.cantidad || 0),
-                                            0
-                                        ) || 0
-                                    ).toFixed(3)
-                                }
-                            </td>
 
-                            <td>
-                                {row.fecha_produccion}
-                            </td>
+                                        {/* TOTAL KG */}
 
-                            <td>
-                                {row.estado}
-                            </td>
+                                        <td>
 
-                            <td>
+                                            <strong>
 
-                                <Button
-                                    size="sm"
-                                    variant="warning"
-                                    onClick={() =>
-                                        navigate(
-                                            `/fabrica/produccion-lotes/editar/${row.id}`
-                                        )
-                                    }
-                                >
-                                    Editar
-                                </Button>
+                                                {
+                                                    (
+                                                        row.detalles
+                                                            ?.reduce(
+                                                                (
+                                                                    total,
+                                                                    item
+                                                                ) =>
+                                                                    total +
+                                                                    Number(
+                                                                        item.cantidad ||
+                                                                        0
+                                                                    ),
+                                                                0
+                                                            ) ||
+                                                        0
+                                                    ).toFixed(
+                                                        3
+                                                    )
+                                                }
 
-                                {" "}
+                                            </strong>
 
-                                <Button
-                                    size="sm"
-                                    variant="danger"
-                                    onClick={() =>
-                                        eliminar(row.id)
-                                    }
-                                >
-                                    Eliminar
-                                </Button>
+                                        </td>
 
-                            </td>
 
-                        </tr>
+                                        {/* FECHA */}
 
-                    ))}
+                                        <td>
 
-                </tbody>
+                                            {
+                                                row.fecha_produccion
+                                            }
 
-            </Table>
+                                        </td>
 
-            <div className="d-flex justify-content-center mt-3">
 
-                <Button
-                    variant="outline-primary"
-                    disabled={
-                        paginaActual === 1
-                    }
-                    onClick={() =>
-                        setPaginaActual(
-                            paginaActual - 1
-                        )
-                    }
-                >
-                    Anterior
-                </Button>
+                                        {/* ESTADO */}
 
-                <span
-                    className="mx-3 align-self-center"
-                >
-                    Página
-                    {" "}
-                    {paginaActual}
-                    {" "}
-                    de
-                    {" "}
-                    {totalPaginas}
-                </span>
+                                        <td>
 
-                <Button
-                    variant="outline-primary"
-                    disabled={
-                        paginaActual ===
-                        totalPaginas
-                    }
-                    onClick={() =>
-                        setPaginaActual(
-                            paginaActual + 1
-                        )
-                    }
-                >
-                    Siguiente
-                </Button>
+                                            {
+                                                row.estado
+                                            }
 
-            </div>
+                                        </td>
+
+
+                                        {/* ACCIONES */}
+
+                                        <td>
+
+                                            <Button
+                                                size="sm"
+                                                variant="warning"
+                                                className="me-1"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/fabrica/produccion-lotes/editar/${row.id}`
+                                                    )
+                                                }
+                                            >
+                                                Editar
+                                            </Button>
+
+
+                                            <Button
+                                                size="sm"
+                                                variant="danger"
+                                                onClick={() =>
+                                                    eliminar(
+                                                        row.id
+                                                    )
+                                                }
+                                            >
+                                                Eliminar
+                                            </Button>
+
+                                        </td>
+
+                                    </tr>
+
+                                )
+                            )}
+
+                        </tbody>
+
+                    </Table>
+
+
+                    {/* ====================================================
+                        PAGINACIÓN
+                    ==================================================== */}
+
+                    <div
+                        className="d-flex justify-content-center mt-3"
+                    >
+
+                        <Button
+                            variant="outline-primary"
+                            disabled={
+                                paginaActual === 1
+                            }
+                            onClick={() =>
+                                setPaginaActual(
+                                    (pagina) =>
+                                        pagina - 1
+                                )
+                            }
+                        >
+                            Anterior
+                        </Button>
+
+
+                        <span
+                            className="mx-3 align-self-center"
+                        >
+
+                            Página{" "}
+                            {paginaActual}
+                            {" "}de{" "}
+                            {totalPaginas}
+
+                        </span>
+
+
+                        <Button
+                            variant="outline-primary"
+                            disabled={
+                                paginaActual >=
+                                totalPaginas
+                            }
+                            onClick={() =>
+                                setPaginaActual(
+                                    (pagina) =>
+                                        pagina + 1
+                                )
+                            }
+                        >
+                            Siguiente
+                        </Button>
+
+                    </div>
+
+                </Card.Body>
+
+            </Card>
 
         </Container>
+
     );
+
 }

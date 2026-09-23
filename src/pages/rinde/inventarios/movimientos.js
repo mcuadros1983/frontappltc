@@ -3,8 +3,11 @@ import {
   Container,
   Table,
   Button,
-  FormControl,
+  Form,
   Spinner,
+  Row,
+  Col,
+  Card
 } from "react-bootstrap";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
 import Contexts from "../../../context/Contexts";
@@ -231,208 +234,571 @@ export default function MovimientosInternos() {
     saveAs(blob, nombreArchivo);
   };
 
-
   return (
-    <Container className="vt-page">
-      <h1 className="my-list-title dark-text vt-title">Movimientos Internos</h1>
 
-      {/* Filtros principales */}
-      <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-        <div className="d-inline-block w-auto">
-          <label className="vt-label d-block">DESDE</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="form-control vt-input text-center"
-            disabled={loading}
-          />
-        </div>
+    <Container fluid>
 
-        <div className="d-inline-block w-auto">
-          <label className="vt-label d-block">HASTA</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="form-control vt-input text-center"
-            disabled={loading}
-          />
-        </div>
+      <Card>
 
-        <div className="d-inline-block w-auto">
-          <label className="vt-label d-block">Sucursal</label>
-          <FormControl
-            as="select"
-            value={searchSucursal}
-            onChange={(e) => setSearchSucursal(e.target.value)}
-            className="vt-input"
-            style={{ minWidth: 240 }}
-            disabled={loading || loadingBranches}
-          >
-            <option value="">
-              {loadingBranches ? "Cargando sucursales..." : "Seleccione una sucursal"}
-            </option>
-            {branches.map((sucursal) => (
-              <option key={sucursal.id} value={sucursal.id}>
-                {sucursal.nombre}
-              </option>
-            ))}
-          </FormControl>
-        </div>
+        {/* =====================================================
+                ENCABEZADO
+            ===================================================== */}
 
-        <div className="d-inline-block">
-          <Button onClick={handleSearchClick} disabled={loading} className="vt-btn">
-            Filtrar
-          </Button>
+        <Card.Header>
 
-          <Button
-            variant="success"
-            onClick={exportarExcel}
-            disabled={loading || movimientosFiltradosPorTipo.length === 0}
-          >
-            Exportar Excel
-          </Button>
-        </div>
-      </div>
+          <h3 className="mb-0">
+            Movimientos Internos
+          </h3>
 
-      {/* Filtro por tipo (condicional) */}
-      {searchSucursal && movimientos.length > 0 && (
-        <div className="vt-toolbar mb-3 d-flex flex-wrap align-items-end gap-3">
-          <div className="d-inline-block w-auto">
-            <label className="vt-label d-block">Tipo</label>
-            <FormControl
-              as="select"
-              value={tipoSeleccionado}
-              onChange={(e) => setTipoSeleccionado(e.target.value)}
-              className="vt-input"
-              style={{ minWidth: 240 }}
-              disabled={loading}
-            >
-              <option value="">Todos los tipos</option>
-              {[...new Set(movimientos.map((m) => m.tipo))].map((tipo, idx) => (
-                <option key={idx} value={tipo}>
-                  {tipo}
-                </option>
-              ))}
-            </FormControl>
-          </div>
-        </div>
-      )}
+        </Card.Header>
 
-      {/* Loading / vacío */}
-      {loading && <Spinner animation="border" role="status"></Spinner>}
-      {noResults && <p>No se encontraron movimientos para las fechas especificadas</p>}
 
-      {/* Tabla */}
-      <div className="vt-tablewrap table-responsive">
-        <Table striped bordered hover className="mb-2">
-          <thead>
-            <tr>
-              <th onClick={() => handleSort("fecha")} className="vt-th-sort">
-                Fecha
-              </th>
-              <th onClick={() => handleSort("numerolote")} className="vt-th-sort">
-                Lote
-              </th>
-              <th
-                onClick={() => handleSort("articulocodigo")}
-                className="vt-th-sort"
-              >
-                Código de Artículo
-              </th>
-              <th
-                onClick={() => handleSort("articulodescripcion")}
-                className="vt-th-sort"
-              >
-                Descripción de Artículo
-              </th>
-              <th
-                onClick={() => handleSort("cantidad")}
-                className="vt-th-sort text-end"
-              >
-                Cantidad
-              </th>
-              <th onClick={() => handleSort("tipo")} className="vt-th-sort">
-                Tipo
-              </th>
-              <th
-                onClick={() => handleSort("sucursal_id")}
-                className="vt-th-sort"
-              >
+        <Card.Body>
+
+          {/* =====================================================
+                    FILTROS PRINCIPALES
+                ===================================================== */}
+
+          <Row className="mb-3">
+
+            <Col md={2}>
+
+              <Form.Label>
+                Fecha Desde
+              </Form.Label>
+
+              <Form.Control
+                type="date"
+                value={startDate}
+                onChange={(e) =>
+                  setStartDate(
+                    e.target.value
+                  )
+                }
+                disabled={loading}
+              />
+
+            </Col>
+
+
+            <Col md={2}>
+
+              <Form.Label>
+                Fecha Hasta
+              </Form.Label>
+
+              <Form.Control
+                type="date"
+                value={endDate}
+                onChange={(e) =>
+                  setEndDate(
+                    e.target.value
+                  )
+                }
+                disabled={loading}
+              />
+
+            </Col>
+
+
+            <Col md={3}>
+
+              <Form.Label>
                 Sucursal
-              </th>
-              {userContext.user?.rol_id !== 4 && (
-                <th className="text-center">Operaciones</th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {currentMovimientos.map((movimiento) => (
-              <tr key={movimiento.id}>
-                <td>{movimiento.fecha}</td>
-                <td>{movimiento.numerolote}</td>
-                <td>{movimiento.articulocodigo}</td>
-                <td>{movimiento.articulodescripcion}</td>
-                <td className="text-end">{movimiento.cantidad}</td>
-                <td>{movimiento.tipo}</td>
-                <td>{sucursalNombreById(movimiento.sucursal_id)}</td>
-                {userContext.user?.rol_id !== 4 && (
-                  <td className="text-center">
-                    <div
-                      className="d-inline-flex align-items-center justify-content-center"
-                      style={{ gap: "10px", flexWrap: "nowrap" }}
-                    >
-                      <Button
-                        variant="danger"
-                        onClick={() => handleEliminarMovimiento(movimiento.id)}
-                        disabled={loading}
-                        size="sm"
-                        className="vt-btn-danger d-inline-flex align-items-center justify-content-center"
-                        style={{
-                          height: "34px",
-                          padding: "4px 12px",
-                          borderRadius: "8px",
-                          fontWeight: 500,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        Eliminar
-                      </Button>
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+              </Form.Label>
 
-      {/* Paginación */}
-      <div className="d-flex justify-content-center align-items-center vt-pager">
-        <Button
-          onClick={prevPage}
-          disabled={currentPage === 1 || loading}
-          variant="light"
-        >
-          <BsChevronLeft />
-        </Button>
-        <span className="mx-2">
-          Página {currentPage} de{" "}
-          {Math.ceil(movimientosFiltradosPorTipo.length / movimientosPerPage)}
-        </span>
-        <Button
-          onClick={nextPage}
-          disabled={
-            currentPage ===
-            Math.ceil(movimientosFiltradosPorTipo.length / movimientosPerPage) ||
-            loading
-          }
-          variant="light"
-        >
-          <BsChevronRight />
-        </Button>
-      </div>
+              <Form.Select
+                value={searchSucursal}
+                onChange={(e) =>
+                  setSearchSucursal(
+                    e.target.value
+                  )
+                }
+                disabled={
+                  loading ||
+                  loadingBranches
+                }
+              >
+
+                <option value="">
+
+                  {
+                    loadingBranches
+                      ? "Cargando sucursales..."
+                      : "Todas las sucursales"
+                  }
+
+                </option>
+
+                {branches.map(
+                  (sucursal) => (
+
+                    <option
+                      key={sucursal.id}
+                      value={sucursal.id}
+                    >
+                      {sucursal.nombre}
+                    </option>
+
+                  )
+                )}
+
+              </Form.Select>
+
+            </Col>
+
+
+            {/* TIPO */}
+
+            <Col md={2}>
+
+              <Form.Label>
+                Tipo
+              </Form.Label>
+
+              <Form.Select
+                value={tipoSeleccionado}
+                onChange={(e) => {
+
+                  setTipoSeleccionado(
+                    e.target.value
+                  );
+
+                  setCurrentPage(1);
+
+                }}
+                disabled={
+                  loading ||
+                  movimientos.length === 0
+                }
+              >
+
+                <option value="">
+                  Todos
+                </option>
+
+                {[
+                  ...new Set(
+                    movimientos.map(
+                      (m) =>
+                        m.tipo
+                    )
+                  )
+                ].map(
+                  (tipo, idx) => (
+
+                    <option
+                      key={idx}
+                      value={tipo}
+                    >
+                      {tipo}
+                    </option>
+
+                  )
+                )}
+
+              </Form.Select>
+
+            </Col>
+
+
+            {/* BOTONES */}
+
+            <Col
+              md={3}
+              className="d-flex align-items-end"
+            >
+
+              <Button
+                variant="primary"
+                onClick={
+                  handleSearchClick
+                }
+                disabled={loading}
+              >
+                Buscar
+              </Button>
+
+
+              <Button
+                variant="success"
+                className="ms-2"
+                onClick={
+                  exportarExcel
+                }
+                disabled={
+                  loading ||
+                  movimientosFiltradosPorTipo
+                    .length === 0
+                }
+              >
+                Exportar Excel
+              </Button>
+
+            </Col>
+
+          </Row>
+
+
+          {/* =====================================================
+                    REGISTROS
+                ===================================================== */}
+
+          <div className="mb-2">
+
+            <strong>
+
+              Registros:{" "}
+
+              {
+                movimientosFiltradosPorTipo
+                  .length
+              }
+
+            </strong>
+
+          </div>
+
+
+          {/* =====================================================
+                    LOADING / SIN RESULTADOS
+                ===================================================== */}
+
+          {loading && (
+
+            <div className="mb-3">
+
+              <Spinner
+                animation="border"
+                size="sm"
+              />
+
+              <span className="ms-2">
+                Cargando...
+              </span>
+
+            </div>
+
+          )}
+
+
+          {noResults && (
+
+            <div
+              className="alert alert-warning"
+            >
+              No se encontraron movimientos
+              para las fechas especificadas.
+            </div>
+
+          )}
+
+
+          {/* =====================================================
+                    TABLA
+                ===================================================== */}
+
+          <Table
+            striped
+            bordered
+            hover
+            responsive
+          >
+
+            <thead>
+
+              <tr>
+
+                <th
+                  onClick={() =>
+                    handleSort(
+                      "fecha"
+                    )
+                  }
+                  style={{
+                    cursor: "pointer"
+                  }}
+                >
+                  Fecha
+                </th>
+
+
+                <th
+                  onClick={() =>
+                    handleSort(
+                      "numerolote"
+                    )
+                  }
+                  style={{
+                    cursor: "pointer"
+                  }}
+                >
+                  Lote
+                </th>
+
+
+                <th
+                  onClick={() =>
+                    handleSort(
+                      "articulocodigo"
+                    )
+                  }
+                  style={{
+                    cursor: "pointer"
+                  }}
+                >
+                  Código de Artículo
+                </th>
+
+
+                <th
+                  onClick={() =>
+                    handleSort(
+                      "articulodescripcion"
+                    )
+                  }
+                  style={{
+                    cursor: "pointer"
+                  }}
+                >
+                  Descripción de Artículo
+                </th>
+
+
+                <th
+                  className="text-end"
+                  onClick={() =>
+                    handleSort(
+                      "cantidad"
+                    )
+                  }
+                  style={{
+                    cursor: "pointer"
+                  }}
+                >
+                  Cantidad
+                </th>
+
+
+                <th
+                  onClick={() =>
+                    handleSort(
+                      "tipo"
+                    )
+                  }
+                  style={{
+                    cursor: "pointer"
+                  }}
+                >
+                  Tipo
+                </th>
+
+
+                <th
+                  onClick={() =>
+                    handleSort(
+                      "sucursal_id"
+                    )
+                  }
+                  style={{
+                    cursor: "pointer"
+                  }}
+                >
+                  Sucursal
+                </th>
+
+
+                {userContext.user?.rol_id !== 4 && (
+
+                  <th className="text-center">
+                    Operaciones
+                  </th>
+
+                )}
+
+              </tr>
+
+            </thead>
+
+
+            <tbody>
+
+              {currentMovimientos.map(
+                (movimiento) => (
+
+                  <tr
+                    key={
+                      movimiento.id
+                    }
+                  >
+
+                    <td>
+                      {
+                        movimiento.fecha
+                      }
+                    </td>
+
+
+                    <td>
+
+                      <strong>
+                        {
+                          movimiento.numerolote
+                        }
+                      </strong>
+
+                    </td>
+
+
+                    <td>
+                      {
+                        movimiento.articulocodigo
+                      }
+                    </td>
+
+
+                    <td>
+                      {
+                        movimiento.articulodescripcion
+                      }
+                    </td>
+
+
+                    <td className="text-end">
+
+                      {
+                        Number(
+                          movimiento.cantidad ||
+                          0
+                        ).toFixed(3)
+                      }
+
+                    </td>
+
+
+                    <td>
+                      {
+                        movimiento.tipo
+                      }
+                    </td>
+
+
+                    <td>
+
+                      {
+                        sucursalNombreById(
+                          movimiento.sucursal_id
+                        )
+                      }
+
+                    </td>
+
+
+                    {userContext.user?.rol_id !== 4 && (
+
+                      <td className="text-center">
+
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() =>
+                            handleEliminarMovimiento(
+                              movimiento.id
+                            )
+                          }
+                          disabled={
+                            loading
+                          }
+                        >
+                          Eliminar
+                        </Button>
+
+                      </td>
+
+                    )}
+
+                  </tr>
+
+                )
+              )}
+
+            </tbody>
+
+          </Table>
+
+
+          {/* =====================================================
+                    PAGINACIÓN
+                ===================================================== */}
+
+          <div
+            className="d-flex justify-content-center mt-3"
+          >
+
+            <Button
+              variant="outline-primary"
+              disabled={
+                currentPage === 1 ||
+                loading
+              }
+              onClick={
+                prevPage
+              }
+            >
+              Anterior
+            </Button>
+
+
+            <span
+              className="mx-3 align-self-center"
+            >
+
+              Página{" "}
+              {currentPage}
+              {" "}de{" "}
+
+              {
+                Math.max(
+                  1,
+                  Math.ceil(
+                    movimientosFiltradosPorTipo
+                      .length /
+                    movimientosPerPage
+                  )
+                )
+              }
+
+            </span>
+
+
+            <Button
+              variant="outline-primary"
+              disabled={
+                currentPage >=
+                Math.max(
+                  1,
+                  Math.ceil(
+                    movimientosFiltradosPorTipo
+                      .length /
+                    movimientosPerPage
+                  )
+                ) ||
+                loading
+              }
+              onClick={
+                nextPage
+              }
+            >
+              Siguiente
+            </Button>
+
+          </div>
+
+        </Card.Body>
+
+      </Card>
+
     </Container>
+
   );
 }
