@@ -119,6 +119,13 @@ export const PERMISSION_CATEGORIES = [
     perms: ["infosuc:view"],
   },
   {
+    id: "inteligencia",
+    title: "INTELIGENCIA COMERCIAL",
+    perms: [
+      "inteligencia:view",
+    ],
+  },
+  {
     id: "inventario",
     title: "INVENTARIO",
     perms: [

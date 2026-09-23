@@ -971,28 +971,29 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                   Lo conservamos exactamente así.
                   ============================================= */}
 
-              <Nav.Item
-                onClick={() => {
-                  setShowMainItems(false);
-                  setShowInteligenciaItems(true);
-                  setShowReturnButton(true);
-                }}
-                className="sb-top"
-              >
-                <Link
-                  to="#"
-                  className="nav-link"
+              {can("inteligencia:view") && (
+                <Nav.Item
+                  onClick={() => {
+                    setShowMainItems(false);
+                    setShowInteligenciaItems(true);
+                    setShowReturnButton(true);
+                  }}
+                  className="sb-top"
                 >
-                  <FiBarChart2 className="sb-ico" />
+                  <Link
+                    to="#"
+                    className="nav-link"
+                  >
+                    <FiBarChart2 className="sb-ico" />
 
-                  <span>
-                    Inteligencia Comercial
-                  </span>
+                    <span>
+                      Inteligencia Comercial
+                    </span>
 
-                  <FiChevronsRight className="sb-right" />
-                </Link>
-              </Nav.Item>
-
+                    <FiChevronsRight className="sb-right" />
+                  </Link>
+                </Nav.Item>
+              )}
 
               {/* =============================================
                   IVA
