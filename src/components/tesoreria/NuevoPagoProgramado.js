@@ -97,6 +97,18 @@ export default function NuevoPagoProgramado({
     setMonto,
   ] = useState("");
 
+  // ==========================================================
+  // CONTROL DE POSIBLES PAGOS DUPLICADOS
+  // ==========================================================
+
+  const [advertenciaDuplicado, setAdvertenciaDuplicado] =
+    useState(null);
+
+  const [detalleAbierto, setDetalleAbierto] =
+    useState(null);
+
+  const [verificandoDuplicado, setVerificandoDuplicado] =
+    useState(false);
 
   const [
     observaciones,
@@ -423,6 +435,10 @@ export default function NuevoPagoProgramado({
       setEcheqFechaVencimiento("");
       setFormaPagoId("");
       setMsg(null);
+
+      setAdvertenciaDuplicado(null);
+      setDetalleAbierto(null);
+      setVerificandoDuplicado(false);
     };
 
 
@@ -476,39 +492,17 @@ export default function NuevoPagoProgramado({
       )
     );
 
-
   // ==========================================================
-  // GUARDAR
+  // CREAR PAGO PROGRAMADO
   // ==========================================================
 
-  const handleSubmit =
-    async (e) => {
+  const guardarPagoProgramado =
+    async () => {
 
-      e.preventDefault();
-
+      setEnviando(true);
       setMsg(null);
 
-
-      if (!puedeGuardar) {
-
-        setMsg({
-          type:
-            "warning",
-
-          text:
-            "Completá todos los campos requeridos.",
-        });
-
-        return;
-      }
-
-
       try {
-
-        setEnviando(
-          true
-        );
-
 
         const payload = {
 
@@ -540,13 +534,6 @@ export default function NuevoPagoProgramado({
               formaPagoAutomatica.id
             ),
 
-          /*
-           * Si es Banco sí dejamos el banco prefijado.
-           *
-           * Si es Caja dejamos caja_id en null por ahora.
-           * La caja real puede resolverse al momento
-           * de ACREDITAR.
-           */
           banco_id:
             (
               medio === "banco" ||
@@ -568,16 +555,12 @@ export default function NuevoPagoProgramado({
 
           imputacioncontable_id:
             imputacionId
-              ? Number(
-                imputacionId
-              )
+              ? Number(imputacionId)
               : null,
 
           proyecto_id:
             proyectoId
-              ? Number(
-                proyectoId
-              )
+              ? Number(proyectoId)
               : null,
 
           idempotencyKey:
@@ -647,12 +630,225 @@ export default function NuevoPagoProgramado({
 
       } finally {
 
-        setEnviando(
+        setEnviando(false);
+      }
+    };
+
+
+  // ==========================================================
+  // GUARDAR
+  // ==========================================================
+
+  const handleSubmit =
+    async (e) => {
+
+      e.preventDefault();
+
+      setMsg(null);
+
+
+      if (!puedeGuardar) {
+
+        setMsg({
+          type:
+            "warning",
+
+          text:
+            "Completá todos los campos requeridos.",
+        });
+
+        return;
+      }
+
+
+      try {
+
+        setVerificandoDuplicado(
+          true
+        );
+
+
+        const params =
+          new URLSearchParams({
+            proveedor_id:
+              String(proveedorId),
+
+            monto:
+              String(montoNumero),
+          });
+
+
+        const res =
+          await fetch(
+            `${apiUrl}/pagos-programados/verificar-duplicado?${params.toString()}`,
+            {
+              credentials:
+                "include",
+            }
+          );
+
+
+        const json =
+          await res
+            .json()
+            .catch(
+              () => ({})
+            );
+
+
+        if (!res.ok) {
+
+          throw new Error(
+            json?.error ||
+            "No se pudo verificar si existen pagos coincidentes"
+          );
+        }
+
+
+        // ==============================================
+        // EXISTEN COINCIDENCIAS
+        // ==============================================
+
+        if (json?.hay_coincidencias) {
+
+          setAdvertenciaDuplicado(
+            json
+          );
+
+          setDetalleAbierto(
+            null
+          );
+
+          return;
+        }
+
+
+        // ==============================================
+        // NO EXISTEN COINCIDENCIAS
+        // GUARDAR NORMALMENTE
+        // ==============================================
+
+        await guardarPagoProgramado();
+
+      } catch (error) {
+
+        setMsg({
+          type:
+            "danger",
+
+          text:
+            error.message ||
+            "Error verificando posibles pagos duplicados",
+        });
+
+      } finally {
+
+        setVerificandoDuplicado(
           false
         );
       }
     };
 
+  // ==========================================================
+  // PRESENTACIÓN DE COINCIDENCIAS
+  // ==========================================================
+
+  const moneyAR =
+    (valor) =>
+      Number(valor || 0)
+        .toLocaleString(
+          "es-AR",
+          {
+            style: "currency",
+            currency: "ARS",
+          }
+        );
+
+
+  const fechaAR =
+    (fecha) => {
+
+      if (!fecha) {
+        return "—";
+      }
+
+      const [
+        anio,
+        mes,
+        dia,
+      ] =
+        String(fecha)
+          .slice(0, 10)
+          .split("-");
+
+      if (
+        !anio ||
+        !mes ||
+        !dia
+      ) {
+        return fecha;
+      }
+
+      return `${dia}/${mes}/${anio}`;
+    };
+
+
+  const nombreBanco =
+    (id) => {
+
+      if (!id) {
+        return "—";
+      }
+
+      const banco =
+        (bancosTabla || [])
+          .find(
+            (b) =>
+              Number(b.id) ===
+              Number(id)
+          );
+
+      return (
+        banco?.nombre ||
+        banco?.descripcion ||
+        `Banco #${id}`
+      );
+    };
+
+
+  const nombreFormaPago =
+    (id) => {
+
+      if (!id) {
+        return "—";
+      }
+
+      const fp =
+        (formasPagoTesoreria || [])
+          .find(
+            (f) =>
+              Number(f.id) ===
+              Number(id)
+          );
+
+      return (
+        fp?.descripcion ||
+        fp?.nombre ||
+        `Forma #${id}`
+      );
+    };
+
+
+  const toggleDetalle =
+    (clave) => {
+
+      setDetalleAbierto(
+        (actual) =>
+          actual === clave
+            ? null
+            : clave
+      );
+    };
 
   // ==========================================================
   // RENDER
@@ -1280,47 +1476,678 @@ export default function NuevoPagoProgramado({
 
           </Row>
 
+          {/* ==================================================
+    ADVERTENCIA POSIBLE PAGO DUPLICADO
+   ================================================== */}
+
+          {advertenciaDuplicado?.hay_coincidencias && (
+
+            <Alert
+              variant="warning"
+              className="mt-4"
+            >
+
+              <div
+                className="fw-bold mb-2"
+                style={{
+                  fontSize: "1.05rem",
+                }}
+              >
+                ⚠ Posible pago duplicado
+              </div>
+
+
+              <div className="mb-3">
+
+                Se encontraron movimientos para este proveedor
+                por un monto de{" "}
+
+                <strong>
+                  {moneyAR(
+                    montoNumero
+                  )}
+                </strong>.
+
+              </div>
+
+
+              {/* ==============================================
+        PAGOS ACREDITADOS
+       ============================================== */}
+
+              {advertenciaDuplicado
+                ?.pagos_acreditados
+                ?.length > 0 && (
+
+                  <div className="mb-3">
+
+                    <div className="fw-bold text-danger mb-2">
+                      Ya existe un pago acreditado por ese monto
+                      para este proveedor.
+                    </div>
+
+
+                    {advertenciaDuplicado
+                      .pagos_acreditados
+                      .map(
+                        (pago, index) => {
+
+                          const clave =
+                            `acreditado-${pago.movimiento_tipo || pago.origen}-${pago.id}-${index}`;
+
+                          const abierto =
+                            detalleAbierto ===
+                            clave;
+
+
+                          return (
+
+                            <div
+                              key={clave}
+                              className="border rounded mb-2 bg-white"
+                            >
+
+                              <button
+                                type="button"
+                                className="btn btn-link text-start text-decoration-none w-100"
+                                onClick={() =>
+                                  toggleDetalle(
+                                    clave
+                                  )
+                                }
+                              >
+
+                                <strong>
+                                  {abierto
+                                    ? "▼"
+                                    : "▶"}{" "}
+                                  Pago acreditado
+                                </strong>
+
+                                {" · "}
+
+                                {fechaAR(
+                                  pago.fecha
+                                )}
+
+                                {" · "}
+
+                                {moneyAR(
+                                  pago.monto
+                                )}
+
+                                {" · "}
+
+                                {pago.medio === "caja"
+                                  ? "Caja"
+                                  : pago.medio === "echeq"
+                                    ? "eCheq"
+                                    : "Banco"}
+
+                              </button>
+
+
+                              {abierto && (
+
+                                <div
+                                  className="px-3 pb-3"
+                                  style={{
+                                    fontSize:
+                                      "0.9rem",
+                                  }}
+                                >
+
+                                  <hr className="mt-0" />
+
+
+                                  <Row>
+
+                                    <Col md={6}>
+                                      <strong>
+                                        Fecha:
+                                      </strong>{" "}
+                                      {fechaAR(
+                                        pago.fecha
+                                      )}
+                                    </Col>
+
+
+                                    <Col md={6}>
+                                      <strong>
+                                        Monto:
+                                      </strong>{" "}
+                                      {moneyAR(
+                                        pago.monto
+                                      )}
+                                    </Col>
+
+
+                                    <Col
+                                      md={6}
+                                      className="mt-2"
+                                    >
+                                      <strong>
+                                        Medio:
+                                      </strong>{" "}
+
+                                      {pago.medio === "caja"
+                                        ? "Caja"
+                                        : pago.medio === "echeq"
+                                          ? "eCheq"
+                                          : "Banco"}
+                                    </Col>
+
+
+                                    <Col
+                                      md={6}
+                                      className="mt-2"
+                                    >
+                                      <strong>
+                                        Estado:
+                                      </strong>{" "}
+
+                                      {pago.estado ||
+                                        "acreditado"}
+                                    </Col>
+
+
+                                    {pago.banco_id && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Banco:
+                                        </strong>{" "}
+
+                                        {nombreBanco(
+                                          pago.banco_id
+                                        )}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.formapago_id && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Forma de pago:
+                                        </strong>{" "}
+
+                                        {nombreFormaPago(
+                                          pago.formapago_id
+                                        )}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.numero_echeq && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Nº eCheq:
+                                        </strong>{" "}
+
+                                        {pago.numero_echeq}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.fecha_vencimiento && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Vencimiento:
+                                        </strong>{" "}
+
+                                        {fechaAR(
+                                          pago.fecha_vencimiento
+                                        )}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.ordenpago_id && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Orden de pago:
+                                        </strong>{" "}
+
+                                        #{pago.ordenpago_id}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.comprobanteegreso_id && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Comprobante:
+                                        </strong>{" "}
+
+                                        #{pago.comprobanteegreso_id}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.descripcion && (
+
+                                      <Col
+                                        md={12}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Descripción:
+                                        </strong>{" "}
+
+                                        {pago.descripcion}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.observaciones && (
+
+                                      <Col
+                                        md={12}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Observaciones:
+                                        </strong>{" "}
+
+                                        {pago.observaciones}
+                                      </Col>
+
+                                    )}
+
+                                  </Row>
+
+                                </div>
+
+                              )}
+
+                            </div>
+                          );
+                        }
+                      )}
+
+                  </div>
+
+                )}
+
+
+              {/* ==============================================
+        PAGOS PROGRAMADOS
+       ============================================== */}
+
+              {advertenciaDuplicado
+                ?.pagos_programados
+                ?.length > 0 && (
+
+                  <div className="mb-3">
+
+                    <div className="fw-bold text-danger mb-2">
+                      Ya existe un pago programado por ese monto
+                      para este proveedor.
+                    </div>
+
+
+                    {advertenciaDuplicado
+                      .pagos_programados
+                      .map(
+                        (pago, index) => {
+
+                          const clave =
+                            `programado-${pago.id}-${index}`;
+
+                          const abierto =
+                            detalleAbierto ===
+                            clave;
+
+
+                          return (
+
+                            <div
+                              key={clave}
+                              className="border rounded mb-2 bg-white"
+                            >
+
+                              <button
+                                type="button"
+                                className="btn btn-link text-start text-decoration-none w-100"
+                                onClick={() =>
+                                  toggleDetalle(
+                                    clave
+                                  )
+                                }
+                              >
+
+                                <strong>
+                                  {abierto
+                                    ? "▼"
+                                    : "▶"}{" "}
+                                  Pago programado #{pago.id}
+                                </strong>
+
+                                {" · "}
+
+                                {fechaAR(
+                                  pago.fecha_programada
+                                )}
+
+                                {" · "}
+
+                                {moneyAR(
+                                  pago.monto
+                                )}
+
+                              </button>
+
+
+                              {abierto && (
+
+                                <div
+                                  className="px-3 pb-3"
+                                  style={{
+                                    fontSize:
+                                      "0.9rem",
+                                  }}
+                                >
+
+                                  <hr className="mt-0" />
+
+
+                                  <Row>
+
+                                    <Col md={6}>
+                                      <strong>
+                                        Fecha programada:
+                                      </strong>{" "}
+
+                                      {fechaAR(
+                                        pago.fecha_programada
+                                      )}
+                                    </Col>
+
+
+                                    <Col md={6}>
+                                      <strong>
+                                        Monto:
+                                      </strong>{" "}
+
+                                      {moneyAR(
+                                        pago.monto
+                                      )}
+                                    </Col>
+
+
+                                    <Col
+                                      md={6}
+                                      className="mt-2"
+                                    >
+                                      <strong>
+                                        Medio previsto:
+                                      </strong>{" "}
+
+                                      {pago.medio === "caja"
+                                        ? "Caja"
+                                        : pago.medio === "echeq"
+                                          ? "eCheq"
+                                          : "Banco"}
+                                    </Col>
+
+
+                                    <Col
+                                      md={6}
+                                      className="mt-2"
+                                    >
+                                      <strong>
+                                        Estado:
+                                      </strong>{" "}
+
+                                      {pago.estado}
+                                    </Col>
+
+
+                                    {pago.banco_id && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Banco:
+                                        </strong>{" "}
+
+                                        {nombreBanco(
+                                          pago.banco_id
+                                        )}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.formapago_id && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Forma de pago:
+                                        </strong>{" "}
+
+                                        {nombreFormaPago(
+                                          pago.formapago_id
+                                        )}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.echeq_fecha_vencimiento && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Vencimiento eCheq:
+                                        </strong>{" "}
+
+                                        {fechaAR(
+                                          pago.echeq_fecha_vencimiento
+                                        )}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.ordenpago_id && (
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Orden de pago:
+                                        </strong>{" "}
+
+                                        #{pago.ordenpago_id}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.descripcion && (
+
+                                      <Col
+                                        md={12}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Descripción:
+                                        </strong>{" "}
+
+                                        {pago.descripcion}
+                                      </Col>
+
+                                    )}
+
+
+                                    {pago.observaciones && (
+
+                                      <Col
+                                        md={12}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Observaciones:
+                                        </strong>{" "}
+
+                                        {pago.observaciones}
+                                      </Col>
+
+                                    )}
+
+                                  </Row>
+
+                                </div>
+
+                              )}
+
+                            </div>
+                          );
+                        }
+                      )}
+
+
+                    <div className="mt-3 fw-bold">
+                      ¿Desea crear igualmente el pago programado?
+                    </div>
+
+                  </div>
+
+                )}
+
+
+              {!advertenciaDuplicado
+                ?.pagos_programados
+                ?.length &&
+                advertenciaDuplicado
+                  ?.pagos_acreditados
+                  ?.length > 0 && (
+
+                  <div className="fw-bold mt-3">
+                    ¿Desea crear igualmente el pago programado?
+                  </div>
+
+                )}
+
+            </Alert>
+
+          )}
+
         </Modal.Body>
+
 
 
         <Modal.Footer>
 
-          <Button
-            variant="secondary"
-            onClick={
-              handleClose
-            }
-            disabled={
-              enviando
-            }
-          >
-            Cancelar
-          </Button>
+          {advertenciaDuplicado?.hay_coincidencias ? (
+
+            <>
+              <Button
+                variant="secondary"
+                type="button"
+                disabled={enviando}
+                onClick={() => {
+                  setAdvertenciaDuplicado(null);
+                  setDetalleAbierto(null);
+                }}
+              >
+                Cancelar
+              </Button>
 
 
-          <Button
-            variant="success"
-            type="submit"
-            disabled={
-              enviando ||
-              !puedeGuardar
-            }
-          >
+              <Button
+                variant="warning"
+                type="button"
+                disabled={enviando}
+                onClick={
+                  guardarPagoProgramado
+                }
+              >
 
-            {enviando ? (
-              <>
-                <Spinner
-                  animation="border"
-                  size="sm"
-                  className="me-2"
-                />
-                Guardando…
-              </>
-            ) : (
-              "Guardar Pago Programado"
-            )}
+                {enviando
+                  ? "Guardando..."
+                  : "Continuar de todas formas"}
 
-          </Button>
+              </Button>
+            </>
+
+          ) : (
+
+            <>
+              <Button
+                variant="secondary"
+                type="button"
+                disabled={
+                  enviando ||
+                  verificandoDuplicado
+                }
+                onClick={
+                  handleClose
+                }
+              >
+                Cancelar
+              </Button>
+
+
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={
+                  !puedeGuardar ||
+                  enviando ||
+                  verificandoDuplicado
+                }
+              >
+
+                {verificandoDuplicado
+                  ? "Verificando..."
+                  : enviando
+                    ? "Guardando..."
+                    : "Guardar Pago Programado"}
+
+              </Button>
+            </>
+
+          )}
 
         </Modal.Footer>
 

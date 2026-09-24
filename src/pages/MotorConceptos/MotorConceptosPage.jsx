@@ -45,6 +45,11 @@ import exportarConceptosExcel
 import {
     useNavigate,
 } from "react-router-dom";
+import MotorConceptoImportModal
+    from "../../components/motorConceptos/MotorConceptoImportModal";
+
+import motorConceptoApi
+    from "../../services/motorConceptoApi";
 
 /*
 Dentro de MotorConceptosContent:
@@ -185,7 +190,37 @@ const MotorConceptosContent = () => {
         setShowDelete,
     ] = useState(false);
 
+    const [
+        showImport,
+        setShowImport,
+    ] = useState(false);
+
+    const [
+        downloadingTemplate,
+        setDownloadingTemplate,
+    ] = useState(false);
+
+    const [
+        importMessage,
+        setImportMessage,
+    ] = useState("");
+
+    const [
+        importError,
+        setImportError,
+    ] = useState("");
+
     // const [conceptos, setConceptos] = useState([]);
+
+    const canDownloadTemplate =
+        can(
+            "motorconceptos:view"
+        );
+
+    const canImport =
+        can(
+            "motorconceptos:config"
+        );
 
     const canCreate =
         can(
@@ -288,6 +323,97 @@ const MotorConceptosContent = () => {
 
     //         closeForm();
     //     };
+
+    const handleDownloadTemplate =
+        async () => {
+
+            setDownloadingTemplate(
+                true
+            );
+
+            setImportError("");
+            setImportMessage("");
+
+
+            try {
+
+                const blob =
+                    await motorConceptoApi
+                        .descargarPlantilla();
+
+
+                const url =
+                    window.URL
+                        .createObjectURL(
+                            blob
+                        );
+
+
+                const link =
+                    document.createElement(
+                        "a"
+                    );
+
+
+                link.href = url;
+
+                link.download =
+                    "Plantilla_Motor_Conceptos.xlsx";
+
+
+                document.body
+                    .appendChild(
+                        link
+                    );
+
+
+                link.click();
+
+                link.remove();
+
+
+                window.URL
+                    .revokeObjectURL(
+                        url
+                    );
+
+
+                setImportMessage(
+                    "Plantilla descargada correctamente"
+                );
+
+            } catch (e) {
+
+                setImportError(
+                    e?.message ||
+                    "No se pudo descargar la plantilla"
+                );
+
+            } finally {
+
+                setDownloadingTemplate(
+                    false
+                );
+
+            }
+
+        };
+    const handleImported =
+        async (result) => {
+
+            await cargar();
+
+            setImportError("");
+
+            setImportMessage(
+                `Importación finalizada. Creados: ${result?.creados ?? 0
+                }, actualizados: ${result?.actualizados ?? 0
+                }, omitidos: ${result?.omitidos ?? 0
+                }.`
+            );
+
+        };
+
     const handleSave = async (payload) => {
 
         // console.group("Guardar concepto");
@@ -363,20 +489,49 @@ const MotorConceptosContent = () => {
                     canCreate={
                         canCreate
                     }
+
                     canExport={
                         canExport
                     }
+
+                    canImport={
+                        canImport
+                    }
+
+                    canDownloadTemplate={
+                        canDownloadTemplate
+                    }
+
                     loading={
                         loading
                     }
+
+                    importing={
+                        downloadingTemplate
+                    }
+
                     onNew={
                         openNew
                     }
+
                     onExport={
                         handleExport
                     }
+
                     onRefresh={
                         cargar
+                    }
+
+                    onImport={
+                        () => {
+                            setImportError("");
+                            setImportMessage("");
+                            setShowImport(true);
+                        }
+                    }
+
+                    onDownloadTemplate={
+                        handleDownloadTemplate
                     }
                 />
             }
@@ -406,6 +561,22 @@ const MotorConceptosContent = () => {
                         }
                     >
                         {message}
+                    </Alert>
+                )
+            }
+
+            {
+                importError && (
+                    <Alert variant="danger">
+                        {importError}
+                    </Alert>
+                )
+            }
+
+            {
+                importMessage && (
+                    <Alert variant="success">
+                        {importMessage}
                     </Alert>
                 )
             }
@@ -486,6 +657,23 @@ const MotorConceptosContent = () => {
                 onHide={closeForm}
                 onSubmit={
                     handleSave
+                }
+            />
+
+            <MotorConceptoImportModal
+                show={
+                    showImport
+                }
+
+                onHide={
+                    () =>
+                        setShowImport(
+                            false
+                        )
+                }
+
+                onImported={
+                    handleImported
                 }
             />
 

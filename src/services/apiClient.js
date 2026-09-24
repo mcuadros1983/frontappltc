@@ -17,7 +17,36 @@ async function handle(res) {
   return res.text();
 }
 
+async function handleBlob(res) {
+
+  if (!res.ok) {
+
+    const text =
+      await res
+        .text()
+        .catch(() => "");
+
+    throw new Error(
+      text ||
+      `HTTP ${res.status}`
+    );
+
+  }
+
+  return res.blob();
+}
+
 export const api = {
+  getBlob: async (path) =>
+  handleBlob(
+    await fetch(
+      `${API_BASE}${path}`,
+      {
+        headers: baseHeaders(),
+        credentials: "include",
+      }
+    )
+  ),
   get: async (path) => handle(await fetch(`${API_BASE}${path}`, { headers: baseHeaders(), credentials: "include" })),
   post: async (path, body) => handle(await fetch(`${API_BASE}${path}`, {
     method: 'POST', headers: baseHeaders(), body:

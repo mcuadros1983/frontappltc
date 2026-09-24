@@ -46,6 +46,63 @@ const mapListParams = (params = {}) => ({
 
 export const motorConceptoApi = {
 
+    descargarPlantilla: async () =>
+        api.getBlob(
+            "/motorconceptos/importacion/plantilla"
+        ),
+
+
+    validarImportacion: async (
+        archivo
+    ) => {
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "archivo",
+            archivo
+        );
+
+        return unwrap(
+            await api.postFormData(
+                "/motorconceptos/importacion/validar",
+                formData
+            )
+        );
+
+    },
+
+
+    importarExcel: async (
+        archivo,
+        acciones = {}
+    ) => {
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "archivo",
+            archivo
+        );
+
+        formData.append(
+            "acciones",
+            JSON.stringify(
+                acciones
+            )
+        );
+
+        return unwrap(
+            await api.postFormData(
+                "/motorconceptos/importacion",
+                formData
+            )
+        );
+
+    },
+
     listar: async (params = {}) =>
         unwrap(
             await api.get(

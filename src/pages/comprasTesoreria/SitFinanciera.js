@@ -7,6 +7,7 @@ import {
   useRef
 } from "react";
 import { Card, Row, Col, Form, Button, Table, Spinner, Alert, Badge, Pagination, InputGroup } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import Contexts from "../../context/Contexts";
 import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
 import AcreditarPagoProgramadoModal
@@ -294,6 +295,9 @@ async function fetchComprobanteNro(id) {
 
 // -------- Componente principal unificado ----------
 export default function SitFinanciera() {
+
+  const navigate = useNavigate();
+
   const dataContext = useContext(Contexts.DataContext);
   const {
     empresaSeleccionada,
@@ -757,6 +761,15 @@ export default function SitFinanciera() {
           p.categoriaegreso_id ??
           null,
 
+        // IMPORTANTE:
+        // conservar también el nombre real del campo
+        // del PagoProgramadoTesoreria.
+        // Se necesita para generar un nuevo pago
+        // programado por la diferencia.
+        categoriaegreso_id:
+          p.categoriaegreso_id ??
+          null,
+
         categoria_nombre,
 
         imputacioncontable_id:
@@ -863,6 +876,10 @@ export default function SitFinanciera() {
 
         caja_id:
           p.caja_id ??
+          null,
+
+        echeq_fecha_vencimiento:
+          p.echeq_fecha_vencimiento ??
           null,
 
         proyecto_id:
@@ -2965,7 +2982,19 @@ export default function SitFinanciera() {
                 + Nuevo eCheq
               </Button>
 
+              <Button
+                variant="outline-primary"
+                className="ms-2"
+                onClick={() =>
+                  navigate(
+                    "/tesoreria/pagos-realizados"
+                  )
+                }
+              >
+                Pagos realizados
+              </Button>
             </Col>
+
 
 
             {/* ================================================== */}

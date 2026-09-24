@@ -129,6 +129,14 @@ export default function AcreditarPagoProgramadoModal({
     setError,
   ] = useState(null);
 
+  // ==========================================================
+  // ACREDITACIÓN PARCIAL
+  // ==========================================================
+
+  const [
+    confirmarSaldo,
+    setConfirmarSaldo,
+  ] = useState(false);
 
   // ==========================================================
   // BANCOS
@@ -214,6 +222,7 @@ export default function AcreditarPagoProgramadoModal({
       false
     );
 
+    setConfirmarSaldo(false);
 
     setError(null);
 
@@ -232,6 +241,23 @@ export default function AcreditarPagoProgramadoModal({
       monto || 0
     );
 
+  /*
+   * El monto original siempre se toma del PagoProgramado
+   * recibido.
+   *
+   * Aunque el usuario modifique el input "monto",
+   * pago.monto permanece intacto.
+   */
+  const montoOriginal =
+    Number(
+      pago?.monto || 0
+    );
+
+  const diferenciaMonto =
+    Math.max(
+      0,
+      montoOriginal - montoNumero
+    );
 
   const montoAplicado =
     Number(
@@ -244,6 +270,17 @@ export default function AcreditarPagoProgramadoModal({
   const montoBloqueado =
     montoAplicado > 0;
 
+  /*
+   * Solamente consideramos pago parcial cuando el monto
+   * puede modificarse.
+   *
+   * Si está aplicado a comprobantes, se mantiene
+   * exactamente la restricción actual.
+   */
+  const esAcreditacionParcial =
+    !montoBloqueado &&
+    montoNumero > 0 &&
+    montoNumero < montoOriginal;
 
   const comprobantesAplicados =
     Array.isArray(
@@ -334,8 +371,9 @@ export default function AcreditarPagoProgramadoModal({
       return;
     }
 
-
     setError(null);
+
+    setConfirmarSaldo(false);
 
     onHide?.();
   };
@@ -345,13 +383,12 @@ export default function AcreditarPagoProgramadoModal({
   // ACREDITAR
   // ==========================================================
 
-  const handleSubmit =
-    async (e) => {
-
-      e.preventDefault();
+  const acreditarPago =
+    async ({
+      generarSaldo = false,
+    } = {}) => {
 
       setError(null);
-
 
       if (!puedeAcreditar) {
 
@@ -367,6 +404,10 @@ export default function AcreditarPagoProgramadoModal({
 
         setEnviando(true);
 
+
+        // ====================================================
+        // 1. ACREDITAR EL PAGO ACTUAL
+        // ====================================================
 
         const payload = {
 
@@ -460,12 +501,191 @@ export default function AcreditarPagoProgramadoModal({
         }
 
 
+        // ====================================================
+        // 2. SI EL USUARIO LO SOLICITÓ,
+        //    CREAR NUEVO PAGO PROGRAMADO POR LA DIFERENCIA
+        // ====================================================
+
+        if (
+          generarSaldo &&
+          diferenciaMonto > 0
+        ) {
+
+          /*
+           * MUY IMPORTANTE:
+           *
+           * Todos los datos se toman de `pago`,
+           * es decir, del PagoProgramado ORIGINAL.
+           *
+           * NO tomamos medio, banco, descripción,
+           * proyecto, etc. del formulario de acreditación.
+           *
+           * El único dato funcional que cambia es MONTO.
+           */
+
+          const payloadSaldo = {
+
+            empresa_id:
+              Number(
+                pago.empresa_id
+              ),
+
+            proveedor_id:
+              Number(
+                pago.proveedor_id
+              ),
+
+            tipo:
+              pago.tipo,
+
+            medio:
+              pago.medio,
+
+            fecha_programada:
+              pago.fecha_programada,
+
+            monto:
+              diferenciaMonto,
+
+            descripcion:
+              pago.descripcion,
+
+            observaciones:
+              pago.observaciones ||
+              null,
+
+            formapago_id:
+              pago.formapago_id
+                ? Number(
+                  pago.formapago_id
+                )
+                : null,
+
+            banco_id:
+              pago.banco_id
+                ? Number(
+                  pago.banco_id
+                )
+                : null,
+
+            caja_id:
+              pago.caja_id
+                ? Number(
+                  pago.caja_id
+                )
+                : null,
+
+            echeq_fecha_vencimiento:
+              pago.echeq_fecha_vencimiento ||
+              null,
+
+            categoriaegreso_id:
+              pago.categoriaegreso_id
+                ? Number(
+                  pago.categoriaegreso_id
+                )
+                : null,
+
+            imputacioncontable_id:
+              pago.imputacioncontable_id
+                ? Number(
+                  pago.imputacioncontable_id
+                )
+                : null,
+
+            proyecto_id:
+              pago.proyecto_id
+                ? Number(
+                  pago.proyecto_id
+                )
+                : null,
+
+            /*
+             * No copiamos:
+             *
+             * - comprobanteegreso_id
+             * - ordenpago_id
+             * - movimiento_ctacte_id
+             * - estado
+             * - fecha_acreditacion
+             * - movimiento_tipo
+             * - movimiento_id
+             * - idempotency_key
+             *
+             * El nuevo PagoProgramado debe generar
+             * sus propias relaciones.
+             */
+
+            idempotencyKey:
+              `saldo-pago-programado-${pago.id}-${Date.now()}`,
+          };
+
+
+          const resSaldo =
+            await fetch(
+              `${apiUrl}/pagos-programados`,
+              {
+                method:
+                  "POST",
+
+                credentials:
+                  "include",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                body:
+                  JSON.stringify(
+                    payloadSaldo
+                  ),
+              }
+            );
+
+
+          const jsonSaldo =
+            await resSaldo
+              .json()
+              .catch(
+                () => ({})
+              );
+
+
+          if (!resSaldo.ok) {
+
+            /*
+             * ATENCIÓN:
+             *
+             * A esta altura la acreditación YA se realizó.
+             * Por eso el mensaje debe dejarlo claramente
+             * indicado.
+             */
+
+            throw new Error(
+              `El pago de ${fmtMoney(
+                montoNumero
+              )} fue acreditado correctamente, pero no se pudo generar el nuevo Pago Programado por el saldo de ${fmtMoney(
+                diferenciaMonto
+              )}. ${jsonSaldo?.error || ""
+              }`
+            );
+          }
+        }
+
+
+        // ====================================================
+        // 3. TODO OK
+        // ====================================================
+
+        setConfirmarSaldo(false);
+
         onAcreditado?.(
           json
         );
 
-
         onHide?.();
+
 
       } catch (e) {
 
@@ -480,6 +700,51 @@ export default function AcreditarPagoProgramadoModal({
       }
     };
 
+
+  // ==========================================================
+  // SUBMIT
+  // ==========================================================
+
+  const handleSubmit =
+    async (e) => {
+
+      e.preventDefault();
+
+      setError(null);
+
+
+      if (!puedeAcreditar) {
+
+        setError(
+          "Completá todos los datos requeridos para acreditar el pago."
+        );
+
+        return;
+      }
+
+
+      /*
+       * Si el usuario está acreditando menos que el
+       * PagoProgramado original, NO acreditamos todavía.
+       *
+       * Primero mostramos la decisión sobre el saldo.
+       */
+      if (esAcreditacionParcial) {
+
+        setConfirmarSaldo(true);
+
+        return;
+      }
+
+
+      /*
+       * Si no existe diferencia, seguimos exactamente
+       * con la acreditación normal.
+       */
+      await acreditarPago({
+        generarSaldo: false,
+      });
+    };
 
   if (!pago) {
     return null;
@@ -800,11 +1065,16 @@ export default function AcreditarPagoProgramadoModal({
                 min="0.01"
                 step="0.01"
                 value={monto}
-                onChange={(e) =>
+                onChange={(e) => {
+
                   setMonto(
                     e.target.value
-                  )
-                }
+                  );
+
+                  setConfirmarSaldo(
+                    false
+                  );
+                }}
                 disabled={
                   montoBloqueado
                 }
@@ -974,43 +1244,231 @@ export default function AcreditarPagoProgramadoModal({
 
           )} */}
 
+          {/* ==================================================
+    ACREDITACIÓN PARCIAL
+   ================================================== */}
+
+          {confirmarSaldo &&
+            esAcreditacionParcial && (
+
+              <Alert
+                variant="warning"
+                className="mt-3 mb-0"
+              >
+
+                <div className="fw-bold mb-2">
+                  Acreditación parcial del Pago Programado
+                </div>
+
+
+                <div className="mb-3">
+
+                  El importe ingresado es menor al importe
+                  original del Pago Programado.
+
+                </div>
+
+
+                <Row className="g-2">
+
+                  <Col md={4}>
+
+                    <div className="text-muted">
+                      Importe original
+                    </div>
+
+                    <strong>
+                      {fmtMoney(
+                        montoOriginal
+                      )}
+                    </strong>
+
+                  </Col>
+
+
+                  <Col md={4}>
+
+                    <div className="text-muted">
+                      Importe a acreditar
+                    </div>
+
+                    <strong>
+                      {fmtMoney(
+                        montoNumero
+                      )}
+                    </strong>
+
+                  </Col>
+
+
+                  <Col md={4}>
+
+                    <div className="text-muted">
+                      Saldo pendiente
+                    </div>
+
+                    <strong>
+                      {fmtMoney(
+                        diferenciaMonto
+                      )}
+                    </strong>
+
+                  </Col>
+
+                </Row>
+
+
+                <hr />
+
+
+                <div className="fw-bold">
+
+                  ¿Desea generar automáticamente un nuevo
+                  Pago Programado por{" "}
+
+                  {fmtMoney(
+                    diferenciaMonto
+                  )}{" "}
+
+                  con los mismos datos del Pago Programado
+                  original?
+
+                </div>
+
+              </Alert>
+
+            )}
+
         </Modal.Body>
 
 
         <Modal.Footer>
 
-          <Button
-            variant="secondary"
-            onClick={handleClose}
-            disabled={enviando}
-          >
-            Cancelar
-          </Button>
+          {confirmarSaldo &&
+            esAcreditacionParcial ? (
+
+            <>
+              {/* ============================================
+          VOLVER
+         ============================================ */}
+
+              <Button
+                variant="secondary"
+                type="button"
+                disabled={enviando}
+                onClick={() =>
+                  setConfirmarSaldo(false)
+                }
+              >
+                Volver
+              </Button>
 
 
-          <Button
-            variant="success"
-            type="submit"
-            disabled={
-              enviando ||
-              !puedeAcreditar
-            }
-          >
+              {/* ============================================
+          ACREDITAR SIN CREAR SALDO
+         ============================================ */}
 
-            {enviando ? (
-              <>
-                <Spinner
-                  animation="border"
-                  size="sm"
-                  className="me-2"
-                />
-                Acreditando…
-              </>
-            ) : (
-              "Acreditar Pago"
-            )}
+              <Button
+                variant="outline-success"
+                type="button"
+                disabled={enviando}
+                onClick={() =>
+                  acreditarPago({
+                    generarSaldo:
+                      false,
+                  })
+                }
+              >
+                {enviando
+                  ? "Procesando…"
+                  : `Acreditar ${fmtMoney(
+                    montoNumero
+                  )} sin generar saldo`}
+              </Button>
 
-          </Button>
+
+              {/* ============================================
+          ACREDITAR + GENERAR DIFERENCIA
+         ============================================ */}
+
+              <Button
+                variant="success"
+                type="button"
+                disabled={enviando}
+                onClick={() =>
+                  acreditarPago({
+                    generarSaldo:
+                      true,
+                  })
+                }
+              >
+
+                {enviando ? (
+
+                  <>
+                    <Spinner
+                      animation="border"
+                      size="sm"
+                      className="me-2"
+                    />
+
+                    Procesando…
+                  </>
+
+                ) : (
+
+                  `Acreditar y programar ${fmtMoney(
+                    diferenciaMonto
+                  )}`
+
+                )}
+
+              </Button>
+            </>
+
+          ) : (
+
+            <>
+              <Button
+                variant="secondary"
+                onClick={handleClose}
+                disabled={enviando}
+              >
+                Cancelar
+              </Button>
+
+
+              <Button
+                variant="success"
+                type="submit"
+                disabled={
+                  enviando ||
+                  !puedeAcreditar
+                }
+              >
+
+                {enviando ? (
+
+                  <>
+                    <Spinner
+                      animation="border"
+                      size="sm"
+                      className="me-2"
+                    />
+
+                    Acreditando…
+                  </>
+
+                ) : (
+
+                  "Acreditar Pago"
+
+                )}
+
+              </Button>
+            </>
+
+          )}
 
         </Modal.Footer>
 

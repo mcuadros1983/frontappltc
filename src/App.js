@@ -170,6 +170,7 @@ import AjustesComprobantesEgresoList from "./pages/tesoreria/AjustesComprobantes
 import MovimientosChequesTesoreria from "./pages/tesoreria/MovimientosChequesTesoreria.js";
 import RegistroHacienda from "./pages/gmedias/RegistroHacienda.js";
 import MoivmientosCajaRetirosTesoreria from "./pages/tesoreria/MovimientosCajaRetirosTesoreria.js";
+import PagosRealizados from "./pages/tesoreria/PagosRealizados.js";
 import AdicionalFijoTipo from "./pages/sueldosTesoreria/AdicionalFijoTipoPage.js";
 import AdicionalFijoManager from "./pages/sueldosTesoreria/AdicionalFijoManager.js";
 import EmpleadoAdicionalFijoManager from "./pages/sueldosTesoreria/EmpleadoAdicionalFijoManager.js";
@@ -1106,6 +1107,10 @@ INTELIGENCIA COMERCIAL
                         <Route path="/sueldostesoreria/asignardatosempleado" element={<AsignarDatosEmpleado />} />
 
                         <Route path="/tesoreria/retirossucursales" element={<MoivmientosCajaRetirosTesoreria />} />
+                        <Route
+                          path="/tesoreria/pagos-realizados"
+                          element={<PagosRealizados />}
+                        />
 
                         {/* Gestión de Medias  */}
                         <Route path="/registrohacienda" element={<RegistroHacienda />} />
