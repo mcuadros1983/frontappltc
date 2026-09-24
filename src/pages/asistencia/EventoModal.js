@@ -470,6 +470,11 @@ export default function EventoModal({
     setMostrarResultados(false);
   };
 
+  const tieneSucursalHabitual = Boolean(
+    empleadoId &&
+    datosEmpleadoMap.get(Number(empleadoId))?.sucursal_id
+  );
+
   return (
     <Modal
       show={show}
@@ -819,13 +824,10 @@ export default function EventoModal({
           <Form.Select
             value={sucursalId}
             onChange={(e) =>
-              setSucursalId(
-                e.target.value
-              )
+              setSucursalId(e.target.value)
             }
             disabled={
-              saving ||
-              Boolean(empleadoId)
+              saving || tieneSucursalHabitual
             }
             style={{
               minHeight: 46,
