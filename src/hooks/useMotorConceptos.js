@@ -87,7 +87,7 @@ const normalizeListResponse = (
 const initialFilters = {
     buscar: "",
     activo: "",
-    entidad: "",
+    entidad_tipo_id: "",
     page: 1,
     limit: 10,
     orderBy: "id",
