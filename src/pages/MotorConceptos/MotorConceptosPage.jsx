@@ -1,4 +1,5 @@
 import React, {
+    useEffect,
     useMemo,
     useState,
 } from "react";
@@ -57,19 +58,17 @@ Dentro de MotorConceptosContent:
 
 // const navigate = useNavigate();
 
-const obtenerEntidades = (concepto) => {
+// const obtenerEntidades = (concepto) => {
 
-    if (!Array.isArray(concepto?.entidades)) {
-        return [];
-    }
+//     if (!Array.isArray(concepto?.entidades)) {
+//         return [];
+//     }
 
-    return concepto.entidades
-        .map((relacion) => relacion.entidadTipo)
-        .filter(Boolean);
+//     return concepto.entidades
+//         .map((relacion) => relacion.entidadTipo)
+//         .filter(Boolean);
 
-};
-
-
+// };
 
 // const obtenerEntidad = (row) => {
 
@@ -138,33 +137,33 @@ const MotorConceptosContent = () => {
     } =
         useMotorConceptosContext();
 
-    const entidades = useMemo(() => {
+    // const entidades = useMemo(() => {
 
-        const mapa = new Map();
+    //     const mapa = new Map();
 
-        conceptos
-            .flatMap(obtenerEntidades)
-            .forEach((entidadTipo) => {
+    //     conceptos
+    //         .flatMap(obtenerEntidades)
+    //         .forEach((entidadTipo) => {
 
-                if (!mapa.has(entidadTipo.id)) {
+    //             if (!mapa.has(entidadTipo.id)) {
 
-                    mapa.set(entidadTipo.id, {
-                        id: entidadTipo.id,
-                        codigo: entidadTipo.codigo,
-                        nombre: entidadTipo.nombre,
-                    });
+    //                 mapa.set(entidadTipo.id, {
+    //                     id: entidadTipo.id,
+    //                     codigo: entidadTipo.codigo,
+    //                     nombre: entidadTipo.nombre,
+    //                 });
 
-                }
+    //             }
 
-            });
+    //         });
 
-        return Array
-            .from(mapa.values())
-            .sort((a, b) =>
-                a.nombre.localeCompare(b.nombre)
-            );
+    //     return Array
+    //         .from(mapa.values())
+    //         .sort((a, b) =>
+    //             a.nombre.localeCompare(b.nombre)
+    //         );
 
-    }, [conceptos]);
+    // }, [conceptos]);
 
     // console.group("MotorConceptosContent");
 
@@ -210,7 +209,74 @@ const MotorConceptosContent = () => {
         setImportError,
     ] = useState("");
 
+    const [
+        entidades,
+        setEntidades,
+    ] = useState([]);
+
     // const [conceptos, setConceptos] = useState([]);
+
+    useEffect(() => {
+
+        let mounted = true;
+
+        const cargarEntidades =
+            async () => {
+
+                try {
+
+                    const response =
+                        await motorConceptoApi
+                            .listarEntidadTipos();
+
+                    if (!mounted) {
+                        return;
+                    }
+
+                    const items =
+                        Array.isArray(response)
+                            ? response
+                            : response?.items ||
+                            response?.rows ||
+                            [];
+
+                    setEntidades(
+                        [...items].sort(
+                            (a, b) =>
+                                String(
+                                    a.nombre || ""
+                                ).localeCompare(
+                                    String(
+                                        b.nombre || ""
+                                    )
+                                )
+                        )
+                    );
+
+                } catch (error) {
+
+                    if (!mounted) {
+                        return;
+                    }
+
+                    console.error(
+                        "No se pudieron cargar los tipos de entidad",
+                        error
+                    );
+
+                    setEntidades([]);
+
+                }
+
+            };
+
+        cargarEntidades();
+
+        return () => {
+            mounted = false;
+        };
+
+    }, []);
 
     const canDownloadTemplate =
         can(
@@ -401,8 +467,6 @@ const MotorConceptosContent = () => {
     const handleImported =
         async (result) => {
 
-            await cargar();
-
             setImportError("");
 
             setImportMessage(
@@ -411,6 +475,13 @@ const MotorConceptosContent = () => {
                 }, omitidos: ${result?.omitidos ?? 0
                 }.`
             );
+
+            actualizarFiltros({
+                buscar: "",
+                activo: "",
+                entidad_tipo_id: "",
+                page: 1,
+            });
 
         };
 
