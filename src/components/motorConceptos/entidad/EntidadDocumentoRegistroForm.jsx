@@ -87,12 +87,26 @@ const EntidadDocumentoRegistroForm =
                     prepareSave:
                         () => {
 
+                            /*
+                             * Si el concepto no tiene campos
+                             * dinámicos, FormRenderer no existe.
+                             *
+                             * El formulario igualmente es válido
+                             * y debemos respetar el mismo contrato
+                             * que devuelve FormRenderer.prepareSave().
+                             */
                             if (
                                 !formRendererRef
                                     .current
                             ) {
 
-                                return values;
+                                return {
+                                    valid: true,
+                                    values: {
+                                        ...values,
+                                    },
+                                    errors: {},
+                                };
 
                             }
 

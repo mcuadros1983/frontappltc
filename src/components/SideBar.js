@@ -3360,7 +3360,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 {/* =============================================
                     REGISTROS
                     ============================================= */}
-
+{/* 
                 {can("legajos:registros.view") &&
                   matchesSearch(
                     "Registros",
@@ -3375,7 +3375,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     >
                       Registros
                     </Link>
-                  )}
+                  )} */}
 
 
                 {/* =============================================

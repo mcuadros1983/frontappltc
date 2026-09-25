@@ -327,7 +327,7 @@ const EntidadDocumentalPage = ({
                 )
             }
 
-            <EntidadDocumentalToolbar
+            {/* <EntidadDocumentalToolbar
 
                 loading={loading}
 
@@ -341,7 +341,7 @@ const EntidadDocumentalPage = ({
 
                 }}
 
-            />
+            /> */}
 
             <EntidadDocumentalResumen
 

@@ -97,6 +97,8 @@ export default function NuevoPagoProgramado({
     setMonto,
   ] = useState("");
 
+  const [montoDisplay, setMontoDisplay] = useState("");
+
   // ==========================================================
   // CONTROL DE POSIBLES PAGOS DUPLICADOS
   // ==========================================================
@@ -163,7 +165,162 @@ export default function NuevoPagoProgramado({
     setMsg,
   ] = useState(null);
 
+  const formatearImporteInput = (valor) => {
+    let texto = String(valor || "");
 
+    // Solo números y coma.
+    // Los puntos de miles los genera automáticamente el sistema.
+    texto = texto.replace(/[^\d,]/g, "");
+
+    const partes = texto.split(",");
+
+    let entero = partes[0] || "";
+
+    // Máximo 2 decimales
+    const tieneDecimal = partes.length > 1;
+
+    const decimal = tieneDecimal
+      ? partes
+        .slice(1)
+        .join("")
+        .replace(/\D/g, "")
+        .slice(0, 2)
+      : "";
+
+    // Eliminar ceros innecesarios al comienzo
+    entero =
+      entero.replace(/^0+(?=\d)/, "") || "";
+
+    // Agregar puntos de miles automáticamente
+    const enteroFormateado =
+      entero.replace(
+        /\B(?=(\d{3})+(?!\d))/g,
+        "."
+      );
+
+    if (tieneDecimal) {
+      return `${enteroFormateado},${decimal}`;
+    }
+
+    return enteroFormateado;
+  };
+
+
+  const importeANumero = (valor) => {
+    if (!valor) return "";
+
+    const normalizado = String(valor)
+      .replace(/\./g, "")
+      .replace(",", ".");
+
+    const numero = Number(normalizado);
+
+    return Number.isFinite(numero)
+      ? String(numero)
+      : "";
+  };
+
+
+  const handleMontoChange = (e) => {
+    const valorFormateado =
+      formatearImporteInput(e.target.value);
+
+    setMontoDisplay(valorFormateado);
+
+    setMonto(
+      importeANumero(valorFormateado)
+    );
+  };
+
+
+  const handleMontoKeyDown = (e) => {
+    // El punto normal o del teclado numérico
+    // funciona como separador decimal.
+    if (
+      e.key === "." ||
+      e.key === "Decimal"
+    ) {
+      e.preventDefault();
+
+      // Ya existe separador decimal
+      if (montoDisplay.includes(",")) {
+        return;
+      }
+
+      const nuevoValor =
+        montoDisplay === ""
+          ? "0,"
+          : `${montoDisplay},`;
+
+      setMontoDisplay(nuevoValor);
+
+      setMonto(
+        importeANumero(nuevoValor)
+      );
+    }
+  };
+
+
+  // const handleMontoChange = (e) => {
+  //   const valorFormateado =
+  //     formatearImporteInput(e.target.value);
+
+  //   setMontoDisplay(valorFormateado);
+
+  //   setMonto(
+  //     importeANumero(valorFormateado)
+  //   );
+  // };
+
+  // const handleMontoKeyDown = (e) => {
+  //   // Punto del teclado normal o numérico = coma decimal
+  //   if (e.key === "." || e.key === "Decimal") {
+  //     e.preventDefault();
+
+  //     // Si ya existe decimal, no hacemos nada
+  //     if (montoDisplay.includes(",")) {
+  //       return;
+  //     }
+
+  //     const nuevoValor =
+  //       montoDisplay === ""
+  //         ? "0,"
+  //         : `${montoDisplay},`;
+
+  //     setMontoDisplay(nuevoValor);
+
+  //     setMonto(
+  //       importeANumero(nuevoValor)
+  //     );
+  //   }
+  // };
+
+
+  // const importeANumero = (valor) => {
+  //   if (!valor) return "";
+
+  //   const normalizado = String(valor)
+  //     .replace(/\./g, "")
+  //     .replace(",", ".");
+
+  //   const numero = Number(normalizado);
+
+  //   return Number.isFinite(numero)
+  //     ? String(numero)
+  //     : "";
+  // };
+
+
+  // const handleMontoChange = (e) => {
+  //   const valorFormateado =
+  //     formatearImporteInput(e.target.value);
+
+  //   setMontoDisplay(valorFormateado);
+
+  //   setMonto(
+  //     importeANumero(valorFormateado)
+  //   );
+  // };
   // ==========================================================
   // BANCOS DE LA EMPRESA
   // ==========================================================
@@ -427,6 +584,7 @@ export default function NuevoPagoProgramado({
       setProveedorId("");
       setDescripcion("");
       setMonto("");
+      setMontoDisplay("");
       setObservaciones("");
       setCategoriaId("");
       setImputacionId("");
@@ -1430,16 +1588,14 @@ export default function NuevoPagoProgramado({
               </Form.Label>
 
               <Form.Control
-                type="number"
-                min="0"
-                step="0.01"
-                value={monto}
-                onChange={(e) =>
-                  setMonto(
-                    e.target.value
-                  )
-                }
+                type="text"
+                inputMode="decimal"
+                value={montoDisplay}
+                onChange={handleMontoChange}
+                placeholder="0,00"
+                autoComplete="off"
                 required
+                onKeyDown={handleMontoKeyDown}
               />
 
             </Col>

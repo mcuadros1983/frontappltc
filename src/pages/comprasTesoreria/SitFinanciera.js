@@ -29,7 +29,12 @@ const apiUrl = process.env.REACT_APP_API_URL;
 
 // -------- Utils ----------
 const toMoney = (n) =>
-  Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number(n || 0).toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 const parseDate = (s) => (s ? new Date(s + "T00:00:00") : null);
 const daysDiffFromToday = (dateStr) => {
@@ -2991,7 +2996,7 @@ export default function SitFinanciera() {
                   )
                 }
               >
-                Pagos realizados
+                Histórico
               </Button>
             </Col>
 

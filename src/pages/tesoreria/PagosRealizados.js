@@ -1087,7 +1087,7 @@ export default function PagosRealizados() {
                 <div>
 
                     <h4 className="mb-0">
-                        Pagos realizados
+                        Históricos
                     </h4>
 
                     <small className="text-muted">

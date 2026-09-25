@@ -77,7 +77,7 @@ const useEntidadDocumental = () => {
         setSelectedAsignacion,
     ] = useState(null);
 
-        const clearAlerts =
+    const clearAlerts =
         useCallback(
             () => {
 
@@ -285,7 +285,7 @@ const useEntidadDocumental = () => {
             []
         );
 
-            const openAsignacion =
+    const openAsignacion =
         useCallback(
             (
                 asignacion
@@ -522,9 +522,92 @@ const useEntidadDocumental = () => {
         ]
     );
 
+    const asignacionesFiltradas =
+        useMemo(
+            () => {
+
+                let resultado = [
+                    ...asignaciones,
+                ];
+
+                /*
+                 * Filtro por búsqueda.
+                 */
+                const search =
+                    String(
+                        filters.search || ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                if (search) {
+
+                    resultado =
+                        resultado.filter(
+                            (item) => {
+
+                                const concepto =
+                                    String(
+                                        item.concepto?.nombre ||
+                                        ""
+                                    )
+                                        .toLowerCase();
+
+                                return concepto.includes(
+                                    search
+                                );
+
+                            }
+                        );
+
+                }
+
+                /*
+                 * Filtro por estado documental.
+                 */
+                if (filters.estado) {
+
+                    resultado =
+                        resultado.filter(
+                            (item) =>
+                                item.estado ===
+                                filters.estado
+                        );
+
+                }
+
+                /*
+                 * Filtro activo.
+                 */
+                if (
+                    typeof filters.activo ===
+                    "boolean"
+                ) {
+
+                    resultado =
+                        resultado.filter(
+                            (item) =>
+                                item.activo ===
+                                filters.activo
+                        );
+
+                }
+
+                return resultado;
+
+            },
+            [
+                asignaciones,
+                filters.search,
+                filters.estado,
+                filters.activo,
+            ]
+        );
+
     return {
 
-        asignaciones,
+        asignaciones:
+            asignacionesFiltradas,
 
         loading,
 

@@ -43,7 +43,7 @@ const getEstadoBadge = (
 ) => {
 
     switch (
-        estado
+    estado
     ) {
 
         case "COMPLETO":
@@ -104,7 +104,7 @@ const EntidadDocumentalTable = ({
 
     onEditar,
 
-    onVer,
+    // onVer,
 
 }) => {
 
@@ -197,45 +197,47 @@ const EntidadDocumentalTable = ({
 
                                 <div className="d-flex gap-2">
 
+                                    <ERPButton
+
+                                        type="new"
+
+                                        label={
+                                            tieneRegistro
+                                                ? "Renovar"
+                                                : "Nuevo"
+                                        }
+
+                                        size="sm"
+
+                                        onClick={() =>
+                                            onNuevo?.(
+                                                item
+                                            )
+                                        }
+
+                                    />
+
                                     {
-                                        tieneRegistro
-                                            ? (
+                                        tieneRegistro && (
 
-                                                <ERPButton
+                                            <ERPButton
 
-                                                    type="edit"
+                                                type="edit"
 
-                                                    size="sm"
+                                                size="sm"
 
-                                                    onClick={() =>
-                                                        onEditar?.(
-                                                            item
-                                                        )
-                                                    }
+                                                onClick={() =>
+                                                    onEditar?.(
+                                                        item
+                                                    )
+                                                }
 
-                                                />
+                                            />
 
-                                            )
-                                            : (
-
-                                                <ERPButton
-
-                                                    type="new"
-
-                                                    size="sm"
-
-                                                    onClick={() =>
-                                                        onNuevo?.(
-                                                            item
-                                                        )
-                                                    }
-
-                                                />
-
-                                            )
+                                        )
                                     }
 
-                                    {
+                                    {/* {
                                         tieneRegistro && (
 
                                             <ERPButton
@@ -253,7 +255,7 @@ const EntidadDocumentalTable = ({
                                             />
 
                                         )
-                                    }
+                                    } */}
 
                                 </div>
 
@@ -266,7 +268,7 @@ const EntidadDocumentalTable = ({
             [
                 onNuevo,
                 onEditar,
-                onVer,
+                // onVer,
             ]
         );
 

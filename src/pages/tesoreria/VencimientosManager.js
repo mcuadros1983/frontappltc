@@ -7,9 +7,13 @@ import {
 const apiUrl = process.env.REACT_APP_API_URL;
 
 // -------- Utils ----------
-const toMoney = (n) => Number(n || 0).toLocaleString("es-AR", {
-  minimumFractionDigits: 2, maximumFractionDigits: 2
-});
+const toMoney = (n) =>
+  Number(n || 0).toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 // -------- API helpers (catálogos) ----------
 async function fetchEmpresas() {

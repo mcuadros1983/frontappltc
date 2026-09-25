@@ -7,7 +7,12 @@ const apiUrl = process.env.REACT_APP_API_URL;
 
 // ---- Helpers ----
 const toMoney = (n) =>
-  Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number(n || 0).toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 const diffDaysInclusive = (d1, d2) => {
   const a = new Date(d1 + "T00:00:00");

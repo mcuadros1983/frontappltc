@@ -43,7 +43,12 @@ function SortIcon({ active, dir }) {
 
 /* ==================== Utils ==================== */
 const toMoney = (n) =>
-    Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number(n || 0).toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 const today = () => new Date().toISOString().slice(0, 10);
 

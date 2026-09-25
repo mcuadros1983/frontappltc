@@ -178,11 +178,19 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
 
   // ==== Helpers mensual ====
   const ymFromDate = (d) => String(d || "").slice(0, 7); // 'YYYY-MM'
+  // const toMoney = (n) =>
+  //   Number(n || 0).toLocaleString("es-AR", {
+  //     minimumFractionDigits: 2,
+  //     maximumFractionDigits: 2,
+  //   });
+
   const toMoney = (n) =>
-    Number(n || 0).toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  Number(n || 0).toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   async function buscarInstanciasMensuales({ proveedorId, fechaStr }) {
     const qs = new URLSearchParams();

@@ -32,7 +32,7 @@ const ListadoCierresZ = () => {
     }
     const dataFormateada = sortedCierres.map((c) => ({
       ID: c.id,
-      Fecha: c.fechaJornada,
+      Fecha: formatearFecha(c.fechaJornada),
       CUIT: c.cuit,
       "Punto Venta": c.puntoVenta,
       "Nro Z": c.numeroZeta,
@@ -105,6 +105,20 @@ const ListadoCierresZ = () => {
   };
 
   // ---- helpers ----
+
+  const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const fechaLimpia = String(fecha).slice(0, 10);
+  const [anio, mes, dia] = fechaLimpia.split("-");
+
+  if (!anio || !mes || !dia) {
+    return fecha;
+  }
+
+  return `${dia}/${mes}/${anio}`;
+};
+
   const formatearNumero = (valor) =>
     new Intl.NumberFormat("es-AR", {
       minimumFractionDigits: 2,
@@ -369,7 +383,7 @@ const ListadoCierresZ = () => {
             {currentCierres.map((cierre) => (
               <tr key={cierre.id}>
                 <td>{cierre.id}</td>
-                <td>{cierre.fechaJornada}</td>
+                <td>{formatearFecha(cierre.fechaJornada)}</td>
                 <td>{cierre.cuit}</td>
                 <td>{cierre.puntoVenta}</td>
                 <td>{cierre.numeroZeta}</td>
