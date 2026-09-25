@@ -894,6 +894,14 @@ const RegistroConceptoEditorPage = () => {
             )
         );
 
+    console.log("=== DEBUG EDICION REGISTRO ===");
+    console.log("registroId:", registroId);
+    console.log("isNew:", isNew);
+    console.log("canUpdate:", canUpdate);
+    console.log("estado:", registro.registro?.estado);
+    console.log("readOnly:", readOnly);
+    console.log("registro:", registro.registro);
+
     const validarDatosIniciales =
         () => {
 
@@ -1543,35 +1551,7 @@ const RegistroConceptoEditorPage = () => {
 
                     <ERPButton
                         type="back"
-                        onClick={() => {
-
-                            if (
-                                location.state?.fromLegajo &&
-                                location.state?.legajoPath
-                            ) {
-
-                                navigate(
-                                    location.state.legajoPath,
-                                    {
-                                        state: {
-                                            entidadNombre:
-                                                location.state?.entidad_nombre,
-
-                                            entidadTipoNombre:
-                                                location.state?.entidad_tipo_nombre,
-                                        },
-                                    }
-                                );
-
-                                return;
-
-                            }
-
-                            navigate(
-                                "/motor-conceptos/registros"
-                            );
-
-                        }}
+                        onClick={handleBack}
                     />
 
 
