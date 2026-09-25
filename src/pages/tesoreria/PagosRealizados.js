@@ -31,7 +31,7 @@ import {
 } from "react-icons/bs";
 
 import Contexts from "../../context/Contexts";
-
+import EditarEcheqModal from "./EditarEcheqModal";
 
 
 export default function PagosRealizados() {
@@ -153,6 +153,10 @@ export default function PagosRealizados() {
     const [busqueda, setBusqueda] =
         useState("");
 
+    const [deletingKey, setDeletingKey] = useState(null);
+
+    const [showEditarEcheq, setShowEditarEcheq] = useState(false);
+    const [echeqEditar, setEcheqEditar] = useState(null);
 
     /*
      * ============================================================
@@ -864,21 +868,163 @@ export default function PagosRealizados() {
 
     const editarPago = (row) => {
 
-        console.log(
-            "Editar pago:",
-            row
-        );
+        if (!row) return;
 
+        if (row.tipo_pago !== "echeq") {
+            return;
+        }
+
+        if (
+            row.anulado ||
+            String(row.estado || "").toLowerCase() === "acreditado"
+        ) {
+            alert(
+                "Este eCheq no puede editarse porque está acreditado o anulado."
+            );
+            return;
+        }
+
+        setEcheqEditar(row);
+        setShowEditarEcheq(true);
     };
 
 
-    const eliminarPago = (row) => {
+    const eliminarPago = async (row) => {
 
-        console.log(
-            "Eliminar pago:",
-            row
-        );
+        if (!row?.id) return;
 
+        const key =
+            `${row.tipo_pago}-${row.id}`;
+
+        try {
+
+            let url = "";
+            let opciones = {
+                method: "DELETE",
+                credentials: "include",
+            };
+
+            // ============================================================
+            // CAJA
+            // ============================================================
+
+            if (row.tipo_pago === "caja") {
+
+                const ok = window.confirm(
+                    `Vas a eliminar el Movimiento de Caja #${row.id} por ${moneda(row.monto)}.\n\n` +
+                    `Esta acción revertirá referencias (OP, banco, cta cte, gastos mensuales, etc.) según las reglas.\n\n` +
+                    `¿Confirmás?`
+                );
+
+                if (!ok) return;
+
+                url =
+                    `${apiUrl}/movimientos-caja-tesoreria/${row.id}`;
+
+                opciones.headers = {
+                    "Content-Type": "application/json",
+                };
+
+                opciones.body = JSON.stringify({
+                    empresa_id:
+                        row.empresa_id ||
+                        empresaId ||
+                        undefined,
+                    hard: true,
+                });
+            }
+
+            // ============================================================
+            // BANCO
+            // ============================================================
+
+            else if (row.tipo_pago === "banco") {
+
+                const ok = window.confirm(
+                    `¿Eliminar el movimiento bancario #${row.id} ` +
+                    `(${fechaAR(row.fecha)}) por ${moneda(row.monto)}?`
+                );
+
+                if (!ok) return;
+
+                url =
+                    `${apiUrl}/movimientos-banco-tesoreria/${row.id}`;
+            }
+
+            // ============================================================
+            // ECHEQ
+            // ============================================================
+
+            else if (row.tipo_pago === "echeq") {
+
+                if (
+                    row.anulado ||
+                    String(row.estado || "").toLowerCase() === "acreditado"
+                ) {
+                    alert(
+                        "Este eCheq no puede eliminarse porque está acreditado o anulado."
+                    );
+                    return;
+                }
+
+                const ok = window.confirm(
+                    "¿Eliminar definitivamente este eCheq? " +
+                    "Se revertirán abonos/aplicaciones y OP vinculada."
+                );
+
+                if (!ok) return;
+
+                url =
+                    `${apiUrl}/echeqs-emitidos/${row.id}`;
+            }
+
+            else {
+
+                throw new Error(
+                    "Tipo de pago no reconocido."
+                );
+            }
+
+            setDeletingKey(key);
+
+            const res =
+                await fetch(
+                    url,
+                    opciones
+                );
+
+            const json =
+                await res
+                    .json()
+                    .catch(() => ({}));
+
+            if (!res.ok) {
+
+                throw new Error(
+                    json?.error ||
+                    json?.detalle ||
+                    "No se pudo eliminar el pago."
+                );
+            }
+
+            await cargarPagos();
+
+        } catch (err) {
+
+            console.error(
+                "Error eliminando pago:",
+                err
+            );
+
+            alert(
+                err.message ||
+                "Error eliminando el pago."
+            );
+
+        } finally {
+
+            setDeletingKey(null);
+        }
     };
 
 
@@ -1737,29 +1883,57 @@ export default function PagosRealizados() {
                                                 }}
                                             >
 
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline-primary"
-                                                    className="me-1"
-                                                    title="Editar"
-                                                    onClick={() =>
-                                                        editarPago(row)
-                                                    }
-                                                >
-                                                    <BsPencil />
-                                                </Button>
+                                                {row.tipo_pago === "echeq" &&
+                                                    !row.anulado &&
+                                                    String(row.estado || "").toLowerCase() !== "acreditado" && (
+
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline-primary"
+                                                            className="me-1"
+                                                            title="Editar eCheq"
+                                                            onClick={() =>
+                                                                editarPago(row)
+                                                            }
+                                                        >
+                                                            <BsPencil />
+                                                        </Button>
+                                                    )}
 
 
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline-danger"
-                                                    title="Eliminar"
-                                                    onClick={() =>
-                                                        eliminarPago(row)
-                                                    }
-                                                >
-                                                    <BsTrash />
-                                                </Button>
+                                                {!(
+                                                    row.tipo_pago === "echeq" &&
+                                                    (
+                                                        row.anulado ||
+                                                        String(row.estado || "").toLowerCase() === "acreditado"
+                                                    )
+                                                ) && (
+
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline-danger"
+                                                            title="Eliminar"
+                                                            disabled={
+                                                                deletingKey ===
+                                                                `${row.tipo_pago}-${row.id}`
+                                                            }
+                                                            onClick={() =>
+                                                                eliminarPago(row)
+                                                            }
+                                                        >
+                                                            {deletingKey ===
+                                                                `${row.tipo_pago}-${row.id}`
+                                                                ? (
+                                                                    <Spinner
+                                                                        animation="border"
+                                                                        size="sm"
+                                                                    />
+                                                                )
+                                                                : (
+                                                                    <BsTrash />
+                                                                )}
+                                                        </Button>
+                                                    )}
 
                                             </td>
 
@@ -1928,6 +2102,22 @@ export default function PagosRealizados() {
             >
                 Página {page} de {totalPages}
             </div>
+
+            <EditarEcheqModal
+                show={showEditarEcheq}
+                row={echeqEditar}
+                onHide={() => {
+                    setShowEditarEcheq(false);
+                    setEcheqEditar(null);
+                }}
+                onUpdated={async () => {
+
+                    setShowEditarEcheq(false);
+                    setEcheqEditar(null);
+
+                    await cargarPagos();
+                }}
+            />
 
         </Container>
 
