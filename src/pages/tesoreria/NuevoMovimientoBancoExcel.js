@@ -961,6 +961,12 @@ export default function NuevoMovimientoBancoExcel() {
       }
 
 
+      const montoOriginal =
+        String(cols[2] || "").trim();
+
+      const montoNumerico =
+        toNumber(montoOriginal);
+
       parsed.push({
         fecha:
           String(cols[0] || "").trim(),
@@ -968,8 +974,12 @@ export default function NuevoMovimientoBancoExcel() {
         descripcion:
           String(cols[1] || "").trim(),
 
+        // El signo no determina el tipo de movimiento.
+        // ingreso / egreso se determina por la columna "tipo".
         monto:
-          String(cols[2] || "").trim(),
+          Number.isFinite(montoNumerico)
+            ? Math.abs(montoNumerico)
+            : montoOriginal,
 
         tipo:
           String(cols[3] || "")

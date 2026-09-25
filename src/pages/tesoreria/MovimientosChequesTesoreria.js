@@ -64,10 +64,10 @@ export default function MovimientosChequesTesoreria() {
   // Edición eCheq
   const [showEditarEcheq, setShowEditarEcheq] = useState(false);
   const [echeqEditar, setEcheqEditar] = useState(null);
-const [ordenTabla, setOrdenTabla] = useState({
-  campo: "emision",
-  direccion: "asc",
-});
+  const [ordenTabla, setOrdenTabla] = useState({
+    campo: "emision",
+    direccion: "asc",
+  });
 
   // Cat/Proy helpers
   const categorias = useMemo(
@@ -113,6 +113,25 @@ const [ordenTabla, setOrdenTabla] = useState({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
+
+  const formatFechaAR = (fecha) => {
+    if (!fecha) return "";
+
+    const soloFecha =
+      String(fecha).split("T")[0];
+
+    const partes =
+      soloFecha.split("-");
+
+    if (partes.length !== 3) {
+      return fecha;
+    }
+
+    const [anio, mes, dia] = partes;
+
+    return `${dia}/${mes}/${anio}`;
+  };
+
 
   const buildQS = (params = {}) => {
     const qs = new URLSearchParams();
@@ -287,164 +306,164 @@ const [ordenTabla, setOrdenTabla] = useState({
 
   const cambiarOrden = (campo) => {
 
-  setOrdenTabla((prev) => {
+    setOrdenTabla((prev) => {
 
-    if (prev.campo === campo) {
+      if (prev.campo === campo) {
+
+        return {
+          campo,
+          direccion:
+            prev.direccion === "asc"
+              ? "desc"
+              : "asc",
+        };
+      }
 
       return {
         campo,
-        direccion:
-          prev.direccion === "asc"
-            ? "desc"
-            : "asc",
+        direccion: "asc",
       };
-    }
-
-    return {
-      campo,
-      direccion: "asc",
-    };
-  });
-};
-
-
-const indicadorOrden = (campo) => {
-
-  if (ordenTabla.campo !== campo) {
-    return "";
-  }
-
-  return ordenTabla.direccion === "asc"
-    ? " ▲"
-    : " ▼";
-};
-
-
-const itemsOrdenados = useMemo(() => {
-
-  const lista =
-    [...itemsFiltrados];
-
-
-  const obtenerValor = (m) => {
-
-    switch (ordenTabla.campo) {
-
-      case "id":
-        return Number(m.id || 0);
-
-      case "emision":
-        return String(
-          m.fecha_emision || ""
-        );
-
-      case "vencimiento":
-        return String(
-          m.fecha_vencimiento || ""
-        );
-
-      case "banco":
-        return String(
-          bancoNombre(m.banco_id) || ""
-        );
-
-      case "numero":
-        return String(
-          m.numero_echeq || ""
-        );
-
-      case "proveedor":
-        return String(
-          nombreProveedor(m.proveedor_id) || ""
-        );
-
-      case "proyecto":
-        return String(
-          nombreProyecto(m.proyecto_id) || ""
-        );
-
-      case "categoria":
-        return String(
-          nombreCategoria(m.categoriaegreso_id) || ""
-        );
-
-      case "estado":
-        return String(
-          m.estado || ""
-        );
-
-      case "importe":
-        return Number(
-          m.importe || 0
-        );
-
-      default:
-        return "";
-    }
+    });
   };
 
 
-  lista.sort((a, b) => {
+  const indicadorOrden = (campo) => {
 
-    const valorA =
-      obtenerValor(a);
-
-    const valorB =
-      obtenerValor(b);
-
-    let resultado = 0;
-
-
-    if (
-      typeof valorA === "number" &&
-      typeof valorB === "number"
-    ) {
-
-      resultado =
-        valorA - valorB;
-
-    } else {
-
-      resultado =
-        String(valorA).localeCompare(
-          String(valorB),
-          "es",
-          {
-            numeric: true,
-            sensitivity: "base",
-          }
-        );
+    if (ordenTabla.campo !== campo) {
+      return "";
     }
-
-
-    /*
-     * Desempate por ID.
-     */
-    if (resultado === 0) {
-
-      resultado =
-        Number(a.id || 0) -
-        Number(b.id || 0);
-    }
-
 
     return ordenTabla.direccion === "asc"
-      ? resultado
-      : -resultado;
+      ? " ▲"
+      : " ▼";
+  };
 
-  });
+
+  const itemsOrdenados = useMemo(() => {
+
+    const lista =
+      [...itemsFiltrados];
 
 
-  return lista;
+    const obtenerValor = (m) => {
 
-}, [
-  itemsFiltrados,
-  ordenTabla,
-  bancosTabla,
-  provById,
-  proyById,
-  catById,
-]);
+      switch (ordenTabla.campo) {
+
+        case "id":
+          return Number(m.id || 0);
+
+        case "emision":
+          return String(
+            m.fecha_emision || ""
+          );
+
+        case "vencimiento":
+          return String(
+            m.fecha_vencimiento || ""
+          );
+
+        case "banco":
+          return String(
+            bancoNombre(m.banco_id) || ""
+          );
+
+        case "numero":
+          return String(
+            m.numero_echeq || ""
+          );
+
+        case "proveedor":
+          return String(
+            nombreProveedor(m.proveedor_id) || ""
+          );
+
+        case "proyecto":
+          return String(
+            nombreProyecto(m.proyecto_id) || ""
+          );
+
+        case "categoria":
+          return String(
+            nombreCategoria(m.categoriaegreso_id) || ""
+          );
+
+        case "estado":
+          return String(
+            m.estado || ""
+          );
+
+        case "importe":
+          return Number(
+            m.importe || 0
+          );
+
+        default:
+          return "";
+      }
+    };
+
+
+    lista.sort((a, b) => {
+
+      const valorA =
+        obtenerValor(a);
+
+      const valorB =
+        obtenerValor(b);
+
+      let resultado = 0;
+
+
+      if (
+        typeof valorA === "number" &&
+        typeof valorB === "number"
+      ) {
+
+        resultado =
+          valorA - valorB;
+
+      } else {
+
+        resultado =
+          String(valorA).localeCompare(
+            String(valorB),
+            "es",
+            {
+              numeric: true,
+              sensitivity: "base",
+            }
+          );
+      }
+
+
+      /*
+       * Desempate por ID.
+       */
+      if (resultado === 0) {
+
+        resultado =
+          Number(a.id || 0) -
+          Number(b.id || 0);
+      }
+
+
+      return ordenTabla.direccion === "asc"
+        ? resultado
+        : -resultado;
+
+    });
+
+
+    return lista;
+
+  }, [
+    itemsFiltrados,
+    ordenTabla,
+    bancosTabla,
+    provById,
+    proyById,
+    catById,
+  ]);
 
 
   const { totalImporte } = useMemo(() => {
@@ -501,7 +520,7 @@ const itemsOrdenados = useMemo(() => {
       <Form className="mb-3">
         <Row className="g-2">
 
-                    <Col md={3}>
+          <Col md={3}>
 
             <Form.Label>
               Proveedor
@@ -665,96 +684,96 @@ const itemsOrdenados = useMemo(() => {
       </Form>
 
       <Table striped bordered hover>
-<thead>
-  <tr>
+        <thead>
+          <tr>
 
-    <th
-      onClick={() => cambiarOrden("id")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por número"
-    >
-      #{indicadorOrden("id")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("id")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por número"
+            >
+              #{indicadorOrden("id")}
+            </th>
 
-    <th
-      onClick={() => cambiarOrden("emision")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por fecha de emisión"
-    >
-      Emisión{indicadorOrden("emision")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("emision")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por fecha de emisión"
+            >
+              Emisión{indicadorOrden("emision")}
+            </th>
 
-    <th
-      onClick={() => cambiarOrden("vencimiento")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por vencimiento"
-    >
-      Vencimiento{indicadorOrden("vencimiento")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("vencimiento")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por vencimiento"
+            >
+              Vencimiento{indicadorOrden("vencimiento")}
+            </th>
 
-    <th
-      onClick={() => cambiarOrden("banco")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por banco"
-    >
-      Banco{indicadorOrden("banco")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("banco")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por banco"
+            >
+              Banco{indicadorOrden("banco")}
+            </th>
 
-    <th
-      onClick={() => cambiarOrden("numero")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por número de eCheq"
-    >
-      Número{indicadorOrden("numero")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("numero")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por número de eCheq"
+            >
+              Número{indicadorOrden("numero")}
+            </th>
 
-    <th
-      onClick={() => cambiarOrden("proveedor")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por proveedor"
-    >
-      Proveedor{indicadorOrden("proveedor")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("proveedor")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por proveedor"
+            >
+              Proveedor{indicadorOrden("proveedor")}
+            </th>
 
-    <th
-      onClick={() => cambiarOrden("proyecto")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por proyecto"
-    >
-      Proyecto{indicadorOrden("proyecto")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("proyecto")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por proyecto"
+            >
+              Proyecto{indicadorOrden("proyecto")}
+            </th>
 
-    <th
-      onClick={() => cambiarOrden("categoria")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por categoría"
-    >
-      Categoría{indicadorOrden("categoria")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("categoria")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por categoría"
+            >
+              Categoría{indicadorOrden("categoria")}
+            </th>
 
-    <th
-      onClick={() => cambiarOrden("estado")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por estado"
-    >
-      Estado{indicadorOrden("estado")}
-    </th>
+            <th
+              onClick={() => cambiarOrden("estado")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por estado"
+            >
+              Estado{indicadorOrden("estado")}
+            </th>
 
-    <th
-      className="text-end"
-      onClick={() => cambiarOrden("importe")}
-      style={{ cursor: "pointer", userSelect: "none" }}
-      title="Ordenar por importe"
-    >
-      Importe{indicadorOrden("importe")}
-    </th>
+            <th
+              className="text-end"
+              onClick={() => cambiarOrden("importe")}
+              style={{ cursor: "pointer", userSelect: "none" }}
+              title="Ordenar por importe"
+            >
+              Importe{indicadorOrden("importe")}
+            </th>
 
-    <th>
-      Acciones
-    </th>
+            <th>
+              Acciones
+            </th>
 
-  </tr>
-</thead>
+          </tr>
+        </thead>
         <tbody>
           {loading && (
             <tr>
@@ -764,7 +783,7 @@ const itemsOrdenados = useMemo(() => {
             </tr>
           )}
 
-         {!loading && itemsOrdenados.map((m) => (
+          {!loading && itemsOrdenados.map((m) => (
             <tr
               key={m.id}
               onDoubleClick={() => onRowDblClick(m)}
@@ -773,8 +792,8 @@ const itemsOrdenados = useMemo(() => {
               title={m.ordenpago_id ? "Doble click para ver detalle de la Orden de Pago" : ""}
             >
               <td>{m.id}</td>
-              <td>{m.fecha_emision || ""}</td>
-              <td>{m.fecha_vencimiento || ""}</td>
+              <td>{formatFechaAR(m.fecha_emision)}</td>
+              <td>{formatFechaAR(m.fecha_vencimiento)}</td>
               <td>{bancoNombre(m.banco_id)}</td>
               <td>{m.numero_echeq || ""}</td>
               <td>{nombreProveedor(m.proveedor_id)}</td>

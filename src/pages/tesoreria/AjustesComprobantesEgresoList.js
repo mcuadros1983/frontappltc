@@ -93,6 +93,24 @@ export default function AjustesComprobantesEgresoList() {
       }
     )}`;
 
+    const formatFechaAR = (fecha) => {
+  if (!fecha) return "";
+
+  const soloFecha =
+    String(fecha).split("T")[0];
+
+  const partes =
+    soloFecha.split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
 
   const nombreProveedor = (ajuste) => {
 
@@ -916,7 +934,7 @@ export default function AjustesComprobantesEgresoList() {
                     </td>
 
                     <td>
-                      {ajuste.fecha || ""}
+                      {formatFechaAR(ajuste.fecha)}
                     </td>
 
                     <td>

@@ -452,6 +452,25 @@ export default function CajaTesoreriaList() {
       maximumFractionDigits: 2,
     })}`;
 
+  const formatFechaAR = (fecha) => {
+    if (!fecha) return "";
+
+    const soloFecha =
+      String(fecha).split("T")[0];
+
+    const partes =
+      soloFecha.split("-");
+
+    if (partes.length !== 3) {
+      return fecha;
+    }
+
+    const [anio, mes, dia] = partes;
+
+    return `${dia}/${mes}/${anio}`;
+  };
+
+
   const buildQS = (params = {}) => {
     const qs = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
@@ -815,7 +834,7 @@ export default function CajaTesoreriaList() {
                 onClick={() => setMovSeleccionado(m)}
               >
                 <td>{m.id}</td>
-                <td>{m.fecha || ""}</td>
+                <td>{formatFechaAR(m.fecha)}</td>
                 <td>{m.descripcion || ""}</td>
                 <td>{nombreProyecto(m)}</td>
                 <td>{nombreCategoriaMovimiento(m)}</td>
