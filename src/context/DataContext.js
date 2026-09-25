@@ -25,6 +25,7 @@ export default function DataContextProvider({ children }) {
   const [tipoDeGastoTabla, setTipoDeGastoTabla] = useState([]);
   const [planTarjetaTabla, setPlanTarjetaTabla] = useState([]);
   const [clientesTabla, setClientesTabla] = useState([]);
+  const [clientesTablaLoading, setClientesTablaLoading] = useState(false);
   const [empleados, setEmpleados] = useState([]);
   const [usuariosTabla, setUsuariosTabla] = useState([]);
   const [usuariosSistema, setUsuariosSistema] = useState([]);
@@ -51,16 +52,77 @@ export default function DataContextProvider({ children }) {
   const apiUrl = process.env.REACT_APP_API_URL;
 
   // Helper: fetch seguro que nunca devuelve algo que rompa el UI
+  // const fetchJsonSafe = async (url, opts = {}) => {
+  //   try {
+  //     const res = await fetch(url, { credentials: "include", ...opts });
+  //     if (!res.ok) {
+  //       console.warn(`⚠️ ${url} → HTTP ${res.status}`);
+  //       return null; // devolvemos null; el caller normaliza a []
+  //     }
+  //     return await res.json();
+  //   } catch (e) {
+  //     console.warn(`❌ Error fetch ${url}:`, e?.message || e);
+  //     return null;
+  //   }
+  // };
+
   const fetchJsonSafe = async (url, opts = {}) => {
+
+    const inicio = performance.now();
+
     try {
-      const res = await fetch(url, { credentials: "include", ...opts });
+
+      const res = await fetch(url, {
+        credentials: "include",
+        ...opts,
+      });
+
+      const despuesFetch = performance.now();
+
       if (!res.ok) {
-        console.warn(`⚠️ ${url} → HTTP ${res.status}`);
-        return null; // devolvemos null; el caller normaliza a []
+
+        console.warn(
+          `⚠️ ${url} → HTTP ${res.status} | ${Math.round(
+            despuesFetch - inicio
+          )} ms`
+        );
+
+        return null;
       }
-      return await res.json();
+
+      const payload = await res.json();
+
+      const fin = performance.now();
+
+      let cantidad = "-";
+
+      if (Array.isArray(payload)) {
+        cantidad = payload.length;
+      } else if (Array.isArray(payload?.rows)) {
+        cantidad = payload.rows.length;
+      }
+
+      console.log(
+        `⏱️ ${url}`,
+        {
+          http: `${Math.round(despuesFetch - inicio)} ms`,
+          json: `${Math.round(fin - despuesFetch)} ms`,
+          total: `${Math.round(fin - inicio)} ms`,
+          registros: cantidad,
+        }
+      );
+
+      return payload;
+
     } catch (e) {
-      console.warn(`❌ Error fetch ${url}:`, e?.message || e);
+
+      const fin = performance.now();
+
+      console.warn(
+        `❌ ${url} | ${Math.round(fin - inicio)} ms`,
+        e?.message || e
+      );
+
       return null;
     }
   };
@@ -85,14 +147,19 @@ export default function DataContextProvider({ children }) {
 
     let cancelled = false;
 
-
     const fetchData = async () => {
+
+      const inicioDataContext = performance.now();
+
+      console.log("🚀 Comenzando carga DataContext");
+
+
 
       const [
         dataSucursales,
         dataClientes,
         dataFormasPago,
-        dataClientesTabla,
+        // dataClientesTabla,
         dataSucursalesTabla,
         dataArticulosTabla,
         dataTipoDeIngresoTabla,
@@ -126,7 +193,7 @@ export default function DataContextProvider({ children }) {
         fetchJsonSafe(`${apiUrl}/sucursales`),
         fetchJsonSafe(`${apiUrl}/clientes`),
         fetchJsonSafe(`${apiUrl}/formas-pago`),
-        fetchJsonSafe(`${apiUrl}/obtenerclientestabla`),
+        // fetchJsonSafe(`${apiUrl}/obtenerclientestabla`),
         fetchJsonSafe(`${apiUrl}/obtenersucursales`),
         fetchJsonSafe(`${apiUrl}/obtenerarticulos`),
         fetchJsonSafe(`${apiUrl}/obtenertipoingreso`),
@@ -181,9 +248,9 @@ export default function DataContextProvider({ children }) {
         toArray(dataFormasPago)
       );
 
-      setClientesTabla(
-        toArray(dataClientesTabla)
-      );
+      // setClientesTabla(
+      //   toArray(dataClientesTabla)
+      // );
 
       setSucursalesTabla(
         toArray(dataSucursalesTabla)
@@ -373,6 +440,52 @@ export default function DataContextProvider({ children }) {
       setCajaAbierta(
         dataCajaAbierta || null
       );
+
+      console.log(
+        `✅ DATACONTEXT PRINCIPAL COMPLETO: ${Math.round(
+          performance.now() - inicioDataContext
+        )} ms`
+      );
+
+      // =====================================================
+      // CARGA EN SEGUNDO PLANO - CLIENTES TABLA
+      // =====================================================
+
+      const cargarClientesTablaSegundoPlano = async () => {
+
+        const inicioClientesTabla = performance.now();
+
+        console.log(
+          "🔄 Iniciando carga de clientesTabla en segundo plano..."
+        );
+
+        const dataClientesTabla = await fetchJsonSafe(
+          `${apiUrl}/obtenerclientestabla`
+        );
+
+        // Si el componente se desmontó mientras cargaba,
+        // no actualizamos el estado.
+        if (cancelled) {
+          return;
+        }
+
+        const clientesTablaArr =
+          toArray(dataClientesTabla);
+
+        setClientesTabla(
+          clientesTablaArr
+        );
+
+        console.log(
+          `✅ clientesTabla cargado en segundo plano: ${Math.round(
+            performance.now() - inicioClientesTabla
+          )} ms | registros: ${clientesTablaArr.length}`
+        );
+      };
+
+      // IMPORTANTE: sin await.
+      // Queremos que se cargue sin bloquear la carga principal.
+      cargarClientesTablaSegundoPlano();
 
     };
 
