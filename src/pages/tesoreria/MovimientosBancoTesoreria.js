@@ -121,6 +121,9 @@ export default function BancoTesoreriaList() {
   const [showDetalle, setShowDetalle] = useState(false);
   const [movSeleccionado, setMovSeleccionado] = useState(null);
   const [showNuevoIngreso, setShowNuevoIngreso] = useState(false);
+  const [showEditar, setShowEditar] = useState(false);
+  const [movEditar, setMovEditar] = useState(null);
+
   // const fmtMoney = (n) => `$${Number(n || 0).toFixed(2)}`;
   const fmtMoney = (n) =>
     `$${Number(n || 0).toLocaleString("es-AR", {
@@ -712,6 +715,29 @@ export default function BancoTesoreriaList() {
     proyectosTabla,
   ]);
 
+  const puedeEditarMovimiento = (mov) => {
+    if (!mov) return false;
+
+    return (
+      mov.referencia_id == null &&
+      mov.referencia_tipo == null &&
+      mov.ordenpago_id == null &&
+      mov.comprobanteegreso_id == null &&
+      mov.comprobanteingreso_id == null
+    );
+  };
+
+  const abrirEditarMovimiento = (e, mov) => {
+    e.stopPropagation();
+
+    if (!puedeEditarMovimiento(mov)) {
+      return;
+    }
+
+    setMovEditar(mov);
+    setShowEditar(true);
+  };
+
   const abrirDetalle = (mov) => {
     setMovSeleccionado(mov);
     setShowDetalle(true);
@@ -1124,20 +1150,44 @@ export default function BancoTesoreriaList() {
                   <td>{nombreEntidadDeMovimiento(m)}</td>
                   <td className="text-end">{isIngreso ? fmtMoney(m.monto) : ""}</td>
                   <td className="text-end">{!isIngreso ? fmtMoney(m.monto) : ""}</td>
-                  <td>
+                  <td className="text-nowrap">
+
+                    <Button
+                      size="sm"
+                      variant="outline-primary"
+                      className="me-2"
+                      onClick={(e) =>
+                        abrirEditarMovimiento(e, m)
+                      }
+                      disabled={!puedeEditarMovimiento(m)}
+                      title={
+                        puedeEditarMovimiento(m)
+                          ? "Editar movimiento"
+                          : "No se puede editar porque el movimiento está vinculado a otra operación"
+                      }
+                    >
+                      Editar
+                    </Button>
+
                     <Button
                       size="sm"
                       variant="outline-danger"
-                      onClick={(e) => eliminarMovimiento(e, m)}
+                      onClick={(e) =>
+                        eliminarMovimiento(e, m)
+                      }
                       disabled={deletingId === m.id}
                       title="Eliminar movimiento"
                     >
                       {deletingId === m.id ? (
-                        <Spinner size="sm" animation="border" />
+                        <Spinner
+                          size="sm"
+                          animation="border"
+                        />
                       ) : (
                         "Eliminar"
                       )}
                     </Button>
+
                   </td>
                 </tr>
               );

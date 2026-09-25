@@ -40,6 +40,8 @@ export default function CajaTesoreriaList() {
   const [showNuevoIngreso, setShowNuevoIngreso] = useState(false);
   const [showDetalleIngreso, setShowDetalleIngreso] = useState(false); // 👈 NUEVO
   const [deletingId, setDeletingId] = useState(null);
+  const [showEditar, setShowEditar] = useState(false);
+  const [movEditar, setMovEditar] = useState(null);
   const [ordenTabla, setOrdenTabla] = useState({
     campo: "fecha",
     direccion: "asc",
@@ -580,6 +582,29 @@ export default function CajaTesoreriaList() {
     return "";
   };
 
+  const puedeEditarMovimiento = (mov) => {
+    if (!mov) return false;
+
+    return (
+      mov.referencia_id == null &&
+      mov.referencia_tipo == null &&
+      mov.ordenpago_id == null &&
+      mov.comprobanteegreso_id == null &&
+      mov.comprobanteingreso_id == null
+    );
+  };
+
+  const abrirEditarMovimiento = (e, mov) => {
+    e.stopPropagation();
+
+    if (!puedeEditarMovimiento(mov)) {
+      return;
+    }
+
+    setMovEditar(mov);
+    setShowEditar(true);
+  };
+
   const abrirDetalle = (mov) => {
     setMovSeleccionado(mov);
 
@@ -841,15 +866,45 @@ export default function CajaTesoreriaList() {
                 <td>{nombreProveedorDeMovimiento(m)}</td>
                 <td className="text-end">{isIngreso ? fmtMoney(m.monto) : ""}</td>
                 <td className="text-end">{!isIngreso ? fmtMoney(m.monto) : ""}</td>
-                <td>
+                <td className="text-nowrap">
+
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    className="me-2"
+                    onClick={(e) =>
+                      abrirEditarMovimiento(e, m)
+                    }
+                    disabled={
+                      !puedeEditarMovimiento(m) ||
+                      loading
+                    }
+                    title={
+                      puedeEditarMovimiento(m)
+                        ? "Editar movimiento"
+                        : "No se puede editar porque el movimiento está vinculado a otra operación"
+                    }
+                  >
+                    Editar
+                  </Button>
+
                   <Button
                     variant="danger"
                     size="sm"
-                    onClick={(e) => { e.stopPropagation(); eliminarMovimiento(m); }}
-                    disabled={deletingId === m.id || loading}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      eliminarMovimiento(m);
+                    }}
+                    disabled={
+                      deletingId === m.id ||
+                      loading
+                    }
                   >
-                    {deletingId === m.id ? "Eliminando..." : "Eliminar"}
+                    {deletingId === m.id
+                      ? "Eliminando..."
+                      : "Eliminar"}
                   </Button>
+
                 </td>
 
               </tr>
