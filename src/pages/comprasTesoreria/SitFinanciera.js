@@ -6,7 +6,20 @@ import {
   useCallback,
   useRef
 } from "react";
-import { Card, Row, Col, Form, Button, Table, Spinner, Alert, Badge, Pagination, InputGroup } from "react-bootstrap";
+import {
+  Card,
+  Row,
+  Col,
+  Form,
+  Button,
+  Table,
+  Spinner,
+  Alert,
+  Badge,
+  Pagination,
+  InputGroup,
+  Modal,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import Contexts from "../../context/Contexts";
 import NuevoPagoProgramado from "../../components/tesoreria/NuevoPagoProgramado";
@@ -308,10 +321,12 @@ export default function SitFinanciera() {
     empresaSeleccionada,
     empresasTabla = [],
     proveedoresTabla = [],
+    setProveedoresTabla,
     categoriasEgreso = [],
     sucursalesTabla = [],
     formasPagoTesoreria = [],
     bancosTabla = [],
+    imputacionContableTabla = [],
   } = dataContext || {};
 
   // -------- Filtros --------
@@ -319,6 +334,37 @@ export default function SitFinanciera() {
   const [proveedorId, setProveedorId] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [sucursalId, setSucursalId] = useState("");
+
+  // -------- Nuevo proveedor --------
+  const [
+    showProveedorCreateModal,
+    setShowProveedorCreateModal,
+  ] = useState(false);
+
+  const [
+    loadingCrearProveedor,
+    setLoadingCrearProveedor,
+  ] = useState(false);
+
+  const [
+    errorCrearProveedor,
+    setErrorCrearProveedor,
+  ] = useState("");
+
+  const [
+    nuevoProveedorModal,
+    setNuevoProveedorModal,
+  ] = useState({
+    nombre: "",
+    direccion: "",
+    telefono: "",
+    email: "",
+    cuit: "",
+    dni: "",
+    imputacioncontable_id: "",
+    formapago_id: "",
+  });
+
   const [
     fpAcordadaFiltro,
     setFpAcordadaFiltro,
@@ -421,6 +467,186 @@ export default function SitFinanciera() {
   useEffect(() => {
     setEmpresaId(empresaSeleccionada?.id || "");
   }, [empresaSeleccionada?.id]);
+
+
+  // ======================================================
+  // NUEVO PROVEEDOR
+  // ======================================================
+
+  const resetProveedorModal = () => {
+    setNuevoProveedorModal({
+      nombre: "",
+      direccion: "",
+      telefono: "",
+      email: "",
+      cuit: "",
+      dni: "",
+      imputacioncontable_id: "",
+      formapago_id: "",
+    });
+
+    setErrorCrearProveedor("");
+  };
+
+
+  const handleOpenProveedorCreateModal = () => {
+    resetProveedorModal();
+    setShowProveedorCreateModal(true);
+  };
+
+
+  const handleCloseProveedorCreateModal = () => {
+    resetProveedorModal();
+    setShowProveedorCreateModal(false);
+  };
+
+
+  const handleNuevoProveedorModalChange = (e) => {
+    const { name, value } = e.target;
+
+    setNuevoProveedorModal((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errorCrearProveedor) {
+      setErrorCrearProveedor("");
+    }
+  };
+
+
+  const handleCrearProveedor = async () => {
+
+    if (
+      !nuevoProveedorModal.cuit ||
+      nuevoProveedorModal.cuit.trim() === ""
+    ) {
+      setErrorCrearProveedor(
+        "El CUIT es obligatorio"
+      );
+
+      return;
+    }
+
+    try {
+
+      setLoadingCrearProveedor(true);
+      setErrorCrearProveedor("");
+
+      const response = await fetch(
+        `${apiUrl}/proveedores/`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          credentials: "include",
+
+          body: JSON.stringify({
+            ...nuevoProveedorModal,
+
+            cuit:
+              nuevoProveedorModal.cuit.trim(),
+          }),
+        }
+      );
+
+      const data =
+        await response
+          .json()
+          .catch(() => ({}));
+
+
+      if (!response.ok) {
+
+        setErrorCrearProveedor(
+          data.error ||
+          "Error al crear el proveedor"
+        );
+
+        return;
+      }
+
+
+      const proveedorCreado = data;
+
+
+      // ==========================================
+      // ACTUALIZAR DATACONTEXT
+      // ==========================================
+
+      if (
+        typeof setProveedoresTabla ===
+        "function"
+      ) {
+
+        setProveedoresTabla((prev) => {
+
+          const lista =
+            Array.isArray(prev)
+              ? prev
+              : [];
+
+          // Evitamos duplicados
+          const sinDuplicado =
+            lista.filter(
+              (p) =>
+                Number(p.id) !==
+                Number(proveedorCreado.id)
+            );
+
+          return [
+            ...sinDuplicado,
+            proveedorCreado,
+          ].sort(
+            (a, b) =>
+              (a.nombre || "")
+                .localeCompare(
+                  b.nombre || "",
+                  "es",
+                  {
+                    sensitivity: "base",
+                  }
+                )
+          );
+        });
+      }
+
+
+      // ==========================================
+      // SELECCIONAR AUTOMÁTICAMENTE
+      // ==========================================
+
+      setProveedorId(
+        String(proveedorCreado.id)
+      );
+
+
+      // ==========================================
+      // CERRAR MODAL
+      // ==========================================
+
+      handleCloseProveedorCreateModal();
+
+
+    } catch (error) {
+
+      console.error(
+        "Error al crear proveedor:",
+        error
+      );
+
+      setErrorCrearProveedor(
+        "Error al crear el proveedor"
+      );
+
+    } finally {
+
+      setLoadingCrearProveedor(false);
+    }
+  };
 
   // -------- Mapas auxiliares (nombres) --------
   const empNameById = useMemo(() => {
@@ -2570,30 +2796,46 @@ export default function SitFinanciera() {
                   Proveedor
                 </Form.Label>
 
-                <Form.Select
-                  value={proveedorId || ""}
-                  onChange={(e) =>
-                    setProveedorId(
-                      e.target.value
-                    )
-                  }
-                  className="form-control form-control-sm my-input"
-                >
-                  <option value="">
-                    Todos
-                  </option>
+                <InputGroup size="sm">
 
-                  {(proveedoresTabla || []).map(
-                    (p) => (
-                      <option
-                        key={p.id}
-                        value={p.id}
-                      >
-                        {p.nombre}
-                      </option>
-                    )
-                  )}
-                </Form.Select>
+                  <Form.Select
+                    value={proveedorId || ""}
+                    onChange={(e) =>
+                      setProveedorId(
+                        e.target.value
+                      )
+                    }
+                    className="form-control form-control-sm my-input"
+                  >
+
+                    <option value="">
+                      Todos
+                    </option>
+
+                    {(proveedoresTabla || []).map(
+                      (p) => (
+                        <option
+                          key={p.id}
+                          value={p.id}
+                        >
+                          {p.nombre}
+                        </option>
+                      )
+                    )}
+
+                  </Form.Select>
+
+                  <Button
+                    variant="outline-success"
+                    onClick={
+                      handleOpenProveedorCreateModal
+                    }
+                    title="Crear nuevo proveedor"
+                  >
+                    +
+                  </Button>
+
+                </InputGroup>
 
               </Form.Group>
             </Col>
@@ -3690,6 +3932,232 @@ export default function SitFinanciera() {
 
         }}
       />
+
+      <Modal
+        show={showProveedorCreateModal}
+        onHide={handleCloseProveedorCreateModal}
+        backdrop="static"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Nuevo Proveedor
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+
+          <Form>
+
+            <div className="row">
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>
+                  Nombre
+                </Form.Label>
+
+                <Form.Control
+                  name="nombre"
+                  value={nuevoProveedorModal.nombre}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>
+                  Teléfono
+                </Form.Label>
+
+                <Form.Control
+                  name="telefono"
+                  value={nuevoProveedorModal.telefono}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+            </div>
+
+
+            <div className="row">
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>
+                  Email
+                </Form.Label>
+
+                <Form.Control
+                  name="email"
+                  value={nuevoProveedorModal.email}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>
+                  Dirección
+                </Form.Label>
+
+                <Form.Control
+                  name="direccion"
+                  value={nuevoProveedorModal.direccion}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+            </div>
+
+
+            <div className="row">
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>
+                  CUIT
+                </Form.Label>
+
+                <Form.Control
+                  name="cuit"
+                  value={nuevoProveedorModal.cuit}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+
+              <Form.Group className="mb-3 col-md-6">
+                <Form.Label>
+                  DNI
+                </Form.Label>
+
+                <Form.Control
+                  name="dni"
+                  value={nuevoProveedorModal.dni}
+                  onChange={handleNuevoProveedorModalChange}
+                />
+              </Form.Group>
+
+            </div>
+
+
+            <div className="row">
+
+              <Form.Group className="mb-3 col-md-6">
+
+                <Form.Label>
+                  Imputación Contable
+                </Form.Label>
+
+                <Form.Select
+                  name="imputacioncontable_id"
+                  value={
+                    nuevoProveedorModal.imputacioncontable_id
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                  className="form-control my-input"
+                >
+
+                  <option value="">
+                    Seleccione...
+                  </option>
+
+                  {(imputacionContableTabla || []).map(
+                    (i) => (
+                      <option
+                        key={i.id}
+                        value={i.id}
+                      >
+                        {i.descripcion}
+                      </option>
+                    )
+                  )}
+
+                </Form.Select>
+
+              </Form.Group>
+
+
+              <Form.Group className="mb-3 col-md-6">
+
+                <Form.Label>
+                  Forma de Pago
+                </Form.Label>
+
+                <Form.Select
+                  name="formapago_id"
+                  value={
+                    nuevoProveedorModal.formapago_id
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                  className="form-control my-input"
+                >
+
+                  <option value="">
+                    Seleccione...
+                  </option>
+
+                  {(formasPagoTesoreria || []).map(
+                    (f) => (
+                      <option
+                        key={f.id}
+                        value={f.id}
+                      >
+                        {f.descripcion}
+                      </option>
+                    )
+                  )}
+
+                </Form.Select>
+
+              </Form.Group>
+
+            </div>
+
+
+            {errorCrearProveedor && (
+
+              <Alert
+                variant="danger"
+                className="py-2 mb-0"
+              >
+                {errorCrearProveedor}
+              </Alert>
+
+            )}
+
+          </Form>
+
+        </Modal.Body>
+
+
+        <Modal.Footer>
+
+          <Button
+            variant="secondary"
+            onClick={
+              handleCloseProveedorCreateModal
+            }
+            disabled={loadingCrearProveedor}
+          >
+            Cancelar
+          </Button>
+
+          <Button
+            variant="success"
+            onClick={handleCrearProveedor}
+            disabled={loadingCrearProveedor}
+          >
+            {loadingCrearProveedor
+              ? "Creando..."
+              : "Crear Proveedor"}
+          </Button>
+
+        </Modal.Footer>
+
+      </Modal>
 
     </>
   );

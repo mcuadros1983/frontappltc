@@ -13,6 +13,7 @@ import {
   Col,
   Alert,
   Spinner,
+  InputGroup,
 } from "react-bootstrap";
 
 import Contexts from "../../context/Contexts";
@@ -53,6 +54,8 @@ export default function NuevoPagoProgramado({
     formasPagoTesoreria = [],
 
     bancosTabla = [],
+
+    imputacionContableTabla = [],
   } = data;
 
 
@@ -85,6 +88,38 @@ export default function NuevoPagoProgramado({
     setProveedorId,
   ] = useState("");
 
+  // ==========================================================
+  // NUEVO PROVEEDOR
+  // ==========================================================
+
+  const [
+    showProveedorCreateModal,
+    setShowProveedorCreateModal,
+  ] = useState(false);
+
+  const [
+    loadingCrearProveedor,
+    setLoadingCrearProveedor,
+  ] = useState(false);
+
+  const [
+    errorCrearProveedor,
+    setErrorCrearProveedor,
+  ] = useState("");
+
+  const [
+    nuevoProveedorModal,
+    setNuevoProveedorModal,
+  ] = useState({
+    nombre: "",
+    direccion: "",
+    telefono: "",
+    email: "",
+    cuit: "",
+    dni: "",
+    imputacioncontable_id: "",
+    formapago_id: "",
+  });
 
   const [
     descripcion,
@@ -614,6 +649,221 @@ export default function NuevoPagoProgramado({
 
 
   // ==========================================================
+  // CREAR PROVEEDOR
+  // ==========================================================
+
+  const resetProveedorModal = () => {
+
+    setNuevoProveedorModal({
+      nombre: "",
+      direccion: "",
+      telefono: "",
+      email: "",
+      cuit: "",
+      dni: "",
+      imputacioncontable_id: "",
+      formapago_id: "",
+    });
+
+    setErrorCrearProveedor("");
+  };
+
+
+  const handleOpenProveedorCreateModal = () => {
+
+    resetProveedorModal();
+
+    setShowProveedorCreateModal(true);
+  };
+
+
+  const handleCloseProveedorCreateModal = () => {
+
+    resetProveedorModal();
+
+    setShowProveedorCreateModal(false);
+  };
+
+
+  const handleNuevoProveedorModalChange = (e) => {
+
+    const {
+      name,
+      value,
+    } = e.target;
+
+    setNuevoProveedorModal(
+      (prev) => ({
+        ...prev,
+        [name]: value,
+      })
+    );
+
+    if (errorCrearProveedor) {
+      setErrorCrearProveedor("");
+    }
+  };
+
+
+  const handleCrearProveedor = async () => {
+
+    if (
+      !nuevoProveedorModal.cuit ||
+      nuevoProveedorModal.cuit.trim() === ""
+    ) {
+
+      setErrorCrearProveedor(
+        "El CUIT es obligatorio"
+      );
+
+      return;
+    }
+
+    try {
+
+      setLoadingCrearProveedor(true);
+
+      setErrorCrearProveedor("");
+
+      const response =
+        await fetch(
+          `${apiUrl}/proveedores/`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            credentials:
+              "include",
+
+            body:
+              JSON.stringify({
+                ...nuevoProveedorModal,
+
+                cuit:
+                  nuevoProveedorModal
+                    .cuit
+                    .trim(),
+              }),
+          }
+        );
+
+
+      const data =
+        await response
+          .json()
+          .catch(
+            () => ({})
+          );
+
+
+      if (!response.ok) {
+
+        setErrorCrearProveedor(
+          data.error ||
+          "Error al crear el proveedor"
+        );
+
+        return;
+      }
+
+
+      const proveedorCreado =
+        data;
+
+
+      // ==============================================
+      // ACTUALIZAR DATACONTEXT
+      // ==============================================
+
+      if (setProveedoresTabla) {
+
+        setProveedoresTabla(
+          (prev) => {
+
+            const lista =
+              Array.isArray(prev)
+                ? prev
+                : [];
+
+
+            const existe =
+              lista.some(
+                (p) =>
+                  Number(p.id) ===
+                  Number(
+                    proveedorCreado.id
+                  )
+              );
+
+
+            if (existe) {
+              return lista;
+            }
+
+
+            return [
+              ...lista,
+              proveedorCreado,
+            ].sort(
+              (a, b) =>
+                String(
+                  a.razonsocial ||
+                  a.nombre ||
+                  ""
+                ).localeCompare(
+                  String(
+                    b.razonsocial ||
+                    b.nombre ||
+                    ""
+                  ),
+                  "es"
+                )
+            );
+          }
+        );
+      }
+
+
+      // ==============================================
+      // SELECCIONAR AUTOMÁTICAMENTE
+      // ==============================================
+
+      setProveedorId(
+        String(
+          proveedorCreado.id
+        )
+      );
+
+
+      // ==============================================
+      // CERRAR MODAL
+      // ==============================================
+
+      handleCloseProveedorCreateModal();
+
+
+    } catch (error) {
+
+      console.error(
+        "Error al crear proveedor:",
+        error
+      );
+
+      setErrorCrearProveedor(
+        "Error al crear el proveedor"
+      );
+
+    } finally {
+
+      setLoadingCrearProveedor(false);
+    }
+  };
+
+  // ==========================================================
   // VALIDACIÓN
   // ==========================================================
 
@@ -1014,319 +1264,321 @@ export default function NuevoPagoProgramado({
 
   return (
 
-    <Modal
-      show={show}
-      onHide={handleClose}
-      size="lg"
-      centered
-    >
+    <>
 
-      <Form
-        onSubmit={handleSubmit}
+      <Modal
+        show={show}
+        onHide={handleClose}
+        size="lg"
+        centered
       >
 
-        <Modal.Header
-          closeButton
+        <Form
+          onSubmit={handleSubmit}
         >
 
-          <Modal.Title>
-            Nuevo Pago Programado
-          </Modal.Title>
+          <Modal.Header
+            closeButton
+          >
 
-        </Modal.Header>
+            <Modal.Title>
+              Nuevo Pago Programado
+            </Modal.Title>
 
-
-        <Modal.Body>
-
-          {!empresa_id && (
-
-            <Alert
-              variant="warning"
-              className="py-2"
-            >
-              Seleccioná una empresa para continuar.
-            </Alert>
-
-          )}
+          </Modal.Header>
 
 
-          {msg && (
+          <Modal.Body>
 
-            <Alert
-              variant={msg.type}
-              className="py-2"
-              dismissible
-              onClose={() =>
-                setMsg(null)
-              }
-            >
+            {!empresa_id && (
 
-              {msg.text}
+              <Alert
+                variant="warning"
+                className="py-2"
+              >
+                Seleccioná una empresa para continuar.
+              </Alert>
 
-            </Alert>
-
-          )}
+            )}
 
 
-          {/* ==================================================
+            {msg && (
+
+              <Alert
+                variant={msg.type}
+                className="py-2"
+                dismissible
+                onClose={() =>
+                  setMsg(null)
+                }
+              >
+
+                {msg.text}
+
+              </Alert>
+
+            )}
+
+
+            {/* ==================================================
               TIPO
              ================================================== */}
 
-          <Row className="mb-3">
+            <Row className="mb-3">
 
-            <Col md={12}>
+              <Col md={12}>
 
-              <Form.Label>
-                Tipo de pago programado
-              </Form.Label>
-
-
-              <div
-                className="d-flex flex-wrap align-items-center"
-                style={{
-                  gap: 16,
-                }}
-              >
-
-                <Form.Check
-                  inline
-                  type="radio"
-                  id="programado-egreso"
-                  name="tipo-programado"
-                  label="Egresos varios"
-                  value="egreso_varios"
-                  checked={
-                    tipo ===
-                    "egreso_varios"
-                  }
-                  onChange={(e) =>
-                    setTipo(
-                      e.target.value
-                    )
-                  }
-                />
+                <Form.Label>
+                  Tipo de pago programado
+                </Form.Label>
 
 
-                <Form.Check
-                  inline
-                  type="radio"
-                  id="programado-anticipo"
-                  name="tipo-programado"
-                  label="Anticipo a Proveedores"
-                  value="anticipo"
-                  checked={
-                    tipo ===
-                    "anticipo"
-                  }
-                  onChange={(e) =>
-                    setTipo(
-                      e.target.value
-                    )
-                  }
-                />
+                <div
+                  className="d-flex flex-wrap align-items-center"
+                  style={{
+                    gap: 16,
+                  }}
+                >
 
-              </div>
-
-            </Col>
-
-          </Row>
-
-
-          {/* ==================================================
-              MEDIO + FECHA
-             ================================================== */}
-
-          <Row className="mb-3">
-
-            <Col md={6}>
-
-              <Form.Label>
-                Medio previsto
-              </Form.Label>
-
-
-              <div
-                className="d-flex flex-wrap align-items-center"
-                style={{
-                  gap: 16,
-                }}
-              >
-
-                <Form.Check
-                  inline
-                  type="radio"
-                  id="medio-banco"
-                  name="medio-programado"
-                  label="Transferencia / Banco"
-                  value="banco"
-                  checked={
-                    medio === "banco"
-                  }
-                  onChange={(e) =>
-                    setMedio(
-                      e.target.value
-                    )
-                  }
-                />
-
-
-                <Form.Check
-                  inline
-                  type="radio"
-                  id="medio-caja"
-                  name="medio-programado"
-                  label="Caja"
-                  value="caja"
-                  checked={
-                    medio === "caja"
-                  }
-                  onChange={(e) =>
-                    setMedio(
-                      e.target.value
-                    )
-                  }
-                />
-
-
-                <Form.Check
-                  inline
-                  type="radio"
-                  id="medio-echeq"
-                  name="medio-programado"
-                  label="eCheq"
-                  value="echeq"
-                  checked={
-                    medio === "echeq"
-                  }
-                  onChange={(e) =>
-                    setMedio(
-                      e.target.value
-                    )
-                  }
-                />
-
-              </div>
-
-            </Col>
-
-
-            <Col md={6}>
-
-              <Form.Label>
-                Fecha programada
-              </Form.Label>
-
-              <Form.Control
-                type="date"
-                value={
-                  fechaProgramada
-                }
-                onChange={(e) =>
-                  setFechaProgramada(
-                    e.target.value
-                  )
-                }
-                required
-              />
-
-            </Col>
-
-          </Row>
-
-
-          {/* ==================================================
-              BANCO
-             ================================================== */}
-
-          {(
-            medio === "banco" ||
-            medio === "echeq"
-          ) && (
-
-              <Row className="mb-3">
-
-                <Col md={6}>
-
-                  <Form.Label>
-                    Banco
-                  </Form.Label>
-
-                  <Form.Select
-                    value={bancoId}
+                  <Form.Check
+                    inline
+                    type="radio"
+                    id="programado-egreso"
+                    name="tipo-programado"
+                    label="Egresos varios"
+                    value="egreso_varios"
+                    checked={
+                      tipo ===
+                      "egreso_varios"
+                    }
                     onChange={(e) =>
-                      setBancoId(
+                      setTipo(
                         e.target.value
                       )
                     }
-                    required
-                    className="form-control my-input"
-                  >
+                  />
 
-                    <option value="">
-                      Seleccione…
-                    </option>
 
-                    {bancosDisponibles.map(
-                      (b) => (
-
-                        <option
-                          key={b.id}
-                          value={b.id}
-                        >
-                          {b.nombre ||
-                            b.descripcion ||
-                            b.alias ||
-                            `Banco ${b.id}`}
-                        </option>
-
+                  <Form.Check
+                    inline
+                    type="radio"
+                    id="programado-anticipo"
+                    name="tipo-programado"
+                    label="Anticipo a Proveedores"
+                    value="anticipo"
+                    checked={
+                      tipo ===
+                      "anticipo"
+                    }
+                    onChange={(e) =>
+                      setTipo(
+                        e.target.value
                       )
-                    )}
+                    }
+                  />
 
-                  </Form.Select>
+                </div>
 
-                </Col>
+              </Col>
 
-                {medio === "echeq" && (
+            </Row>
+
+
+            {/* ==================================================
+              MEDIO + FECHA
+             ================================================== */}
+
+            <Row className="mb-3">
+
+              <Col md={6}>
+
+                <Form.Label>
+                  Medio previsto
+                </Form.Label>
+
+
+                <div
+                  className="d-flex flex-wrap align-items-center"
+                  style={{
+                    gap: 16,
+                  }}
+                >
+
+                  <Form.Check
+                    inline
+                    type="radio"
+                    id="medio-banco"
+                    name="medio-programado"
+                    label="Transferencia / Banco"
+                    value="banco"
+                    checked={
+                      medio === "banco"
+                    }
+                    onChange={(e) =>
+                      setMedio(
+                        e.target.value
+                      )
+                    }
+                  />
+
+
+                  <Form.Check
+                    inline
+                    type="radio"
+                    id="medio-caja"
+                    name="medio-programado"
+                    label="Caja"
+                    value="caja"
+                    checked={
+                      medio === "caja"
+                    }
+                    onChange={(e) =>
+                      setMedio(
+                        e.target.value
+                      )
+                    }
+                  />
+
+
+                  <Form.Check
+                    inline
+                    type="radio"
+                    id="medio-echeq"
+                    name="medio-programado"
+                    label="eCheq"
+                    value="echeq"
+                    checked={
+                      medio === "echeq"
+                    }
+                    onChange={(e) =>
+                      setMedio(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                </div>
+
+              </Col>
+
+
+              <Col md={6}>
+
+                <Form.Label>
+                  Fecha programada
+                </Form.Label>
+
+                <Form.Control
+                  type="date"
+                  value={
+                    fechaProgramada
+                  }
+                  onChange={(e) =>
+                    setFechaProgramada(
+                      e.target.value
+                    )
+                  }
+                  required
+                />
+
+              </Col>
+
+            </Row>
+
+
+            {/* ==================================================
+              BANCO
+             ================================================== */}
+
+            {(
+              medio === "banco" ||
+              medio === "echeq"
+            ) && (
+
+                <Row className="mb-3">
 
                   <Col md={6}>
 
                     <Form.Label>
-                      Vencimiento previsto del eCheq
+                      Banco
                     </Form.Label>
 
-                    <Form.Control
-                      type="date"
-                      value={
-                        echeqFechaVencimiento
-                      }
-                      min={
-                        fechaProgramada || undefined
-                      }
+                    <Form.Select
+                      value={bancoId}
                       onChange={(e) =>
-                        setEcheqFechaVencimiento(
+                        setBancoId(
                           e.target.value
                         )
                       }
                       required
-                      isInvalid={
-                        !!echeqFechaVencimiento &&
-                        !!fechaProgramada &&
-                        echeqFechaVencimiento <
-                        fechaProgramada
-                      }
-                    />
-
-                    <Form.Control.Feedback
-                      type="invalid"
+                      className="form-control my-input"
                     >
-                      El vencimiento no puede ser anterior
-                      a la fecha programada.
-                    </Form.Control.Feedback>
+
+                      <option value="">
+                        Seleccione…
+                      </option>
+
+                      {bancosDisponibles.map(
+                        (b) => (
+
+                          <option
+                            key={b.id}
+                            value={b.id}
+                          >
+                            {b.nombre ||
+                              b.descripcion ||
+                              b.alias ||
+                              `Banco ${b.id}`}
+                          </option>
+
+                        )
+                      )}
+
+                    </Form.Select>
 
                   </Col>
 
-                )}
-                {/* <Col md={6}>
+                  {medio === "echeq" && (
+
+                    <Col md={6}>
+
+                      <Form.Label>
+                        Vencimiento previsto del eCheq
+                      </Form.Label>
+
+                      <Form.Control
+                        type="date"
+                        value={
+                          echeqFechaVencimiento
+                        }
+                        min={
+                          fechaProgramada || undefined
+                        }
+                        onChange={(e) =>
+                          setEcheqFechaVencimiento(
+                            e.target.value
+                          )
+                        }
+                        required
+                        isInvalid={
+                          !!echeqFechaVencimiento &&
+                          !!fechaProgramada &&
+                          echeqFechaVencimiento <
+                          fechaProgramada
+                        }
+                      />
+
+                      <Form.Control.Feedback
+                        type="invalid"
+                      >
+                        El vencimiento no puede ser anterior
+                        a la fecha programada.
+                      </Form.Control.Feedback>
+
+                    </Col>
+
+                  )}
+                  {/* <Col md={6}>
 
                 <Form.Label>
                   Forma de pago
@@ -1367,168 +1619,182 @@ export default function NuevoPagoProgramado({
 
               </Col> */}
 
-              </Row>
+                </Row>
+
+              )}
+
+            {medio === "caja" && (
+
+              <Alert
+                variant="light"
+                className="py-2"
+              >
+                El pago se programará para realizarse por
+                <strong> Caja</strong>. Al momento de acreditarlo,
+                se utilizará automáticamente la caja que se
+                encuentre abierta.
+              </Alert>
 
             )}
 
-          {medio === "caja" && (
-
-            <Alert
-              variant="light"
-              className="py-2"
-            >
-              El pago se programará para realizarse por
-              <strong> Caja</strong>. Al momento de acreditarlo,
-              se utilizará automáticamente la caja que se
-              encuentre abierta.
-            </Alert>
-
-          )}
-
-          {/* ==================================================
+            {/* ==================================================
               PROVEEDOR + PROYECTO
              ================================================== */}
 
-          <Row className="mb-3">
+            <Row className="mb-3">
 
-            <Col md={6}>
+              <Col md={6}>
 
-              <Form.Label>
-                Proveedor / Entidad
-              </Form.Label>
+                <Form.Label>
+                  Proveedor / Entidad
+                </Form.Label>
 
-              <Form.Select
-                value={
-                  proveedorId
-                }
-                onChange={(e) =>
-                  setProveedorId(
-                    e.target.value
-                  )
-                }
-                required
-                className="form-control my-input"
-              >
+                <InputGroup>
 
-                <option value="">
-                  Seleccione…
-                </option>
+                  <Form.Select
+                    value={proveedorId}
+                    onChange={(e) =>
+                      setProveedorId(
+                        e.target.value
+                      )
+                    }
+                    required
+                    className="form-control my-input"
+                  >
 
-                {(proveedoresTabla || [])
-                  .map(
-                    (p) => (
+                    <option value="">
+                      Seleccione…
+                    </option>
 
-                      <option
-                        key={p.id}
-                        value={p.id}
-                      >
-                        {p.razonsocial ||
-                          p.nombre ||
-                          `Proveedor ${p.id}`}
-                      </option>
+                    {(proveedoresTabla || [])
+                      .map(
+                        (p) => (
 
+                          <option
+                            key={p.id}
+                            value={p.id}
+                          >
+                            {p.razonsocial ||
+                              p.nombre ||
+                              `Proveedor ${p.id}`}
+                          </option>
+
+                        )
+                      )}
+
+                  </Form.Select>
+
+
+                  <Button
+                    variant="outline-success"
+                    type="button"
+                    onClick={
+                      handleOpenProveedorCreateModal
+                    }
+                    title="Crear nuevo proveedor"
+                  >
+                    +
+                  </Button>
+
+                </InputGroup>
+
+              </Col>
+
+
+              <Col md={6}>
+
+                <Form.Label>
+                  Proyecto
+                </Form.Label>
+
+                <Form.Select
+                  value={
+                    proyectoId
+                  }
+                  onChange={(e) =>
+                    setProyectoId(
+                      e.target.value
                     )
-                  )}
+                  }
+                  className="form-control my-input"
+                >
 
-              </Form.Select>
+                  <option value="">
+                    Sin proyecto
+                  </option>
 
-            </Col>
+                  {(proyectosTabla || [])
+                    .map(
+                      (p) => (
 
+                        <option
+                          key={p.id}
+                          value={p.id}
+                        >
+                          {p.nombre ||
+                            p.descripcion ||
+                            `Proyecto ${p.id}`}
+                        </option>
 
-            <Col md={6}>
+                      )
+                    )}
 
-              <Form.Label>
-                Proyecto
-              </Form.Label>
+                </Form.Select>
 
-              <Form.Select
-                value={
-                  proyectoId
-                }
-                onChange={(e) =>
-                  setProyectoId(
-                    e.target.value
-                  )
-                }
-                className="form-control my-input"
-              >
+              </Col>
 
-                <option value="">
-                  Sin proyecto
-                </option>
-
-                {(proyectosTabla || [])
-                  .map(
-                    (p) => (
-
-                      <option
-                        key={p.id}
-                        value={p.id}
-                      >
-                        {p.nombre ||
-                          p.descripcion ||
-                          `Proyecto ${p.id}`}
-                      </option>
-
-                    )
-                  )}
-
-              </Form.Select>
-
-            </Col>
-
-          </Row>
+            </Row>
 
 
-          {/* ==================================================
+            {/* ==================================================
               CATEGORÍA
              ================================================== */}
 
-          <Row className="mb-3">
+            <Row className="mb-3">
 
-            <Col md={6}>
+              <Col md={6}>
 
-              <Form.Label>
-                Categoría de egreso
-              </Form.Label>
+                <Form.Label>
+                  Categoría de egreso
+                </Form.Label>
 
-              <Form.Select
-                value={
-                  categoriaId
-                }
-                onChange={(e) =>
-                  setCategoriaId(
-                    e.target.value
-                  )
-                }
-                required
-                className="form-control my-input"
-              >
-
-                <option value="">
-                  Seleccione…
-                </option>
-
-                {(categoriasEgreso || [])
-                  .map(
-                    (c) => (
-
-                      <option
-                        key={c.id}
-                        value={c.id}
-                      >
-                        {c.nombre ||
-                          `Categoría ${c.id}`}
-                      </option>
-
+                <Form.Select
+                  value={
+                    categoriaId
+                  }
+                  onChange={(e) =>
+                    setCategoriaId(
+                      e.target.value
                     )
-                  )}
+                  }
+                  required
+                  className="form-control my-input"
+                >
 
-              </Form.Select>
+                  <option value="">
+                    Seleccione…
+                  </option>
 
-            </Col>
+                  {(categoriasEgreso || [])
+                    .map(
+                      (c) => (
 
-            {/* 
+                        <option
+                          key={c.id}
+                          value={c.id}
+                        >
+                          {c.nombre ||
+                            `Categoría ${c.id}`}
+                        </option>
+
+                      )
+                    )}
+
+                </Form.Select>
+
+              </Col>
+
+              {/* 
             <Col md={6}>
 
               <Form.Label>
@@ -1546,769 +1812,1087 @@ export default function NuevoPagoProgramado({
 
             </Col> */}
 
-          </Row>
+            </Row>
 
 
-          {/* ==================================================
+            {/* ==================================================
               DESCRIPCIÓN + MONTO
              ================================================== */}
 
-          <Row className="mb-3">
+            <Row className="mb-3">
 
-            <Col md={8}>
+              <Col md={8}>
 
-              <Form.Label>
-                Descripción
-              </Form.Label>
+                <Form.Label>
+                  Descripción
+                </Form.Label>
 
-              <Form.Control
-                value={
-                  descripcion
-                }
-                onChange={(e) =>
-                  setDescripcion(
-                    e.target.value
-                  )
-                }
-                required
-                placeholder={
-                  tipo === "anticipo"
-                    ? "Anticipo a proveedor"
-                    : "Concepto del egreso"
-                }
-              />
+                <Form.Control
+                  value={
+                    descripcion
+                  }
+                  onChange={(e) =>
+                    setDescripcion(
+                      e.target.value
+                    )
+                  }
+                  required
+                  placeholder={
+                    tipo === "anticipo"
+                      ? "Anticipo a proveedor"
+                      : "Concepto del egreso"
+                  }
+                />
 
-            </Col>
-
-
-            <Col md={4}>
-
-              <Form.Label>
-                Importe
-              </Form.Label>
-
-              <Form.Control
-                type="text"
-                inputMode="decimal"
-                value={montoDisplay}
-                onChange={handleMontoChange}
-                placeholder="0,00"
-                autoComplete="off"
-                required
-                onKeyDown={handleMontoKeyDown}
-              />
-
-            </Col>
-
-          </Row>
+              </Col>
 
 
-          {/* ==================================================
+              <Col md={4}>
+
+                <Form.Label>
+                  Importe
+                </Form.Label>
+
+                <Form.Control
+                  type="text"
+                  inputMode="decimal"
+                  value={montoDisplay}
+                  onChange={handleMontoChange}
+                  placeholder="0,00"
+                  autoComplete="off"
+                  required
+                  onKeyDown={handleMontoKeyDown}
+                />
+
+              </Col>
+
+            </Row>
+
+
+            {/* ==================================================
               OBSERVACIONES
              ================================================== */}
 
-          <Row>
+            <Row>
 
-            <Col md={12}>
+              <Col md={12}>
 
-              <Form.Label>
-                Observaciones
-              </Form.Label>
+                <Form.Label>
+                  Observaciones
+                </Form.Label>
 
-              <Form.Control
-                as="textarea"
-                rows={2}
-                value={
-                  observaciones
-                }
-                onChange={(e) =>
-                  setObservaciones(
-                    e.target.value
-                  )
-                }
-              />
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  value={
+                    observaciones
+                  }
+                  onChange={(e) =>
+                    setObservaciones(
+                      e.target.value
+                    )
+                  }
+                />
 
-            </Col>
+              </Col>
 
-          </Row>
+            </Row>
 
-          {/* ==================================================
+            {/* ==================================================
     ADVERTENCIA POSIBLE PAGO DUPLICADO
    ================================================== */}
 
-          {advertenciaDuplicado?.hay_coincidencias && (
+            {advertenciaDuplicado?.hay_coincidencias && (
 
-            <Alert
-              variant="warning"
-              className="mt-4"
-            >
-
-              <div
-                className="fw-bold mb-2"
-                style={{
-                  fontSize: "1.05rem",
-                }}
+              <Alert
+                variant="warning"
+                className="mt-4"
               >
-                ⚠ Posible pago duplicado
-              </div>
+
+                <div
+                  className="fw-bold mb-2"
+                  style={{
+                    fontSize: "1.05rem",
+                  }}
+                >
+                  ⚠ Posible pago duplicado
+                </div>
 
 
-              <div className="mb-3">
+                <div className="mb-3">
 
-                Se encontraron movimientos para este proveedor
-                por un monto de{" "}
+                  Se encontraron movimientos para este proveedor
+                  por un monto de{" "}
 
-                <strong>
-                  {moneyAR(
-                    montoNumero
-                  )}
-                </strong>.
+                  <strong>
+                    {moneyAR(
+                      montoNumero
+                    )}
+                  </strong>.
 
-              </div>
+                </div>
 
 
-              {/* ==============================================
+                {/* ==============================================
         PAGOS ACREDITADOS
        ============================================== */}
 
-              {advertenciaDuplicado
-                ?.pagos_acreditados
-                ?.length > 0 && (
-
-                  <div className="mb-3">
-
-                    <div className="fw-bold text-danger mb-2">
-                      Ya existe un pago acreditado por ese monto
-                      para este proveedor.
-                    </div>
-
-
-                    {advertenciaDuplicado
-                      .pagos_acreditados
-                      .map(
-                        (pago, index) => {
-
-                          const clave =
-                            `acreditado-${pago.movimiento_tipo || pago.origen}-${pago.id}-${index}`;
-
-                          const abierto =
-                            detalleAbierto ===
-                            clave;
-
-
-                          return (
-
-                            <div
-                              key={clave}
-                              className="border rounded mb-2 bg-white"
-                            >
-
-                              <button
-                                type="button"
-                                className="btn btn-link text-start text-decoration-none w-100"
-                                onClick={() =>
-                                  toggleDetalle(
-                                    clave
-                                  )
-                                }
-                              >
-
-                                <strong>
-                                  {abierto
-                                    ? "▼"
-                                    : "▶"}{" "}
-                                  Pago acreditado
-                                </strong>
-
-                                {" · "}
-
-                                {fechaAR(
-                                  pago.fecha
-                                )}
-
-                                {" · "}
-
-                                {moneyAR(
-                                  pago.monto
-                                )}
-
-                                {" · "}
-
-                                {pago.medio === "caja"
-                                  ? "Caja"
-                                  : pago.medio === "echeq"
-                                    ? "eCheq"
-                                    : "Banco"}
-
-                              </button>
-
-
-                              {abierto && (
-
-                                <div
-                                  className="px-3 pb-3"
-                                  style={{
-                                    fontSize:
-                                      "0.9rem",
-                                  }}
-                                >
-
-                                  <hr className="mt-0" />
-
-
-                                  <Row>
-
-                                    <Col md={6}>
-                                      <strong>
-                                        Fecha:
-                                      </strong>{" "}
-                                      {fechaAR(
-                                        pago.fecha
-                                      )}
-                                    </Col>
-
-
-                                    <Col md={6}>
-                                      <strong>
-                                        Monto:
-                                      </strong>{" "}
-                                      {moneyAR(
-                                        pago.monto
-                                      )}
-                                    </Col>
-
-
-                                    <Col
-                                      md={6}
-                                      className="mt-2"
-                                    >
-                                      <strong>
-                                        Medio:
-                                      </strong>{" "}
-
-                                      {pago.medio === "caja"
-                                        ? "Caja"
-                                        : pago.medio === "echeq"
-                                          ? "eCheq"
-                                          : "Banco"}
-                                    </Col>
-
-
-                                    <Col
-                                      md={6}
-                                      className="mt-2"
-                                    >
-                                      <strong>
-                                        Estado:
-                                      </strong>{" "}
-
-                                      {pago.estado ||
-                                        "acreditado"}
-                                    </Col>
-
-
-                                    {pago.banco_id && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Banco:
-                                        </strong>{" "}
-
-                                        {nombreBanco(
-                                          pago.banco_id
-                                        )}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.formapago_id && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Forma de pago:
-                                        </strong>{" "}
-
-                                        {nombreFormaPago(
-                                          pago.formapago_id
-                                        )}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.numero_echeq && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Nº eCheq:
-                                        </strong>{" "}
-
-                                        {pago.numero_echeq}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.fecha_vencimiento && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Vencimiento:
-                                        </strong>{" "}
-
-                                        {fechaAR(
-                                          pago.fecha_vencimiento
-                                        )}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.ordenpago_id && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Orden de pago:
-                                        </strong>{" "}
-
-                                        #{pago.ordenpago_id}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.comprobanteegreso_id && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Comprobante:
-                                        </strong>{" "}
-
-                                        #{pago.comprobanteegreso_id}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.descripcion && (
-
-                                      <Col
-                                        md={12}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Descripción:
-                                        </strong>{" "}
-
-                                        {pago.descripcion}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.observaciones && (
-
-                                      <Col
-                                        md={12}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Observaciones:
-                                        </strong>{" "}
-
-                                        {pago.observaciones}
-                                      </Col>
-
-                                    )}
-
-                                  </Row>
-
-                                </div>
-
-                              )}
-
-                            </div>
-                          );
-                        }
-                      )}
-
-                  </div>
-
-                )}
-
-
-              {/* ==============================================
-        PAGOS PROGRAMADOS
-       ============================================== */}
-
-              {advertenciaDuplicado
-                ?.pagos_programados
-                ?.length > 0 && (
-
-                  <div className="mb-3">
-
-                    <div className="fw-bold text-danger mb-2">
-                      Ya existe un pago programado por ese monto
-                      para este proveedor.
-                    </div>
-
-
-                    {advertenciaDuplicado
-                      .pagos_programados
-                      .map(
-                        (pago, index) => {
-
-                          const clave =
-                            `programado-${pago.id}-${index}`;
-
-                          const abierto =
-                            detalleAbierto ===
-                            clave;
-
-
-                          return (
-
-                            <div
-                              key={clave}
-                              className="border rounded mb-2 bg-white"
-                            >
-
-                              <button
-                                type="button"
-                                className="btn btn-link text-start text-decoration-none w-100"
-                                onClick={() =>
-                                  toggleDetalle(
-                                    clave
-                                  )
-                                }
-                              >
-
-                                <strong>
-                                  {abierto
-                                    ? "▼"
-                                    : "▶"}{" "}
-                                  Pago programado #{pago.id}
-                                </strong>
-
-                                {" · "}
-
-                                {fechaAR(
-                                  pago.fecha_programada
-                                )}
-
-                                {" · "}
-
-                                {moneyAR(
-                                  pago.monto
-                                )}
-
-                              </button>
-
-
-                              {abierto && (
-
-                                <div
-                                  className="px-3 pb-3"
-                                  style={{
-                                    fontSize:
-                                      "0.9rem",
-                                  }}
-                                >
-
-                                  <hr className="mt-0" />
-
-
-                                  <Row>
-
-                                    <Col md={6}>
-                                      <strong>
-                                        Fecha programada:
-                                      </strong>{" "}
-
-                                      {fechaAR(
-                                        pago.fecha_programada
-                                      )}
-                                    </Col>
-
-
-                                    <Col md={6}>
-                                      <strong>
-                                        Monto:
-                                      </strong>{" "}
-
-                                      {moneyAR(
-                                        pago.monto
-                                      )}
-                                    </Col>
-
-
-                                    <Col
-                                      md={6}
-                                      className="mt-2"
-                                    >
-                                      <strong>
-                                        Medio previsto:
-                                      </strong>{" "}
-
-                                      {pago.medio === "caja"
-                                        ? "Caja"
-                                        : pago.medio === "echeq"
-                                          ? "eCheq"
-                                          : "Banco"}
-                                    </Col>
-
-
-                                    <Col
-                                      md={6}
-                                      className="mt-2"
-                                    >
-                                      <strong>
-                                        Estado:
-                                      </strong>{" "}
-
-                                      {pago.estado}
-                                    </Col>
-
-
-                                    {pago.banco_id && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Banco:
-                                        </strong>{" "}
-
-                                        {nombreBanco(
-                                          pago.banco_id
-                                        )}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.formapago_id && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Forma de pago:
-                                        </strong>{" "}
-
-                                        {nombreFormaPago(
-                                          pago.formapago_id
-                                        )}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.echeq_fecha_vencimiento && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Vencimiento eCheq:
-                                        </strong>{" "}
-
-                                        {fechaAR(
-                                          pago.echeq_fecha_vencimiento
-                                        )}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.ordenpago_id && (
-
-                                      <Col
-                                        md={6}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Orden de pago:
-                                        </strong>{" "}
-
-                                        #{pago.ordenpago_id}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.descripcion && (
-
-                                      <Col
-                                        md={12}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Descripción:
-                                        </strong>{" "}
-
-                                        {pago.descripcion}
-                                      </Col>
-
-                                    )}
-
-
-                                    {pago.observaciones && (
-
-                                      <Col
-                                        md={12}
-                                        className="mt-2"
-                                      >
-                                        <strong>
-                                          Observaciones:
-                                        </strong>{" "}
-
-                                        {pago.observaciones}
-                                      </Col>
-
-                                    )}
-
-                                  </Row>
-
-                                </div>
-
-                              )}
-
-                            </div>
-                          );
-                        }
-                      )}
-
-
-                    <div className="mt-3 fw-bold">
-                      ¿Desea crear igualmente el pago programado?
-                    </div>
-
-                  </div>
-
-                )}
-
-
-              {!advertenciaDuplicado
-                ?.pagos_programados
-                ?.length &&
-                advertenciaDuplicado
+                {advertenciaDuplicado
                   ?.pagos_acreditados
                   ?.length > 0 && (
 
-                  <div className="fw-bold mt-3">
-                    ¿Desea crear igualmente el pago programado?
-                  </div>
+                    <div className="mb-3">
 
-                )}
+                      <div className="fw-bold text-danger mb-2">
+                        Ya existe un pago acreditado por ese monto
+                        para este proveedor.
+                      </div>
 
-            </Alert>
 
-          )}
+                      {advertenciaDuplicado
+                        .pagos_acreditados
+                        .map(
+                          (pago, index) => {
+
+                            const clave =
+                              `acreditado-${pago.movimiento_tipo || pago.origen}-${pago.id}-${index}`;
+
+                            const abierto =
+                              detalleAbierto ===
+                              clave;
+
+
+                            return (
+
+                              <div
+                                key={clave}
+                                className="border rounded mb-2 bg-white"
+                              >
+
+                                <button
+                                  type="button"
+                                  className="btn btn-link text-start text-decoration-none w-100"
+                                  onClick={() =>
+                                    toggleDetalle(
+                                      clave
+                                    )
+                                  }
+                                >
+
+                                  <strong>
+                                    {abierto
+                                      ? "▼"
+                                      : "▶"}{" "}
+                                    Pago acreditado
+                                  </strong>
+
+                                  {" · "}
+
+                                  {fechaAR(
+                                    pago.fecha
+                                  )}
+
+                                  {" · "}
+
+                                  {moneyAR(
+                                    pago.monto
+                                  )}
+
+                                  {" · "}
+
+                                  {pago.medio === "caja"
+                                    ? "Caja"
+                                    : pago.medio === "echeq"
+                                      ? "eCheq"
+                                      : "Banco"}
+
+                                </button>
+
+
+                                {abierto && (
+
+                                  <div
+                                    className="px-3 pb-3"
+                                    style={{
+                                      fontSize:
+                                        "0.9rem",
+                                    }}
+                                  >
+
+                                    <hr className="mt-0" />
+
+
+                                    <Row>
+
+                                      <Col md={6}>
+                                        <strong>
+                                          Fecha:
+                                        </strong>{" "}
+                                        {fechaAR(
+                                          pago.fecha
+                                        )}
+                                      </Col>
+
+
+                                      <Col md={6}>
+                                        <strong>
+                                          Monto:
+                                        </strong>{" "}
+                                        {moneyAR(
+                                          pago.monto
+                                        )}
+                                      </Col>
+
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Medio:
+                                        </strong>{" "}
+
+                                        {pago.medio === "caja"
+                                          ? "Caja"
+                                          : pago.medio === "echeq"
+                                            ? "eCheq"
+                                            : "Banco"}
+                                      </Col>
+
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Estado:
+                                        </strong>{" "}
+
+                                        {pago.estado ||
+                                          "acreditado"}
+                                      </Col>
+
+
+                                      {pago.banco_id && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Banco:
+                                          </strong>{" "}
+
+                                          {nombreBanco(
+                                            pago.banco_id
+                                          )}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.formapago_id && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Forma de pago:
+                                          </strong>{" "}
+
+                                          {nombreFormaPago(
+                                            pago.formapago_id
+                                          )}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.numero_echeq && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Nº eCheq:
+                                          </strong>{" "}
+
+                                          {pago.numero_echeq}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.fecha_vencimiento && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Vencimiento:
+                                          </strong>{" "}
+
+                                          {fechaAR(
+                                            pago.fecha_vencimiento
+                                          )}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.ordenpago_id && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Orden de pago:
+                                          </strong>{" "}
+
+                                          #{pago.ordenpago_id}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.comprobanteegreso_id && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Comprobante:
+                                          </strong>{" "}
+
+                                          #{pago.comprobanteegreso_id}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.descripcion && (
+
+                                        <Col
+                                          md={12}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Descripción:
+                                          </strong>{" "}
+
+                                          {pago.descripcion}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.observaciones && (
+
+                                        <Col
+                                          md={12}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Observaciones:
+                                          </strong>{" "}
+
+                                          {pago.observaciones}
+                                        </Col>
+
+                                      )}
+
+                                    </Row>
+
+                                  </div>
+
+                                )}
+
+                              </div>
+                            );
+                          }
+                        )}
+
+                    </div>
+
+                  )}
+
+
+                {/* ==============================================
+        PAGOS PROGRAMADOS
+       ============================================== */}
+
+                {advertenciaDuplicado
+                  ?.pagos_programados
+                  ?.length > 0 && (
+
+                    <div className="mb-3">
+
+                      <div className="fw-bold text-danger mb-2">
+                        Ya existe un pago programado por ese monto
+                        para este proveedor.
+                      </div>
+
+
+                      {advertenciaDuplicado
+                        .pagos_programados
+                        .map(
+                          (pago, index) => {
+
+                            const clave =
+                              `programado-${pago.id}-${index}`;
+
+                            const abierto =
+                              detalleAbierto ===
+                              clave;
+
+
+                            return (
+
+                              <div
+                                key={clave}
+                                className="border rounded mb-2 bg-white"
+                              >
+
+                                <button
+                                  type="button"
+                                  className="btn btn-link text-start text-decoration-none w-100"
+                                  onClick={() =>
+                                    toggleDetalle(
+                                      clave
+                                    )
+                                  }
+                                >
+
+                                  <strong>
+                                    {abierto
+                                      ? "▼"
+                                      : "▶"}{" "}
+                                    Pago programado #{pago.id}
+                                  </strong>
+
+                                  {" · "}
+
+                                  {fechaAR(
+                                    pago.fecha_programada
+                                  )}
+
+                                  {" · "}
+
+                                  {moneyAR(
+                                    pago.monto
+                                  )}
+
+                                </button>
+
+
+                                {abierto && (
+
+                                  <div
+                                    className="px-3 pb-3"
+                                    style={{
+                                      fontSize:
+                                        "0.9rem",
+                                    }}
+                                  >
+
+                                    <hr className="mt-0" />
+
+
+                                    <Row>
+
+                                      <Col md={6}>
+                                        <strong>
+                                          Fecha programada:
+                                        </strong>{" "}
+
+                                        {fechaAR(
+                                          pago.fecha_programada
+                                        )}
+                                      </Col>
+
+
+                                      <Col md={6}>
+                                        <strong>
+                                          Monto:
+                                        </strong>{" "}
+
+                                        {moneyAR(
+                                          pago.monto
+                                        )}
+                                      </Col>
+
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Medio previsto:
+                                        </strong>{" "}
+
+                                        {pago.medio === "caja"
+                                          ? "Caja"
+                                          : pago.medio === "echeq"
+                                            ? "eCheq"
+                                            : "Banco"}
+                                      </Col>
+
+
+                                      <Col
+                                        md={6}
+                                        className="mt-2"
+                                      >
+                                        <strong>
+                                          Estado:
+                                        </strong>{" "}
+
+                                        {pago.estado}
+                                      </Col>
+
+
+                                      {pago.banco_id && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Banco:
+                                          </strong>{" "}
+
+                                          {nombreBanco(
+                                            pago.banco_id
+                                          )}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.formapago_id && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Forma de pago:
+                                          </strong>{" "}
+
+                                          {nombreFormaPago(
+                                            pago.formapago_id
+                                          )}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.echeq_fecha_vencimiento && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Vencimiento eCheq:
+                                          </strong>{" "}
+
+                                          {fechaAR(
+                                            pago.echeq_fecha_vencimiento
+                                          )}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.ordenpago_id && (
+
+                                        <Col
+                                          md={6}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Orden de pago:
+                                          </strong>{" "}
+
+                                          #{pago.ordenpago_id}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.descripcion && (
+
+                                        <Col
+                                          md={12}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Descripción:
+                                          </strong>{" "}
+
+                                          {pago.descripcion}
+                                        </Col>
+
+                                      )}
+
+
+                                      {pago.observaciones && (
+
+                                        <Col
+                                          md={12}
+                                          className="mt-2"
+                                        >
+                                          <strong>
+                                            Observaciones:
+                                          </strong>{" "}
+
+                                          {pago.observaciones}
+                                        </Col>
+
+                                      )}
+
+                                    </Row>
+
+                                  </div>
+
+                                )}
+
+                              </div>
+                            );
+                          }
+                        )}
+
+
+                      <div className="mt-3 fw-bold">
+                        ¿Desea crear igualmente el pago programado?
+                      </div>
+
+                    </div>
+
+                  )}
+
+
+                {!advertenciaDuplicado
+                  ?.pagos_programados
+                  ?.length &&
+                  advertenciaDuplicado
+                    ?.pagos_acreditados
+                    ?.length > 0 && (
+
+                    <div className="fw-bold mt-3">
+                      ¿Desea crear igualmente el pago programado?
+                    </div>
+
+                  )}
+
+              </Alert>
+
+            )}
+
+          </Modal.Body>
+
+
+
+          <Modal.Footer>
+
+            {advertenciaDuplicado?.hay_coincidencias ? (
+
+              <>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  disabled={enviando}
+                  onClick={() => {
+                    setAdvertenciaDuplicado(null);
+                    setDetalleAbierto(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+
+
+                <Button
+                  variant="warning"
+                  type="button"
+                  disabled={enviando}
+                  onClick={
+                    guardarPagoProgramado
+                  }
+                >
+
+                  {enviando
+                    ? "Guardando..."
+                    : "Continuar de todas formas"}
+
+                </Button>
+              </>
+
+            ) : (
+
+              <>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  disabled={
+                    enviando ||
+                    verificandoDuplicado
+                  }
+                  onClick={
+                    handleClose
+                  }
+                >
+                  Cancelar
+                </Button>
+
+
+                <Button
+                  variant="primary"
+                  type="submit"
+                  disabled={
+                    !puedeGuardar ||
+                    enviando ||
+                    verificandoDuplicado
+                  }
+                >
+
+                  {verificandoDuplicado
+                    ? "Verificando..."
+                    : enviando
+                      ? "Guardando..."
+                      : "Guardar Pago Programado"}
+
+                </Button>
+              </>
+
+            )}
+
+          </Modal.Footer>
+
+        </Form>
+
+
+      </Modal>
+      <Modal
+        show={showProveedorCreateModal}
+        onHide={handleCloseProveedorCreateModal}
+        backdrop="static"
+        centered
+      >
+        <Modal.Header closeButton>
+
+          <Modal.Title>
+            Nuevo Proveedor
+          </Modal.Title>
+
+        </Modal.Header>
+
+
+        <Modal.Body>
+
+          <Form>
+
+            <Row>
+
+              <Form.Group
+                className="mb-3"
+                as={Col}
+                md={6}
+              >
+
+                <Form.Label>
+                  Nombre
+                </Form.Label>
+
+                <Form.Control
+                  name="nombre"
+                  value={
+                    nuevoProveedorModal.nombre
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                />
+
+              </Form.Group>
+
+
+              <Form.Group
+                className="mb-3"
+                as={Col}
+                md={6}
+              >
+
+                <Form.Label>
+                  Teléfono
+                </Form.Label>
+
+                <Form.Control
+                  name="telefono"
+                  value={
+                    nuevoProveedorModal.telefono
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                />
+
+              </Form.Group>
+
+            </Row>
+
+
+            <Row>
+
+              <Form.Group
+                className="mb-3"
+                as={Col}
+                md={6}
+              >
+
+                <Form.Label>
+                  Email
+                </Form.Label>
+
+                <Form.Control
+                  name="email"
+                  value={
+                    nuevoProveedorModal.email
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                />
+
+              </Form.Group>
+
+
+              <Form.Group
+                className="mb-3"
+                as={Col}
+                md={6}
+              >
+
+                <Form.Label>
+                  Dirección
+                </Form.Label>
+
+                <Form.Control
+                  name="direccion"
+                  value={
+                    nuevoProveedorModal.direccion
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                />
+
+              </Form.Group>
+
+            </Row>
+
+
+            <Row>
+
+              <Form.Group
+                className="mb-3"
+                as={Col}
+                md={6}
+              >
+
+                <Form.Label>
+                  CUIT
+                </Form.Label>
+
+                <Form.Control
+                  name="cuit"
+                  value={
+                    nuevoProveedorModal.cuit
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                />
+
+              </Form.Group>
+
+
+              <Form.Group
+                className="mb-3"
+                as={Col}
+                md={6}
+              >
+
+                <Form.Label>
+                  DNI
+                </Form.Label>
+
+                <Form.Control
+                  name="dni"
+                  value={
+                    nuevoProveedorModal.dni
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                />
+
+              </Form.Group>
+
+            </Row>
+
+
+            <Row>
+
+              <Form.Group
+                className="mb-3"
+                as={Col}
+                md={6}
+              >
+
+                <Form.Label>
+                  Imputación Contable
+                </Form.Label>
+
+                <Form.Select
+                  name="imputacioncontable_id"
+                  value={
+                    nuevoProveedorModal
+                      .imputacioncontable_id
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                  className="form-control my-input"
+                >
+
+                  <option value="">
+                    Seleccione...
+                  </option>
+
+                  {(imputacionContableTabla || [])
+                    .map(
+                      (i) => (
+
+                        <option
+                          key={i.id}
+                          value={i.id}
+                        >
+                          {i.descripcion}
+                        </option>
+
+                      )
+                    )}
+
+                </Form.Select>
+
+              </Form.Group>
+
+
+              <Form.Group
+                className="mb-3"
+                as={Col}
+                md={6}
+              >
+
+                <Form.Label>
+                  Forma de Pago
+                </Form.Label>
+
+                <Form.Select
+                  name="formapago_id"
+                  value={
+                    nuevoProveedorModal
+                      .formapago_id
+                  }
+                  onChange={
+                    handleNuevoProveedorModalChange
+                  }
+                  className="form-control my-input"
+                >
+
+                  <option value="">
+                    Seleccione...
+                  </option>
+
+                  {(formasPagoTesoreria || [])
+                    .map(
+                      (f) => (
+
+                        <option
+                          key={f.id}
+                          value={f.id}
+                        >
+                          {f.descripcion}
+                        </option>
+
+                      )
+                    )}
+
+                </Form.Select>
+
+              </Form.Group>
+
+            </Row>
+
+
+            {errorCrearProveedor && (
+
+              <Alert
+                variant="danger"
+                className="py-2 mb-0"
+              >
+                {errorCrearProveedor}
+              </Alert>
+
+            )}
+
+          </Form>
 
         </Modal.Body>
 
 
-
         <Modal.Footer>
 
-          {advertenciaDuplicado?.hay_coincidencias ? (
-
-            <>
-              <Button
-                variant="secondary"
-                type="button"
-                disabled={enviando}
-                onClick={() => {
-                  setAdvertenciaDuplicado(null);
-                  setDetalleAbierto(null);
-                }}
-              >
-                Cancelar
-              </Button>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={
+              handleCloseProveedorCreateModal
+            }
+            disabled={
+              loadingCrearProveedor
+            }
+          >
+            Cancelar
+          </Button>
 
 
-              <Button
-                variant="warning"
-                type="button"
-                disabled={enviando}
-                onClick={
-                  guardarPagoProgramado
-                }
-              >
+          <Button
+            variant="success"
+            type="button"
+            onClick={
+              handleCrearProveedor
+            }
+            disabled={
+              loadingCrearProveedor
+            }
+          >
 
-                {enviando
-                  ? "Guardando..."
-                  : "Continuar de todas formas"}
+            {loadingCrearProveedor
+              ? "Creando..."
+              : "Crear Proveedor"}
 
-              </Button>
-            </>
-
-          ) : (
-
-            <>
-              <Button
-                variant="secondary"
-                type="button"
-                disabled={
-                  enviando ||
-                  verificandoDuplicado
-                }
-                onClick={
-                  handleClose
-                }
-              >
-                Cancelar
-              </Button>
-
-
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={
-                  !puedeGuardar ||
-                  enviando ||
-                  verificandoDuplicado
-                }
-              >
-
-                {verificandoDuplicado
-                  ? "Verificando..."
-                  : enviando
-                    ? "Guardando..."
-                    : "Guardar Pago Programado"}
-
-              </Button>
-            </>
-
-          )}
+          </Button>
 
         </Modal.Footer>
 
-      </Form>
+      </Modal>
 
-    </Modal>
+    </>
   );
 }
