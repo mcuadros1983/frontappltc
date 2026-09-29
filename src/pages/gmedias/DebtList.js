@@ -37,6 +37,18 @@ const DebtList = () => {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const toDate = (value) => {
+  if (!value) return "";
+
+  const [year, month, day] = String(value).split("-");
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}/${month}/${year}`;
+};
+
   // ===== Helpers
   const handleSortBy = (col) => {
     setCurrentPage(1);
@@ -287,7 +299,7 @@ const DebtList = () => {
 
     const data = sortedCobranzas.map((row) => ({
       "ID": row.id,
-      "Fecha": row.fecha,                 // si viene YYYY-MM-DD queda ok
+      "Fecha": toDate(row.fecha),            // si viene YYYY-MM-DD queda ok
       "Monto Total": toNumber(row.monto_total),
       "Cliente": row.clienteNombre,
       "Forma de pago": getFormaPagoNombre(row),
@@ -417,7 +429,7 @@ const DebtList = () => {
                 title="Doble clic para ver/editar detalle"
               >
                 <td>{row.id}</td>
-                <td>{row.fecha}</td>
+               <td>{toDate(row.fecha)}</td>
                 <td>
                   {Number(row.monto_total).toLocaleString("es-AR", {
                     style: "currency",

@@ -2092,8 +2092,8 @@ export default function SitFinanciera() {
 
       const mensaje =
         esAnticipo
-          ? `¿Eliminar este anticipo programado por $${toMoney(row.monto_base)}?\n\nTambién se anulará el anticipo generado en la cuenta corriente del proveedor.`
-          : `¿Eliminar este egreso programado por $${toMoney(row.monto_base)}?`;
+          ? `¿Eliminar este anticipo programado por ${toMoney(row.monto_base)}?\n\nTambién se anulará el anticipo generado en la cuenta corriente del proveedor.`
+          : `¿Eliminar este egreso programado por ${toMoney(row.monto_base)}?`;
 
 
       const confirmar =
@@ -2147,7 +2147,7 @@ export default function SitFinanciera() {
 
       const confirmar =
         window.confirm(
-          `¿Acreditar el eCheq "${row.descripcion}" por $${toMoney(row.monto_base)}?`
+          `¿Acreditar el eCheq "${row.descripcion}" por ${toMoney(row.monto_base)}?`
         );
 
       if (!confirmar) {
@@ -2209,7 +2209,7 @@ export default function SitFinanciera() {
 
       const confirmar =
         window.confirm(
-          `¿Eliminar el eCheq "${row.descripcion}" por $${toMoney(row.monto_base)}?\n\nEsta acción utilizará la misma lógica de eliminación que la pantalla de movimientos de eCheq.`
+          `¿Eliminar el eCheq "${row.descripcion}" por ${toMoney(row.monto_base)}?\n\nEsta acción utilizará la misma lógica de eliminación que la pantalla de movimientos de eCheq.`
         );
 
       if (!confirmar) {
@@ -3115,7 +3115,7 @@ export default function SitFinanciera() {
                       <td>{row.categoria_nombre || "-"}</td>
                       <td>{row.sucursal_nombre || "-"}</td>
                       <td>{row.fecha_vencimiento || "-"}</td>
-                      <td className="text-end">${toMoney(row.monto_base)}</td>
+                      <td className="text-end">{toMoney(row.monto_base)}</td>
                       <td><EstadoBadge estado={row.estado} diasRest={row.dias_restantes} /></td>
                       <td>{row.formapago_futuro_desc || "-"}</td>
                       <td className="text-center">

@@ -31,6 +31,18 @@ export default function AccountForm() {
   const location = useLocation();
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const toDate = (value) => {
+    if (!value) return "";
+
+    const [year, month, day] = String(value).split("-");
+
+    if (!year || !month || !day) {
+      return value;
+    }
+
+    return `${day}/${month}/${year}`;
+  };
+
   // Preselección (state o query)
   const preselectedFromState = location.state?.preselectedClientId;
   const preselectedFromQuery = new URLSearchParams(location.search).get("clienteId");
@@ -619,7 +631,7 @@ export default function AccountForm() {
                           : "Doble clic para editar cobranza"
                     }
                   >
-                    <td>{movimiento.fecha}</td>
+                    <td>{toDate(movimiento.fecha)}</td>
                     <td>{isVenta ? "Venta" : "Cobranza"}</td>
                     <td>{isVenta ? calcCantidadItemsFromMov(movimiento) : ""}</td>
                     <td>{isVenta ? calcPesoTotalFromMov(movimiento).toFixed(2) : ""}</td>

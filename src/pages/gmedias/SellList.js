@@ -57,8 +57,17 @@ export default function SellList() {
   const context = useContext(Contexts.UserContext);
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
-  console.log("info")
+  const toDate = (value) => {
+    if (!value) return "";
 
+    const [year, month, day] = String(value).split("-");
+
+    if (!year || !month || !day) {
+      return value;
+    }
+
+    return `${day}/${month}/${year}`;
+  };
   // --- helpers derivados desde productos de la venta ---
   const getSellProductos = (sell) =>
     sell?.productos || sell?.Productos || sell?.producto || sell?.Producto || [];
@@ -386,17 +395,17 @@ export default function SellList() {
 
   const nextPage = () => {
 
-  if (
-    currentPage <
-    totalPages
-  ) {
-    setCurrentPage(
-      (prev) =>
-        prev + 1
-    );
-  }
+    if (
+      currentPage <
+      totalPages
+    ) {
+      setCurrentPage(
+        (prev) =>
+          prev + 1
+      );
+    }
 
-};
+  };
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
 
 
@@ -422,7 +431,7 @@ export default function SellList() {
 
     const data = filteredSells.map((sell) => ({
       "ID": sell.id,
-      "Fecha": sell.fecha,
+      "Fecha": toDate(sell.fecha),
       "Cliente": sell?.Cliente?.nombre || "Cliente Desconocido",
       "Forma de Pago": sell?.FormaPago?.tipo || "Forma de pago desconocida",
       "Monto": getMontoVenta(sell),              // numérico en Excel
@@ -1207,10 +1216,7 @@ export default function SellList() {
 
 
                             <td className="text-nowrap">
-                              {
-                                sell.fecha ||
-                                "—"
-                              }
+                              {sell.fecha ? toDate(sell.fecha) : "—"}
                             </td>
 
 

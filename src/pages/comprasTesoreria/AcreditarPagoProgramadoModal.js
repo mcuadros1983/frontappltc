@@ -901,7 +901,7 @@ export default function AcreditarPagoProgramadoModal({
 
             throw new Error(
               jsonSaldo?.error ||
-              `No se pudo generar el nuevo Pago Programado por el saldo de $${toMoney(
+              `No se pudo generar el nuevo Pago Programado por el saldo de ${toMoney(
                 diferenciaMonto
               )}`
             );
@@ -1176,7 +1176,7 @@ export default function AcreditarPagoProgramadoModal({
 
                   <Form.Control
                     value={
-                      `$${toMoney(
+                      `${toMoney(
                         row.monto_base
                       )}`
                     }
@@ -1959,7 +1959,7 @@ export default function AcreditarPagoProgramadoModal({
             >
               {saving
                 ? "Procesando..."
-                : `Acreditar $${toMoney(
+                : `Acreditar ${toMoney(
                   montoNumero
                 )} sin generar saldo`}
             </Button>
@@ -1991,7 +1991,7 @@ export default function AcreditarPagoProgramadoModal({
 
               ) : (
 
-                `Acreditar y programar $${toMoney(
+                `Acreditar y programar ${toMoney(
                   diferenciaMonto
                 )}`
 

@@ -474,7 +474,7 @@ export default function AplicarInstanciaGasto({
     ) {
 
       throw new Error(
-        `El monto no puede superar el saldo pendiente de $${toMoney(
+        `El monto no puede superar el saldo pendiente de ${toMoney(
           saldoInstancia
         )}`
       );
@@ -1033,7 +1033,7 @@ export default function AplicarInstanciaGasto({
 
                   <Form.Control
                     value={
-                      `$${toMoney(
+                      `${toMoney(
                         saldoInstancia
                       )}`
                     }

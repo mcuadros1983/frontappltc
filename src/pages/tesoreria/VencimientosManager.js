@@ -218,7 +218,7 @@ function ConciliarGastoModal({ show, onHide, gasto, onSaved }) {
           <Col md={4}>
             <div className="text-muted">Saldo</div>
             <div className="fw-bold">
-              {saldo >= 0 ? `$${toMoney(saldo)}` : <span className="text-danger">-$ {toMoney(-saldo)}</span>}
+              {saldo >= 0 ? `${toMoney(saldo)}` : <span className="text-danger">-$ {toMoney(-saldo)}</span>}
             </div>
           </Col>
         </Row>

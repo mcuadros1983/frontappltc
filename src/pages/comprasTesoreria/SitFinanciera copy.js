@@ -965,7 +965,7 @@ export default function SitFinanciera() {
 
       const confirmar =
         window.confirm(
-          `¿Acreditar el pago programado "${row.descripcion}" por $${toMoney(row.monto_base)}?`
+          `¿Acreditar el pago programado "${row.descripcion}" por ${toMoney(row.monto_base)}?`
         );
 
       if (!confirmar) {
@@ -1055,8 +1055,8 @@ export default function SitFinanciera() {
 
       const mensaje =
         esAnticipo
-          ? `¿Eliminar este anticipo programado por $${toMoney(row.monto_base)}?\n\nTambién se anulará el anticipo generado en la cuenta corriente del proveedor.`
-          : `¿Eliminar este egreso programado por $${toMoney(row.monto_base)}?`;
+          ? `¿Eliminar este anticipo programado por ${toMoney(row.monto_base)}?\n\nTambién se anulará el anticipo generado en la cuenta corriente del proveedor.`
+          : `¿Eliminar este egreso programado por ${toMoney(row.monto_base)}?`;
 
 
       const confirmar =
@@ -1110,7 +1110,7 @@ export default function SitFinanciera() {
 
       const confirmar =
         window.confirm(
-          `¿Acreditar el eCheq "${row.descripcion}" por $${toMoney(row.monto_base)}?`
+          `¿Acreditar el eCheq "${row.descripcion}" por ${toMoney(row.monto_base)}?`
         );
 
       if (!confirmar) {
@@ -1172,7 +1172,7 @@ export default function SitFinanciera() {
 
       const confirmar =
         window.confirm(
-          `¿Eliminar el eCheq "${row.descripcion}" por $${toMoney(row.monto_base)}?\n\nEsta acción utilizará la misma lógica de eliminación que la pantalla de movimientos de eCheq.`
+          `¿Eliminar el eCheq "${row.descripcion}" por ${toMoney(row.monto_base)}?\n\nEsta acción utilizará la misma lógica de eliminación que la pantalla de movimientos de eCheq.`
         );
 
       if (!confirmar) {

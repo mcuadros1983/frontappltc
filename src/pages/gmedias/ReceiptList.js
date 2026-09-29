@@ -22,6 +22,18 @@ export default function ReceiptList() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const toDate = (value) => {
+  if (!value) return "";
+
+  const [year, month, day] = String(value).split("-");
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}/${month}/${year}`;
+};
+
   const loadReceipts = useCallback(async () => {
     const res = await fetch(`${apiUrl}/ingresos/`, {
       credentials: "include",
@@ -207,7 +219,7 @@ export default function ReceiptList() {
               onDoubleClick={() => navigate(`/receipts/${receipt.id}/products`)}
             >
               <td>{receipt.id}</td>
-              <td>{receipt.fecha}</td>
+              <td>{toDate(receipt.fecha)}</td>
               <td>{receipt.cantidad_total}</td>
               <td>{receipt.peso_total}</td>
               <td>{receipt.categoria_ingreso}</td>

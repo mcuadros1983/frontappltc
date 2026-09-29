@@ -425,7 +425,7 @@ export default function AgendaManager() {
                                                         <td>{it.fecha || "-"}</td>
                                                         <td>{it.fecha_vencimiento || (it.dia_vencimiento ? `día ${it.dia_vencimiento}` : "-")}</td>
                                                         <td className="text-capitalize">{it.periodicidad}</td>
-                                                        <td className="text-end">{it.costo != null ? `$${toMoney(it.costo)}` : "-"}</td>
+                                                        <td className="text-end">{it.costo != null ? `${toMoney(it.costo)}` : "-"}</td>
                                                         <td className="text-nowrap">
                                                             {/* Acciones rápidas de estado */}
                                                             {it.realizado !== "realizado" && (

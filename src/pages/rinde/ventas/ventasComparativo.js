@@ -16,6 +16,18 @@ export default function VentasTotalesPorFecha() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const toDate = (value) => {
+    if (!value) return "";
+
+    const [year, month, day] = String(value).split("-");
+
+    if (!year || !month || !day) {
+      return value;
+    }
+
+    return `${day}/${month}/${year}`;
+  };
+
   const sucursalesTabla = context?.sucursalesTabla ?? [];
 
   const sucursalesActivasLista = useMemo(
@@ -81,7 +93,9 @@ export default function VentasTotalesPorFecha() {
 
   const exportarExcel = () => {
     const dataToExport = ventasTotales.map((fila) => {
-      const filaExport = { Fecha: fila.fecha };
+      const filaExport = {
+        Fecha: toDate(fila.fecha),
+      };
       sucursalesActivasLista.forEach((sucursal) => {
         const val = Number(fila[sucursal.id] || 0);
         filaExport[sucursal.nombre] = val.toLocaleString("es-ES", {
@@ -157,7 +171,9 @@ export default function VentasTotalesPorFecha() {
           <tbody>
             {ventasTotales.map((fila, idx) => (
               <tr key={idx}>
-                <td className="sticky-col shadow-right">{fila.fecha}</td>
+                <td className="sticky-col shadow-right">
+                  {toDate(fila.fecha)}
+                </td>
                 {sucursalesActivasLista.map((sucursal) => (
                   <td key={sucursal.id}>
                     {Number(fila[sucursal.id] || 0).toLocaleString("es-ES", {

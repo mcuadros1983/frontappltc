@@ -28,6 +28,17 @@ export default function OrderList() {
   const navigate = useNavigate();
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const toDate = (value) => {
+    if (!value) return "";
+
+    const [year, month, day] = String(value).split("-");
+
+    if (!year || !month || !day) {
+      return value;
+    }
+
+    return `${day}/${month}/${year}`;
+  };
   // --- helper para derivar categoría de una orden ---
   const deriveCategoria = (order) => {
     // Soporta alias comunes de Sequelize: hasMany Producto => "Productos"
@@ -289,7 +300,7 @@ export default function OrderList() {
                     className="form-control"
                   />
                 ) : (
-                  order.fecha
+                  toDate(order.fecha)
                 )}
               </td>
               <td>{order.cantidad_total}</td>
