@@ -91,6 +91,18 @@ export default function FormasPagoEditor({
     return it?.descripcion || "";
   };
 
+  const numeroEcheqResumen = (numero, max = 18) => {
+    const texto = String(numero || "").trim();
+
+    if (!texto) return "-";
+
+    if (texto.length <= max) {
+      return texto;
+    }
+
+    return `${texto.slice(0, max)}...`;
+  };
+
   const suma = useMemo(
     () => value.reduce((acc, it) => acc + (Number(it.monto) || 0), 0),
     [value]
@@ -114,6 +126,77 @@ export default function FormasPagoEditor({
     if (changed) onChange(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fechaComprobante]);
+
+  // ==========================================================
+  // SI CAMBIA EL PROVEEDOR
+  // QUITAR MOVIMIENTOS EXISTENTES DEL PROVEEDOR ANTERIOR
+  // ==========================================================
+
+  useEffect(() => {
+
+    if (
+      !Array.isArray(value) ||
+      value.length === 0
+    ) {
+
+      // Aunque no haya filas,
+      // limpiamos cualquier búsqueda anterior.
+      setOpcionesPorFila({});
+
+      return;
+    }
+
+
+    let changed = false;
+
+
+    const next = value.map((row) => {
+
+      // Si la fila no tiene un movimiento existente
+      // seleccionado, no tocamos nada.
+      if (!row.existing_ref) {
+        return row;
+      }
+
+
+      changed = true;
+
+
+      return {
+        ...row,
+
+        // Quitamos el movimiento seleccionado
+        // del proveedor anterior.
+        existing_ref: null,
+
+        // Limpiamos los valores que fueron tomados
+        // automáticamente del movimiento existente.
+        monto: "",
+        detalle: "",
+
+        // Si se trataba de un eCheq,
+        // tampoco deben quedar sus datos anteriores.
+        numero_echeq: "",
+        fecha_vencimiento: "",
+      };
+
+    });
+
+
+    // Actualizamos las formas de pago solamente
+    // si había algún movimiento existente seleccionado.
+    if (changed) {
+      onChange?.(next);
+    }
+
+
+    // Eliminamos los resultados de "Buscar disponibles"
+    // correspondientes al proveedor anterior.
+    setOpcionesPorFila({});
+
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proveedorId]);
 
   // === Edición de filas ===
   const addRow = () => {
@@ -335,12 +418,18 @@ export default function FormasPagoEditor({
 
       existing_ref: {
         tipo,
-        id:
-          it.id,
+        id: it.id,
       },
 
       monto:
         String(importe),
+
+      // Si el movimiento seleccionado es un eCheq,
+      // colocamos su número completo en Detalle.
+      detalle:
+        medio === "echeq"
+          ? String(it.numero_echeq || "")
+          : row.detalle || "",
 
       gastoestimado: {
         aplicar:
@@ -657,12 +746,12 @@ export default function FormasPagoEditor({
                             if (mv.tipo === "pago_programado") {
                               return `PROGRAMADO #${mv.id} · Fecha ${mv.fecha_emision || mv.fecha || "-"} · Vto ${mv.fecha_vencimiento || "-"} · $${Number(
                                 mv.importe || mv.monto || 0
-                              ).toFixed(2)} · ${mv.descripcion || ""}`;
+                              ).toFixed(2)} · ${mv.descripcion || ""} · N° ${numeroEcheqResumen(mv.numero_echeq)}`;
                             }
 
                             return `ECHEQ #${mv.id} · Emisión ${mv.fecha_emision || "-"} · Vto ${mv.fecha_vencimiento || "-"} · $${Number(
                               mv.importe || mv.monto || 0
-                            ).toFixed(2)}`;
+                            ).toFixed(2)} · N° ${numeroEcheqResumen(mv.numero_echeq)}`;
                           }
                           if (medio === "tarjeta")
                             return `#${mv.id} · ${mv.fecha} · $${Number(mv.importe || mv.monto || 0).toFixed(2)} · cupón ${mv.cupon_numero || "-"}`;

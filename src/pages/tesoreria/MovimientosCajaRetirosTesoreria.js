@@ -384,16 +384,28 @@ export default function MovimientosRetirosTesoreria() {
     }, 150);
   };
 
-  const afterSaved = () => {
+  const afterSaved = async () => {
+
     setModalOpen(false);
     setCelda(null);
+
     // refrescamos según modo
     if (modoRecepcion) {
-      cargarRecepcion();
-      cargarSaldoDia();
+
+      await Promise.all([
+        cargarRecepcion(),
+        cargarSaldoDia(),
+      ]);
+
     } else {
-      cargarDatos();
+
+      await Promise.all([
+        cargarDatos(),
+        cargarSaldoTotalCaja(),
+      ]);
+
     }
+
   };
 
   // ======== Modo Recepción ========
