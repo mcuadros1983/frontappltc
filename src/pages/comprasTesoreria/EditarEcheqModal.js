@@ -916,7 +916,7 @@ export default function EditarEcheqModal({
                   {!puedeModificarProveedorMonto && (
 
                     <Form.Text muted>
-                      Importe actual: $
+                      Importe actual:
                       {toMoney(
                         echeq.importe
                       )}

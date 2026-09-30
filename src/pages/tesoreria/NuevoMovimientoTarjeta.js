@@ -787,9 +787,9 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                                   <td>#{it.id}</td>
                                   <td>{it.descripcion || "—"}</td>
                                   <td>{it.fecha_vencimiento}</td>
-                                  <td className="text-end">${toMoney(base)}</td>
-                                  <td className="text-end">${toMoney(pagado)}</td>
-                                  <td className="text-end">${toMoney(saldo)}</td>
+                                  <td className="text-end">{toMoney(base)}</td>
+                                  <td className="text-end">{toMoney(pagado)}</td>
+                                  <td className="text-end">{toMoney(saldo)}</td>
                                   <td className="text-end">
                                     <Form.Control
                                       type="number"
@@ -825,7 +825,7 @@ export default function NuevoMovimientoTarjeta({ show, onHide, onCreated }) {
                         />
                       </div>
                       <div className="fw-bold">
-                        Total a aplicar: ${toMoney(totalAsignado)} / Monto movimiento: $
+                        Total a aplicar: {toMoney(totalAsignado)} / Monto movimiento: $
                         {toMoney(montoMovimiento)}
                       </div>
                     </div>

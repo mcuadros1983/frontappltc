@@ -378,7 +378,7 @@ export default function GastoEstimadoManager() {
                             <td>{it.sucursal_nombre || sucNameById.get(Number(it.sucursal_id)) || "-"}</td>
                             <td>{it.periodicidad}</td>
                             <td>{it.dia_vencimiento_default ?? "-"}</td>
-                            <td className="text-end">${toMoney(it.monto_estimado_default)}</td>
+                            <td className="text-end">{toMoney(it.monto_estimado_default)}</td>
                             <td><RequiereFacturaBadge requiere={Boolean(it.requiere_factura)} /></td>
                             {/* <td><ActivoBadge activo={it.activo !== false} /></td> */}
                             <td className="text-nowrap">

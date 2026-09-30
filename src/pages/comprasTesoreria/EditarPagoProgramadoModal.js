@@ -846,7 +846,7 @@ export default function EditarPagoProgramadoModal({
                                     ) : (
 
                                         <Form.Text muted>
-                                            Actual: $
+                                            Actual:
                                             {toMoney(
                                                 row.monto_base
                                             )}

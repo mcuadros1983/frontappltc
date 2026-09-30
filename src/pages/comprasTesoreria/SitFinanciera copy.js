@@ -1448,7 +1448,7 @@ export default function SitFinanciera() {
                     <td>{row.categoria_nombre || "-"}</td>
                     <td>{row.sucursal_nombre || "-"}</td>
                     <td>{row.fecha_vencimiento || "-"}</td>
-                    <td className="text-end">${toMoney(row.monto_base)}</td>
+                    <td className="text-end">{toMoney(row.monto_base)}</td>
                     <td><EstadoBadge estado={row.estado} diasRest={row.dias_restantes} /></td>
                     <td>{row.formapago_futuro_desc || "-"}</td>
                     <td className="text-center">
@@ -1572,7 +1572,7 @@ export default function SitFinanciera() {
               <tfoot>
                 <tr>
                   <td colSpan={9}><strong>Total (filtrado)</strong></td>
-                  <td className="text-end"><strong>${toMoney(totalPendiente)}</strong></td>
+                  <td className="text-end"><strong>{toMoney(totalPendiente)}</strong></td>
                   <td colSpan={3} />
                 </tr>
               </tfoot>

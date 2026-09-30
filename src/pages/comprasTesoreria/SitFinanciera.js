@@ -2705,7 +2705,11 @@ export default function SitFinanciera() {
 
   const compNroView = (row) =>
     row.comprobante_nro ||
-    (row.comprobanteegreso_id ? (compNroById.get(row.comprobanteegreso_id) || "-") : "-");
+    (
+      row.comprobanteegreso_id
+        ? (compNroById.get(row.comprobanteegreso_id) || "-")
+        : "-"
+    );
 
   const BotonNoHabilitado = ({
     children,
@@ -3305,7 +3309,11 @@ export default function SitFinanciera() {
                   <SortableTh colKey="id">#</SortableTh>
                   <SortableTh colKey="tipo">Tipo</SortableTh>
                   <SortableTh colKey="empresa_nombre">Empresa</SortableTh>
-                  {/* <SortableTh colKey="comprobante_nro">Comprobante</SortableTh> */}
+
+                  <SortableTh colKey="comprobante_nro">
+                    Comprobante
+                  </SortableTh>
+
                   <SortableTh colKey="descripcion">Descripción</SortableTh>
                   <SortableTh colKey="proveedor_nombre">Proveedor</SortableTh>
                   <SortableTh colKey="categoria_nombre">Categoría</SortableTh>
@@ -3330,7 +3338,9 @@ export default function SitFinanciera() {
                 )}
                 {!loading && pageItems.length === 0 && (
                   <tr>
-                    <td colSpan={12} className="text-center text-muted">Sin resultados</td>
+                    <td colSpan={13} className="text-center text-muted">
+                      Sin resultados
+                    </td>
                   </tr>
                 )}
                 {!loading &&
@@ -3351,7 +3361,11 @@ export default function SitFinanciera() {
                               : "Instancia"}
                       </td>
                       <td>{row.empresa_nombre || "-"}</td>
-                      {/* <td>{compNroView(row)}</td> */}
+
+                      <td>
+                        {compNroView(row)}
+                      </td>
+
                       <td>{row.descripcion || "-"}</td>
                       <td>{row.proveedor_nombre || "-"}</td>
                       <td>{row.categoria_nombre || "-"}</td>
@@ -3626,8 +3640,14 @@ export default function SitFinanciera() {
               {items.length > 0 && (
                 <tfoot>
                   <tr>
-                    <td colSpan={9}><strong>Total (filtrado)</strong></td>
-                    <td className="text-end"><strong>${toMoney(totalPendiente)}</strong></td>
+                    <td colSpan={10}>
+                      <strong>Total (filtrado)</strong>
+                    </td>
+
+                    <td className="text-end">
+                      <strong>{toMoney(totalPendiente)}</strong>
+                    </td>
+
                     <td colSpan={3} />
                   </tr>
                 </tfoot>

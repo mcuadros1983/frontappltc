@@ -209,11 +209,11 @@ function ConciliarGastoModal({ show, onHide, gasto, onSaved }) {
         <Row className="mb-3">
           <Col md={4}>
             <div className="text-muted">Monto base</div>
-            <div className="fw-bold">${toMoney(base)}</div>
+            <div className="fw-bold">{toMoney(base)}</div>
           </Col>
           <Col md={4}>
             <div className="text-muted">Pagado</div>
-            <div className="fw-bold text-success">${toMoney(totalPagado)}</div>
+            <div className="fw-bold text-success">{toMoney(totalPagado)}</div>
           </Col>
           <Col md={4}>
             <div className="text-muted">Saldo</div>
@@ -241,7 +241,7 @@ function ConciliarGastoModal({ show, onHide, gasto, onSaved }) {
               {pagos.map(p => (
                 <tr key={p.id}>
                   <td>{p.fecha_aplicacion || "-"}</td>
-                  <td className="text-end">${toMoney(p.monto_aplicado)}</td>
+                  <td className="text-end">{toMoney(p.monto_aplicado)}</td>
                   <td>{p.referencia_tipo}{p.referencia_id ? ` #${p.referencia_id}` : ""}</td>
                   <td>{p.observaciones || "-"}</td>
                 </tr>
@@ -713,7 +713,7 @@ export default function VencimientosManager() {
                             <td>{it.categoria_nombre || catNameById.get(Number(it.categoriaegreso_id)) || "-"}</td>
                             <td>{sucNameById.get(Number(it.sucursal_id)) || "-"}</td>
                             <td>{it.fecha_vencimiento}</td>
-                            <td className="text-end">${toMoney(it.monto_base)}</td>
+                            <td className="text-end">{toMoney(it.monto_base)}</td>
                             <td><EstadoBadge estado={it.estado} diasRest={it.dias_restantes} /></td>
                             <td className="text-nowrap">
                              {/* <Button size="sm" variant="outline-success" onClick={() => onConciliar(it)} className="me-1">Conciliar</Button>*/}

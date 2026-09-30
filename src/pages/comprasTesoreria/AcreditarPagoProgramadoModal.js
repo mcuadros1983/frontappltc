@@ -848,6 +848,13 @@ export default function AcreditarPagoProgramadoModal({
                 )
                 : null,
 
+            comprobanteegreso_id:
+              row.comprobanteegreso_id
+                ? Number(
+                  row.comprobanteegreso_id
+                )
+                : null,
+
             idempotencyKey:
               `saldo-pago-programado-${row.id}-${Date.now()}`,
           };
@@ -1618,7 +1625,7 @@ export default function AcreditarPagoProgramadoModal({
 
                     <Form.Text muted>
 
-                      Programado: $
+                      Programado:
                       {toMoney(
                         row.monto_base
                       )}
@@ -1862,7 +1869,7 @@ export default function AcreditarPagoProgramadoModal({
                   </div>
 
                   <strong>
-                    ${toMoney(
+                    {toMoney(
                       montoOriginal
                     )}
                   </strong>
@@ -1877,7 +1884,7 @@ export default function AcreditarPagoProgramadoModal({
                   </div>
 
                   <strong>
-                    ${toMoney(
+                    {toMoney(
                       montoNumero
                     )}
                   </strong>
@@ -1892,7 +1899,7 @@ export default function AcreditarPagoProgramadoModal({
                   </div>
 
                   <strong>
-                    ${toMoney(
+                    {toMoney(
                       diferenciaMonto
                     )}
                   </strong>
@@ -1910,7 +1917,7 @@ export default function AcreditarPagoProgramadoModal({
                 ¿Desea generar automáticamente un nuevo
                 Pago Programado por{" "}
 
-                ${toMoney(
+                {toMoney(
                   diferenciaMonto
                 )}{" "}
 
