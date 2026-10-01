@@ -37,17 +37,38 @@ import EditarEcheqModal
   from "./EditarEcheqModal";
 import AbonoCtaCteModal from "./abonoCtaCteModal";
 import * as XLSX from "xlsx";
-
 const apiUrl = process.env.REACT_APP_API_URL;
 
 // -------- Utils ----------
+
+const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const soloFecha = String(fecha).slice(0, 10);
+  const partes = soloFecha.split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
+// const toMoney = (n) =>
+//   Number(n || 0).toLocaleString("es-AR", {
+//     style: "currency",
+//     currency: "ARS",
+//     minimumFractionDigits: 2,
+//     maximumFractionDigits: 2,
+//   });
+
 const toMoney = (n) =>
-  Number(n || 0).toLocaleString("es-AR", {
-    style: "currency",
-    currency: "ARS",
+  `$ ${Number(n || 0).toLocaleString("es-AR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  });
+  })}`;
 
 const parseDate = (s) => (s ? new Date(s + "T00:00:00") : null);
 const daysDiffFromToday = (dateStr) => {
@@ -1818,8 +1839,9 @@ export default function SitFinanciera() {
             "",
 
           Vencimiento:
-            row.fecha_vencimiento ||
-            "",
+            row.fecha_vencimiento
+              ? formatearFecha(row.fecha_vencimiento)
+              : "",
 
           Monto:
             Number(
@@ -3370,7 +3392,11 @@ export default function SitFinanciera() {
                       <td>{row.proveedor_nombre || "-"}</td>
                       <td>{row.categoria_nombre || "-"}</td>
                       <td>{row.sucursal_nombre || "-"}</td>
-                      <td>{row.fecha_vencimiento || "-"}</td>
+                      <td>
+                        {row.fecha_vencimiento
+                          ? formatearFecha(row.fecha_vencimiento)
+                          : "-"}
+                      </td>
                       <td className="text-end">{toMoney(row.monto_base)}</td>
                       <td><EstadoBadge estado={row.estado} diasRest={row.dias_restantes} /></td>
                       <td>{row.formapago_futuro_desc || "-"}</td>
