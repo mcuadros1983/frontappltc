@@ -18,6 +18,22 @@ export default function Sueldos() {
   const [sueldosOriginales, setSueldosOriginales] = useState([]);
 
   const apiUrl = process.env.REACT_APP_API_URL;
+
+  const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const partes = String(fecha).split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
+
   const contexto = useContext(Contexts.DataContext);
 
   const manejadorFiltroEmpleadoSeleccionado = useCallback(() => {
@@ -210,13 +226,13 @@ export default function Sueldos() {
 
       // console.log("empleadocompleto", empleadoCompleto)
 
-      return {
-        Fecha: sueldo.fecha,
-        Importe: parseFloat(sueldo.importe).toFixed(2),
-        Sucursal: sucursalNombre,
-        Empleado: empleadoCompleto,
-        Descripción: sueldo.descripcion,
-      };
+return {
+  Fecha: formatearFecha(sueldo.fecha),
+  Importe: parseFloat(sueldo.importe).toFixed(2),
+  Sucursal: sucursalNombre,
+  Empleado: empleadoCompleto,
+  Descripción: sueldo.descripcion,
+};
     });
 
     const ws = XLSX.utils.json_to_sheet(sueldosParaExportar);
@@ -334,7 +350,7 @@ export default function Sueldos() {
 
               return (
                 <tr key={sueldo.id}>
-                  <td>{sueldo.fecha}</td>
+                  <td>{formatearFecha(sueldo.fecha)}</td>
                   <td className="text-end">{parseFloat(sueldo.importe).toFixed(2)}</td>
                   <td>
                     {contexto.sucursalesTabla.find(

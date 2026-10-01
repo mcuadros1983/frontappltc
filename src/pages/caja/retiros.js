@@ -19,6 +19,20 @@ export default function Retiros() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const partes = String(fecha).split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
   const handleFilter = async () => {
     try {
       // Validación de fechas
@@ -104,14 +118,14 @@ export default function Retiros() {
           (s) => s.id === parseInt(r.sucursal_id, 10)
         )?.nombre || "Desconocido";
 
-      return {
-        Fecha: r.fecha,
-        Importe: Number.isNaN(parseFloat(r.importe))
-          ? r.importe
-          : parseFloat(r.importe),
-        Sucursal: sucursalNombre,
-        Descripción: r.descripcion,
-      };
+return {
+  Fecha: formatearFecha(r.fecha),
+  Importe: Number.isNaN(parseFloat(r.importe))
+    ? r.importe
+    : parseFloat(r.importe),
+  Sucursal: sucursalNombre,
+  Descripción: r.descripcion,
+};
     });
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -262,7 +276,7 @@ export default function Retiros() {
           <tbody>
             {currentRetiros.map((retiro) => (
               <tr key={retiro.id}>
-                <td>{retiro.fecha}</td>
+                <td>{formatearFecha(retiro.fecha)}</td>
                 <td className="text-end">{retiro.importe}</td>
                 <td>
                   {context.sucursalesTabla.find(

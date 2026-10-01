@@ -21,6 +21,20 @@ export default function Gastos() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const formatearFecha = (fecha) => {
+    if (!fecha) return "";
+
+    const partes = String(fecha).split("-");
+
+    if (partes.length !== 3) {
+      return fecha;
+    }
+
+    const [anio, mes, dia] = partes;
+
+    return `${dia}/${mes}/${anio}`;
+  };
+
   const exportarExcel = () => {
     const datosParaExportar = gastos.map((gasto) => {
       const sucursalNombre = context.sucursalesTabla.find(
@@ -32,7 +46,7 @@ export default function Gastos() {
       )?.descripcion || "Desconocido";
 
       return {
-        Fecha: gasto.fecha,
+        Fecha: formatearFecha(gasto.fecha),
         Importe: gasto.importe,
         Sucursal: sucursalNombre,
         Descripción: gasto.descripcion,
@@ -298,7 +312,7 @@ export default function Gastos() {
           <tbody>
             {currentGastos.map((gasto) => (
               <tr key={gasto.id}>
-                <td>{gasto.fecha}</td>
+                <td>{formatearFecha(gasto.fecha)}</td>
                 <td className="text-end">{gasto.importe}</td>
                 <td>
                   {context.sucursalesTabla.find(

@@ -19,6 +19,20 @@ export default function Cajas() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const formatearFecha = (fecha) => {
+    if (!fecha) return "";
+
+    const partes = String(fecha).split("-");
+
+    if (partes.length !== 3) {
+      return fecha;
+    }
+
+    const [anio, mes, dia] = partes;
+
+    return `${dia}/${mes}/${anio}`;
+  };
+
   const handleFilter = async () => {
     try {
       if (!isValidDate(fechaDesde) || !isValidDate(fechaHasta)) {
@@ -128,8 +142,8 @@ export default function Cajas() {
 
       return {
         "Número": caja.id,
-        "Fecha Inicio": caja.fechainicio,
-        "Fecha Fin": caja.fechafin,
+        "Fecha Inicio": formatearFecha(caja.fechainicio),
+        "Fecha Fin": formatearFecha(caja.fechafin),
         "Caja Inicial": toNumber(caja.cajainicial),
         "Caja Final": toNumber(caja.cajafinal),
         "Sucursal": sucursalNombre,
@@ -253,8 +267,8 @@ export default function Cajas() {
             {currentCajas.map((caja) => (
               <tr key={caja.id}>
                 <td>{caja.id}</td>
-                <td>{caja.fechainicio}</td>
-                <td>{caja.fechafin}</td>
+                <td>{formatearFecha(caja.fechainicio)}</td>
+                <td>{formatearFecha(caja.fechafin)}</td>
                 <td className="text-end">{caja.cajainicial}</td>
                 <td className="text-end">{caja.cajafinal}</td>
                 <td>

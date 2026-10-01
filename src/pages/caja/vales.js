@@ -21,6 +21,20 @@ export default function Vales() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const formatearFecha = (fecha) => {
+    if (!fecha) return "";
+
+    const partes = String(fecha).split("-");
+
+    if (partes.length !== 3) {
+      return fecha;
+    }
+
+    const [anio, mes, dia] = partes;
+
+    return `${dia}/${mes}/${anio}`;
+  };
+
   const manejadorFiltroClienteSeleccionado = useCallback(() => {
     let valesFiltrados = [...valesOriginales];
     if (clienteSeleccionado) {
@@ -188,7 +202,7 @@ export default function Vales() {
         : "Desconocido";
 
       return {
-        Fecha: vale.fecha,
+        Fecha: formatearFecha(vale.fecha),
         Importe: vale.importecupon,
         Sucursal: sucursalNombre,
         Cliente: clienteCompleto,
@@ -328,7 +342,7 @@ export default function Vales() {
 
               return (
                 <tr key={vale.id}>
-                  <td>{vale.fecha}</td>
+                  <td>{formatearFecha(vale.fecha)}</td>
                   <td className="text-end">{vale.importecupon}</td>
                   <td>{sucursalNombre}</td>
                   <td>{clienteCompleto}</td>

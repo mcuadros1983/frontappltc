@@ -29,6 +29,21 @@ export default function CobranzasCtaCte() {
   const contexto = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const partes = String(fecha).split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
+
   const manejadorFiltroClienteSeleccionado = useCallback(() => {
     if (cobranzasOriginales.length > 0) {
       let cobranzasFiltradas = [...cobranzasOriginales];
@@ -254,15 +269,11 @@ export default function CobranzasCtaCte() {
         </thead>
         <tbody>
           {cobranzasActuales.map((cobranza) => {
-            // const fecha = new Date(cobranza.fecha);
-            // const dia = fecha.getDate();
-            // const mes = fecha.getMonth() + 1;
-            // const anio = fecha.getFullYear();
-            // const fechaFormateada = `${dia}/${mes}/${anio}`;
+   
 
             return (
               <tr key={cobranza.id}>
-                <td>{cobranza.fecha}</td>
+               <td>{formatearFecha(cobranza.fecha)}</td>
                 <td className="text-end">{fmtMoney(cobranza.importe)}</td>
                 <td>
                   {contexto.clientesTabla.find(

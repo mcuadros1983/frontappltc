@@ -30,6 +30,20 @@ export default function Cierres() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const partes = String(fecha).split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
   const handleFilter = useCallback(async () => {
     try {
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
@@ -206,7 +220,7 @@ export default function Cierres() {
           <tbody>
             {currentCierres.map((cierre) => (
               <tr key={cierre.id}>
-                <td>{cierre.fecha}</td>
+                <td>{formatearFecha(cierre.fecha)}</td>
                 <td className="text-end">{fmtMoney(cierre.total)}</td>
                 <td>{context.sucursales.find(s => s.id === parseInt(cierre.sucursal_id))?.nombre || "Desconocido"}</td>
                 <td>{cierre.nro_cierre}</td>

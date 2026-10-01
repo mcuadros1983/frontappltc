@@ -36,6 +36,19 @@ export default function VentasCtaCte() {
   const contexto = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
+const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const partes = String(fecha).split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
 
   const manejadorFiltroClienteSeleccionado = useCallback(() => {
     if (ventasOriginales.length > 0) {
@@ -361,7 +374,7 @@ export default function VentasCtaCte() {
           {ventasActuales.map((venta) => {
             return (
               <tr key={venta.id}>
-                <td>{venta.fecha}</td>
+                <td>{formatearFecha(venta.fecha)}</td>
                 <td>{parseFloat(venta.importe).toFixed(3)}</td>
                 <td>
                   {contexto.sucursalesTabla.find(

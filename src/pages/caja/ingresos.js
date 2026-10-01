@@ -20,6 +20,21 @@ export default function Ingresos() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const partes = String(fecha).split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
+
   const manejadorFiltroTipoSeleccionado = useCallback(() => {
     if (ingresosOriginales.length > 0) {
       let ingresosFiltrados = [...ingresosOriginales];
@@ -243,7 +258,7 @@ export default function Ingresos() {
           <tbody>
             {ingresosActuales.map((ingreso) => (
               <tr key={ingreso.id}>
-                <td>{ingreso.fecha}</td>
+               <td>{formatearFecha(ingreso.fecha)}</td>
                 <td className="text-end">{parseFloat(ingreso.importe).toFixed(2)}</td>
                 <td>
                   {contexto.sucursalesTabla.find(

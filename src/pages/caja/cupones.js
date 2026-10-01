@@ -149,6 +149,20 @@ export default function Cupones() {
   const contexto = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const formatearFecha = (fecha) => {
+  if (!fecha) return "";
+
+  const partes = String(fecha).split("-");
+
+  if (partes.length !== 3) {
+    return fecha;
+  }
+
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
   const esFechaValida = (cadenaFecha) =>
     /^\d{4}-\d{2}-\d{2}$/.test(cadenaFecha) &&
     new Date(cadenaFecha).toISOString().slice(0, 10) === cadenaFecha;
@@ -293,18 +307,18 @@ export default function Cupones() {
       const conRecargo = Number(c.importecuponconrecargo) || importe;
       const recargo = conRecargo - importe;
 
-      return {
-        Fecha: c.fecha,
-        Importe: fmtMoney(importe),
-        Recargo: fmtMoney(recargo),
-        "Importe c/ Recargo": fmtMoney(conRecargo),
-        Sucursal: sucursalNombre,
-        Cliente: clienteNombre,
-        Caja: c.caja_id,
-        Lote: c.lote,
-        Cupón: c.nrocupon,
-        Plan: planDesc,
-      };
+return {
+  Fecha: formatearFecha(c.fecha),
+  Importe: fmtMoney(importe),
+  Recargo: fmtMoney(recargo),
+  "Importe c/ Recargo": fmtMoney(conRecargo),
+  Sucursal: sucursalNombre,
+  Cliente: clienteNombre,
+  Caja: c.caja_id,
+  Lote: c.lote,
+  Cupón: c.nrocupon,
+  Plan: planDesc,
+};
     });
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -492,7 +506,7 @@ export default function Cupones() {
 
               return (
                 <tr key={cupon.id}>
-                  <td>{cupon.fecha}</td>
+                  <td>{formatearFecha(cupon.fecha)}</td>
                   <td className="text-end">{fmtMoney(importe)}</td>
                   <td>{sucursalNombre}</td>
                   <td>{clienteNombre}</td>
