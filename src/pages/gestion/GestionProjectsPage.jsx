@@ -112,6 +112,16 @@ const GestionProjectsPage = () => {
       const data =
         await gestionService.getProyecto(id);
 
+      console.log(
+        "PROYECTO DETALLE:",
+        data
+      );
+
+      console.log(
+        "TAREAS DEL PROYECTO:",
+        data?.tareas
+      );
+
       setSelected(data);
 
       setShowDetail(true);
@@ -139,6 +149,16 @@ const GestionProjectsPage = () => {
         gestionService.getProyectos(),
         gestionService.getTareas(),
       ]);
+
+      console.log(
+        "PROYECTOS:",
+        proyectosData
+      );
+
+      console.log(
+        "TAREAS RECIBIDAS:",
+        tareasData
+      );
 
       setItems(
         Array.isArray(proyectosData)
