@@ -36,6 +36,10 @@ import EditarInstanciaGasto
 import EditarEcheqModal
   from "./EditarEcheqModal";
 import AbonoCtaCteModal from "./abonoCtaCteModal";
+import AcreditarEcheqModal from "./AcreditarEcheqModal";
+
+
+
 import * as XLSX from "xlsx";
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -484,6 +488,10 @@ export default function SitFinanciera() {
     setShowEditarEcheq,
   ] = useState(false);
 
+  const [
+    echeqAcreditar,
+    setEcheqAcreditar,
+  ] = useState(null);
   // Si cambia empresa en el contexto, reflejar en filtro
   useEffect(() => {
     setEmpresaId(empresaSeleccionada?.id || "");
@@ -1986,6 +1994,7 @@ export default function SitFinanciera() {
       );
     };
 
+
   const confirmarEdicionProgramado =
     async (datos = {}) => {
 
@@ -2390,67 +2399,13 @@ export default function SitFinanciera() {
   // ACCIONES ECHEQ
   // ======================================================
 
-  const handleAcreditarEcheq =
-    async (row) => {
+  const handleAcreditarEcheq = (row) => {
 
-      const confirmar =
-        window.confirm(
-          `¿Acreditar el eCheq "${row.descripcion}" por ${toMoney(row.monto_base)}?`
-        );
+    setEcheqAcreditar(
+      row
+    );
 
-      if (!confirmar) {
-        return;
-      }
-
-      try {
-
-        setAccionandoId(
-          row.key
-        );
-
-        setErr(null);
-
-
-        const body = {
-          fecha_acreditacion:
-            iso(new Date()),
-        };
-
-
-        await acreditarEcheqApi(
-          row.id,
-          body
-        );
-
-
-        /*
-         * Volvemos a consultar todo.
-         *
-         * Al quedar el eCheq como "acreditado",
-         * listarEcheqsPendientes() ya no lo incluirá,
-         * porque sólo admite:
-         *
-         * emitido
-         * entregado
-         * presentado
-         */
-        await cargar();
-
-      } catch (e) {
-
-        setErr(
-          e.message ||
-          "No se pudo acreditar el eCheq"
-        );
-
-      } finally {
-
-        setAccionandoId(
-          null
-        );
-      }
-    };
-
+  };
 
   const handleEliminarEcheq =
     async (row) => {
@@ -4204,6 +4159,62 @@ export default function SitFinanciera() {
         </Modal.Footer>
 
       </Modal>
+
+      <AcreditarEcheqModal
+        show={!!echeqAcreditar}
+
+        row={echeqAcreditar}
+
+        onHide={() => {
+          setEcheqAcreditar(null);
+        }}
+
+        onAcreditar={async (
+          echeqId,
+          body
+        ) => {
+
+          try {
+
+            setAccionandoId(
+              echeqAcreditar?.key ||
+              null
+            );
+
+            setErr(null);
+
+            await acreditarEcheqApi(
+              echeqId,
+              body
+            );
+
+            await cargar();
+
+            setEcheqAcreditar(
+              null
+            );
+
+          } catch (e) {
+
+            setErr(
+              e.message ||
+              "No se pudo acreditar el eCheq"
+            );
+
+            throw e;
+
+          } finally {
+
+            setAccionandoId(
+              null
+            );
+
+          }
+
+        }}
+      />
+
+
 
     </>
   );
