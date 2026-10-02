@@ -714,19 +714,95 @@ export default function AbonoCtaCteModal({
         ),
       ];
       const ordenPagoIdParaEnviar = opIds.length === 1 ? Number(opIds[0]) : null;
+      const empresaId =
+        Number(
+          empresaSeleccionada?.id
+        );
+
+      if (
+        !Number.isInteger(empresaId) ||
+        empresaId <= 0
+      ) {
+        throw new Error(
+          "No se pudo determinar la empresa seleccionada."
+        );
+      }
 
       const body = {
-        empresa_id: empresaSeleccionada?.id || null,
-        proveedor_id: Number(proveedorId),
+        empresa_id:
+          empresaId,
+
+        proveedor_id:
+          Number(proveedorId),
+
         fecha,
-        descripcion: descripcion || null,
+
+        descripcion:
+          descripcion || null,
+
         aplicaciones,
-        pagos: pagosNormalized,
-        incluirNumerosComp: true,
-        ...(ordenPagoIdParaEnviar ? { ordenpago_id: ordenPagoIdParaEnviar } : {}),
+
+        pagos:
+          pagosNormalized,
+
+        incluirNumerosComp:
+          true,
+
+        ...(ordenPagoIdParaEnviar
+          ? {
+            ordenpago_id:
+              ordenPagoIdParaEnviar,
+          }
+          : {}),
       };
 
-      console.log("🌐 POST /movimientos-cta-cte-proveedor/aplicar", body);
+      console.log(
+        "🔎 DEBUG APLICAR CTA CTE",
+        {
+          empresaSeleccionada,
+          empresa_id_enviado:
+            empresaId,
+
+          proveedor_id_enviado:
+            Number(proveedorId),
+
+          aplicaciones,
+
+          cargosSeleccionados:
+            cargos
+              .filter(
+                (c) =>
+                  aplicaciones.some(
+                    (a) =>
+                      Number(a.cargo_id) ===
+                      Number(c.id)
+                  )
+              )
+              .map(
+                (c) => ({
+                  id:
+                    c.id,
+
+                  empresa_id:
+                    c.empresa_id,
+
+                  proveedor_id:
+                    c.proveedor_id,
+
+                  comprobanteegreso_id:
+                    c.comprobanteegreso_id,
+
+                  saldo:
+                    c.saldo,
+                })
+              ),
+        }
+      );
+
+      console.log(
+        "🌐 POST /movimientos-cta-cte-proveedor/aplicar",
+        body
+      );
 
       const res = await fetch(`${apiUrl}/movimientos-cta-cte-proveedor/aplicar`, {
         method: "POST",
