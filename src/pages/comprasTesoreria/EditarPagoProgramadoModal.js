@@ -82,6 +82,10 @@ export default function EditarPagoProgramadoModal({
         setFechaProgramada,
     ] = useState("");
 
+    const [
+        echeqFechaVencimiento,
+        setEcheqFechaVencimiento,
+    ] = useState("");
 
     const [
         medio,
@@ -252,12 +256,41 @@ export default function EditarPagoProgramadoModal({
             ]
         );
 
+    const formaPagoEcheq =
+        useMemo(
+            () =>
+                (formasPagoTesoreria || []).find(
+                    (fp) => {
+
+                        const texto =
+                            String(
+                                fp.descripcion ||
+                                fp.nombre ||
+                                ""
+                            )
+                                .trim()
+                                .toLowerCase();
+
+                        return (
+                            texto.includes("echeq") ||
+                            texto.includes("e-cheq") ||
+                            texto.includes("e-cheque")
+                        );
+                    }
+                ) || null,
+            [
+                formasPagoTesoreria,
+            ]
+        );
 
     const formaPagoSeleccionada =
         medio === "caja"
             ? formaPagoEfectivo
-            : formaPagoTransferencia;
-
+            : medio === "banco"
+                ? formaPagoTransferencia
+                : medio === "echeq"
+                    ? formaPagoEcheq
+                    : null;
     // ======================================================
     // BANCOS EMPRESA
     // ======================================================
@@ -377,12 +410,26 @@ export default function EditarPagoProgramadoModal({
             //   );
 
 
+            setEcheqFechaVencimiento(
+                row.echeq_fecha_vencimiento
+                    ? String(row.echeq_fecha_vencimiento).slice(0, 10)
+                    : ""
+            );
+
             if (
                 row.medio === "banco"
             ) {
 
                 setMedio(
                     "banco"
+                );
+
+            } else if (
+                row.medio === "echeq"
+            ) {
+
+                setMedio(
+                    "echeq"
                 );
 
             } else {
@@ -476,10 +523,11 @@ export default function EditarPagoProgramadoModal({
         }
 
         if (
-            !["caja", "banco"].includes(
+            !["caja", "banco", "echeq"].includes(
                 medio
             )
         ) {
+
             throw new Error(
                 "Debe seleccionar un medio de pago"
             );
@@ -489,10 +537,13 @@ export default function EditarPagoProgramadoModal({
         if (
             !formaPagoSeleccionada?.id
         ) {
+
             throw new Error(
                 medio === "caja"
                     ? "No se encontró la forma de pago Efectivo"
-                    : "No se encontró la forma de pago Transferencia"
+                    : medio === "banco"
+                        ? "No se encontró la forma de pago Transferencia"
+                        : "No se encontró la forma de pago eCheq"
             );
         }
 
@@ -518,6 +569,27 @@ export default function EditarPagoProgramadoModal({
                 "Debe seleccionar un banco"
             );
         }
+
+        if (
+            medio === "echeq" &&
+            !bancoId
+        ) {
+
+            throw new Error(
+                "Debe seleccionar un banco para el eCheq"
+            );
+        }
+
+        if (
+            medio === "echeq" &&
+            !echeqFechaVencimiento
+        ) {
+
+            throw new Error(
+                "Debe indicar la fecha de vencimiento del eCheq"
+            );
+        }
+
     };
 
 
@@ -557,10 +629,20 @@ export default function EditarPagoProgramadoModal({
                             : null,
 
                     banco_id:
-                        medio === "banco"
+
+                        (
+                            medio === "banco" ||
+                            medio === "echeq"
+                        )
                             ? Number(
                                 bancoId
                             )
+                            : null,
+
+                    echeq_fecha_vencimiento:
+
+                        medio === "echeq"
+                            ? echeqFechaVencimiento
                             : null,
 
                     monto:
@@ -1029,6 +1111,25 @@ export default function EditarPagoProgramadoModal({
                                             }
                                         />
 
+                                        <Form.Check
+                                            inline
+                                            type="radio"
+                                            name="medio-editar-programado"
+                                            id="editar-programado-medio-echeq"
+                                            label="eCheq"
+                                            checked={
+                                                medio === "echeq"
+                                            }
+                                            disabled={
+                                                saving
+                                            }
+                                            onChange={() =>
+                                                setMedio(
+                                                    "echeq"
+                                                )
+                                            }
+                                        />
+
                                     </div>
 
                                 </Form.Group>
@@ -1076,7 +1177,7 @@ export default function EditarPagoProgramadoModal({
 
                             {/* BANCO */}
 
-                            {medio === "banco" && (
+                            {(medio === "banco" || medio === "echeq") && (
 
                                 <Col md={6}>
 
@@ -1127,6 +1228,37 @@ export default function EditarPagoProgramadoModal({
                                             )}
 
                                         </Form.Select>
+
+                                    </Form.Group>
+
+                                </Col>
+
+                            )}
+
+                            {medio === "echeq" && (
+
+                                <Col md={6}>
+
+                                    <Form.Group>
+
+                                        <Form.Label>
+                                            Vencimiento eCheq
+                                        </Form.Label>
+
+                                        <Form.Control
+                                            type="date"
+                                            value={
+                                                echeqFechaVencimiento
+                                            }
+                                            disabled={
+                                                saving
+                                            }
+                                            onChange={(e) =>
+                                                setEcheqFechaVencimiento(
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
 
                                     </Form.Group>
 

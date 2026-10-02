@@ -2041,10 +2041,18 @@ export default function SitFinanciera() {
               : null,
 
           banco_id:
-            datos.medio === "banco"
+            (
+              datos.medio === "banco" ||
+              datos.medio === "echeq"
+            )
               ? Number(
                 datos.banco_id
               )
+              : null,
+
+          echeq_fecha_vencimiento:
+            datos.medio === "echeq"
+              ? datos.echeq_fecha_vencimiento
               : null,
 
           monto:
