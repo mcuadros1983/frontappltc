@@ -11,7 +11,14 @@ import TaskDetailModal from "../../components/gestion/tasks/TaskDetailModal";
 
 const GestionProjectsPage = () => {
   const [items, setItems] = useState([]);
+  const [tareas, setTareas] = useState([]);
+
   const [search, setSearch] = useState("");
+
+  const [
+    soloProyectosConPendientes,
+    setSoloProyectosConPendientes
+  ] = useState(false);
 
   const [filtroEstado, setFiltroEstado] = useState("");
 
@@ -121,7 +128,44 @@ const GestionProjectsPage = () => {
 
   };
 
-  const load = async () => setItems(await gestionService.getProyectos());
+  const load = async () => {
+
+    try {
+
+      const [
+        proyectosData,
+        tareasData
+      ] = await Promise.all([
+        gestionService.getProyectos(),
+        gestionService.getTareas(),
+      ]);
+
+      setItems(
+        Array.isArray(proyectosData)
+          ? proyectosData
+          : []
+      );
+
+      setTareas(
+        Array.isArray(tareasData)
+          ? tareasData
+          : []
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Error cargando proyectos y tareas:",
+        error
+      );
+
+      alert(
+        getErrorMessage(error)
+      );
+
+    }
+
+  };
   useEffect(() => { load(); }, []);
 
   const addMember = async () => {
@@ -289,10 +333,106 @@ const GestionProjectsPage = () => {
 
   };
 
+
+  const tareasPorProyecto =
+    React.useMemo(() => {
+
+      const map = new Map();
+
+      tareas.forEach((tarea) => {
+
+        if (
+          tarea.proyecto_id === null ||
+          tarea.proyecto_id === undefined
+        ) {
+          return;
+        }
+
+        const proyectoId =
+          String(tarea.proyecto_id);
+
+        if (!map.has(proyectoId)) {
+
+          map.set(
+            proyectoId,
+            {
+              total: 0,
+              finalizadas: 0,
+            }
+          );
+
+        }
+
+        const resumen =
+          map.get(proyectoId);
+
+        resumen.total += 1;
+
+        if (
+          tarea.estado === "FINALIZADA"
+        ) {
+
+          resumen.finalizadas += 1;
+
+        }
+
+      });
+
+      return map;
+
+    }, [
+      tareas
+    ]);
+
+
+  const getResumenTareasProyecto = (
+    proyectoId
+  ) => {
+
+    return (
+      tareasPorProyecto.get(
+        String(proyectoId)
+      ) || {
+        total: 0,
+        finalizadas: 0,
+      }
+    );
+
+  };
+
+
+  const proyectoTieneTareasPendientes = (
+    proyectoId
+  ) => {
+
+    const resumen =
+      getResumenTareasProyecto(
+        proyectoId
+      );
+
+    return (
+      resumen.total > 0 &&
+      resumen.finalizadas <
+      resumen.total
+    );
+
+  };
+
   const itemsFiltrados =
     React.useMemo(() => {
 
       let data = [...items];
+
+      if (soloProyectosConPendientes) {
+
+        data = data.filter(
+          (proyecto) =>
+            proyectoTieneTareasPendientes(
+              proyecto.id
+            )
+        );
+
+      }
 
       if (search) {
 
@@ -394,7 +534,9 @@ const GestionProjectsPage = () => {
       filtroEstado,
       filtroPrioridad,
       filtroResponsable,
-      orden
+      orden,
+      soloProyectosConPendientes,
+      tareasPorProyecto,
     ]);
 
   const totalPages = Math.max(
@@ -421,6 +563,7 @@ const GestionProjectsPage = () => {
     filtroResponsable,
     orden,
     pageSize,
+    soloProyectosConPendientes,
   ]);
 
   return (
@@ -491,6 +634,28 @@ const GestionProjectsPage = () => {
       </div>
 
       <div className="d-flex flex-wrap gap-2 mb-3">
+
+        <div
+          className="d-flex align-items-center px-2"
+        >
+          <Form.Check
+            type="checkbox"
+            id="solo-proyectos-con-pendientes"
+            label="Solo proyectos con tareas pendientes"
+            checked={
+              soloProyectosConPendientes
+            }
+            onChange={(e) => {
+
+              setSoloProyectosConPendientes(
+                e.target.checked
+              );
+
+              setCurrentPage(1);
+
+            }}
+          />
+        </div>
 
         <Form.Control
           style={{ width: 250 }}
@@ -641,19 +806,110 @@ const GestionProjectsPage = () => {
           </tr>
         </thead>
         <tbody>
-          {itemsPaginados.map((p) => (
-            <tr key={p.id}>
-              <td>{p.codigo}</td>
-              <td>{p.nombre}</td>
-              <td>{p.responsable?.usuario || "-"}</td>
-              <td>{p.estado}</td>
-              <td>
-                <Button size="sm" onClick={() => openDetail(p.id)}>
-                  Ver
-                </Button>
-              </td>
-            </tr>
-          ))}
+          {itemsPaginados.map((p) => {
+
+            const resumen =
+              getResumenTareasProyecto(
+                p.id
+              );
+
+            const todasFinalizadas =
+              resumen.total > 0 &&
+              resumen.finalizadas ===
+              resumen.total;
+
+            const porcentaje =
+              resumen.total > 0
+                ? Math.round(
+                  (
+                    resumen.finalizadas /
+                    resumen.total
+                  ) * 100
+                )
+                : 0;
+
+            return (
+
+              <tr key={p.id}>
+
+                <td>
+                  {p.codigo}
+                </td>
+
+                <td>
+                  {p.nombre}
+                </td>
+
+                <td>
+                  {p.responsable?.usuario || "-"}
+                </td>
+
+                <td>
+                  {p.estado}
+                </td>
+
+                <td>
+
+                  {resumen.total === 0 ? (
+
+                    <span className="text-muted">
+                      Sin tareas
+                    </span>
+
+                  ) : (
+
+                    <div>
+
+                      <div className="fw-semibold">
+
+                        {resumen.finalizadas}
+                        {" / "}
+                        {resumen.total}
+
+                        {" "}
+
+                        {todasFinalizadas && (
+                          <span className="text-success">
+                            ✓
+                          </span>
+                        )}
+
+                      </div>
+
+                      <small
+                        className={
+                          todasFinalizadas
+                            ? "text-success"
+                            : "text-muted"
+                        }
+                      >
+                        {porcentaje}% finalizado
+                      </small>
+
+                    </div>
+
+                  )}
+
+                </td>
+
+                <td>
+
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      openDetail(p.id)
+                    }
+                  >
+                    Ver
+                  </Button>
+
+                </td>
+
+              </tr>
+
+            );
+
+          })}
         </tbody>
       </Table>
 

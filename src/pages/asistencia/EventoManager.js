@@ -82,6 +82,8 @@ export default function EventoManager() {
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
+  const [soloVigentesHoy, setSoloVigentesHoy] = useState(false);
+
   const [filter, setFilter] = useState({
     fromDate: "",
     toDate: "",
@@ -242,6 +244,32 @@ export default function EventoManager() {
       return empleadosMap.has(empleadoId);
     });
 
+    // Mostrar solamente eventos vigentes al día de hoy
+    if (soloVigentesHoy) {
+      const hoy = new Date();
+
+      hoy.setHours(0, 0, 0, 0);
+
+      arr = arr.filter((ev) => {
+        if (!ev.fecha_desde) {
+          return false;
+        }
+
+        const desde = new Date(
+          `${ev.fecha_desde}T00:00:00`
+        );
+
+        const hasta = ev.fecha_hasta
+          ? new Date(`${ev.fecha_hasta}T00:00:00`)
+          : null;
+
+        return (
+          desde <= hoy &&
+          (!hasta || hasta >= hoy)
+        );
+      });
+    }
+
     const {
       fromDate,
       toDate,
@@ -249,7 +277,7 @@ export default function EventoManager() {
       sucursal_id,
       concepto_id,
     } = filter;
-    
+
     if (fromDate) {
       const d = new Date(`${fromDate}T00:00:00`);
 
@@ -319,7 +347,13 @@ export default function EventoManager() {
     });
 
     return arr;
-  }, [rows, filter, sortConfig, empleadosMap]);
+  }, [
+    rows,
+    filter,
+    sortConfig,
+    empleadosMap,
+    soloVigentesHoy,
+  ]);
 
   const totalPages = Math.max(
     1,
@@ -371,12 +405,15 @@ export default function EventoManager() {
       concepto_id: "",
     });
 
+    setSoloVigentesHoy(false);
+
     setPage(1);
   };
-
-  const filtrosActivos = Object.values(filter).some(
-    (value) => value !== ""
-  );
+  const filtrosActivos =
+    soloVigentesHoy ||
+    Object.values(filter).some(
+      (value) => value !== ""
+    );
 
   const abrirNuevo = () => {
     setEditItem(null);
@@ -502,6 +539,21 @@ export default function EventoManager() {
               <Card.Body>
                 <Form>
                   <Row className="g-2">
+
+                    <Col xs={12}>
+                      <Form.Check
+                        type="checkbox"
+                        id="solo-vigentes-hoy-mobile"
+                        label="Mostrar solo eventos vigentes hoy"
+                        checked={soloVigentesHoy}
+                        onChange={(e) => {
+                          setSoloVigentesHoy(e.target.checked);
+                          setPage(1);
+                        }}
+                      />
+                    </Col>
+
+
                     <Col xs={6}>
                       <Form.Group>
                         <Form.Label className="small mb-1">
@@ -626,6 +678,19 @@ export default function EventoManager() {
         <Card.Body>
           <Form>
             <Row className="g-2 align-items-end">
+
+              <Col md={12}>
+                <Form.Check
+                  type="checkbox"
+                  id="solo-vigentes-hoy-desktop"
+                  label="Mostrar solo eventos vigentes hoy"
+                  checked={soloVigentesHoy}
+                  onChange={(e) => {
+                    setSoloVigentesHoy(e.target.checked);
+                    setPage(1);
+                  }}
+                />
+              </Col>
 
               <Col md={2}>
                 <Form.Label>Desde</Form.Label>
