@@ -65,6 +65,7 @@ import InventariosArticulos from "./pages/rinde/inventarios/InventariosArticulos
 import MovimientosInternos from "./pages/rinde/inventarios/movimientos";
 import MovimientosOtros from "./pages/rinde/inventarios/MovimientosOtrosList.js";
 import CrearMovimientosOtros from "./pages/rinde/inventarios/crearMovimientosOtros.js";
+import CrearInventariosMasivosDesdeExcel from "./pages/rinde/inventarios/CrearInventariosMasivosDesdeExcel.js";
 import ArticulosPrecios from "./pages/tablas/articulosprecios";
 // import ArticulosPeciosActualizar from "./pages/tablas/articulosprecios_actualizar";
 import ArticulosPreciosActualizar from "./pages/tablas/articulosprecios_actualizar";
@@ -1283,6 +1284,10 @@ INTELIGENCIA COMERCIAL
                         <Route
                           path="/inventory/create"
                           element={<CrearInventario />}
+                        />
+                        <Route
+                          path="/inventory/create-massive"
+                          element={<CrearInventariosMasivosDesdeExcel />}
                         />
                         <Route
                           path="/inventory/:inventarioId/articles"
