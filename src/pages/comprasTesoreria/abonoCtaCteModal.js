@@ -270,14 +270,40 @@ export default function AbonoCtaCteModal({
     );
 
   // Helper para derivar "medio" desde formapago_id (coincide con tu editor)
+  // const medioFromFp = (fpId) => {
+  //   const fp = formasPagoTesoreria.find(f => Number(f.id) === Number(fpId));
+  //   const desc = (fp?.descripcion || "").toLowerCase();
+  //   if (/caja|efectivo/.test(desc)) return "caja";
+  //   if (/transfer/.test(desc)) return "transferencia";
+  //   if (/e-?\s*cheq|echeq/.test(desc)) return "echeq";
+  //   if (/tarjeta|cr[eé]dito|d[eé]bito/.test(desc)) return "tarjeta";
+  //   if (/cta\.?\s*cte|cuenta\s*corriente/.test(desc)) return "ctacte";
+  //   return "desconocido";
+  // };
+
   const medioFromFp = (fpId) => {
-    const fp = formasPagoTesoreria.find(f => Number(f.id) === Number(fpId));
-    const desc = (fp?.descripcion || "").toLowerCase();
+    const fp = formasPagoTesoreria.find(
+      f => Number(f.id) === Number(fpId)
+    );
+
+    const desc = String(
+      fp?.descripcion || fp?.nombre || ""
+    )
+      .trim()
+      .toLowerCase();
+
     if (/caja|efectivo/.test(desc)) return "caja";
+
     if (/transfer/.test(desc)) return "transferencia";
+
     if (/e-?\s*cheq|echeq/.test(desc)) return "echeq";
+
     if (/tarjeta|cr[eé]dito|d[eé]bito/.test(desc)) return "tarjeta";
+
     if (/cta\.?\s*cte|cuenta\s*corriente/.test(desc)) return "ctacte";
+
+    if (/compensaci[oó]n/.test(desc)) return "ajuste";
+
     return "desconocido";
   };
 
