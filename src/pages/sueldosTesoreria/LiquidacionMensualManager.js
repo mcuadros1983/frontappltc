@@ -49,7 +49,7 @@ export default function LiquidacionMensualManager() {
 
   // ====== Mensaje que mandamos por WhatsApp ======
   const construirMensaje = useCallback((recibo, empleadoNombre, periodoStr, pdfUrl) => {
-    return `Hola ${empleadoNombre}, te comparto tu recibo de sueldo. Podés descargarlo aquí: ${pdfUrl}`;
+    return `Hola ${empleadoNombre}, te comparto tu liquidación. Podés descargarlo aquí: ${pdfUrl}`;
   }, []);
 
   // ====== Handler WhatsApp: teléfonos + link firmado + abrir wa.me ======
