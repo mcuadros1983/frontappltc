@@ -1359,7 +1359,7 @@ export default function AcreditarPagoProgramadoModal({
 
                     {cajaAbierta?.caja?.id && (
                       <Form.Text muted>
-                        Saldo actual: $
+                        Saldo actual:
                         {toMoney(
                           cajaAbierta.saldo
                         )}
@@ -1368,7 +1368,7 @@ export default function AcreditarPagoProgramadoModal({
 
                     {cajaAbierta?.id && (
                       <Form.Text muted>
-                        Saldo actual: $
+                        Saldo actual:
                         {toMoney(
                           cajaAbierta.saldo
                         )}

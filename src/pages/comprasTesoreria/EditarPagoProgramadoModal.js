@@ -1161,7 +1161,7 @@ export default function EditarPagoProgramadoModal({
                                         {cajaAbierta?.caja?.id && (
 
                                             <Form.Text muted>
-                                                Saldo actual: $
+                                                Saldo actual:
                                                 {toMoney(
                                                     cajaAbierta.saldo
                                                 )}

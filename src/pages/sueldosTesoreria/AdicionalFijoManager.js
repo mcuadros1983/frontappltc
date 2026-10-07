@@ -2,6 +2,8 @@ import { useEffect, useState, useContext, useCallback } from "react";
 import { Container, Row, Col, Table, Button, Form, Spinner, Badge } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
 import AdicionalFijoEditorModal from "./AdicionalFijoEditorModal";
+import AdicionalFijoHistorialModal
+  from "./AdicionalFijoHistorialModal";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -19,12 +21,49 @@ export default function AdicionalFijoManager() {
   const [showModal, setShowModal] = useState(false);
   const [editTipo, setEditTipo] = useState(null); // null => crear; objeto => editar
   const [mode, setMode] = useState("create");    // "create" | "edit" | "valor" | "edit_valor"
+  const [
+    showHistorial,
+    setShowHistorial,
+  ] = useState(false);
+
+  const [
+    tipoHistorial,
+    setTipoHistorial,
+  ] = useState(null);
+
+  const [
+    valorEditar,
+    setValorEditar,
+  ] = useState(null);
+
 
   // nueva función
-  const openEditarValor = (tipo) => {
+  const openEditar = (
+    tipo,
+    valor = null,
+    desdeHistorial = false
+  ) => {
+
+    if (!desdeHistorial) {
+      setTipoHistorial(null);
+    }
+
     setEditTipo(tipo);
+
+    setValorEditar(
+      valor || ultimos[tipo.id] || null
+    );
+
     setMode("edit_valor");
+
     setShowModal(true);
+  };
+
+  const openHistorial = (tipo) => {
+
+    setTipoHistorial(tipo);
+
+    setShowHistorial(true);
   };
 
   const fetchTipos = useCallback(async () => {
@@ -91,22 +130,48 @@ export default function AdicionalFijoManager() {
     setShowModal(true);
   };
 
-  const openEditTipo = (tipo) => {
-    setEditTipo(tipo);
-    setMode("edit");
-    setShowModal(true);
-  };
+  // const openEditTipo = (tipo) => {
+
+  //   setTipoHistorial(null);
+
+  //   setEditTipo(tipo);
+
+  //   setMode("edit");
+
+  //   setShowModal(true);
+  // };
 
   const openNuevoValor = (tipo) => {
+
+    setTipoHistorial(null);
+
     setEditTipo(tipo);
+
     setMode("valor");
+
     setShowModal(true);
   };
 
-  const onCloseModal = (changed) => {
+  const onCloseModal = async (changed) => {
+
     setShowModal(false);
+
     setEditTipo(null);
-    if (changed) fetchTipos();
+
+    setValorEditar(null);
+
+
+    if (changed) {
+      await fetchTipos();
+    }
+
+
+    // Si el editor fue abierto desde Historial,
+    // regresamos al Historial tanto al guardar
+    // como al cancelar.
+    if (tipoHistorial) {
+      setShowHistorial(true);
+    }
   };
 
   const eliminarTipo = async (tipo) => {
@@ -127,7 +192,9 @@ export default function AdicionalFijoManager() {
     <Container className="py-3">
       <Row className="align-items-center mb-3">
         <Col>
-          <h4 className="mb-0">Adicionales Fijos (Tipo + Último valor cargado)</h4>
+          <h4 className="mb-0">
+            Adicionales Fijos
+          </h4>
         </Col>
         <Col md="auto">
           <Button onClick={openCreate}>Crear adicional</Button>
@@ -154,7 +221,9 @@ export default function AdicionalFijoManager() {
               <th>Descripción</th>
               <th style={{ width: 160 }}>Último valor</th>
               <th style={{ width: 220 }}>Última vigencia desde</th>
-              <th style={{ width: 260 }}>Acciones</th>
+              <th style={{ width: 470 }}>
+                Acciones
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -182,25 +251,35 @@ export default function AdicionalFijoManager() {
                     <td>{v ? v.vigencia_desde : "-"}</td>
                     <td>
                       <div className="d-flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline-primary"
-                          onClick={() => openEditTipo(t)}
-                          className="mx-2"
-                        >
-                          Editar
-                        </Button>
 
-
+                        {v && (
+                          <Button
+                            size="sm"
+                            variant="outline-primary"
+                            onClick={() => openEditar(t)}
+                          >
+                            Editar
+                          </Button>
+                        )}
 
                         <Button
                           size="sm"
                           variant="outline-success"
                           onClick={() => openNuevoValor(t)}
-                          className="mx-2"
                         >
-                          Nuevo
+                          Nuevo valor
                         </Button>
+
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          onClick={() =>
+                            openHistorial(t)
+                          }
+                        >
+                          Historial
+                        </Button>
+
                       </div>
                     </td>
                   </tr>
@@ -221,12 +300,48 @@ export default function AdicionalFijoManager() {
         <AdicionalFijoEditorModal
           show={showModal}
           onClose={onCloseModal}
-          mode={mode}                 // "create" | "edit" | "valor"
-          tipo={editTipo}             // null en "create"
+          mode={mode}
+          tipo={editTipo}
           empresa_id={empresa_id}
-          vigente={editTipo ? ultimos[editTipo.id] : null} // pasamos el último registro
+          vigente={
+            mode === "edit_valor"
+              ? valorEditar
+              : editTipo
+                ? ultimos[editTipo.id]
+                : null
+          }
         />
       )}
+      {showHistorial && tipoHistorial && (
+
+        <AdicionalFijoHistorialModal
+
+          show={showHistorial}
+
+          tipo={tipoHistorial}
+
+          onClose={() => {
+
+            setShowHistorial(false);
+
+            setTipoHistorial(null);
+          }}
+
+          onEditar={(valor) => {
+
+            setShowHistorial(false);
+
+            openEditar(
+              tipoHistorial,
+              valor,
+              true
+            );
+          }}
+
+        />
+
+      )}
+
     </Container>
   );
 }

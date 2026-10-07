@@ -5,15 +5,14 @@ const apiUrl = process.env.REACT_APP_API_URL;
 
 export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, empresa_id, vigente }) {
     const isCreate = mode === "create";
-    const isEditTipo = mode === "edit";
     const isNuevoValor = mode === "valor";
-    const isEditValor = mode === "edit_valor"; // 👈 NUEVO
+    const isEdit = mode === "edit_valor";
     // campos
     const [descripcion, setDescripcion] = useState("");
     const [monto, setMonto] = useState("");
     const [vigenciaDesde, setVigenciaDesde] = useState("");
     const [vigenciaHasta, setVigenciaHasta] = useState(""); // opcional (normalmente null para el abierto)
-    const [cerrarActual, setCerrarActual] = useState(true); // cerrar vigente anterior cuando hay nuevo valor
+    // const [cerrarActual, setCerrarActual] = useState(true); // cerrar vigente anterior cuando hay nuevo valor
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState(null);
 
@@ -21,32 +20,55 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
         setErr(null);
 
         if (isCreate) {
+
             setDescripcion("");
             setMonto("");
             setVigenciaDesde("");
             setVigenciaHasta("");
-            setCerrarActual(true);
-        } else if (isEditTipo) {
-            setDescripcion(tipo?.descripcion || "");
+
         } else if (isNuevoValor) {
-            setDescripcion(tipo?.descripcion || "");
+
+            setDescripcion(
+                tipo?.descripcion || ""
+            );
+
             setMonto("");
             setVigenciaDesde("");
             setVigenciaHasta("");
-            setCerrarActual(true);
-        } else if (isEditValor) {
-            setDescripcion(tipo?.descripcion || "");
-            setMonto(vigente ? String(vigente.monto) : "");
-            setVigenciaDesde(vigente?.vigencia_desde || "");
-            setVigenciaHasta(vigente?.vigencia_hasta || ""); // normalmente null/"" en abierto
+
+        } else if (isEdit) {
+
+            setDescripcion(
+                tipo?.descripcion || ""
+            );
+
+            setMonto(
+                vigente
+                    ? String(vigente.monto)
+                    : ""
+            );
+
+            setVigenciaDesde(
+                vigente?.vigencia_desde || ""
+            );
+
+            setVigenciaHasta(
+                vigente?.vigencia_hasta || ""
+            );
         }
-    }, [isCreate, isEditTipo, isNuevoValor, isEditValor, tipo, vigente]);
+    }, [
+        isCreate,
+        isNuevoValor,
+        isEdit,
+        tipo,
+        vigente
+    ]);
 
     const crearTipoYValor = async () => {
         // 1) crear tipo
         const payloadTipo = { descripcion: descripcion?.trim() || null, ...(empresa_id ? { empresa_id } : {}) };
         const r = await fetch(`${apiUrl}/adicionalfijotipo`, {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payloadTipo), credentials:"include",
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payloadTipo), credentials: "include",
         });
         if (!r.ok) throw new Error("Error creando el tipo");
         const nuevoTipo = await r.json();
@@ -59,7 +81,7 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
             monto: Number(monto),
         };
         const rv = await fetch(`${apiUrl}/adicionalfijovalor`, {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payloadValor), credentials:"include",
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payloadValor), credentials: "include",
         });
         if (!rv.ok) throw new Error("Error creando el valor");
     };
@@ -67,10 +89,11 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
     const editarTipo = async () => {
         const payload = { descripcion: descripcion?.trim() || null, ...(empresa_id ? { empresa_id } : {}) };
         const r = await fetch(`${apiUrl}/adicionalfijotipo/${tipo.id}`, {
-            method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), credentials:"include",
+            method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), credentials: "include",
         });
         if (!r.ok) throw new Error("Error editando el tipo");
     };
+
 
     const editarValorActual = async () => {
         if (!vigente?.id) throw new Error("No se encontró el valor vigente.");
@@ -84,7 +107,7 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
-            credentials:"include"
+            credentials: "include"
         });
         if (!r.ok) {
             const e = await r.json().catch(() => ({}));
@@ -102,7 +125,7 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
-            credentials:"include"
+            credentials: "include"
         });
         if (!r.ok) {
             const err = await r.json().catch(() => ({}));
@@ -115,38 +138,121 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
             setSaving(true);
             setErr(null);
 
+            const montoNumero = Number(monto);
+
             if (isCreate) {
-                if (!descripcion?.trim() || !vigenciaDesde || !monto) {
-                    throw new Error("Completá descripción, vigencia y monto.");
+
+                if (!descripcion?.trim()) {
+                    throw new Error(
+                        "La descripción es requerida."
+                    );
                 }
+
+                if (!vigenciaDesde) {
+                    throw new Error(
+                        "La vigencia desde es requerida."
+                    );
+                }
+
+                if (
+                    !Number.isFinite(montoNumero) ||
+                    montoNumero <= 0
+                ) {
+                    throw new Error(
+                        "El monto debe ser mayor a cero."
+                    );
+                }
+
                 await crearTipoYValor();
-            } else if (isEditTipo) {
-                if (!descripcion?.trim()) throw new Error("La descripción es requerida.");
-                await editarTipo();
+
+
             } else if (isNuevoValor) {
-                if (!vigenciaDesde || !monto) throw new Error("Completá vigencia y monto.");
+
+                if (!vigenciaDesde) {
+                    throw new Error(
+                        "La vigencia desde es requerida."
+                    );
+                }
+
+                if (
+                    !Number.isFinite(montoNumero) ||
+                    montoNumero <= 0
+                ) {
+                    throw new Error(
+                        "El monto debe ser mayor a cero."
+                    );
+                }
+
                 await crearNuevoValor();
-            } else if (isEditValor) {
-                if (!vigenciaDesde || !monto) throw new Error("Completá vigencia y monto.");
+
+
+            } else if (isEdit) {
+
+                if (!descripcion?.trim()) {
+                    throw new Error(
+                        "La descripción es requerida."
+                    );
+                }
+
+                if (!vigente?.id) {
+                    throw new Error(
+                        "No se encontró el valor a editar."
+                    );
+                }
+
+                if (!vigenciaDesde) {
+                    throw new Error(
+                        "La vigencia desde es requerida."
+                    );
+                }
+
+                if (
+                    !Number.isFinite(montoNumero) ||
+                    montoNumero <= 0
+                ) {
+                    throw new Error(
+                        "El monto debe ser mayor a cero."
+                    );
+                }
+
+
+                // Primero modificamos el tipo/nombre.
+                await editarTipo();
+
+                // Después modificamos esta versión.
                 await editarValorActual();
             }
 
+
             onClose(true);
+
         } catch (e) {
+
             console.error(e);
-            setErr(e.message || "No se pudo guardar.");
+
+            setErr(
+                e.message ||
+                "No se pudo guardar."
+            );
+
         } finally {
+
             setSaving(false);
         }
     };
+
     return (
         <Modal show={show} onHide={() => onClose(false)} centered>
             <Modal.Header closeButton>
                 <Modal.Title>
-                    {isCreate && "Crear adicional (tipo + valor inicial)"}
-                    {isEditTipo && `Editar tipo: ${tipo?.descripcion}`}
-                    {isNuevoValor && `Nuevo valor para: ${tipo?.descripcion}`}
-                    {isEditValor && `Editar valor vigente de: ${tipo?.descripcion}`} {/* 👈 */}
+                    {isCreate &&
+                        "Crear adicional"}
+
+                    {isNuevoValor &&
+                        `Nuevo valor para: ${tipo?.descripcion}`}
+
+                    {isEdit &&
+                        `Editar adicional: ${tipo?.descripcion}`}
                 </Modal.Title>
             </Modal.Header>
 
@@ -157,13 +263,15 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
                     <Form.Label>Descripción</Form.Label>
                     <Form.Control
                         value={descripcion}
-                        onChange={(e) => setDescripcion(e.target.value)}
-                        disabled={!isCreate && !isEditTipo} // bloqueada en valor/editar valor
+                        onChange={(e) =>
+                            setDescripcion(e.target.value)
+                        }
+                        disabled={isNuevoValor}
                         placeholder="Ej.: Jefatura"
                     />
                 </Form.Group>
 
-                {(isCreate || isNuevoValor || isEditValor) && (
+                {(isCreate || isNuevoValor || isEdit) && (
                     <>
                         <Form.Group className="mb-3">
                             <Form.Label>Vigencia desde</Form.Label>
@@ -195,7 +303,7 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
               />
             </Form.Group>
             */}
-
+                        {/* 
                         {isNuevoValor && vigente && (
                             <Form.Check
                                 type="checkbox"
@@ -204,7 +312,7 @@ export default function AdicionalFijoEditorModal({ show, onClose, mode, tipo, em
                                 label="Finalizar el monto actual con la nueva fecha de vigencia"
                                 className="mb-2"
                             />
-                        )}
+                        )} */}
                     </>
                 )}
             </Modal.Body>

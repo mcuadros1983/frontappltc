@@ -1133,7 +1133,7 @@ export default function AplicarInstanciaGasto({
                     {cajaAbierta?.caja?.id && (
 
                       <Form.Text muted>
-                        Saldo actual: $
+                        Saldo actual:
                         {toMoney(
                           cajaAbierta.saldo
                         )}
@@ -1248,7 +1248,7 @@ export default function AplicarInstanciaGasto({
 
                   <Form.Text muted>
 
-                    Máximo: $
+                    Máximo: 
                     {toMoney(
                       saldoInstancia
                     )}

@@ -20,6 +20,10 @@ import {
 
 import Contexts from "../../context/Contexts";
 import PrestamoEmpleadoModal from "./PrestamoEmpleadoModal";
+import PrestamoEmpleadoCargaMasivaModal
+    from "./PrestamoEmpleadoCargaMasivaModal";
+
+
 const apiUrl = process.env.REACT_APP_API_URL;
 
 export default function PrestamoEmpleadoManager() {
@@ -62,6 +66,10 @@ export default function PrestamoEmpleadoManager() {
 
     const [showModal, setShowModal] = useState(false);
     const [prestamoEditar, setPrestamoEditar] = useState(null);
+    const [
+        showCargaMasiva,
+        setShowCargaMasiva,
+    ] = useState(false);
 
     // =====================================================
     // DETALLE
@@ -617,9 +625,24 @@ export default function PrestamoEmpleadoManager() {
                 </Col>
 
                 <Col md="auto">
-                    <Button onClick={abrirNuevo}>
-                        Nuevo Préstamo
-                    </Button>
+
+                    <div className="d-flex gap-2">
+
+                        <Button
+                            variant="outline-success"
+                            onClick={() =>
+                                setShowCargaMasiva(true)
+                            }
+                        >
+                            Carga Masiva
+                        </Button>
+
+                        <Button onClick={abrirNuevo}>
+                            Nuevo Préstamo
+                        </Button>
+
+                    </div>
+
                 </Col>
 
             </Row>
@@ -1493,6 +1516,27 @@ export default function PrestamoEmpleadoManager() {
                     empleados={empleadosCtx}
                     prestamo={prestamoEditar}
                 />
+            )}
+
+            {showCargaMasiva && (
+
+                <PrestamoEmpleadoCargaMasivaModal
+
+                    show={showCargaMasiva}
+
+                    empleados={empleadosCtx}
+
+                    onClose={async (changed) => {
+
+                        setShowCargaMasiva(false);
+
+                        if (changed) {
+                            await fetchPrestamos();
+                        }
+                    }}
+
+                />
+
             )}
 
         </Container>
