@@ -6,6 +6,24 @@ import Contexts from "../../context/Contexts";
 const apiUrl = process.env.REACT_APP_API_URL;
 
 // ---- Helpers ----
+
+// Obtener primer y último día del mes actual
+const obtenerRangoMesActual = () => {
+  const hoy = new Date();
+
+  const anio = hoy.getFullYear();
+  const mes = hoy.getMonth() + 1;
+
+  const mesFormateado = String(mes).padStart(2, "0");
+
+  const ultimoDia = new Date(anio, mes, 0).getDate();
+
+  return {
+    desde: `${anio}-${mesFormateado}-01`,
+    hasta: `${anio}-${mesFormateado}-${String(ultimoDia).padStart(2, "0")}`,
+  };
+};
+
 const toMoney = (n) =>
   Number(n || 0).toLocaleString("es-AR", {
     style: "currency",
@@ -192,8 +210,13 @@ export default function IvaProyeccion() {
   }, [empresaSeleccionada?.id]);
 
   // Entradas de usuario
-  const [fechaDesde, setFechaDesde] = useState("");
-  const [fechaHasta, setFechaHasta] = useState("");
+  const [fechaDesde, setFechaDesde] = useState(
+    () => obtenerRangoMesActual().desde
+  );
+
+  const [fechaHasta, setFechaHasta] = useState(
+    () => obtenerRangoMesActual().hasta
+  );
   const [diasNoOperativosMes, setDiasNoOperativosMes] = useState(0);
   const [proyectarCompras, setProyectarCompras] = useState(false);
 
@@ -332,8 +355,10 @@ export default function IvaProyeccion() {
     setResultado(null);
     setCierresZ([]);
     setCzPage(1);
-    setFechaDesde("");
-    setFechaHasta("");
+    const rangoActual = obtenerRangoMesActual();
+
+    setFechaDesde(rangoActual.desde);
+    setFechaHasta(rangoActual.hasta);
     setDiasNoOperativosMes(0);
   };
 

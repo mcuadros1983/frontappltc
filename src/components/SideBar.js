@@ -3911,7 +3911,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     iva:libro.view
                     ============================================= */}
 
-                {(can("iva:libro.create") ||
+                {/* {(can("iva:libro.create") ||
                   can("iva:libro.view")) &&
                   matchesSearch(
                     "Libros IVA",
@@ -3990,7 +3990,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       </Collapse>
 
                     </>
-                  )}
+                  )} */}
 
 
                 {/* =============================================

@@ -9,19 +9,37 @@ const Layout = ({ children }) => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(!isMobile);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     if (window.innerWidth <= 993) {
+  //       setIsMobile(true);
+  //       setIsSidebarVisible(false);
+  //       setIsSidebarCollapsed(false);
+  //     } else {
+  //       setIsMobile(false);
+  //       setIsSidebarVisible(true);
+  //     }
+  //   };
+  //   window.addEventListener('resize', handleResize);
+  //   return () => window.removeEventListener('resize', handleResize);
+  // }, []);
+
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth <= 993) {
-        setIsMobile(true);
-        setIsSidebarVisible(false);
-        setIsSidebarCollapsed(false);
-      } else {
-        setIsMobile(false);
-        setIsSidebarVisible(true);
-      }
+    const mediaQuery = window.matchMedia("(max-width: 993px)");
+
+    const handleBreakpointChange = (event) => {
+      const mobile = event.matches;
+
+      setIsMobile(mobile);
+      setIsSidebarVisible(!mobile);
+      setIsSidebarCollapsed(false);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+
+    mediaQuery.addEventListener("change", handleBreakpointChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleBreakpointChange);
+    };
   }, []);
 
   const toggleSidebar = () => setIsSidebarVisible(!isSidebarVisible);
@@ -85,15 +103,18 @@ const Layout = ({ children }) => {
               className={`sidebar-wrapper ${isSidebarVisible ? 'visible' : ''}`}
               style={{
                 backgroundColor: '#343a40',
-                minHeight: '100vh',
+                height: 'calc(100dvh - 70px)',
                 color: 'white',
-                position: 'absolute',
+                position: 'fixed',
                 top: '70px',
                 left: isSidebarVisible ? '0' : '-250px',
                 width: '250px',
                 zIndex: 999,
                 transition: 'left 0.3s ease',
                 overflowY: 'auto',
+                overflowX: 'hidden',
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehaviorY: 'contain',
               }}
             >
               <SideBar toggleSidebar={toggleSidebar} isMobile={isMobile} />
