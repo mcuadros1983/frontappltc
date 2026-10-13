@@ -188,6 +188,35 @@ export default function ComprobantesEgresoList() {
     return map;
   }, [tiposComprobanteTabla]);
 
+  const puedeEliminarComprobante = (comp) => {
+    const estado = String(comp.estadopago || "")
+      .trim()
+      .toLowerCase();
+
+    if (estado === "impaga") return true;
+
+    const descripcionTipo = String(
+      tiposComprobanteById[comp.tipocomprobante_id] || ""
+    )
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toUpperCase();
+
+    const esNotaCredito =
+      descripcionTipo.includes("NOTA") &&
+      descripcionTipo.includes("CREDITO");
+
+    const sinFormaPago =
+      comp.formapago_id == null ||
+      comp.formapago_id === "";
+
+    const sinOrdenPago =
+      comp.ordenpago_id == null ||
+      comp.ordenpago_id === "";
+
+    return esNotaCredito && sinFormaPago && sinOrdenPago;
+  };
+
   const hoy = new Date().toISOString().split("T")[0];
 
   const makeInitialNuevo = () => ({
@@ -1070,9 +1099,10 @@ export default function ComprobantesEgresoList() {
   };
 
   const handleEliminar = async (comp) => {
-    const estado = String(comp.estadopago || "").toLowerCase();
-    if (estado !== "impaga") {
-      alert("Sólo se pueden eliminar comprobantes en estado IMPAGA.");
+    if (!puedeEliminarComprobante(comp)) {
+      alert(
+        "Sólo se pueden eliminar comprobantes IMPAGOS o notas de crédito sin forma de pago asociada."
+      );
       return;
     }
     if (!window.confirm(`¿Eliminar el comprobante #${comp.id}? Esta acción no se puede deshacer.`)) {
@@ -2032,9 +2062,16 @@ export default function ComprobantesEgresoList() {
                 <Button
                   variant="danger"
                   size="sm"
-                  disabled={String(comp.estadopago || "").toLowerCase() !== "impaga" || deletingId === comp.id}
+                  disabled={
+                    !puedeEliminarComprobante(comp) ||
+                    deletingId === comp.id
+                  }
                   onClick={() => handleEliminar(comp)}
-                  title={String(comp.estadopago || "").toLowerCase() !== "impaga" ? "Sólo IMPAGA" : "Eliminar"}
+                  title={
+                    puedeEliminarComprobante(comp)
+                      ? "Eliminar"
+                      : "Sólo comprobantes IMPAGOS o notas de crédito sin pago"
+                  }
                 >
                   {deletingId === comp.id ? "Eliminando…" : "Eliminar"}
                 </Button>
