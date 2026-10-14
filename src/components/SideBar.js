@@ -3360,7 +3360,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                 {/* =============================================
                     REGISTROS
                     ============================================= */}
-{/* 
+                {/* 
                 {can("legajos:registros.view") &&
                   matchesSearch(
                     "Registros",
@@ -4035,6 +4035,14 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                       Proyección del IVA
                     </Link>
                   )}
+
+                {can("arca.conciliacion.consultar") && (
+                  <Nav.Item>
+                    <Link className="nav-link" to="/iva/conciliacion-arca">
+                      Conciliación ARCA
+                    </Link>
+                  </Nav.Item>
+                )}
 
               </>
             )}

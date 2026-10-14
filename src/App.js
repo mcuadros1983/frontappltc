@@ -415,6 +415,8 @@ import InteligenciaClimaPage
   from "./pages/inteligencia/clima/InteligenciaClimaPage";
 import PagosProgramadosPage from "./components/tesoreria/PagosProgramadosPage.js";
 
+import ConciliacionArca from "./pages/iva/ConciliacionArca";
+
 const PUBLIC_FIDELIZACION_HOSTS = [
   "latradicionsorteos.com",
   "www.latradicionsorteos.com",
@@ -996,6 +998,7 @@ INTELIGENCIA COMERCIAL
                         <Route path="/compraproyectada" element={<CompraProyectadaManager />} />
                         <Route path="/ivaproyeccion" element={<IvaProyeccion />} />
                         <Route path="/periodoliquidacion" element={<PeriodoManager />} />
+                        <Route path="/iva/conciliacion-arca" element={<ConciliacionArca />} />
 
 
 
