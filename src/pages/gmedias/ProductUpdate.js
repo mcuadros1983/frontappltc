@@ -23,7 +23,7 @@ const ProductUpdate = () => {
     const today = new Date();
     return today.toISOString().split("T")[0]; // Formato YYYY-MM-DD
   });
-
+  const [fechaFaena, setFechaFaena] = useState("");
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -36,10 +36,10 @@ const ProductUpdate = () => {
       console.error("Falta información requerida para la carga del archivo.");
       return;
     }
-  
+
     try {
       setButtonDisabled(true);
-  
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("tipo", tipo);
@@ -49,15 +49,19 @@ const ProductUpdate = () => {
       formData.append("cliente", cliente);
       formData.append("formaPago", formaPago);
       formData.append("fechaOperacion", fechaOperacion);
-  
+
+      if (tipo === "crear" && operacion === "romaneo") {
+        formData.append("fechaFaena", fechaFaena);
+      }
+
       const response = await fetch(`${apiUrl}/productos/upload`, {
         credentials: "include",
         method: "POST",
         body: formData,
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         setUploadSuccess(true);
         setUploadMessage(data.mensaje);
@@ -74,7 +78,7 @@ const ProductUpdate = () => {
       setButtonDisabled(false);
     }
   };
-  
+
 
   const validateFile = async (file) => {
     try {
@@ -86,33 +90,115 @@ const ProductUpdate = () => {
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-        // Excluir la séptima columna (índice 6) y validar números a partir de la tercera columna
+        // Validar únicamente las columnas numéricas.
+        // No incluir fecha_faena, porque puede contener una fecha.
         const invalidRows = jsonData.slice(1).some((row) => {
-          const filteredRow = row.filter((cell, index) => index !== 6);
-          return filteredRow.slice(2).some((cell) => isNaN(cell));
+          const columnasNumericas = [2, 3, 4, 5, 6, 7];
+
+          return columnasNumericas.some((index) => {
+            const valor = row[index];
+
+            return (
+              valor !== undefined &&
+              valor !== null &&
+              valor !== "" &&
+              !Number.isFinite(Number(valor))
+            );
+          });
         });
 
         if (invalidRows) {
           setUploadSuccess(false);
           setUploadMessage(
-            "El archivo debe contener solo datos numéricos a partir de la tercera columna, comenzando desde la segunda fila, excluyendo la séptima columna."
+            "Las columnas num_media, garron, precio, costo, kg y tropa deben contener valores numéricos válidos."
           );
           return;
         }
 
-              // Validar que ninguna fila tenga el campo num_media vacío
-      const missingNumMedia = jsonData.slice(1).some((row, index) => {
-        const numMedia = row[2]; // Índice 2 corresponde a num_media
-        return !numMedia || numMedia.toString().trim() === "";
-      });
+        // Validar que ninguna fila tenga el campo num_media vacío
+        const missingNumMedia = jsonData.slice(1).some((row, index) => {
+          const numMedia = row[2]; // Índice 2 corresponde a num_media
+          return !numMedia || numMedia.toString().trim() === "";
+        });
 
-      if (missingNumMedia) {
-        setUploadSuccess(false);
-        setUploadMessage(
-          "El archivo contiene filas sin el campo 'num_media'. Por favor, complete todos los campos antes de subir el archivo."
-        );
-        return;
-      }
+        if (missingNumMedia) {
+          setUploadSuccess(false);
+          setUploadMessage(
+            "El archivo contiene filas sin el campo 'num_media'. Por favor, complete todos los campos antes de subir el archivo."
+          );
+          return;
+        }
+
+        if (tipo === "crear" && operacion === "romaneo") {
+          const encabezados = jsonData[0] || [];
+
+          if (encabezados[8] !== "fecha_faena") {
+            setUploadSuccess(false);
+            setUploadMessage(
+              "El Excel de romaneo debe contener la columna fecha_faena."
+            );
+            return;
+          }
+
+          const fechaValida = (valor) => {
+            if (valor === undefined || valor === null || valor === "") {
+              return true; // Permitir fecha vacía
+            }
+
+            if (typeof valor === "number") {
+              // Excel puede almacenar fechas como números de serie.
+              return Number.isInteger(valor) && valor > 0;
+            }
+
+            if (typeof valor !== "string") return false;
+
+            const fecha = valor.trim();
+
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+              return false;
+            }
+
+            const [anio, mes, dia] = fecha.split("-").map(Number);
+            const comprobacion = new Date(Date.UTC(anio, mes - 1, dia));
+
+            return (
+              comprobacion.getUTCFullYear() === anio &&
+              comprobacion.getUTCMonth() + 1 === mes &&
+              comprobacion.getUTCDate() === dia
+            );
+          };
+
+          const fechaInvalida = jsonData.slice(1).some(
+            (row) => !fechaValida(row[8])
+          );
+
+          const fechasFaltantes = jsonData.slice(1).some((row) => {
+            const fechaExcel = row[8];
+
+            return (
+              (fechaExcel === undefined ||
+                fechaExcel === null ||
+                fechaExcel === "") &&
+              !fechaFaena
+            );
+          });
+
+          if (fechasFaltantes) {
+            setUploadSuccess(false);
+            setUploadMessage(
+              "Debe indicar una fecha de faena en el formulario o en el Excel para todos los productos."
+            );
+            return;
+          }
+
+          if (fechaInvalida) {
+            setUploadSuccess(false);
+            setUploadMessage(
+              "La columna fecha_faena contiene fechas inválidas. Utilice el formato YYYY-MM-DD."
+            );
+            return;
+          }
+        }
 
         // Validar la primera columna para "bovino" o "porcino" y que solo haya una categoría por archivo
         const categories = jsonData.slice(1).map((row) => row[0]);
@@ -202,6 +288,12 @@ const ProductUpdate = () => {
         "tropa",
       ];
     }
+
+    if (tipo === "crear" && operacion === "romaneo") {
+      templateHeaders.push("fecha_faena");
+    }
+
+
     const worksheet = XLSX.utils.aoa_to_sheet([templateHeaders]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "ProductosTemplate");
@@ -256,6 +348,8 @@ const ProductUpdate = () => {
     setDestino("");
     setCliente("");
     setFormaPago("");
+    setFechaFaena("");
+    setFile(null);
   }, [operacion]); // Se ejecutará cada vez que cambie 'operacion'
 
   return (
@@ -329,6 +423,21 @@ const ProductUpdate = () => {
                 <option value="ingreso">Ingreso</option> {/* Nueva opción agregada */}
               </Form.Select>
             </Form.Group>
+
+            {operacion === "romaneo" && (
+              <Form.Group controlId="fechaFaena" className="mb-3">
+                <Form.Label>Fecha de Faena:</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={fechaFaena}
+                  onChange={(e) => setFechaFaena(e.target.value)}
+                  className="my-input custom-style-select"
+                  size="lg"
+                  style={{ width: "auto", minWidth: "140px" }}
+                />
+              </Form.Group>
+            )}
+
 
             {(operacion === "venta" || operacion === "orden" || operacion === "ingreso") && ( // Incluye ingreso
               <Form.Group controlId="fechaOperacion" className="mb-3">

@@ -3,6 +3,7 @@ import { Table, Container, Button, Modal, Form, Row, Col, InputGroup } from "rea
 import Contexts from "../../context/Contexts";
 import FormasPagoEditor from "./FormasPagoEditor";
 import HaciendaPickerModal from "./HaciendaPickerModal";
+import * as XLSX from "xlsx";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 
@@ -164,6 +165,24 @@ export default function ComprobantesEgresoList() {
     fecha_desde: "",
     fecha_hasta: "",
   });
+
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [registrosPorPagina, setRegistrosPorPagina] = useState(50);
+
+  const [orden, setOrden] = useState({
+    campo: "fechacomprobante",
+    direccion: "desc",
+  });
+
+  const cambiarOrden = (campo) => {
+    setOrden((prev) => ({
+      campo,
+      direccion:
+        prev.campo === campo && prev.direccion === "asc"
+          ? "desc"
+          : "asc",
+    }));
+  };
 
   const onFiltroChange = (e) => {
     const { name, value } = e.target;
@@ -541,6 +560,140 @@ export default function ComprobantesEgresoList() {
     () => comprobantesFiltrados.reduce((acc, c) => acc + (Number(c.total) || 0), 0),
     [comprobantesFiltrados]
   );
+
+  const comprobantesOrdenados = useMemo(() => {
+    const arr = [...comprobantesFiltrados];
+
+    const obtenerValor = (comp, campo) => {
+      switch (campo) {
+        case "proveedor":
+          return proveedoresTabla.find(
+            (p) => Number(p.id) === Number(comp.proveedor_id)
+          )?.nombre || "";
+
+        case "tipo":
+          return tiposComprobanteById[comp.tipocomprobante_id] || "";
+
+        case "empresa":
+          return empresasById[comp.empresa_id] || "";
+
+        case "formapago":
+          return formasPagoTesoreria.find(
+            (fp) => Number(fp.id) === Number(comp.formapago_id)
+          )?.descripcion || "";
+
+        default:
+          return comp[campo];
+      }
+    };
+
+    const camposNumericos = [
+      "id", "neto", "iva105", "iva21",
+      "total", "hacienda_id",
+    ];
+
+    arr.sort((a, b) => {
+      const va = obtenerValor(a, orden.campo);
+      const vb = obtenerValor(b, orden.campo);
+
+      let resultado = 0;
+
+      if (camposNumericos.includes(orden.campo)) {
+        resultado = Number(va || 0) - Number(vb || 0);
+      } else {
+        resultado = String(va ?? "").localeCompare(
+          String(vb ?? ""),
+          "es",
+          { numeric: true, sensitivity: "base" }
+        );
+      }
+
+      if (resultado === 0) {
+        resultado = Number(a.id) - Number(b.id);
+      }
+
+      return orden.direccion === "asc" ? resultado : -resultado;
+    });
+
+    return arr;
+  }, [
+    comprobantesFiltrados,
+    orden,
+    proveedoresTabla,
+    tiposComprobanteById,
+    empresasById,
+    formasPagoTesoreria,
+  ]);
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(comprobantesOrdenados.length / registrosPorPagina)
+  );
+
+  const paginaVisible = Math.min(paginaActual, totalPaginas);
+
+  const comprobantesPaginados = useMemo(() => {
+    const inicio = (paginaVisible - 1) * registrosPorPagina;
+
+    return comprobantesOrdenados.slice(
+      inicio,
+      inicio + registrosPorPagina
+    );
+  }, [comprobantesOrdenados, paginaVisible, registrosPorPagina]);
+
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [filtros, registrosPorPagina, orden]);
+
+  const exportarExcel = () => {
+    const datos = comprobantesOrdenados.map((comp) => ({
+      ID: comp.id,
+      Comprobante: comp.nrocomprobante,
+      Tipo:
+        tiposComprobanteById[comp.tipocomprobante_id] ||
+        comp.tipocomprobante_id,
+      Fecha: comp.fechacomprobante,
+      Neto: Number(comp.neto || 0),
+      "IVA 10,5 %": Number(comp.iva105 || 0),
+      "IVA 21 %": Number(comp.iva21 || 0),
+      Total: Number(comp.total || 0),
+      Proveedor:
+        proveedoresTabla.find(
+          (p) => Number(p.id) === Number(comp.proveedor_id)
+        )?.nombre || comp.proveedor_id,
+      Empresa:
+        empresasById[comp.empresa_id] || comp.empresa_id,
+      Hacienda: comp.hacienda_id || "",
+      "Forma de Pago":
+        formasPagoTesoreria.find(
+          (fp) => Number(fp.id) === Number(comp.formapago_id)
+        )?.descripcion || "VARIOS",
+      "Estado Pago": comp.estadopago,
+    }));
+
+    const hoja = XLSX.utils.json_to_sheet(datos);
+
+    hoja["!cols"] = [
+      { wch: 10 }, { wch: 18 }, { wch: 20 },
+      { wch: 15 }, { wch: 18 }, { wch: 18 },
+      { wch: 18 }, { wch: 18 }, { wch: 35 },
+      { wch: 25 }, { wch: 15 }, { wch: 22 },
+      { wch: 18 },
+    ];
+
+    const libro = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      libro,
+      hoja,
+      "Comprobantes de Egreso"
+    );
+
+    XLSX.writeFile(
+      libro,
+      "Comprobantes_Egreso.xlsx"
+    );
+  };
 
   // === LCD Flags ===
   const esLCDCreate = useMemo(() => {
@@ -1447,7 +1600,9 @@ export default function ComprobantesEgresoList() {
           // OJO: default usa formapago_id de la fila…
           formapago_id: p.formapago_id ? Number(p.formapago_id) : null,
           monto: Number(p.monto || 0),
-          fecha: p.fecha || nuevoComprobante.fechapago || nuevoComprobante.fechacomprobante,
+          fecha: usaExistente
+            ? (p.fecha || null)
+            : (nuevoComprobante.fechapago || null),
           detalle: p.detalle || null,
           categoriaegreso_id: p.categoriaegreso_id
             ? Number(p.categoriaegreso_id)
@@ -1964,6 +2119,15 @@ export default function ComprobantesEgresoList() {
 
         <div>
           <Button
+            variant="outline-success"
+            className="mx-2"
+            onClick={exportarExcel}
+            disabled={comprobantesOrdenados.length === 0}
+          >
+            Exportar Excel
+          </Button>
+
+          <Button
             className="mx-2"
             variant="success"
             disabled={!empresaSeleccionada}
@@ -2008,79 +2172,162 @@ export default function ComprobantesEgresoList() {
           </Button>
         </div>
       </div>
-
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Comprobante</th>
-            <th>Tipo</th>
-            <th>Fecha</th>
-            <th>Total</th>
-            <th>Proveedor</th>
-            <th>Empresa</th>
-            <th>Hacienda</th>
-            <th>Forma de Pago</th>
-            <th>Estado Pago</th>
-            <th>Acciones</th>
-
-          </tr>
-        </thead>
-        <tbody>
-          {comprobantesFiltrados.map((comp) => (
-            <tr
-              key={comp.id}
-              onDoubleClick={() => handleDoubleClick(comp)}
-              style={{ cursor: "pointer" }}
-            >
-              <td>{comp.id}</td>
-              <td>{comp.nrocomprobante}</td>
-              <td>{tiposComprobanteById[comp.tipocomprobante_id] || comp.tipocomprobante_id}</td>
-              <td>{comp.fechacomprobante || ""}</td>
-              <td>{fmtMoney(comp.total)}</td>
-              <td>
-                {proveedoresTabla.find((p) => p.id === comp.proveedor_id)?.nombre ||
-                  comp.proveedor_id}
-              </td>
-              <td>
-                {empresaSeleccionada?.id
-                  ? empresaSeleccionada.descripcion ||
-                  empresaSeleccionada.razon_social ||
-                  `Empresa ${empresaSeleccionada.id}`
-                  : empresasById[comp.empresa_id] || comp.empresa_id}
-              </td>
-              <td>{comp.hacienda_id || "-"}</td>
-              <td>
-                {comp.formapago_id
-                  ? formasPagoTesoreria.find(
-                    (fp) => Number(fp.id) === Number(comp.formapago_id)
-                  )?.descripcion || comp.formapago_id
-                  : "VARIOS"}
-              </td>
-              <td>{comp.estadopago}</td>
-              <td>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  disabled={
-                    !puedeEliminarComprobante(comp) ||
-                    deletingId === comp.id
-                  }
-                  onClick={() => handleEliminar(comp)}
-                  title={
-                    puedeEliminarComprobante(comp)
-                      ? "Eliminar"
-                      : "Sólo comprobantes IMPAGOS o notas de crédito sin pago"
-                  }
+      <div style={{ overflowX: "auto" }}>
+        <Table striped bordered hover size="sm" className="align-middle">
+          <thead>
+            <tr>
+              {[
+                ["id", "#"],
+                ["nrocomprobante", "Comprobante"],
+                ["tipo", "Tipo"],
+                ["fechacomprobante", "Fecha"],
+                ["neto", "Neto"],
+                ["iva105", "IVA 10,5 %"],
+                ["iva21", "IVA 21 %"],
+                ["total", "Total"],
+                ["proveedor", "Proveedor"],
+                ["empresa", "Empresa"],
+                ["hacienda_id", "Hacienda"],
+                ["formapago", "Forma de Pago"],
+                ["estadopago", "Estado Pago"],
+              ].map(([campo, titulo]) => (
+                <th
+                  key={campo}
+                  onClick={() => cambiarOrden(campo)}
+                  style={{ cursor: "pointer", whiteSpace: "nowrap" }}
                 >
-                  {deletingId === comp.id ? "Eliminando…" : "Eliminar"}
-                </Button>
-              </td>
-
+                  {titulo}
+                  {orden.campo === campo
+                    ? orden.direccion === "asc" ? " ▲" : " ▼"
+                    : ""}
+                </th>
+              ))}
+              <th>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+
+          <tbody>
+            {comprobantesPaginados.map((comp) => (
+              <tr
+                key={comp.id}
+                onDoubleClick={() => handleDoubleClick(comp)}
+                style={{ cursor: "pointer" }}
+              >
+                <td>{comp.id}</td>
+                <td>{comp.nrocomprobante}</td>
+                <td>
+                  {tiposComprobanteById[comp.tipocomprobante_id] ||
+                    comp.tipocomprobante_id}
+                </td>
+                <td>{comp.fechacomprobante || ""}</td>
+                <td className="text-end">{fmtMoney(comp.neto)}</td>
+                <td className="text-end">{fmtMoney(comp.iva105)}</td>
+                <td className="text-end">{fmtMoney(comp.iva21)}</td>
+                <td className="text-end">{fmtMoney(comp.total)}</td>
+                <td>
+                  {proveedoresTabla.find(
+                    (p) => Number(p.id) === Number(comp.proveedor_id)
+                  )?.nombre || comp.proveedor_id}
+                </td>
+                <td>
+                  {empresasById[comp.empresa_id] || comp.empresa_id}
+                </td>
+                <td>{comp.hacienda_id || "-"}</td>
+                <td>
+                  {comp.formapago_id
+                    ? formasPagoTesoreria.find(
+                      (fp) => Number(fp.id) === Number(comp.formapago_id)
+                    )?.descripcion || comp.formapago_id
+                    : "VARIOS"}
+                </td>
+                <td>{comp.estadopago}</td>
+                <td>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    disabled={
+                      !puedeEliminarComprobante(comp) ||
+                      deletingId === comp.id
+                    }
+                    onClick={() => handleEliminar(comp)}
+                    title={
+                      puedeEliminarComprobante(comp)
+                        ? "Eliminar"
+                        : "Sólo comprobantes IMPAGOS o notas de crédito sin pago"
+                    }
+                  >
+                    {deletingId === comp.id ? "Eliminando…" : "Eliminar"}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+
+      <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div className="d-flex align-items-center gap-2">
+          <span>Mostrar</span>
+
+          <Form.Select
+            size="sm"
+            style={{ width: 90 }}
+            value={registrosPorPagina}
+            onChange={(e) => setRegistrosPorPagina(Number(e.target.value))}
+          >
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </Form.Select>
+
+          <span>
+            de {comprobantesOrdenados.length} registros
+          </span>
+        </div>
+
+        <div className="d-flex align-items-center gap-2">
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            disabled={paginaVisible === 1}
+            onClick={() => setPaginaActual(1)}
+          >
+            Primera
+          </Button>
+
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            disabled={paginaVisible === 1}
+            onClick={() => setPaginaActual(paginaVisible - 1)}
+          >
+            Anterior
+          </Button>
+
+          <span>
+            Página {paginaVisible} de {totalPaginas}
+          </span>
+
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            disabled={paginaVisible === totalPaginas}
+            onClick={() => setPaginaActual(paginaVisible + 1)}
+          >
+            Siguiente
+          </Button>
+
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            disabled={paginaVisible === totalPaginas}
+            onClick={() => setPaginaActual(totalPaginas)}
+          >
+            Última
+          </Button>
+        </div>
+      </div>
+
 
       {/* ===== Modal de edición ===== */}
       <Modal show={showModal} onHide={handleCloseModal} backdrop="static" centered size="lg">

@@ -1,4 +1,5 @@
 // pages/inventarios/crearMovimientosOtros.js
+// src/pages/rinde/inventarios/crearMovimientosOtros.js
 
 import React, {
   useContext,
@@ -18,7 +19,6 @@ import * as XLSX from "xlsx";
 
 import Contexts from "../../../context/Contexts";
 
-
 const CrearMovimientosOtros = () => {
 
   // =====================================================
@@ -29,7 +29,6 @@ const CrearMovimientosOtros = () => {
     sucursalesTabla,
     articulosTabla
   } = useContext(Contexts.DataContext);
-
 
   // =====================================================
   // ESTADOS GENERALES
@@ -60,13 +59,11 @@ const CrearMovimientosOtros = () => {
   const [movimientosPegados, setMovimientosPegados] =
     useState([]);
 
-
   const apiUrl =
     process.env.REACT_APP_API_URL;
 
-
   // =====================================================
-  // HELPERS
+  // CONFIGURACIÓN DEL MOVIMIENTO
   // =====================================================
 
   const obtenerConfiguracionMovimiento = () => {
@@ -85,131 +82,134 @@ const CrearMovimientosOtros = () => {
       };
     }
 
+    // NUEVO TIPO DE MOVIMIENTO
+    if (tipoMovimiento === "Otros") {
+      return {
+        tipo: "OTROS",
+        sucursal_codigo: 1
+      };
+    }
+
     return {
       tipo: "",
       sucursal_codigo: ""
     };
   };
 
+  // =====================================================
+  // BUSCAR ARTÍCULO
+  // =====================================================
 
   const buscarArticulo = (codigo) => {
 
     const codigoNormalizado =
-      String(codigo || "").trim();
+      String(codigo ?? "").trim();
 
     return (
-      articulosTabla.find(
+      (articulosTabla || []).find(
         (articulo) =>
           String(
-            articulo.codigobarra || ""
+            articulo.codigobarra ?? ""
           ).trim() === codigoNormalizado
       ) || null
     );
   };
 
+  // =====================================================
+  // BUSCAR SUCURSAL
+  // =====================================================
 
   const buscarSucursal = (codigo) => {
 
     const codigoNormalizado =
-      String(codigo || "").trim();
+      String(codigo ?? "").trim();
 
     return (
-      sucursalesTabla.find(
+      (sucursalesTabla || []).find(
         (sucursal) =>
           String(
-            sucursal.codigo || ""
+            sucursal.codigo ?? ""
           ).trim() === codigoNormalizado
       ) || null
     );
   };
 
+  // =====================================================
+  // VALIDAR FECHA
+  // =====================================================
 
   const validarFecha = (valor) => {
 
     const fecha =
-      String(valor || "").trim();
+      String(valor ?? "").trim();
 
     if (!fecha) {
       return false;
     }
 
+    let dia;
+    let mes;
+    let anio;
+
     // dd/mm/yyyy
-    if (fecha.includes("/")) {
+    if (
+      /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(fecha)
+    ) {
 
-      const partes =
-        fecha.split("/");
-
-      if (partes.length !== 3) {
-        return false;
-      }
-
-      const [
-        dia,
-        mes,
-        anio
-      ] = partes.map(Number);
-
-      if (
-        !dia ||
-        !mes ||
-        !anio
-      ) {
-        return false;
-      }
-
-      const fechaJS =
-        new Date(
-          anio,
-          mes - 1,
-          dia
-        );
-
-      return (
-        fechaJS.getFullYear() === anio &&
-        fechaJS.getMonth() === mes - 1 &&
-        fechaJS.getDate() === dia
-      );
-    }
-
+      [dia, mes, anio] =
+        fecha.split("/").map(Number);
 
     // yyyy-mm-dd
-    const partesISO =
-      fecha.split("-");
+    } else if (
+      /^\d{4}-\d{1,2}-\d{1,2}$/.test(fecha)
+    ) {
 
-    if (partesISO.length === 3) {
+      [anio, mes, dia] =
+        fecha.split("-").map(Number);
 
-      const [
-        anio,
-        mes,
-        dia
-      ] = partesISO.map(Number);
-
-      const fechaJS =
-        new Date(
-          anio,
-          mes - 1,
-          dia
-        );
-
-      return (
-        fechaJS.getFullYear() === anio &&
-        fechaJS.getMonth() === mes - 1 &&
-        fechaJS.getDate() === dia
-      );
+    } else {
+      return false;
     }
 
+    if (
+      !dia ||
+      !mes ||
+      !anio ||
+      anio < 1000
+    ) {
+      return false;
+    }
 
-    return false;
+    const fechaJS =
+      new Date(
+        anio,
+        mes - 1,
+        dia
+      );
+
+    return (
+      fechaJS.getFullYear() === anio &&
+      fechaJS.getMonth() === mes - 1 &&
+      fechaJS.getDate() === dia
+    );
   };
 
+  // =====================================================
+  // VALIDAR CANTIDAD
+  // =====================================================
 
   const validarCantidad = (valor) => {
 
+    const texto =
+      String(valor ?? "").trim();
+
+    if (!texto) {
+      return false;
+    }
+
     const numero =
       Number(
-        String(valor ?? "")
-          .trim()
-          .replace(",", ".")
+        texto.replace(",", ".")
       );
 
     return (
@@ -217,7 +217,6 @@ const CrearMovimientosOtros = () => {
       numero > 0
     );
   };
-
 
   // =====================================================
   // CAMBIO DE TIPO
@@ -230,12 +229,12 @@ const CrearMovimientosOtros = () => {
     );
 
     // Limpiamos cargas anteriores
+    setFile(null);
     setMovimientosPegados([]);
     setTextoPegado("");
     setUploadMessage("");
     setUploadSuccess(false);
   };
-
 
   // =====================================================
   // CARGA TRADICIONAL POR ARCHIVO
@@ -244,10 +243,12 @@ const CrearMovimientosOtros = () => {
   const handleFileChange = (event) => {
 
     setFile(
-      event.target.files[0]
+      event.target.files?.[0] || null
     );
-  };
 
+    setUploadMessage("");
+    setUploadSuccess(false);
+  };
 
   const handleUpload = async () => {
 
@@ -265,18 +266,15 @@ const CrearMovimientosOtros = () => {
       return;
     }
 
-
     try {
 
       setButtonDisabled(true);
-
 
       const {
         tipo,
         sucursal_codigo
       } =
         obtenerConfiguracionMovimiento();
-
 
       const formData =
         new FormData();
@@ -296,7 +294,6 @@ const CrearMovimientosOtros = () => {
         sucursal_codigo
       );
 
-
       const response =
         await fetch(
           `${apiUrl}/movimientos-otro-excel`,
@@ -307,10 +304,8 @@ const CrearMovimientosOtros = () => {
           }
         );
 
-
       const data =
         await response.json();
-
 
       if (response.ok) {
 
@@ -320,6 +315,8 @@ const CrearMovimientosOtros = () => {
           data.mensaje ||
           "Archivo procesado correctamente."
         );
+
+        setFile(null);
 
       } else {
 
@@ -351,7 +348,6 @@ const CrearMovimientosOtros = () => {
     }
   };
 
-
   const handleUploadButtonClick = () => {
 
     if (!file) {
@@ -365,21 +361,9 @@ const CrearMovimientosOtros = () => {
       return;
     }
 
-
-    const reader =
-      new FileReader();
-
-
-    reader.onload = () => {
-
-      // Conservamos la lógica actual.
-      handleUpload();
-    };
-
-
-    reader.readAsArrayBuffer(file);
+    // El archivo se envía directamente al backend.
+    handleUpload();
   };
-
 
   // =====================================================
   // PEGAR DESDE EXCEL
@@ -389,24 +373,20 @@ const CrearMovimientosOtros = () => {
 
     e.preventDefault();
 
-
     const texto =
       e.clipboardData.getData(
         "text/plain"
       );
 
-
     if (!texto) {
       return;
     }
-
 
     let lineas =
       String(texto)
         .replace(/\r\n/g, "\n")
         .replace(/\r/g, "\n")
         .split("\n");
-
 
     // Excel suele agregar una línea vacía al final.
     while (
@@ -418,9 +398,7 @@ const CrearMovimientosOtros = () => {
       lineas.pop();
     }
 
-
     const nuevosMovimientos = [];
-
 
     lineas.forEach(
       (linea) => {
@@ -429,10 +407,8 @@ const CrearMovimientosOtros = () => {
           return;
         }
 
-
         const columnas =
           linea.split("\t");
-
 
         // Deben venir exactamente 5 columnas.
         if (columnas.length !== 5) {
@@ -441,29 +417,29 @@ const CrearMovimientosOtros = () => {
 
             fecha:
               String(
-                columnas[0] || ""
+                columnas[0] ?? ""
               ).trim(),
 
             articulocodigo:
               String(
-                columnas[1] || ""
+                columnas[1] ?? ""
               ).trim(),
 
             articulodescripcion: "",
 
             cantidad:
               String(
-                columnas[2] || ""
+                columnas[2] ?? ""
               ).trim(),
 
             remito:
               String(
-                columnas[3] || ""
+                columnas[3] ?? ""
               ).trim(),
 
             sucursaldestino_codigo:
               String(
-                columnas[4] || ""
+                columnas[4] ?? ""
               ).trim(),
 
             sucursaldestino_nombre: "",
@@ -478,36 +454,30 @@ const CrearMovimientosOtros = () => {
           return;
         }
 
-
         const fecha =
           String(
-            columnas[0] || ""
+            columnas[0] ?? ""
           ).trim();
-
 
         const articulocodigo =
           String(
-            columnas[1] || ""
+            columnas[1] ?? ""
           ).trim();
-
 
         const cantidad =
           String(
-            columnas[2] || ""
+            columnas[2] ?? ""
           ).trim();
-
 
         const remito =
           String(
-            columnas[3] || ""
+            columnas[3] ?? ""
           ).trim();
-
 
         const sucursaldestino_codigo =
           String(
-            columnas[4] || ""
+            columnas[4] ?? ""
           ).trim();
-
 
         // -----------------------------------------
         // BUSCAR ARTÍCULO
@@ -518,7 +488,6 @@ const CrearMovimientosOtros = () => {
             articulocodigo
           );
 
-
         // -----------------------------------------
         // BUSCAR SUCURSAL
         // -----------------------------------------
@@ -527,7 +496,6 @@ const CrearMovimientosOtros = () => {
           buscarSucursal(
             sucursaldestino_codigo
           );
-
 
         nuevosMovimientos.push({
 
@@ -553,7 +521,6 @@ const CrearMovimientosOtros = () => {
           sucursaldestino_nombre:
             sucursal?.nombre || "",
 
-
           errorEstructura: false,
 
           errorFecha:
@@ -568,22 +535,18 @@ const CrearMovimientosOtros = () => {
           errorSucursal:
             !sucursal
         });
-
       }
     );
-
 
     setMovimientosPegados(
       nuevosMovimientos
     );
-
 
     setTextoPegado("");
 
     setUploadMessage("");
     setUploadSuccess(false);
   };
-
 
   // =====================================================
   // CORREGIR FECHA
@@ -606,20 +569,17 @@ const CrearMovimientosOtros = () => {
             return {
               ...item,
 
-              fecha:
-                valor,
+              fecha: valor,
 
               errorFecha:
                 !validarFecha(valor),
 
-              errorEstructura:
-                false
+              errorEstructura: false
             };
           }
         )
     );
   };
-
 
   // =====================================================
   // CORREGIR ARTÍCULO
@@ -631,14 +591,12 @@ const CrearMovimientosOtros = () => {
   ) => {
 
     const codigoLimpio =
-      String(codigo || "").trim();
-
+      String(codigo ?? "").trim();
 
     const articulo =
       buscarArticulo(
         codigoLimpio
       );
-
 
     setMovimientosPegados(
       (prev) =>
@@ -649,13 +607,11 @@ const CrearMovimientosOtros = () => {
               return item;
             }
 
-
             return {
 
               ...item,
 
-              articulocodigo:
-                codigo,
+              articulocodigo: codigo,
 
               articulo_id:
                 articulo?.id || "",
@@ -666,14 +622,12 @@ const CrearMovimientosOtros = () => {
               errorArticulo:
                 !articulo,
 
-              errorEstructura:
-                false
+              errorEstructura: false
             };
           }
         )
     );
   };
-
 
   // =====================================================
   // CORREGIR CANTIDAD
@@ -697,20 +651,17 @@ const CrearMovimientosOtros = () => {
 
               ...item,
 
-              cantidad:
-                valor,
+              cantidad: valor,
 
               errorCantidad:
                 !validarCantidad(valor),
 
-              errorEstructura:
-                false
+              errorEstructura: false
             };
           }
         )
     );
   };
-
 
   // =====================================================
   // CORREGIR REMITO
@@ -739,7 +690,6 @@ const CrearMovimientosOtros = () => {
     );
   };
 
-
   // =====================================================
   // CORREGIR SUCURSAL
   // =====================================================
@@ -750,14 +700,12 @@ const CrearMovimientosOtros = () => {
   ) => {
 
     const codigoLimpio =
-      String(codigo || "").trim();
-
+      String(codigo ?? "").trim();
 
     const sucursal =
       buscarSucursal(
         codigoLimpio
       );
-
 
     setMovimientosPegados(
       (prev) =>
@@ -768,13 +716,11 @@ const CrearMovimientosOtros = () => {
               return item;
             }
 
-
             return {
 
               ...item,
 
-              sucursaldestino_codigo:
-                codigo,
+              sucursaldestino_codigo: codigo,
 
               sucursaldestino_id:
                 sucursal?.id || "",
@@ -785,14 +731,12 @@ const CrearMovimientosOtros = () => {
               errorSucursal:
                 !sucursal,
 
-              errorEstructura:
-                false
+              errorEstructura: false
             };
           }
         )
     );
   };
-
 
   // =====================================================
   // ELIMINAR FILA
@@ -811,7 +755,6 @@ const CrearMovimientosOtros = () => {
     );
   };
 
-
   // =====================================================
   // VALIDACIÓN GLOBAL
   // =====================================================
@@ -825,7 +768,6 @@ const CrearMovimientosOtros = () => {
         item.errorCantidad ||
         item.errorSucursal
     );
-
 
   // =====================================================
   // GUARDAR MOVIMIENTOS PEGADOS
@@ -844,7 +786,6 @@ const CrearMovimientosOtros = () => {
       return;
     }
 
-
     if (
       movimientosPegados.length === 0
     ) {
@@ -858,7 +799,6 @@ const CrearMovimientosOtros = () => {
       return;
     }
 
-
     if (hayErrores) {
 
       setUploadSuccess(false);
@@ -870,18 +810,15 @@ const CrearMovimientosOtros = () => {
       return;
     }
 
-
     try {
 
       setButtonDisabled(true);
-
 
       const {
         tipo,
         sucursal_codigo
       } =
         obtenerConfiguracionMovimiento();
-
 
       // Enviamos solamente los campos que necesita
       // el backend.
@@ -908,7 +845,7 @@ const CrearMovimientosOtros = () => {
 
             remito:
               String(
-                item.remito || ""
+                item.remito ?? ""
               ).trim(),
 
             sucursaldestino_codigo:
@@ -917,7 +854,6 @@ const CrearMovimientosOtros = () => {
               ).trim()
           })
         );
-
 
       const response =
         await fetch(
@@ -942,10 +878,8 @@ const CrearMovimientosOtros = () => {
           }
         );
 
-
       const data =
         await response.json();
-
 
       if (!response.ok) {
 
@@ -955,7 +889,6 @@ const CrearMovimientosOtros = () => {
         );
       }
 
-
       setUploadSuccess(true);
 
       setUploadMessage(
@@ -963,10 +896,8 @@ const CrearMovimientosOtros = () => {
         "Movimientos creados correctamente."
       );
 
-
       setMovimientosPegados([]);
       setTextoPegado("");
-
 
     } catch (error) {
 
@@ -987,7 +918,6 @@ const CrearMovimientosOtros = () => {
     }
   };
 
-
   // =====================================================
   // DESCARGAR PLANTILLA
   // =====================================================
@@ -996,7 +926,6 @@ const CrearMovimientosOtros = () => {
 
     const workbook =
       XLSX.utils.book_new();
-
 
     // ---------------------------------------------------
     // HOJA CARGA
@@ -1012,12 +941,10 @@ const CrearMovimientosOtros = () => {
       ]
     ];
 
-
     const worksheet =
       XLSX.utils.aoa_to_sheet(
         headers
       );
-
 
     worksheet["!cols"] = [
       { wch: 15 },
@@ -1027,42 +954,37 @@ const CrearMovimientosOtros = () => {
       { wch: 25 }
     ];
 
-
     XLSX.utils.book_append_sheet(
       workbook,
       worksheet,
       "Carga"
     );
 
-
     // ---------------------------------------------------
     // HOJA ARTÍCULOS
     // ---------------------------------------------------
 
     const datosArticulos =
-      articulosTabla.map(
+      (articulosTabla || []).map(
         (articulo) => ({
 
           codigo:
-            articulo.codigobarra || "",
+            articulo.codigobarra ?? "",
 
           descripcion:
-            articulo.descripcion || ""
+            articulo.descripcion ?? ""
         })
       );
-
 
     const hojaArticulos =
       XLSX.utils.json_to_sheet(
         datosArticulos
       );
 
-
     hojaArticulos["!cols"] = [
       { wch: 20 },
       { wch: 50 }
     ];
-
 
     XLSX.utils.book_append_sheet(
       workbook,
@@ -1070,35 +992,31 @@ const CrearMovimientosOtros = () => {
       "Articulos"
     );
 
-
     // ---------------------------------------------------
     // HOJA SUCURSALES
     // ---------------------------------------------------
 
     const datosSucursales =
-      sucursalesTabla.map(
+      (sucursalesTabla || []).map(
         (sucursal) => ({
 
           codigo:
-            sucursal.codigo || "",
+            sucursal.codigo ?? "",
 
           nombre:
-            sucursal.nombre || ""
+            sucursal.nombre ?? ""
         })
       );
-
 
     const hojaSucursales =
       XLSX.utils.json_to_sheet(
         datosSucursales
       );
 
-
     hojaSucursales["!cols"] = [
       { wch: 15 },
       { wch: 40 }
     ];
-
 
     XLSX.utils.book_append_sheet(
       workbook,
@@ -1106,13 +1024,11 @@ const CrearMovimientosOtros = () => {
       "Sucursales"
     );
 
-
     XLSX.writeFile(
       workbook,
       "MovimientosOtrosTemplate.xlsx"
     );
   };
-
 
   // =====================================================
   // RENDER
@@ -1126,6 +1042,9 @@ const CrearMovimientosOtros = () => {
         Cargar Movimientos Otros
       </h1>
 
+      {/* ========================================= */}
+      {/* MENSAJES                                  */}
+      {/* ========================================= */}
 
       {uploadSuccess && (
 
@@ -1135,9 +1054,7 @@ const CrearMovimientosOtros = () => {
         >
           {uploadMessage}
         </Alert>
-
       )}
-
 
       {!uploadSuccess &&
         uploadMessage && (
@@ -1148,11 +1065,12 @@ const CrearMovimientosOtros = () => {
           >
             {uploadMessage}
           </Alert>
-
         )}
 
-
-      <Form className="vt-form">
+      <Form
+        className="vt-form"
+        onSubmit={(e) => e.preventDefault()}
+      >
 
         {/* ========================================= */}
         {/* TIPO MOVIMIENTO                           */}
@@ -1173,6 +1091,7 @@ const CrearMovimientosOtros = () => {
               handleTipoMovimientoChange
             }
             className="vt-input"
+            disabled={buttonDisabled}
           >
 
             <option value="">
@@ -1187,10 +1106,15 @@ const CrearMovimientosOtros = () => {
               Achuras
             </option>
 
+            {/* NUEVO TIPO */}
+
+            <option value="Otros">
+              Otros
+            </option>
+
           </Form.Select>
 
         </Form.Group>
-
 
         {/* ========================================= */}
         {/* BOTONES MODO                              */}
@@ -1201,32 +1125,37 @@ const CrearMovimientosOtros = () => {
           <div className="d-flex gap-2 mb-3">
 
             <Button
+              type="button"
               variant={
                 !modoPegado
                   ? "primary"
                   : "outline-primary"
               }
+              disabled={buttonDisabled}
               onClick={() => {
 
                 setModoPegado(false);
                 setUploadMessage("");
+                setUploadSuccess(false);
 
               }}
             >
               Cargar archivo
             </Button>
 
-
             <Button
+              type="button"
               variant={
                 modoPegado
                   ? "primary"
                   : "outline-primary"
               }
+              disabled={buttonDisabled}
               onClick={() => {
 
                 setModoPegado(true);
                 setUploadMessage("");
+                setUploadSuccess(false);
 
               }}
             >
@@ -1234,9 +1163,7 @@ const CrearMovimientosOtros = () => {
             </Button>
 
           </div>
-
         )}
-
 
         {/* ========================================= */}
         {/* MODO ARCHIVO                              */}
@@ -1257,18 +1184,20 @@ const CrearMovimientosOtros = () => {
                 </Form.Label>
 
                 <Form.Control
+                  key={tipoMovimiento}
                   type="file"
                   accept=".xlsx,.xls"
                   onChange={
                     handleFileChange
                   }
                   className="vt-input"
+                  disabled={buttonDisabled}
                 />
 
               </Form.Group>
 
-
               <Button
+                type="button"
                 variant="primary"
                 onClick={
                   handleUploadButtonClick
@@ -1279,13 +1208,13 @@ const CrearMovimientosOtros = () => {
                 }
                 className="vt-btn"
               >
-                Subir Movimientos
+                {buttonDisabled
+                  ? "Procesando..."
+                  : "Subir Movimientos"}
               </Button>
 
             </>
-
           )}
-
 
         {/* ========================================= */}
         {/* MODO PEGADO                               */}
@@ -1319,6 +1248,7 @@ const CrearMovimientosOtros = () => {
                     onPaste={
                       handlePaste
                     }
+                    disabled={buttonDisabled}
                   />
 
                   <Form.Text muted>
@@ -1332,6 +1262,9 @@ const CrearMovimientosOtros = () => {
 
               </Card>
 
+              {/* ========================================= */}
+              {/* GRILLA DE MOVIMIENTOS                     */}
+              {/* ========================================= */}
 
               {movimientosPegados.length > 0 && (
 
@@ -1346,45 +1279,18 @@ const CrearMovimientosOtros = () => {
                   <thead>
 
                     <tr>
-
                       <th>Fecha</th>
-
-                      <th>
-                        Código
-                      </th>
-
-                      <th>
-                        Producto
-                      </th>
-
-                      <th>
-                        Cantidad
-                      </th>
-
-                      <th>
-                        Remito
-                      </th>
-
-                      <th>
-                        Cód. sucursal
-                      </th>
-
-                      <th>
-                        Sucursal destino
-                      </th>
-
-                      <th>
-                        Estado
-                      </th>
-
-                      <th>
-                        Acción
-                      </th>
-
+                      <th>Código</th>
+                      <th>Producto</th>
+                      <th>Cantidad</th>
+                      <th>Remito</th>
+                      <th>Cód. sucursal</th>
+                      <th>Sucursal destino</th>
+                      <th>Estado</th>
+                      <th>Acción</th>
                     </tr>
 
                   </thead>
-
 
                   <tbody>
 
@@ -1397,7 +1303,6 @@ const CrearMovimientosOtros = () => {
                           item.errorArticulo ||
                           item.errorCantidad ||
                           item.errorSucursal;
-
 
                         return (
 
@@ -1429,10 +1334,10 @@ const CrearMovimientosOtros = () => {
                                     e.target.value
                                   )
                                 }
+                                disabled={buttonDisabled}
                               />
 
                             </td>
-
 
                             {/* CÓDIGO ARTÍCULO */}
 
@@ -1453,10 +1358,10 @@ const CrearMovimientosOtros = () => {
                                     e.target.value
                                   )
                                 }
+                                disabled={buttonDisabled}
                               />
 
                             </td>
-
 
                             {/* DESCRIPCIÓN */}
 
@@ -1471,15 +1376,12 @@ const CrearMovimientosOtros = () => {
                               ) : (
 
                                 <span className="text-success">
-                                  {
-                                    item.articulodescripcion
-                                  }
+                                  {item.articulodescripcion}
                                 </span>
 
                               )}
 
                             </td>
-
 
                             {/* CANTIDAD */}
 
@@ -1500,10 +1402,10 @@ const CrearMovimientosOtros = () => {
                                     e.target.value
                                   )
                                 }
+                                disabled={buttonDisabled}
                               />
 
                             </td>
-
 
                             {/* REMITO */}
 
@@ -1521,10 +1423,10 @@ const CrearMovimientosOtros = () => {
                                     e.target.value
                                   )
                                 }
+                                disabled={buttonDisabled}
                               />
 
                             </td>
-
 
                             {/* CÓDIGO SUCURSAL */}
 
@@ -1545,10 +1447,10 @@ const CrearMovimientosOtros = () => {
                                     e.target.value
                                   )
                                 }
+                                disabled={buttonDisabled}
                               />
 
                             </td>
-
 
                             {/* NOMBRE SUCURSAL */}
 
@@ -1563,15 +1465,12 @@ const CrearMovimientosOtros = () => {
                               ) : (
 
                                 <span className="text-success fw-bold">
-                                  {
-                                    item.sucursaldestino_nombre
-                                  }
+                                  {item.sucursaldestino_nombre}
                                 </span>
 
                               )}
 
                             </td>
-
 
                             {/* ESTADO */}
 
@@ -1617,19 +1516,18 @@ const CrearMovimientosOtros = () => {
 
                             </td>
 
-
                             {/* ELIMINAR */}
 
                             <td>
 
                               <Button
+                                type="button"
                                 variant="danger"
                                 size="sm"
                                 onClick={() =>
-                                  eliminarMovimiento(
-                                    index
-                                  )
+                                  eliminarMovimiento(index)
                                 }
+                                disabled={buttonDisabled}
                               >
                                 X
                               </Button>
@@ -1637,7 +1535,6 @@ const CrearMovimientosOtros = () => {
                             </td>
 
                           </tr>
-
                         );
                       }
                     )}
@@ -1645,13 +1542,16 @@ const CrearMovimientosOtros = () => {
                   </tbody>
 
                 </Table>
-
               )}
 
+              {/* ========================================= */}
+              {/* GUARDAR MOVIMIENTOS                       */}
+              {/* ========================================= */}
 
               {movimientosPegados.length > 0 && (
 
                 <Button
+                  type="button"
                   variant="success"
                   onClick={
                     guardarPegados
@@ -1670,9 +1570,7 @@ const CrearMovimientosOtros = () => {
               )}
 
             </>
-
           )}
-
 
         {/* ========================================= */}
         {/* DESCARGAR PLANTILLA                       */}
@@ -1681,17 +1579,18 @@ const CrearMovimientosOtros = () => {
         <div className="mt-3">
 
           <Button
+            type="button"
             variant="secondary"
             onClick={
               downloadTemplate
             }
             className="vt-btn-secondary"
+            disabled={buttonDisabled}
           >
             Descargar Plantilla
           </Button>
 
         </div>
-
 
         <Alert
           variant="info"
@@ -1716,9 +1615,10 @@ const CrearMovimientosOtros = () => {
             sucursaldestino_codigo
           </code>.
 
-          {" "}El tipo y la sucursal de
-          origen se determinan automáticamente
-          según Fábrica o Achuras.
+          {" "}La sucursal de origen se determina
+          automáticamente según el tipo de movimiento:
+          Fábrica (código 20), Achuras (código 1)
+          u Otros (código 1).
 
         </Alert>
 
@@ -1727,6 +1627,5 @@ const CrearMovimientosOtros = () => {
     </Container>
   );
 };
-
 
 export default CrearMovimientosOtros;

@@ -30,9 +30,30 @@ export default function Stock() {
   const [cargandoSubcategorias, setCargandoSubcategorias] = useState(false);
   const [subcategoriasMedias, setSubcategoriasMedias] = useState([]);
   const [subcategoriasOmitidas, setSubcategoriasOmitidas] = useState([]);
+  const [subcategoriasFiltradas, setSubcategoriasFiltradas] = useState([]);
 
   const context = useContext(Contexts.DataContext);
   const apiUrl = process.env.REACT_APP_API_URL;
+
+  const subcategoriaPorCodigo = React.useMemo(() => {
+    const mapa = new Map();
+
+    (context.articulosTabla || []).forEach((articulo) => {
+      const codigo = String(articulo.codigobarra ?? "").trim();
+
+      if (!codigo) return;
+
+      // Ajustar si el modelo ArticuloTabla utiliza otro nombre
+      // para su clave foránea de subcategoría.
+      const subcategoriaId = articulo.subcategoria_id;
+
+      if (subcategoriaId != null) {
+        mapa.set(codigo, String(subcategoriaId));
+      }
+    });
+
+    return mapa;
+  }, [context.articulosTabla]);
 
   useEffect(() => {
     setSelectedInventario(null);
@@ -193,9 +214,31 @@ export default function Stock() {
 
   const indexOfLast = currentPage * articulosPerPage;
   const indexOfFirst = indexOfLast - articulosPerPage;
-  const filtered = articulos.filter((a) =>
-    (a.descripcion || "").toLowerCase().includes(searchDescription.toLowerCase())
-  );
+  // const filtered = articulos.filter((a) =>
+  //   (a.descripcion || "").toLowerCase().includes(searchDescription.toLowerCase())
+  // );
+
+  const filtered = articulos.filter((articulo) => {
+
+    const coincideDescripcion =
+      (articulo.descripcion || "")
+        .toLowerCase()
+        .includes(searchDescription.toLowerCase());
+
+    const codigo = String(articulo.codigo ?? "").trim();
+
+    const subcategoriaId = subcategoriaPorCodigo.get(codigo);
+
+    const coincideSubcategoria =
+      subcategoriasFiltradas.length === 0 ||
+      (
+        subcategoriaId !== undefined &&
+        subcategoriasFiltradas.includes(subcategoriaId)
+      );
+
+    return coincideDescripcion && coincideSubcategoria;
+  });
+
   const current = filtered.slice(indexOfFirst, indexOfLast);
 
   const nextPage = () => {
@@ -316,39 +359,79 @@ export default function Stock() {
         </div>
       </div>
 
-      {/* Subcategorías de medias a omitir */}
-      {/* <div className="d-flex flex-wrap align-items-end gap-3 mb-3">
+      {/* FILTRO DE SUBCATEGORÍAS PARA VISUALIZACIÓN */}
+
+      <div className="stock-toolbar d-flex flex-wrap align-items-end gap-3 mb-3">
+
         <div className="mx-2 my-2">
-          <label className="d-block">Omitir subcategorías de medias</label>
+
+          <label className="d-block">
+            Filtrar stock por subcategorías
+          </label>
+
           <FormControl
             as="select"
             multiple
-            value={subcategoriasOmitidas}
-            disabled={calculandoStock || cargandoSubcategorias}
+            value={subcategoriasFiltradas}
             onChange={(e) => {
-              const values = Array.from(
+
+              const valores = Array.from(
                 e.target.selectedOptions,
                 (option) => option.value
               );
-              setSubcategoriasOmitidas(values);
+
+              setSubcategoriasFiltradas(valores);
+              setCurrentPage(1);
             }}
             className="form-control my-input"
-            style={{ minWidth: 260, minHeight: 110 }}
+            style={{
+              minWidth: 280,
+              minHeight: 150
+            }}
           >
-            {subcategoriasMedias.map((subcategoria) => (
-              <option key={subcategoria} value={subcategoria}>
-                {subcategoria}
-              </option>
-            ))}
+
+            {(context.subcategoriasTabla || []).map(
+              (subcategoria) => (
+
+                <option
+                  key={subcategoria.id}
+                  value={String(subcategoria.id)}
+                >
+                  {subcategoria.descripcion}
+                </option>
+
+              )
+            )}
+
           </FormControl>
 
-          <small className="text-muted">
-            {cargandoSubcategorias
-              ? "Cargando subcategorías..."
-              : "Mantener Ctrl presionado para seleccionar varias."}
+          <small className="text-muted d-block mt-1">
+            Mantené Ctrl para seleccionar varias.
+            Sin selección se muestran todas.
           </small>
+
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              setSubcategoriasFiltradas([]);
+              setCurrentPage(1);
+            }}
+            disabled={subcategoriasFiltradas.length === 0}
+          >
+            Limpiar filtro
+          </Button>
+
         </div>
-      </div> */}
+
+        <div className="mx-2 my-2">
+          <span className="text-muted">
+            Productos encontrados: <strong>{filtered.length}</strong>
+          </span>
+        </div>
+
+      </div>
 
       {/* Buscador por descripción */}
       <div className="d-flex flex-wrap align-items-end gap-3 mb-3">
