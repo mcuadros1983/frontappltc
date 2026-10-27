@@ -589,7 +589,7 @@ export default function ComprobantesEgresoList() {
 
     const camposNumericos = [
       "id", "neto", "iva105", "iva21",
-      "total", "hacienda_id",
+      "iva_especial", "total", "hacienda_id",
     ];
 
     arr.sort((a, b) => {
@@ -656,6 +656,7 @@ export default function ComprobantesEgresoList() {
       Neto: Number(comp.neto || 0),
       "IVA 10,5 %": Number(comp.iva105 || 0),
       "IVA 21 %": Number(comp.iva21 || 0),
+      "IVA especial": Number(comp.iva_especial || 0),
       Total: Number(comp.total || 0),
       Proveedor:
         proveedoresTabla.find(
@@ -674,11 +675,20 @@ export default function ComprobantesEgresoList() {
     const hoja = XLSX.utils.json_to_sheet(datos);
 
     hoja["!cols"] = [
-      { wch: 10 }, { wch: 18 }, { wch: 20 },
-      { wch: 15 }, { wch: 18 }, { wch: 18 },
-      { wch: 18 }, { wch: 18 }, { wch: 35 },
-      { wch: 25 }, { wch: 15 }, { wch: 22 },
-      { wch: 18 },
+      { wch: 10 }, // ID
+      { wch: 18 }, // Comprobante
+      { wch: 20 }, // Tipo
+      { wch: 15 }, // Fecha
+      { wch: 18 }, // Neto
+      { wch: 18 }, // IVA 10,5 %
+      { wch: 18 }, // IVA 21 %
+      { wch: 18 }, // IVA especial
+      { wch: 18 }, // Total
+      { wch: 35 }, // Proveedor
+      { wch: 25 }, // Empresa
+      { wch: 15 }, // Hacienda
+      { wch: 22 }, // Forma de Pago
+      { wch: 18 }, // Estado Pago
     ];
 
     const libro = XLSX.utils.book_new();
@@ -2184,6 +2194,7 @@ export default function ComprobantesEgresoList() {
                 ["neto", "Neto"],
                 ["iva105", "IVA 10,5 %"],
                 ["iva21", "IVA 21 %"],
+                ["iva_especial", "IVA especial"],
                 ["total", "Total"],
                 ["proveedor", "Proveedor"],
                 ["empresa", "Empresa"],
@@ -2223,6 +2234,7 @@ export default function ComprobantesEgresoList() {
                 <td className="text-end">{fmtMoney(comp.neto)}</td>
                 <td className="text-end">{fmtMoney(comp.iva105)}</td>
                 <td className="text-end">{fmtMoney(comp.iva21)}</td>
+                <td className="text-end">{fmtMoney(comp.iva_especial ?? 0)}</td>
                 <td className="text-end">{fmtMoney(comp.total)}</td>
                 <td>
                   {proveedoresTabla.find(
