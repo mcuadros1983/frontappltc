@@ -20,7 +20,7 @@ import * as XLSX from "xlsx";
 export default function StockCentralList() {
   const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-
+  const [filtroUbicacion, setFiltroUbicacion] = useState("todos");
   // Filtros por fecha de faena
   const [fechaFaenaDesde, setFechaFaenaDesde] = useState("");
   const [fechaFaenaHasta, setFechaFaenaHasta] = useState("");
@@ -35,6 +35,18 @@ export default function StockCentralList() {
 
   const apiUrl = process.env.REACT_APP_API_URL;
 
+  const obtenerUbicacion = (sucursalId) => {
+    switch (Number(sucursalId)) {
+      case 18:
+        return "CENTRAL";
+
+      case 32:
+        return "EL HUECO";
+
+      default:
+        return "DESCONOCIDA";
+    }
+  };
   // Formatear fechas sin problemas de zona horaria
   const formatDate = (dateString) => {
     if (!dateString) return "—";
@@ -48,21 +60,56 @@ export default function StockCentralList() {
   };
 
   // Cargar productos de la sucursal central
+  // const loadProducts = useCallback(async () => {
+  //   try {
+  //     const res = await fetch(`${apiUrl}/sucursales/18/productos`, {
+  //       credentials: "include",
+  //     });
+
+  //     if (!res.ok) {
+  //       throw new Error("Error al obtener los productos");
+  //     }
+
+  //     const data = await res.json();
+
+  //     const sortedProducts = Array.isArray(data)
+  //       ? [...data].sort((a, b) => Number(a.id) - Number(b.id))
+  //       : [];
+
+  //     setProducts(sortedProducts);
+  //   } catch (error) {
+  //     console.error("Error al cargar productos:", error);
+  //   }
+  // }, [apiUrl]);
+  // Cargar productos de CENTRAL (18) y EL HUECO (32)
   const loadProducts = useCallback(async () => {
     try {
-      const res = await fetch(`${apiUrl}/sucursales/18/productos`, {
-        credentials: "include",
-      });
+      const [resCentral, resHueco] = await Promise.all([
+        fetch(`${apiUrl}/sucursales/18/productos`, {
+          credentials: "include",
+        }),
+        fetch(`${apiUrl}/sucursales/32/productos`, {
+          credentials: "include",
+        }),
+      ]);
 
-      if (!res.ok) {
+      if (!resCentral.ok || !resHueco.ok) {
         throw new Error("Error al obtener los productos");
       }
 
-      const data = await res.json();
+      const [productosCentral, productosHueco] = await Promise.all([
+        resCentral.json(),
+        resHueco.json(),
+      ]);
 
-      const sortedProducts = Array.isArray(data)
-        ? [...data].sort((a, b) => Number(a.id) - Number(b.id))
-        : [];
+      const todosLosProductos = [
+        ...productosCentral,
+        ...productosHueco,
+      ];
+
+      const sortedProducts = todosLosProductos.sort(
+        (a, b) => Number(a.id) - Number(b.id)
+      );
 
       setProducts(sortedProducts);
     } catch (error) {
@@ -79,6 +126,11 @@ export default function StockCentralList() {
     const termino = searchTerm.trim().toLowerCase();
 
     const filtered = products.filter((product) => {
+
+      const ubicacionMatch =
+        filtroUbicacion === "todos" ||
+        Number(product.sucursal_id) === Number(filtroUbicacion);
+
       // Búsqueda por los campos originales
       const searchMatch =
         termino === "" ||
@@ -107,9 +159,12 @@ export default function StockCentralList() {
       return (
         searchMatch &&
         fechaDesdeMatch &&
-        fechaHastaMatch
+        fechaHastaMatch &&
+        ubicacionMatch
       );
     });
+
+
 
     // Aplicar ordenamiento
     if (!sortColumn) {
@@ -167,6 +222,7 @@ export default function StockCentralList() {
     searchTerm,
     fechaFaenaDesde,
     fechaFaenaHasta,
+    filtroUbicacion,
     sortColumn,
     sortDirection,
   ]);
@@ -188,6 +244,7 @@ export default function StockCentralList() {
   const handleExportToExcel = () => {
     const dataToExport = filteredProducts.map((product) => ({
       ID: product.id,
+      Ubicación: obtenerUbicacion(product.sucursal_id),
       "Fecha de Ingreso": product.fecha
         ? formatDate(product.fecha)
         : "",
@@ -208,17 +265,18 @@ export default function StockCentralList() {
 
     // Ajustar el ancho de las columnas
     worksheet["!cols"] = [
-      { wch: 10 },
-      { wch: 18 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 24 },
-      { wch: 20 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 20 },
-      { wch: 20 },
+      { wch: 10 }, // ID
+      { wch: 18 }, // Ubicación
+      { wch: 18 }, // Fecha de Ingreso
+      { wch: 18 }, // Fecha de Faena
+      { wch: 14 }, // Nº Ingreso
+      { wch: 24 }, // Código de Barra
+      { wch: 20 }, // Número de Media
+      { wch: 15 }, // Precio
+      { wch: 15 }, // Peso
+      { wch: 15 }, // Tropa
+      { wch: 20 }, // Categoría
+      { wch: 20 }, // Subcategoría
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -341,6 +399,24 @@ export default function StockCentralList() {
         </Col>
       </Row>
 
+      <Col xs={12} md={3}>
+        <Form.Group>
+          <Form.Label>Ubicación</Form.Label>
+
+          <Form.Select
+            value={filtroUbicacion}
+            onChange={(e) => {
+              setFiltroUbicacion(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="todos">Todas las ubicaciones</option>
+            <option value="18">CENTRAL</option>
+            <option value="32">EL HUECO</option>
+          </Form.Select>
+        </Form.Group>
+      </Col>
+
       <div className="mb-3 text-muted">
         Productos encontrados: {filteredProducts.length}
       </div>
@@ -351,6 +427,15 @@ export default function StockCentralList() {
           <thead>
             <tr>
               <th>#</th>
+
+              <th
+                onClick={() => handleSort("sucursal_id")}
+                style={{ cursor: "pointer" }}
+              >
+                Ubicación
+                {sortColumn === "sucursal_id" &&
+                  (sortDirection === "asc" ? " ↑" : " ↓")}
+              </th>
 
               <th
                 onClick={() => handleSort("fecha")}
@@ -430,7 +515,7 @@ export default function StockCentralList() {
             {currentProducts.length === 0 ? (
               <tr>
                 <td
-                  colSpan={11}
+                  colSpan={12}
                   className="text-center text-muted py-4"
                 >
                   No hay productos para mostrar.
@@ -440,6 +525,10 @@ export default function StockCentralList() {
               currentProducts.map((product) => (
                 <tr key={product.id}>
                   <td>{product.id}</td>
+
+                  <td className="fw-semibold">
+                    {obtenerUbicacion(product.sucursal_id)}
+                  </td>
 
                   <td>
                     {formatDate(product.fecha)}
