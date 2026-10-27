@@ -2,7 +2,7 @@
 import React, { useContext, useEffect, useMemo, useState, useCallback } from "react";
 import { Container, Row, Col, Card, Form, Button, Alert, Table, Spinner, Badge, Pagination } from "react-bootstrap";
 import Contexts from "../../context/Contexts";
-
+import * as XLSX from "xlsx";
 const apiUrl = process.env.REACT_APP_API_URL;
 
 // ---- Helpers ----
@@ -262,6 +262,7 @@ export default function IvaProyeccion() {
 
   // Registros completos (para cálculo) y paginación (solo visual)
   const [cierresZ, setCierresZ] = useState([]);
+
   const [czPage, setCzPage] = useState(1);
   const CZ_PAGE_SIZE = 20;
 
@@ -438,6 +439,97 @@ export default function IvaProyeccion() {
   const goPrev = () => setCzPage((p) => Math.max(1, p - 1));
   const goNext = () => setCzPage((p) => Math.min(czTotalPages, p + 1));
   const goLast = () => setCzPage(czTotalPages);
+
+  // ===============================
+  // EXPORTAR CIERRES Z A EXCEL
+  // ===============================
+  const exportarCierresZ = () => {
+    if (!resultado || cierresZ.length === 0) {
+      return;
+    }
+
+    const numero = (valor) => Number(valor || 0);
+
+    // Exportar TODOS los cierres del cálculo, no solo la página visible
+    const registros = cierresZ.map((z) => ({
+      Fecha: z.fechaJornada || "",
+      "Punto de Venta": z.puntoVenta || "",
+      "N° Cierre Z": z.numeroZeta || "",
+      "IVA 10,5 %": numero(z.iva105),
+      "IVA 21 %": numero(z.iva21),
+      "IVA Total": numero(z.ivaTotal),
+      Neto: numero(z.neto),
+      Total: numero(z.total),
+      Emitidos: numero(z.cantidadEmitidos),
+      Cancelados: numero(z.cantidadCancelados),
+    }));
+
+    // Totales de los importes y cantidades
+    const totales = cierresZ.reduce(
+      (acc, z) => {
+        acc.iva105 += numero(z.iva105);
+        acc.iva21 += numero(z.iva21);
+        acc.ivaTotal += numero(z.ivaTotal);
+        acc.neto += numero(z.neto);
+        acc.total += numero(z.total);
+        acc.emitidos += numero(z.cantidadEmitidos);
+        acc.cancelados += numero(z.cantidadCancelados);
+        return acc;
+      },
+      {
+        iva105: 0,
+        iva21: 0,
+        ivaTotal: 0,
+        neto: 0,
+        total: 0,
+        emitidos: 0,
+        cancelados: 0,
+      }
+    );
+
+    registros.push({
+      Fecha: "TOTALES",
+      "Punto de Venta": "",
+      "N° Cierre Z": "",
+      "IVA 10,5 %": Number(totales.iva105.toFixed(2)),
+      "IVA 21 %": Number(totales.iva21.toFixed(2)),
+      "IVA Total": Number(totales.ivaTotal.toFixed(2)),
+      Neto: Number(totales.neto.toFixed(2)),
+      Total: Number(totales.total.toFixed(2)),
+      Emitidos: totales.emitidos,
+      Cancelados: totales.cancelados,
+    });
+
+    const hoja = XLSX.utils.json_to_sheet(registros);
+
+    // Ancho de columnas
+    hoja["!cols"] = [
+      { wch: 15 }, // Fecha
+      { wch: 18 }, // Punto de Venta
+      { wch: 18 }, // N° Cierre Z
+      { wch: 18 }, // IVA 10,5 %
+      { wch: 18 }, // IVA 21 %
+      { wch: 18 }, // IVA Total
+      { wch: 20 }, // Neto
+      { wch: 20 }, // Total
+      { wch: 14 }, // Emitidos
+      { wch: 14 }, // Cancelados
+    ];
+
+    const libro = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      libro,
+      hoja,
+      "Cierres Z"
+    );
+
+    // Usar las fechas del cálculo realizado, no fechas modificadas después
+    const nombreArchivo =
+      `Cierres_Z_${resultado.parametros.fechaDesde}_${resultado.parametros.fechaHasta}.xlsx`;
+
+    XLSX.writeFile(libro, nombreArchivo);
+  };
 
   return (
     <Container fluid className="mt-3">
@@ -649,9 +741,24 @@ export default function IvaProyeccion() {
 
                   {/* Detalle de Cierres Z del rango con paginación */}
                   <Card className="mb-3">
-                    <Card.Header>
-                      Cierres Z incluidos en la proyección (detalle del rango {resultado.parametros.fechaDesde} a {resultado.parametros.fechaHasta})
+                    <Card.Header className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                      <strong>
+                        Cierres Z incluidos en la proyección
+                        {" "}({resultado.parametros.fechaDesde} a {resultado.parametros.fechaHasta})
+                      </strong>
+
+                      <Button
+                        variant="outline-success"
+                        size="sm"
+                        onClick={exportarCierresZ}
+                        disabled={cierresZ.length === 0 || loading}
+                      >
+                        Exportar Cierres Z a Excel
+                      </Button>
+
                     </Card.Header>
+
                     <Card.Body>
                       {cierresZ.length === 0 ? (
                         <Alert variant="secondary" className="mb-0">No se encontraron Cierres Z para el rango seleccionado.</Alert>
