@@ -210,9 +210,34 @@ export default function FacturacionTesoreriaList() {
       if (req[k] === null || req[k] === undefined || String(req[k]).trim() === "") return false;
     }
 
-    // neto requerido (puede ser 0, pero debe ser número válido)
-    const netoNum = Number(req.neto);
-    if (!Number.isFinite(netoNum)) return false;
+    // Neto válido
+    if (
+      req.neto === "" ||
+      req.neto === null ||
+      !Number.isFinite(Number(req.neto))
+    ) {
+      return false;
+    }
+
+    // IVA revisado después de modificar el neto.
+    // Se permite 0 para operaciones sin IVA en esa alícuota.
+    if (
+      req.iva105 === null ||
+      req.iva105 === undefined ||
+      req.iva105 === "" ||
+      req.iva21 === null ||
+      req.iva21 === undefined ||
+      req.iva21 === ""
+    ) {
+      return false;
+    }
+
+    if (
+      !Number.isFinite(Number(req.iva105)) ||
+      !Number.isFinite(Number(req.iva21))
+    ) {
+      return false;
+    }
 
     return true;
   }, [nuevoComprobante, empresaSeleccionada]);
@@ -575,22 +600,14 @@ export default function FacturacionTesoreriaList() {
 
   // Abrir modal de edición
   const handleDoubleClick = async (comprobante) => {
-
-    if (!empresaSeleccionada) {
-      alert(
-        "Debe seleccionar una empresa para editar comprobantes."
-      );
+    if (!empresaSeleccionada?.id) {
+      alert("Debe seleccionar una empresa para editar comprobantes.");
       return;
     }
 
     try {
-
-      /*
-       * Primero consultamos el detalle.
-       * NO abrimos el modal todavía.
-       */
       const res = await fetch(
-        `${apiUrl}/comprobantes-egreso/${comprobante.id}/detalle`,
+        `${apiUrl}/comprobantes-ingreso/${comprobante.id}`,
         {
           credentials: "include",
         }
@@ -600,56 +617,37 @@ export default function FacturacionTesoreriaList() {
 
       if (!res.ok) {
         throw new Error(
-          data?.error ||
-          "No se pudo obtener el detalle del comprobante"
+          data?.error || "No se pudo obtener el comprobante."
         );
       }
 
-      /*
-       * ============================================================
-       * REGLA DE EDICIÓN
-       * ============================================================
-       *
-       * El backend determina si el comprobante puede modificarse.
-       * Sólo los comprobantes cuya situación financiera permitida
-       * sea Cuenta Corriente podrán abrir el modal de edición.
-       * ============================================================
-       */
+      // El endpoint devuelve el comprobante individual.
+      const comp = data.comprobante || data;
 
-      if (data.puede_editar !== true) {
-
-        alert(
-          data.motivo_no_editar ||
-          "Este comprobante no puede modificarse porque posee una forma de pago distinta de Cuenta Corriente."
+      if (Number(comp.empresa_id) !== Number(empresaSeleccionada.id)) {
+        throw new Error(
+          "El comprobante no pertenece a la empresa seleccionada."
         );
-
-        setSelectedComprobante(null);
-        setShowModal(false);
-
-        return;
       }
 
-      /*
-       * El backend confirmó que puede editarse.
-       */
+      // Normalizar IVA nulo de registros anteriores a cero.
+      // El IVA se dejará en null solo si se modifica el neto.
+      setSelectedComprobante({
+        ...comp,
+        iva105: comp.iva105 ?? 0,
+        iva21: comp.iva21 ?? 0,
+        ajusta_cierre_z: !!comp.ajusta_cierre_z,
+      });
 
-      setSelectedComprobante(
-        data.comprobante || comprobante
-      );
+      setClienteQueryEdit("");
+      setClienteResultadosEdit([]);
+      setClienteErrorEdit("");
 
       setShowModal(true);
 
-    } catch (err) {
-
-      console.error(
-        "❌ Error al verificar edición del comprobante:",
-        err
-      );
-
-      alert(
-        err.message ||
-        "No se pudo verificar si el comprobante puede modificarse."
-      );
+    } catch (error) {
+      console.error("Error al abrir comprobante:", error);
+      alert(error.message || "No se pudo abrir el comprobante.");
     }
   };
 
@@ -675,10 +673,16 @@ export default function FacturacionTesoreriaList() {
         [name]: numeric.has(name) ? (v === "" ? "" : Number(v)) : v,
       };
 
-      // ✅ si cambia neto: reset IVA
-      if (name === "neto") {
-        next.iva105 = 0;
-        next.iva21 = 0;
+      // Si cambia el neto, invalidar los IVA anteriores
+      if (name === "neto" && String(v) !== String(prev.neto ?? "")) {
+        next.iva105 = null;
+        next.iva21 = null;
+      }
+
+      // Si cambia el tipo de comprobante,
+      // evitar conservar un ajuste de Z de una nota de crédito anterior
+      if (name === "tipocomprobante_id") {
+        next.ajusta_cierre_z = false;
       }
 
       return next;
@@ -688,26 +692,61 @@ export default function FacturacionTesoreriaList() {
 
   const handleGuardarCambios = async () => {
     if (!canGuardarCambios) {
-      alert("Faltan completar campos obligatorios antes de guardar.");
+      alert("Revisá los campos obligatorios y los importes de IVA.");
       return;
     }
+
     try {
       const payload = {
         ...selectedComprobante,
+
+        neto: toNumber2(selectedComprobante.neto),
+        iva105: toNumber2(selectedComprobante.iva105),
+        iva21: toNumber2(selectedComprobante.iva21),
+
         total: toNumber2(derivedTotalEdit),
+
+        // Solo las notas de crédito pueden corregir Cierres Z
+        ajusta_cierre_z:
+          tiposComprobanteTabla.some(
+            (t) =>
+              Number(t.id) ===
+              Number(selectedComprobante.tipocomprobante_id) &&
+              /NOTA\s+(DE\s+)?CREDITO/i.test(
+                String(t.descripcion || "")
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "")
+              )
+          ) && !!selectedComprobante.ajusta_cierre_z,
       };
 
-      await fetch(`${apiUrl}/comprobantes-ingreso/${selectedComprobante.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${apiUrl}/comprobantes-ingreso/${selectedComprobante.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+
+        throw new Error(
+          errorData?.error || "No se pudo actualizar el comprobante."
+        );
+      }
 
       await loadComprobantes();
+
       handleCloseModal();
+
     } catch (error) {
       console.error("Error al actualizar comprobante:", error);
+      alert(error.message);
     }
   };
 
@@ -961,7 +1000,11 @@ export default function FacturacionTesoreriaList() {
                 );
 
                 return (
-                  <tr key={comp.id}>
+                  <tr
+                    key={comp.id}
+                    onDoubleClick={() => handleDoubleClick(comp)}
+                    style={{ cursor: "pointer" }}
+                  >
                     <td>{comp.id}</td>
 
                     <td style={{ whiteSpace: "nowrap" }}>
@@ -1171,7 +1214,7 @@ export default function FacturacionTesoreriaList() {
                       type="number"
                       step="0.01"
                       name="iva105"
-                      value={selectedComprobante.iva105 || 0}
+                      value={selectedComprobante.iva105 ?? ""}
                       onChange={handleChange}
                     />
                     <Button
@@ -1193,7 +1236,7 @@ export default function FacturacionTesoreriaList() {
                       type="number"
                       step="0.01"
                       name="iva21"
-                      value={selectedComprobante.iva21 || 0}
+                      value={selectedComprobante.iva21 ?? ""}
                       onChange={handleChange}
                     />
                     <Button
