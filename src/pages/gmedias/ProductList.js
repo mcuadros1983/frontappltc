@@ -210,31 +210,77 @@ export default function ProductList() {
     products,
   ]);
 
-  const handleSort = (columnName) => {
-    // Cambiar la dirección de orden si la columna es la misma que la columna actualmente ordenada
-    setSortDirection(
-      columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
-    );
+  // const handleSort = (columnName) => {
+  //   // Cambiar la dirección de orden si la columna es la misma que la columna actualmente ordenada
+  //   setSortDirection(
+  //     columnName === sortColumn && sortDirection === "asc" ? "desc" : "asc"
+  //   );
 
-    // Actualizar la columna actualmente ordenada
+  //   // Actualizar la columna actualmente ordenada
+  //   setSortColumn(columnName);
+
+  //   const sortedProducts = [...filteredProducts].sort((a, b) => {
+  //     const valueA = a[columnName];
+  //     const valueB = b[columnName];
+
+  //     if (valueA < valueB) {
+  //       return sortDirection === "asc" ? -1 : 1;
+  //     } else if (valueA > valueB) {
+  //       return sortDirection === "asc" ? 1 : -1;
+  //     } else {
+  //       return 0;
+  //     }
+  //   });
+
+  //   setFilteredProducts(sortedProducts);
+  // };
+
+  const handleSort = (columnName) => {
+    const nuevaDireccion =
+      sortColumn === columnName && sortDirection === "asc"
+        ? "desc"
+        : "asc";
+
     setSortColumn(columnName);
+    setSortDirection(nuevaDireccion);
 
     const sortedProducts = [...filteredProducts].sort((a, b) => {
       const valueA = a[columnName];
       const valueB = b[columnName];
 
-      if (valueA < valueB) {
-        return sortDirection === "asc" ? -1 : 1;
-      } else if (valueA > valueB) {
-        return sortDirection === "asc" ? 1 : -1;
+      // Ubicar siempre los valores vacíos al final
+      const aVacio = valueA === null || valueA === undefined || valueA === "";
+      const bVacio = valueB === null || valueB === undefined || valueB === "";
+
+      if (aVacio && bVacio) return 0;
+      if (aVacio) return 1;
+      if (bVacio) return -1;
+
+      // Las fechas DATEONLY se comparan correctamente como YYYY-MM-DD
+      let comparacion;
+
+      if (columnName === "fecha" || columnName === "fecha_faena") {
+        comparacion = String(valueA).localeCompare(String(valueB));
+      } else if (
+        columnName === "num_media" &&
+        Number.isFinite(Number(valueA)) &&
+        Number.isFinite(Number(valueB))
+      ) {
+        comparacion = Number(valueA) - Number(valueB);
       } else {
-        return 0;
+        comparacion = String(valueA).localeCompare(
+          String(valueB),
+          "es",
+          { numeric: true, sensitivity: "base" }
+        );
       }
+
+      return nuevaDireccion === "asc" ? comparacion : -comparacion;
     });
 
     setFilteredProducts(sortedProducts);
+    setCurrentPage(1);
   };
-
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(
@@ -301,7 +347,10 @@ export default function ProductList() {
   const handleExportToExcel = () => {
     const dataToExport = filteredProducts.map((product) => ({
       ID: product.id,
-      Fecha: product.fecha,
+      Fecha: product.fecha ? formatDate(product.fecha) : "",
+      "Fecha Faena": product.fecha_faena
+        ? formatDate(product.fecha_faena)
+        : "",
       Categoría: product.categoria_producto,
       Subcategoría: product.subcategoria,
       "Número de Media": product.num_media,
@@ -332,9 +381,20 @@ export default function ProductList() {
     XLSX.writeFile(workbook, "productos_filtrados.xlsx");
   };
 
+  // const formatDate = (dateString) => {
+  //   const date = new Date(dateString);
+  //   return date.toISOString().split("T")[0];
+  // };
+
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
+    if (!dateString) return "—";
+
+    const fecha = String(dateString).split("T")[0];
+    const [anio, mes, dia] = fecha.split("-");
+
+    if (!anio || !mes || !dia) return "—";
+
+    return `${dia}/${mes}/${anio}`;
   };
 
   const totalPages = Math.max(
@@ -1113,6 +1173,15 @@ export default function ProductList() {
                   </th>
 
                   <th
+                    className="text-nowrap"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleSort("fecha_faena")}
+                    title="Ordenar por fecha de faena"
+                  >
+                    Fecha Faena
+                  </th>
+
+                  <th
                     style={{
                       cursor: "pointer",
                     }}
@@ -1205,7 +1274,7 @@ export default function ProductList() {
                       <tr>
 
                         <td
-                          colSpan={17}
+                          colSpan={18}
                           className="
                           text-center
                           text-muted
@@ -1264,10 +1333,11 @@ export default function ProductList() {
 
 
                             <td className="text-nowrap">
-                              {
-                                product.fecha ||
-                                "—"
-                              }
+                              {formatDate(product.fecha)}
+                            </td>
+
+                            <td className="text-nowrap">
+                              {formatDate(product.fecha_faena)}
                             </td>
 
 
