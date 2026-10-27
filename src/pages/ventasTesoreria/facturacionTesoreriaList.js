@@ -26,7 +26,15 @@ export default function FacturacionTesoreriaList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [empresas, setEmpresas] = useState([]);
 
+  // =========================
+  // FILTROS Y ORDENAMIENTO
+  // =========================
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState("");
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState("");
+  const [filtroTipoComprobante, setFiltroTipoComprobante] = useState("");
 
+  const [ordenColumna, setOrdenColumna] = useState("fechacomprobante");
+  const [ordenDireccion, setOrdenDireccion] = useState("desc");
   const hoy = new Date().toISOString().split("T")[0];
 
   const getClienteCachedLabel = (id) => {
@@ -101,6 +109,7 @@ export default function FacturacionTesoreriaList() {
     formapago_id: "",
     estadoPago: "pendiente",
     conFactura: true,
+    ajusta_cierre_z: false,
   });
 
 
@@ -274,7 +283,140 @@ export default function FacturacionTesoreriaList() {
     () => Object.fromEntries(empresas.map((e) => [e.id, e])),
     [empresas]
   );
+  // =========================
+  // ORDENAMIENTO DE COLUMNAS
+  // =========================
+  const cambiarOrden = (columna) => {
+    if (ordenColumna === columna) {
+      setOrdenDireccion((prev) => prev === "asc" ? "desc" : "asc");
+    } else {
+      setOrdenColumna(columna);
+      setOrdenDireccion("asc");
+    }
+  };
 
+  const indicadorOrden = (columna) => {
+    if (ordenColumna !== columna) return " ↕";
+    return ordenDireccion === "asc" ? " ↑" : " ↓";
+  };
+
+  // =========================
+  // COMPROBANTES FILTRADOS
+  // =========================
+  const comprobantesFiltrados = useMemo(() => {
+    return comprobantes.filter((comp) => {
+      const fecha = String(comp.fechacomprobante || "").slice(0, 10);
+
+      if (filtroFechaDesde && fecha < filtroFechaDesde) {
+        return false;
+      }
+
+      if (filtroFechaHasta && fecha > filtroFechaHasta) {
+        return false;
+      }
+
+      if (
+        filtroTipoComprobante &&
+        Number(comp.tipocomprobante_id) !== Number(filtroTipoComprobante)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [
+    comprobantes,
+    filtroFechaDesde,
+    filtroFechaHasta,
+    filtroTipoComprobante,
+  ]);
+
+  // =========================
+  // COMPROBANTES ORDENADOS
+  // =========================
+  const comprobantesOrdenados = useMemo(() => {
+    const registros = [...comprobantesFiltrados];
+
+    const obtenerValor = (comp) => {
+      if (ordenColumna === "tipo") {
+        const tipo = tiposComprobanteTabla.find(
+          (t) => Number(t.id) === Number(comp.tipocomprobante_id)
+        );
+
+        return tipo?.descripcion || "";
+      }
+
+      return comp[ordenColumna];
+    };
+
+    const columnasNumericas = [
+      "id",
+      "neto",
+      "iva105",
+      "iva21",
+      "total",
+    ];
+
+    registros.sort((a, b) => {
+      const valorA = obtenerValor(a);
+      const valorB = obtenerValor(b);
+
+      let resultado = 0;
+
+      if (columnasNumericas.includes(ordenColumna)) {
+        resultado = Number(valorA || 0) - Number(valorB || 0);
+      } else {
+        resultado = String(valorA ?? "").localeCompare(
+          String(valorB ?? ""),
+          "es",
+          { numeric: true, sensitivity: "base" }
+        );
+      }
+
+      // Desempate para mantener un orden consistente
+      if (resultado === 0) {
+        resultado = Number(a.id) - Number(b.id);
+      }
+
+      return ordenDireccion === "asc" ? resultado : -resultado;
+    });
+
+    return registros;
+  }, [
+    comprobantesFiltrados,
+    ordenColumna,
+    ordenDireccion,
+    tiposComprobanteTabla,
+  ]);
+
+  // =========================
+  // TOTALES DE LOS FILTRADOS
+  // =========================
+  const totalesFiltrados = useMemo(() => {
+    return comprobantesFiltrados.reduce(
+      (acc, comp) => {
+        const tipo = tiposComprobanteTabla.find(
+          (t) => Number(t.id) === Number(comp.tipocomprobante_id)
+        );
+
+        const descripcion = String(tipo?.descripcion || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toUpperCase();
+
+        const esNotaCredito = /NOTA\s+(DE\s+)?CREDITO/.test(descripcion);
+        const signo = esNotaCredito ? -1 : 1;
+
+        acc.neto += signo * Math.abs(Number(comp.neto || 0));
+        acc.iva105 += signo * Math.abs(Number(comp.iva105 || 0));
+        acc.iva21 += signo * Math.abs(Number(comp.iva21 || 0));
+        acc.total += signo * Math.abs(Number(comp.total || 0));
+
+        return acc;
+      },
+      { neto: 0, iva105: 0, iva21: 0, total: 0 }
+    );
+  }, [comprobantesFiltrados, tiposComprobanteTabla]);
   useEffect(() => {
     // precargar clientes de los comprobantes visibles
     const ids = Array.from(
@@ -412,6 +554,11 @@ export default function FacturacionTesoreriaList() {
         [name]: numeric.has(name) ? (v === "" ? "" : Number(v)) : v,
       };
 
+      // Si cambia el tipo de comprobante, reiniciar el ajuste de Cierre Z
+      if (name === "tipocomprobante_id") {
+        next.ajusta_cierre_z = false;
+      }
+
       // ✅ si cambia neto: reset IVA
       if (name === "neto") {
         next.iva105 = 0;
@@ -427,84 +574,84 @@ export default function FacturacionTesoreriaList() {
   }, [loadComprobantes]);
 
   // Abrir modal de edición
-const handleDoubleClick = async (comprobante) => {
+  const handleDoubleClick = async (comprobante) => {
 
-  if (!empresaSeleccionada) {
-    alert(
-      "Debe seleccionar una empresa para editar comprobantes."
-    );
-    return;
-  }
-
-  try {
-
-    /*
-     * Primero consultamos el detalle.
-     * NO abrimos el modal todavía.
-     */
-    const res = await fetch(
-      `${apiUrl}/comprobantes-egreso/${comprobante.id}/detalle`,
-      {
-        credentials: "include",
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(
-        data?.error ||
-        "No se pudo obtener el detalle del comprobante"
-      );
-    }
-
-    /*
-     * ============================================================
-     * REGLA DE EDICIÓN
-     * ============================================================
-     *
-     * El backend determina si el comprobante puede modificarse.
-     * Sólo los comprobantes cuya situación financiera permitida
-     * sea Cuenta Corriente podrán abrir el modal de edición.
-     * ============================================================
-     */
-
-    if (data.puede_editar !== true) {
-
+    if (!empresaSeleccionada) {
       alert(
-        data.motivo_no_editar ||
-        "Este comprobante no puede modificarse porque posee una forma de pago distinta de Cuenta Corriente."
+        "Debe seleccionar una empresa para editar comprobantes."
       );
-
-      setSelectedComprobante(null);
-      setShowModal(false);
-
       return;
     }
 
-    /*
-     * El backend confirmó que puede editarse.
-     */
+    try {
 
-    setSelectedComprobante(
-      data.comprobante || comprobante
-    );
+      /*
+       * Primero consultamos el detalle.
+       * NO abrimos el modal todavía.
+       */
+      const res = await fetch(
+        `${apiUrl}/comprobantes-egreso/${comprobante.id}/detalle`,
+        {
+          credentials: "include",
+        }
+      );
 
-    setShowModal(true);
+      const data = await res.json();
 
-  } catch (err) {
+      if (!res.ok) {
+        throw new Error(
+          data?.error ||
+          "No se pudo obtener el detalle del comprobante"
+        );
+      }
 
-    console.error(
-      "❌ Error al verificar edición del comprobante:",
-      err
-    );
+      /*
+       * ============================================================
+       * REGLA DE EDICIÓN
+       * ============================================================
+       *
+       * El backend determina si el comprobante puede modificarse.
+       * Sólo los comprobantes cuya situación financiera permitida
+       * sea Cuenta Corriente podrán abrir el modal de edición.
+       * ============================================================
+       */
 
-    alert(
-      err.message ||
-      "No se pudo verificar si el comprobante puede modificarse."
-    );
-  }
-};
+      if (data.puede_editar !== true) {
+
+        alert(
+          data.motivo_no_editar ||
+          "Este comprobante no puede modificarse porque posee una forma de pago distinta de Cuenta Corriente."
+        );
+
+        setSelectedComprobante(null);
+        setShowModal(false);
+
+        return;
+      }
+
+      /*
+       * El backend confirmó que puede editarse.
+       */
+
+      setSelectedComprobante(
+        data.comprobante || comprobante
+      );
+
+      setShowModal(true);
+
+    } catch (err) {
+
+      console.error(
+        "❌ Error al verificar edición del comprobante:",
+        err
+      );
+
+      alert(
+        err.message ||
+        "No se pudo verificar si el comprobante puede modificarse."
+      );
+    }
+  };
 
   const handleCloseModal = () => {
     setSelectedComprobante(null);
@@ -590,25 +737,28 @@ const handleDoubleClick = async (comprobante) => {
       const creado = await res.json();
       await loadComprobantes();
       setShowCreateModal(false);
-      setNuevoComprobante({
-        nrocomprobante: "",
-        iva105: 0,
-        iva21: 0,
-        neto: 0,
-        total: 0,
-        tipocomprobante_id: "",
-        ptoventa_id: "",
-        libroiva_id: "",
-        cliente_id: "",
-        fechacomprobante: "",
-        fechavencimiento: "",
-        imputacioncontable_id: "",
-        observaciones: "",
-        ctactecliente_id: "",
-        formapago_id: "",
-        estadoPago: "pendiente",
-        conFactura: true,
-      });
+      // setNuevoComprobante({
+      //   nrocomprobante: "",
+      //   iva105: 0,
+      //   iva21: 0,
+      //   neto: 0,
+      //   total: 0,
+      //   tipocomprobante_id: "",
+      //   ptoventa_id: "",
+      //   libroiva_id: "",
+      //   cliente_id: "",
+      //   fechacomprobante: "",
+      //   fechavencimiento: "",
+      //   imputacioncontable_id: "",
+      //   observaciones: "",
+      //   ctactecliente_id: "",
+      //   formapago_id: "",
+      //   estadoPago: "pendiente",
+      //   conFactura: true,
+      //   ajusta_cierre_z: !!nuevoComprobante.ajusta_cierre_z,
+      // });
+      // Restablecer todos los campos a sus valores iniciales
+      setNuevoComprobante(getNuevoComprobanteInicial());
       setClienteQueryCreate("");
       setClienteResultadosCreate([]);
       setClienteErrorCreate("");
@@ -657,66 +807,269 @@ const handleDoubleClick = async (comprobante) => {
 
       </div>
 
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Comprobante</th>
-            <th>Total</th>
-            <th>Cliente</th>
-            <th>Forma de Pago (solo informativo)</th>
-            <th>Empresa</th>
-            <th>Acciones</th> {/* Nueva columna */}
-          </tr>
-        </thead>
-        <tbody>
-          {comprobantes.map((comp) => (
-            <tr
-              key={comp.id}
-              onDoubleClick={() => {
-                if (!empresaSeleccionada) {
-                  alert("Debe seleccionar una empresa para editar comprobantes.");
-                } else {
-                  handleDoubleClick(comp);
-                }
-              }}
-              style={{ cursor: "pointer" }}
+      {/* =========================
+    FILTROS DE COMPROBANTES
+========================= */}
+      <div className="border rounded p-3 mb-3">
+        <div className="row g-3">
+
+          <div className="col-md-3">
+            <Form.Label>Fecha desde</Form.Label>
+            <Form.Control
+              type="date"
+              value={filtroFechaDesde}
+              onChange={(e) => setFiltroFechaDesde(e.target.value)}
+            />
+          </div>
+
+          <div className="col-md-3">
+            <Form.Label>Fecha hasta</Form.Label>
+            <Form.Control
+              type="date"
+              value={filtroFechaHasta}
+              onChange={(e) => setFiltroFechaHasta(e.target.value)}
+            />
+          </div>
+
+          <div className="col-md-4">
+            <Form.Label>Tipo de comprobante</Form.Label>
+            <Form.Select
+              value={filtroTipoComprobante}
+              onChange={(e) => setFiltroTipoComprobante(e.target.value)}
             >
-              <td>{comp.id}</td>
-              <td>{comp.nrocomprobante}</td>
-              <td className="text-end">{fmtMoney(comp.total)}</td>
-              <td>
-                {comp.cliente_id
-                  ? (clientesCache[Number(comp.cliente_id)]
-                    ? clienteLabel(clientesCache[Number(comp.cliente_id)])
-                    : "Cargando...")
-                  : "-"}
-              </td>
-              <td>
-                {formasPagoTesoreria.find((fp) => fp.id === comp.formapago_id)
-                  ?.descripcion || comp.formapago_id}
-              </td>
-              <td>
-                {empresasMap[comp.empresa_id]?.nombrecorto ||
-                  empresasMap[comp.empresa_id]?.nombre ||
-                  `ID ${comp.empresa_id}`}
-              </td>
-              <td>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation(); // evitar que abra modal con doble click
-                    handleEliminarComprobante(comp.id);
-                  }}
-                >
-                  Eliminar
-                </Button>
-              </td>
+              <option value="">Todos los comprobantes</option>
+
+              {tiposComprobanteTabla.map((tipo) => (
+                <option key={tipo.id} value={tipo.id}>
+                  {tipo.descripcion}
+                </option>
+              ))}
+            </Form.Select>
+          </div>
+
+          <div className="col-md-2 d-flex align-items-end">
+            <Button
+              variant="outline-secondary"
+              className="w-100"
+              onClick={() => {
+                setFiltroFechaDesde("");
+                setFiltroFechaHasta("");
+                setFiltroTipoComprobante("");
+              }}
+            >
+              Limpiar filtros
+            </Button>
+          </div>
+
+        </div>
+
+        <div className="text-muted small mt-3">
+          Mostrando <strong>{comprobantesFiltrados.length}</strong> de{" "}
+          <strong>{comprobantes.length}</strong> comprobantes.
+        </div>
+      </div>
+
+      <div className="table-responsive">
+        <Table striped bordered hover size="sm" className="align-middle">
+
+          <thead>
+            <tr>
+              <th
+                onClick={() => cambiarOrden("id")}
+                style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                #{indicadorOrden("id")}
+              </th>
+
+              <th
+                onClick={() => cambiarOrden("fechacomprobante")}
+                style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                Fecha{indicadorOrden("fechacomprobante")}
+              </th>
+
+              <th
+                onClick={() => cambiarOrden("tipo")}
+                style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                Tipo comprobante{indicadorOrden("tipo")}
+              </th>
+
+              <th
+                onClick={() => cambiarOrden("nrocomprobante")}
+                style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                Comprobante{indicadorOrden("nrocomprobante")}
+              </th>
+
+              <th
+                className="text-end"
+                onClick={() => cambiarOrden("neto")}
+                style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                Neto{indicadorOrden("neto")}
+              </th>
+
+              <th
+                className="text-end"
+                onClick={() => cambiarOrden("iva105")}
+                style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                IVA 10,5%{indicadorOrden("iva105")}
+              </th>
+
+              <th
+                className="text-end"
+                onClick={() => cambiarOrden("iva21")}
+                style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                IVA 21%{indicadorOrden("iva21")}
+              </th>
+
+              <th
+                className="text-end"
+                onClick={() => cambiarOrden("total")}
+                style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                Total{indicadorOrden("total")}
+              </th>
+
+              <th>Cliente</th>
+              <th>Forma de pago</th>
+              <th>Empresa</th>
+              <th>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </Table>
+          </thead>
+
+          <tbody>
+            {comprobantesOrdenados.length === 0 ? (
+              <tr>
+                <td colSpan={12} className="text-center text-muted py-4">
+                  No se encontraron comprobantes con los filtros seleccionados.
+                </td>
+              </tr>
+            ) : (
+              comprobantesOrdenados.map((comp) => {
+                const tipo = tiposComprobanteTabla.find(
+                  (t) => Number(t.id) === Number(comp.tipocomprobante_id)
+                );
+
+                const esNotaCredito = /NOTA\s+(DE\s+)?CREDITO/i.test(
+                  String(tipo?.descripcion || "")
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                );
+
+                return (
+                  <tr key={comp.id}>
+                    <td>{comp.id}</td>
+
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      {comp.fechacomprobante
+                        ? String(comp.fechacomprobante)
+                          .slice(0, 10)
+                          .split("-")
+                          .reverse()
+                          .join("/")
+                        : "-"}
+                    </td>
+
+                    <td>
+                      <span
+                        className={
+                          esNotaCredito
+                            ? "badge bg-warning text-dark"
+                            : "badge bg-secondary"
+                        }
+                      >
+                        {tipo?.descripcion || `ID ${comp.tipocomprobante_id}`}
+                      </span>
+                    </td>
+
+                    <td>{comp.nrocomprobante}</td>
+
+                    <td className="text-end" style={{ whiteSpace: "nowrap" }}>
+                      {fmtMoney(comp.neto)}
+                    </td>
+
+                    <td className="text-end" style={{ whiteSpace: "nowrap" }}>
+                      {fmtMoney(comp.iva105)}
+                    </td>
+
+                    <td className="text-end" style={{ whiteSpace: "nowrap" }}>
+                      {fmtMoney(comp.iva21)}
+                    </td>
+
+                    <td className="text-end" style={{ whiteSpace: "nowrap" }}>
+                      <strong>{fmtMoney(comp.total)}</strong>
+                    </td>
+
+                    <td>
+                      {comp.cliente_id
+                        ? clientesCache[Number(comp.cliente_id)]
+                          ? clienteLabel(clientesCache[Number(comp.cliente_id)])
+                          : "Cargando..."
+                        : "-"}
+                    </td>
+
+                    <td>
+                      {formasPagoTesoreria.find(
+                        (fp) => Number(fp.id) === Number(comp.formapago_id)
+                      )?.descripcion || comp.formapago_id}
+                    </td>
+
+                    <td>
+                      {empresasMap[comp.empresa_id]?.nombrecorto ||
+                        empresasMap[comp.empresa_id]?.nombre ||
+                        `ID ${comp.empresa_id}`}
+                    </td>
+
+                    <td>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEliminarComprobante(comp.id);
+                        }}
+                      >
+                        Eliminar
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+
+          <tfoot>
+            <tr className="table-secondary fw-bold">
+              <td colSpan={4} className="text-end">
+                TOTALES ({comprobantesFiltrados.length} comprobantes)
+              </td>
+
+              <td className="text-end">
+                {fmtMoney(totalesFiltrados.neto)}
+              </td>
+
+              <td className="text-end">
+                {fmtMoney(totalesFiltrados.iva105)}
+              </td>
+
+              <td className="text-end">
+                {fmtMoney(totalesFiltrados.iva21)}
+              </td>
+
+              <td className="text-end">
+                {fmtMoney(totalesFiltrados.total)}
+              </td>
+
+              <td colSpan={4}></td>
+            </tr>
+          </tfoot>
+
+        </Table>
+      </div>
 
       {/* ===== Modal de edición ===== */}
       <Modal show={showModal} onHide={handleCloseModal} backdrop="static" centered size="lg">
@@ -1020,6 +1373,27 @@ const handleDoubleClick = async (comprobante) => {
                     }
                   />
                 </Form.Group>
+
+                {tiposComprobanteTabla.some(
+                  (t) =>
+                    Number(t.id) === Number(selectedComprobante.tipocomprobante_id) &&
+                    /NOTA\s+(DE\s+)?CREDITO/i.test(
+                      String(t.descripcion || "")
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                    )
+                ) && (
+                    <Form.Group className="mb-3 col-md-6">
+                      <Form.Check
+                        type="switch"
+                        label="Corrige un Cierre Z"
+                        name="ajusta_cierre_z"
+                        checked={!!selectedComprobante.ajusta_cierre_z}
+                        onChange={handleChange}
+                      />
+                    </Form.Group>
+                  )}
+
               </div>
             </Form>
           )}
@@ -1350,6 +1724,36 @@ const handleDoubleClick = async (comprobante) => {
                   onChange={handleNuevoChange}
                 />
               </Form.Group>
+
+              {(() => {
+                const tipo = tiposComprobanteTabla.find(
+                  (t) => Number(t.id) === Number(nuevoComprobante.tipocomprobante_id)
+                );
+
+                const descripcion = String(tipo?.descripcion || "")
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "")
+                  .toUpperCase();
+
+                const esNotaCredito = /NOTA\s+(DE\s+)?CREDITO/.test(descripcion);
+
+                if (!esNotaCredito) return null;
+
+                return (
+                  <Form.Group className="mb-3 col-md-6">
+                    <Form.Check
+                      type="switch"
+                      label="Corrige un Cierre Z"
+                      name="ajusta_cierre_z"
+                      checked={!!nuevoComprobante.ajusta_cierre_z}
+                      onChange={handleNuevoChange}
+                    />
+                    <Form.Text className="text-muted">
+                      Descuenta el IVA de esta nota de crédito antes de proyectar los Cierres Z.
+                    </Form.Text>
+                  </Form.Group>
+                );
+              })()}
             </div>
           </Form>
         </Modal.Body>

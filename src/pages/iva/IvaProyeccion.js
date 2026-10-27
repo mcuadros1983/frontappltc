@@ -51,9 +51,14 @@ const isBetweenYMD = (ymd, desde, hasta) => {
 };
 
 const includesNotaCredito = (desc = "") => {
-  const s = (desc || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase();
-  // Busca "NOTA CREDITO" o "NOTA DE CREDITO"
-  return /NOTA\s+(DE\s+)?CREDITO/.test(s);
+  const s = String(desc || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .trim();
+
+  return /NOTA\s+(DE\s+)?CREDITO/.test(s) ||
+    /^N\.?\s*C\.?(?:\s|$)/.test(s);
 };
 
 // ---- API ----
@@ -111,14 +116,34 @@ async function fetchIvaDebitoComprobantesIngreso({ empresaId, fechaDesde, fechaH
   });
 
   let totalIvaDebitoCI = 0;
+  let ivaAjustesCierreZ = 0;
+  let ivaComprobantesIndependientes = 0;
+
   for (const c of filtered) {
-    const ivaTotal = Number(c.iva105 || 0) + Number(c.iva21 || 0);
+    const ivaTotal =
+      Math.abs(Number(c.iva105 || 0)) +
+      Math.abs(Number(c.iva21 || 0));
+
     const descTipo = tiposMap.get(Number(c.tipocomprobante_id)) || "";
-    const sign = includesNotaCredito(descTipo) ? -1 : 1; // NC resta
-    totalIvaDebitoCI += sign * ivaTotal;
+
+    const esNotaCredito = includesNotaCredito(descTipo);
+    const ivaFirmado = esNotaCredito ? -ivaTotal : ivaTotal;
+
+    totalIvaDebitoCI += ivaFirmado;
+
+    if (esNotaCredito && c.ajusta_cierre_z === true) {
+      ivaAjustesCierreZ += ivaFirmado;
+    } else {
+      ivaComprobantesIndependientes += ivaFirmado;
+    }
   }
 
-  return { totalIvaDebitoCI, registros: filtered };
+  return {
+    totalIvaDebitoCI,
+    ivaAjustesCierreZ,
+    ivaComprobantesIndependientes,
+    registros: filtered,
+  };
 }
 
 // --- Compras proyectadas (Crédito) ---
@@ -167,11 +192,21 @@ async function fetchIvaCreditoComprobantesEgreso({ empresaId, fechaDesde, fechaH
   });
 
   let totalIvaCreditoCE = 0;
+
   for (const c of filtered) {
-    const ivaTotal = Number(c.iva105 || 0) + Number(c.iva21 || 0);
+
+    // Sumar todos los conceptos de IVA del comprobante de egreso
+    const ivaTotal =
+      Math.abs(Number(c.iva105 || 0)) +
+      Math.abs(Number(c.iva21 || 0)) +
+      Math.abs(Number(c.iva_especial || 0));
+
+    // Identificar el tipo de comprobante
     const descTipo = tiposMap.get(Number(c.tipocomprobante_id)) || "";
-    // En crédito: NC resta el crédito
+
+    // Las notas de crédito recibidas descuentan IVA crédito
     const sign = includesNotaCredito(descTipo) ? -1 : 1;
+
     totalIvaCreditoCE += sign * ivaTotal;
   }
 
@@ -261,7 +296,11 @@ export default function IvaProyeccion() {
       // 1) Traer datos del rango
       const [
         { totalIvaDebitoZ, registros: registrosZ },
-        { totalIvaDebitoCI },
+        {
+          totalIvaDebitoCI,
+          ivaAjustesCierreZ,
+          ivaComprobantesIndependientes,
+        },
         { totalIvaCredito: totalIvaCreditoCompras }, // compras proyectadas (puede proyectarse)
         { totalIvaCreditoCE }                         // egresos (crédito fijo)
       ] = await Promise.all([
@@ -284,9 +323,23 @@ export default function IvaProyeccion() {
       const diasProyectados = Math.max(0, diasMes - Number(diasNoOperativosMes || 0));
 
       // Débito (Z proyectable + CI fijo)
-      const ivaDebitoProjZ = diasConRegistro > 0 ? (totalIvaDebitoZ / diasConRegistro) * diasProyectados : 0;
-      const ivaDebitoRangoTotal = totalIvaDebitoZ + totalIvaDebitoCI;
-      const ivaDebitoProjTotal = ivaDebitoProjZ + totalIvaDebitoCI;
+      // Débito real del período: Z + todos los comprobantes emitidos
+      const ivaDebitoRangoTotal =
+        totalIvaDebitoZ + totalIvaDebitoCI;
+
+      // Base proyectable: Cierres Z corregidos con sus notas de crédito
+      const ivaBaseZAjustada =
+        totalIvaDebitoZ + ivaAjustesCierreZ;
+
+      // Proyección de los Z sobre la base corregida
+      const ivaDebitoProjZ =
+        diasConRegistro > 0
+          ? (ivaBaseZAjustada / diasConRegistro) * diasProyectados
+          : 0;
+
+      // Sumar comprobantes administrativos independientes una sola vez
+      const ivaDebitoProjTotal =
+        ivaDebitoProjZ + ivaComprobantesIndependientes;
 
       // Crédito (Compras proyectables + Egreso fijo)
       const ivaCreditoComprasProj = proyectarCompras
@@ -319,7 +372,9 @@ export default function IvaProyeccion() {
           factor: diasConRegistro > 0 ? (diasProyectados / diasConRegistro) : 0,
           // Débito
           ivaDebitoProjZ,
-          ivaDebitoFijoCI: totalIvaDebitoCI,
+          ivaDebitoFijoCI: ivaComprobantesIndependientes,
+          ivaAjustesCierreZ,
+          ivaBaseZAjustada,
           ivaDebitoProjTotal,
           // Crédito
           ivaCreditoComprasProj,
@@ -528,6 +583,21 @@ export default function IvaProyeccion() {
                   <Card className="mb-3">
                     <Card.Header>Proyección para todo el mes</Card.Header>
                     <Card.Body>
+                      <Alert variant="info" className="py-2">
+                        <strong>Base de IVA débito proyectable:</strong>{" "}
+                        {toMoney(resultado.rango.ivaDebitoZ)}
+                        {" + "}
+                        {toMoney(resultado.proyeccion.ivaAjustesCierreZ)}
+                        {" = "}
+                        <strong>
+                          {toMoney(resultado.proyeccion.ivaBaseZAjustada)}
+                        </strong>
+                        <div className="small mt-1">
+                          Los ajustes por notas de crédito correctivas de Cierres Z
+                          se descuentan antes de calcular el promedio diario.
+                        </div>
+                      </Alert>
+
                       <Row className="mb-2">
                         <Col md={12}>
                           <div className="text-muted">
@@ -668,7 +738,7 @@ export default function IvaProyeccion() {
                           <strong>{toMoney(resultado.rango.ivaCreditoCompras)}</strong>
                         </li>
                         <li>
-                          <strong>IVA Crédito (Comprobantes de Egreso)</strong> = suma de (<code>iva105 + iva21</code>) del rango,
+                          <strong>IVA Crédito (Comprobantes de Egreso)</strong> = suma de (<code>iva105 + iva21 + iva_especial</code>) del rango,
                           restando si el tipo contiene “NOTA CREDITO/NOTA DE CREDITO” →{" "}
                           <strong>{toMoney(resultado.rango.ivaCreditoFijoCE)}</strong>
                         </li>
@@ -687,7 +757,13 @@ export default function IvaProyeccion() {
                         <li>
                           <strong>Débito proyectado (Z)</strong> = Promedio diario × Días proyectados ={" "}
                           <code>
-                            {toMoney(resultado.rango.ivaDebitoZ)} / {resultado.rango.diasConRegistro || 1} × {resultado.proyeccion.diasProyectados} = {toMoney(resultado.proyeccion.ivaDebitoProjZ)}
+                            {toMoney(resultado.proyeccion.ivaBaseZAjustada)}
+                            {" / "}
+                            {resultado.rango.diasConRegistro || 1}
+                            {" × "}
+                            {resultado.proyeccion.diasProyectados}
+                            {" = "}
+                            {toMoney(resultado.proyeccion.ivaDebitoProjZ)}
                           </code>
                         </li>
                         <li>
