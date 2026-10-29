@@ -323,24 +323,24 @@ export default function IvaProyeccion() {
       const diasMes = daysInMonthFromDate(fechaHasta);
       const diasProyectados = Math.max(0, diasMes - Number(diasNoOperativosMes || 0));
 
-      // Débito (Z proyectable + CI fijo)
-      // Débito real del período: Z + todos los comprobantes emitidos
+      // =======================================
+      // IVA DÉBITO - BASE REAL Y PROYECCIÓN
+      // =======================================
+
+      // IVA real acumulado:
+      // Cierres Z + comprobantes administrativos
+      // (las notas de crédito ya vienen restadas)
       const ivaDebitoRangoTotal =
         totalIvaDebitoZ + totalIvaDebitoCI;
 
-      // Base proyectable: Cierres Z corregidos con sus notas de crédito
-      const ivaBaseZAjustada =
-        totalIvaDebitoZ + ivaAjustesCierreZ;
+      // La totalidad del débito real es proyectable
+      const ivaBaseDebitoProyectable = ivaDebitoRangoTotal;
 
-      // Proyección de los Z sobre la base corregida
-      const ivaDebitoProjZ =
-        diasConRegistro > 0
-          ? (ivaBaseZAjustada / diasConRegistro) * diasProyectados
-          : 0;
-
-      // Sumar comprobantes administrativos independientes una sola vez
+      // Proyectar la base real neta a los días operativos del mes
       const ivaDebitoProjTotal =
-        ivaDebitoProjZ + ivaComprobantesIndependientes;
+        diasConRegistro > 0
+          ? (ivaBaseDebitoProyectable / diasConRegistro) * diasProyectados
+          : 0;
 
       // Crédito (Compras proyectables + Egreso fijo)
       const ivaCreditoComprasProj = proyectarCompras
@@ -371,11 +371,11 @@ export default function IvaProyeccion() {
           diasMes,
           diasProyectados,
           factor: diasConRegistro > 0 ? (diasProyectados / diasConRegistro) : 0,
+
           // Débito
-          ivaDebitoProjZ,
-          ivaDebitoFijoCI: ivaComprobantesIndependientes,
+          ivaBaseDebitoProyectable,
           ivaAjustesCierreZ,
-          ivaBaseZAjustada,
+          ivaComprobantesIndependientes,
           ivaDebitoProjTotal,
           // Crédito
           ivaCreditoComprasProj,
@@ -676,16 +676,20 @@ export default function IvaProyeccion() {
                     <Card.Header>Proyección para todo el mes</Card.Header>
                     <Card.Body>
                       <Alert variant="info" className="py-2">
-                        <strong>Base de IVA débito proyectable:</strong>{" "}
+                        <strong>Base real de IVA débito proyectable:</strong>{" "}
+
                         {toMoney(resultado.rango.ivaDebitoZ)}
                         {" + "}
-                        {toMoney(resultado.proyeccion.ivaAjustesCierreZ)}
+                        {toMoney(resultado.rango.ivaDebitoCI)}
                         {" = "}
+
                         <strong>
-                          {toMoney(resultado.proyeccion.ivaBaseZAjustada)}
+                          {toMoney(resultado.proyeccion.ivaBaseDebitoProyectable)}
                         </strong>
+
                         <div className="small mt-1">
-                          Los ajustes por notas de crédito correctivas de Cierres Z
+                          Se incluyen los Cierres Z y todos los comprobantes
+                          administrativos del período. Las notas de crédito
                           se descuentan antes de calcular el promedio diario.
                         </div>
                       </Alert>
@@ -708,8 +712,7 @@ export default function IvaProyeccion() {
                               <tr>
                                 <th></th>
                                 <th className="text-end">IVA Débito (real Z)</th>
-                                <th className="text-end">IVA Débito (proyectado Z)</th>
-                                <th className="text-end">IVA Débito</th>
+                                <th className="text-end">IVA Débito (base real neta)</th>
                                 <th className="text-end">IVA Débito (TOTAL proyectado)</th>
                                 <th className="text-end">IVA Crédito (Compras {resultado.parametros.proyectarCompras ? "proy." : "real"})</th>
                                 <th className="text-end">IVA Crédito (CE)</th>
@@ -720,10 +723,20 @@ export default function IvaProyeccion() {
                             <tbody>
                               <tr>
                                 <td>Proyección</td>
-                                <td className="text-end">{toMoney(resultado.rango.ivaDebitoZ)}</td>
-                                <td className="text-end">{toMoney(resultado.proyeccion.ivaDebitoProjZ)}</td>
-                                <td className="text-end">{toMoney(resultado.proyeccion.ivaDebitoFijoCI)}</td>
-                                <td className="text-end"><strong>{toMoney(resultado.proyeccion.ivaDebitoProjTotal)}</strong></td>
+
+                                <td className="text-end">
+                                  {toMoney(resultado.rango.ivaDebitoZ)}
+                                </td>
+
+                                <td className="text-end">
+                                  {toMoney(resultado.proyeccion.ivaBaseDebitoProyectable)}
+                                </td>
+
+                                <td className="text-end">
+                                  <strong>
+                                    {toMoney(resultado.proyeccion.ivaDebitoProjTotal)}
+                                  </strong>
+                                </td>
                                 <td className="text-end">{toMoney(resultado.proyeccion.ivaCreditoComprasProj)}</td>
                                 <td className="text-end">{toMoney(resultado.proyeccion.ivaCreditoFijoCE)}</td>
                                 <td className="text-end"><strong>{toMoney(resultado.proyeccion.ivaCreditoProjTotal)}</strong></td>
@@ -854,23 +867,33 @@ export default function IvaProyeccion() {
                           <strong>{resultado.rango.diasConRegistro}</strong> (del rango: {resultado.rango.diasRango}, sin registro: {resultado.rango.diasSinRegistro})
                         </li>
                         <li>
-                          <strong>Promedio diario (Z)</strong> = Débito Z / Días con registro ={" "}
-                          <code>{toMoney(resultado.rango.ivaDebitoZ)} / {resultado.rango.diasConRegistro || 1}</code>
+                          <strong>Promedio diario de IVA débito neto</strong>
+                          {" = "}
+                          Base real neta / Días con Cierre Z ={" "}
+
+                          <code>
+                            {toMoney(resultado.proyeccion.ivaBaseDebitoProyectable)}
+                            {" / "}
+                            {resultado.rango.diasConRegistro || 1}
+                          </code>
                         </li>
                         <li>
                           <strong>Días proyectados</strong> = Días del mes ({resultado.proyeccion.diasMes}) − No operativos ({resultado.parametros.diasNoOperativosMes}) ={" "}
                           <strong>{resultado.proyeccion.diasProyectados}</strong>
                         </li>
                         <li>
-                          <strong>Débito proyectado (Z)</strong> = Promedio diario × Días proyectados ={" "}
+                          <strong>IVA Débito TOTAL proyectado</strong>
+                          {" = "}
+                          Promedio diario neto × Días proyectados ={" "}
+
                           <code>
-                            {toMoney(resultado.proyeccion.ivaBaseZAjustada)}
+                            {toMoney(resultado.proyeccion.ivaBaseDebitoProyectable)}
                             {" / "}
                             {resultado.rango.diasConRegistro || 1}
                             {" × "}
                             {resultado.proyeccion.diasProyectados}
                             {" = "}
-                            {toMoney(resultado.proyeccion.ivaDebitoProjZ)}
+                            {toMoney(resultado.proyeccion.ivaDebitoProjTotal)}
                           </code>
                         </li>
                         <li>
@@ -885,12 +908,12 @@ export default function IvaProyeccion() {
                             {toMoney(resultado.proyeccion.ivaCreditoComprasProj)} + {toMoney(resultado.proyeccion.ivaCreditoFijoCE)} = {toMoney(resultado.proyeccion.ivaCreditoProjTotal)}
                           </code>
                         </li>
-                        <li>
+                        {/* <li>
                           <strong>Débito TOTAL {resultado.parametros.proyectarCompras ? "(proyectado)" : "(real)"}</strong> = Débito (Z) + Débito (CI) ={" "}
                           <code>
                             {toMoney(resultado.proyeccion.ivaDebitoProjZ)} + {toMoney(resultado.proyeccion.ivaDebitoFijoCI)} = {toMoney(resultado.proyeccion.ivaDebitoProjTotal)}
                           </code>
-                        </li>
+                        </li> */}
                         <li>
                           <strong>Saldo {resultado.parametros.proyectarCompras ? "proyectado" : "real"}</strong> = Débito TOTAL − Crédito TOTAL ={" "}
                           <code>
