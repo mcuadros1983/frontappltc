@@ -39,7 +39,7 @@ const nombreEmpleado = (item) => {
     item?.empleado?.nombre ||
     item?.nombre ||
     "";
-  const full = `${ap} ${no}`.trim();
+  const full = `${no} ${ap}`.trim();
   return full || `Empleado #${item?.empleado?.id ?? item?.id ?? ""}`;
 };
 
@@ -171,8 +171,8 @@ export default function AsignarEmpleadoManager() {
         (a?.clientePersona?.nombre || a?.empleado?.nombre || "").toLowerCase();
       const noB =
         (b?.clientePersona?.nombre || b?.empleado?.nombre || "").toLowerCase();
-      if (apA !== apB) return apA < apB ? -1 : 1;
       if (noA !== noB) return noA < noB ? -1 : 1;
+      if (apA !== apB) return apA < apB ? -1 : 1;
       return 0;
     });
 
