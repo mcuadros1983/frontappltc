@@ -214,6 +214,37 @@ export default function ComprobantesEgresoList() {
 
     if (estado === "impaga") return true;
 
+    // Permitir eliminar comprobantes pagados íntegramente
+    // con compensación, siempre que no tengan orden de pago.
+    const formaPago = formasPagoTesoreria.find(
+      (fp) => Number(fp.id) === Number(comp.formapago_id)
+    );
+
+    const descripcionFormaPago = String(
+      formaPago?.descripcion || ""
+    )
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    const esCompensacion =
+      descripcionFormaPago.includes("compensacion");
+
+    // if (
+    //   estado === "pagada" &&
+    //   esCompensacion &&
+    //   !comp.ordenpago_id
+    // ) {
+    //   return true;
+    // }
+
+    if (
+      estado === "pagada" &&
+      esCompensacion
+    ) {
+      return true;
+    }
+
     const descripcionTipo = String(
       tiposComprobanteById[comp.tipocomprobante_id] || ""
     )
@@ -1264,7 +1295,7 @@ export default function ComprobantesEgresoList() {
   const handleEliminar = async (comp) => {
     if (!puedeEliminarComprobante(comp)) {
       alert(
-        "Sólo se pueden eliminar comprobantes IMPAGOS o notas de crédito sin forma de pago asociada."
+        "Sólo se pueden eliminar comprobantes impagos, notas de crédito sin pagos o comprobantes pagados íntegramente mediante compensación."
       );
       return;
     }
@@ -1445,11 +1476,13 @@ export default function ComprobantesEgresoList() {
       };
       const esPagoEnCajaDesdeId = (fpId) => has(fpId, /caja|efectivo/i);
       const medioFromFp = (fpId) => {
+        if (has(fpId, /compensaci[oó]n/i)) return "compensacion";
         if (has(fpId, /caja|efectivo/i)) return "caja";
         if (has(fpId, /transfer/i)) return "transferencia";
         if (has(fpId, /e-?cheq|echeq/i)) return "echeq";
         if (has(fpId, /tarjeta/i)) return "tarjeta";
         if (has(fpId, /cta.?cte|cuenta corriente/i)) return "ctacte";
+
         return "desconocido";
       };
 

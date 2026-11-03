@@ -65,8 +65,12 @@ export default function FormasPagoEditor({
   const esCtaCte = (fpId) => has(fpId, /(cta\.?\s*cte|cuenta\s*corriente)/i);
   const esEcheq = (fpId) => has(fpId, /(e-?\s*cheq|echeq)/i);
   const esTarjeta = (fpId) => has(fpId, /(tarjeta|cr[eé]dito|d[eé]bito)/i);
+  const esCompensacion = (fpId) =>
+    has(fpId, /compensaci[oó]n/i);
+
 
   const medioFromFp = (fpId) => {
+    if (esCompensacion(fpId)) return "compensacion";
     if (esPagoEnCaja(fpId)) return "caja";
     if (esTransferencia(fpId)) return "transferencia";
     if (esEcheq(fpId)) return "echeq";
@@ -74,7 +78,6 @@ export default function FormasPagoEditor({
     if (esCtaCte(fpId)) return "ctacte";
     return "desconocido";
   };
-
   const tipoExistingFromMedio = (medio) => {
     switch (medio) {
       case "caja": return "caja";
