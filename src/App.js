@@ -686,6 +686,11 @@ export default function App() {
                         {/* PLANTILLAS */}
 
                         <Route
+                          path="/inspecciones/configuracion"
+                          element={<PlantillasList />}
+                        />
+
+                        <Route
                           path="/inspecciones/plantillas"
                           element={<PlantillasList />}
                         />

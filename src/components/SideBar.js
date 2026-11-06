@@ -2764,9 +2764,9 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                     "Inspecciones"
                   ) && (
                     <Link
-                      to="/inspecciones/reportes"
+                      to="/inspecciones/dashboard" 
                       className={getLinkClassName(
-                        "/inspecciones/reportes"
+                        "/inspecciones/dashboard"
                       )}
                       onClick={handleLinkClick}
                     >

@@ -67,10 +67,23 @@ const InspeccionDetalle = () => {
     can("inspecciones:admin") ||
     Number(user?.rol_id) === 1;
 
+  const puedeEliminarEvidencia =
+    can("inspecciones:edit") ||
+    Number(user?.rol_id) === 1;
+
   const puedeRevisar =
     can("inspecciones:review") ||
     can("inspecciones:admin") ||
     Number(user?.rol_id) === 1;
+
+  console.log("PERMISOS INSPECCIONES", {
+    usuario: user?.usuario,
+    rol_id: user?.rol_id,
+    sucursal_id: user?.sucursal_id,
+    permisoReview: can("inspecciones:review"),
+    permisoAdmin: can("inspecciones:admin"),
+    puedeRevisar,
+  });
 
   const esSucursal =
     !esInspector &&
@@ -186,7 +199,9 @@ const InspeccionDetalle = () => {
       setError("");
       setOk("");
 
-      await inspeccionesApi.enviarRevision(respuesta.id);
+      await inspeccionesApi.enviarRevision(respuesta.id, {
+        comentario_sucursal: respuesta.comentario_sucursal || "",
+      });
 
       setOk("Observación enviada a revisión.");
       await cargar();
@@ -361,6 +376,7 @@ const InspeccionDetalle = () => {
                     esSucursal={esSucursal}
                     esInspector={esInspector}
                     puedeRevisar={puedeRevisar}
+                    puedeEliminarEvidencia={puedeEliminarEvidencia}
                     inspeccion={inspeccion}
                     actualizarLocal={actualizarLocal}
                     trabajarRespuesta={trabajarRespuesta}
@@ -635,6 +651,7 @@ const RespuestaSucursal = ({
 const Evidencias = ({
   evidencias = [],
   cargar,
+  puedeEliminarEvidencia = false,
 }) => {
   if (!evidencias.length) {
     return <div className="small text-muted">Sin evidencias cargadas.</div>;
@@ -669,28 +686,30 @@ const Evidencias = ({
                   </Button>
                 )}
 
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={async () => {
+                {puedeEliminarEvidencia && (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={async () => {
+                      if (!window.confirm("¿Eliminar evidencia?")) {
+                        return;
+                      }
 
-                    if (
-                      !window.confirm(
-                        "¿Eliminar evidencia?"
-                      )
-                    ) {
-                      return;
-                    }
-
-                    await inspeccionesApi.eliminarEvidencia(
-                      ev.id
-                    );
-
-                    await cargar();
-                  }}
-                >
-                  Eliminar
-                </Button>
+                      try {
+                        await inspeccionesApi.eliminarEvidencia(ev.id);
+                        await cargar();
+                      } catch (error) {
+                        console.error("Error eliminando evidencia:", error);
+                        alert(
+                          error?.message ||
+                          "No se pudo eliminar la evidencia."
+                        );
+                      }
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                )}
               </div>
             </Card.Body>
           </Card>
@@ -767,6 +786,7 @@ const CardRespuesta = ({
   esSucursal,
   esInspector,
   puedeRevisar,
+  puedeEliminarEvidencia,
   inspeccion,
   actualizarLocal,
   trabajarRespuesta,
@@ -789,10 +809,16 @@ const CardRespuesta = ({
     r.requiere_accion &&
     ["PENDIENTE", "EN_TRABAJO", "RECHAZADA", "REABIERTA"].includes(r.estado);
 
-  const mostrarRevision = puedeRevisar && r.estado === "EN_REVISION";
+  const mostrarRevision =
+    puedeRevisar &&
+    inspeccion?.estado !== "ANULADA" &&
+    r.estado === "EN_REVISION";
 
   const mostrarReabrir =
-    puedeRevisar && ["APROBADA", "CERRADA"].includes(r.estado);
+    puedeRevisar &&
+    !esSucursal &&
+    inspeccion?.estado !== "ANULADA" &&
+    ["APROBADA", "CERRADA"].includes(r.estado);
 
   return (
     <Card className="rpm-card mb-3">
@@ -921,6 +947,10 @@ const CardRespuesta = ({
         <Evidencias
           evidencias={r.evidencias || []}
           cargar={cargar}
+          puedeEliminarEvidencia={
+            puedeEliminarEvidencia &&
+            inspeccion?.estado !== "ANULADA"
+          }
         />
 
         {mostrarRevision && (

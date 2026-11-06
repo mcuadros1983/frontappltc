@@ -29,10 +29,11 @@ export const inspeccionesApi = {
             )
         ),
 
-    enviarRevision: async (id) =>
+    enviarRevision: async (id, payload = {}) =>
         unwrap(
             await api.post(
-                `/inspecciones/respuestas/${id}/enviar-revision`
+                `/inspecciones/respuestas/${id}/enviar-revision`,
+                payload
             )
         ),
 
