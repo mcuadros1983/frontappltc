@@ -6881,7 +6881,7 @@ const SideBar = ({ toggleSidebar, isMobile }) => {
                             )}
                             onClick={handleLinkClick}
                           >
-                            Crear Fabrica y Ach
+                            Crear Fabrica, Ach y Otros
                           </Link>
                         )}
 

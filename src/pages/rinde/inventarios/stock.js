@@ -76,9 +76,12 @@ export default function Stock() {
       const rows = filtered.map((articulo) => ({
         codigo: articulo.codigo,
         descripcion: articulo.descripcion,
-        cantidad: articulo.cantidad,
-        ventas: articulo.ventas || 0,
-        egresos: articulo.egresos || 0,
+        inventario: Number(articulo.inventario || 0),
+        medias: Number(articulo.medias || 0),
+        movimientos: Number(articulo.movimientos || 0),
+        ventas: Number(articulo.ventas || 0),
+        // egresos: Number(articulo.egresos || 0),
+        stockFinal: Number(articulo.cantidad || 0),
       }));
 
       exportToExcel(
@@ -113,8 +116,14 @@ export default function Stock() {
       if (!response.ok) throw new Error("Error al obtener subcategorías");
 
       const data = await response.json();
+
       setSubcategoriasMedias(data);
-      setSubcategoriasOmitidas([]);
+
+      setSubcategoriasOmitidas((anteriores) =>
+        anteriores.filter((subcategoria) =>
+          data.includes(subcategoria)
+        )
+      );
     } catch (error) {
       console.error("Error al obtener subcategorías de medias:", error);
     } finally {
@@ -163,11 +172,7 @@ export default function Stock() {
     fetchSubcategoriasMedias();
   }, [startDate, endDate, searchSucursal]);
 
-  useEffect(() => {
-    fetchSubcategoriasMedias();
-  }, [startDate, endDate, searchSucursal]);
-
-  const handleCalcularStock = async () => {
+  const handleCalcularStock = async (omisiones = subcategoriasOmitidas) => {
     try {
       if (!isValidDate(startDate) || !isValidDate(endDate)) {
         alert("Ingrese una fecha válida.");
@@ -186,6 +191,11 @@ export default function Stock() {
 
       setCalculandoStock(true);
 
+      console.log("========== CALCULO STOCK ==========");
+      console.log("Sucursal:", searchSucursal);
+      console.log("Inventario:", selectedInventario.id);
+      console.log("Subcategorías omitidas:", omisiones);
+
       const response = await fetch(`${apiUrl}/obtenerstock`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -194,24 +204,27 @@ export default function Stock() {
           fechaHasta: endDate,
           sucursalId: searchSucursal,
           inventarioId: selectedInventario.id,
-          subcategoriasOmitidas,
+          subcategoriasOmitidas: omisiones,
         }),
       });
 
-      if (!response.ok) throw new Error("Error al calcular stock");
+      if (!response.ok) {
+        throw new Error("Error al calcular stock");
+      }
 
       const data = await response.json();
 
+      console.log("Stock calculado:", data);
+
       setArticulos(data);
       setCurrentPage(1);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error("Error al calcular stock:", error);
       alert("Error al calcular stock.");
     } finally {
       setCalculandoStock(false);
     }
   };
-
   const indexOfLast = currentPage * articulosPerPage;
   const indexOfFirst = indexOfLast - articulosPerPage;
   // const filtered = articulos.filter((a) =>
@@ -341,6 +354,7 @@ export default function Stock() {
                 e.target.selectedOptions,
                 (option) => option.value
               );
+
               setSubcategoriasOmitidas(values);
             }}
             className="form-control my-input"
@@ -449,7 +463,7 @@ export default function Stock() {
         <div className="mx-2 my-2">
           <label className="d-block">&nbsp;</label>
           <Button
-            onClick={handleCalcularStock}
+            onClick={() => handleCalcularStock()}
             className="stock-btn"
             disabled={calculandoStock}
           >
@@ -475,14 +489,34 @@ export default function Stock() {
               <th className="st-th-sort" onClick={() => handleSort("codigo")}>
                 Código
               </th>
+
               <th className="st-th-sort" onClick={() => handleSort("descripcion")}>
                 Descripción
               </th>
-              <th className="st-th-sort text-end" onClick={() => handleSort("cantidad")}>
-                Stock
+
+              <th className="st-th-sort text-end" onClick={() => handleSort("inventario")}>
+                Inventario
               </th>
-              <th className="st-th-sort text-end" onClick={() => handleSort("ventas")}>Ventas</th>
-              <th className="st-th-sort text-end" onClick={() => handleSort("egresos")}>Egresos</th>
+
+              <th className="st-th-sort text-end" onClick={() => handleSort("medias")}>
+                Medias
+              </th>
+
+              <th className="st-th-sort text-end" onClick={() => handleSort("movimientos")}>
+                Movimientos
+              </th>
+
+              <th className="st-th-sort text-end" onClick={() => handleSort("ventas")}>
+                Ventas
+              </th>
+
+              {/* <th className="st-th-sort text-end" onClick={() => handleSort("egresos")}>
+                Egresos
+              </th> */}
+
+              <th className="st-th-sort text-end" onClick={() => handleSort("cantidad")}>
+                Stock final
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -490,9 +524,30 @@ export default function Stock() {
               <tr key={`${art.codigo}-${idx}`}>
                 <td>{art.codigo}</td>
                 <td>{art.descripcion}</td>
-                <td className="text-end">{art.cantidad}</td>
-                <td className="text-end">{art.ventas}</td>
-                <td className="text-end">{art.egresos}</td>
+
+                <td className="text-end">
+                  {Number(art.inventario || 0).toFixed(2)}
+                </td>
+
+                <td className="text-end">
+                  {Number(art.medias || 0).toFixed(2)}
+                </td>
+
+                <td className="text-end">
+                  {Number(art.movimientos || 0).toFixed(2)}
+                </td>
+
+                <td className="text-end">
+                  {Number(art.ventas || 0).toFixed(2)}
+                </td>
+
+                {/* <td className="text-end">
+                  {Number(art.egresos || 0).toFixed(2)}
+                </td> */}
+
+                <td className="text-end fw-bold">
+                  {Number(art.cantidad || 0).toFixed(2)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -543,4 +598,4 @@ export default function Stock() {
       </Modal>
     </Container>
   );
-}
+} 
