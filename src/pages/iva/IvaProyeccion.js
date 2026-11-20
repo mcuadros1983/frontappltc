@@ -195,11 +195,12 @@ async function fetchIvaCreditoComprobantesEgreso({ empresaId, fechaDesde, fechaH
 
   for (const c of filtered) {
 
-    // Sumar todos los conceptos de IVA del comprobante de egreso
+    // IVA crédito fiscal + percepciones de IVA
     const ivaTotal =
       Math.abs(Number(c.iva105 || 0)) +
       Math.abs(Number(c.iva21 || 0)) +
-      Math.abs(Number(c.iva_especial || 0));
+      Math.abs(Number(c.iva_especial || 0)) +
+      Math.abs(Number(c.percepcion_iva || 0));
 
     // Identificar el tipo de comprobante
     const descTipo = tiposMap.get(Number(c.tipocomprobante_id)) || "";
